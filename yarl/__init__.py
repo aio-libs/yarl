@@ -1,7 +1,7 @@
 __version__ = '0.0.1'
 
-
-from urllib.parse import urlsplit, urlunsplit
+from multidict import MultiDict, MultiDictProxy
+from urllib.parse import urlsplit, urlunsplit, parse_qsl
 
 
 # Why not furl?
@@ -25,6 +25,7 @@ class URL:
     # not to be passed into standard library functions like os.open etc.
     def __init__(self, val):
         self._val = urlsplit(val)
+        self._query = None
 
     def __str__(self):
         return urlunsplit(self._val)
@@ -58,3 +59,9 @@ class URL:
     @property
     def password(self):
         return self._val.password
+
+    @property
+    def query(self):
+        if self._query is None:
+            self._query = MultiDict(parse_qsl(self._val.query))
+        return MultiDictProxy(self._query)

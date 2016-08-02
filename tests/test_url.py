@@ -1,4 +1,5 @@
 from yarl import URL
+from multidict import MultiDict, MultiDictProxy
 
 
 def test_url_is_not_str():
@@ -64,3 +65,19 @@ def test_user():
 def test_password():
     url = URL('http://user:password@example.com')
     assert 'password' == url.password
+
+
+def test_empty_query():
+    url = URL('http://example.com')
+    assert isinstance(url.query, MultiDictProxy)
+    assert url.query == MultiDict()
+
+
+def test_query():
+    url = URL('http://example.com?a=1&b=2')
+    assert url.query == MultiDict([('a', '1'), ('b', '2')])
+
+
+def test_query_repeated_args():
+    url = URL('http://example.com?a=1&b=2&a=3')
+    assert url.query == MultiDict([('a', '1'), ('b', '2'), ('a', '3')])
