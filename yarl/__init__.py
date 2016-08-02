@@ -23,6 +23,9 @@ class URL:
     # probably URL will not suffer from pathlib problems:
     # it's intended for libraries like aiohttp,
     # not to be passed into standard library functions like os.open etc.
+
+    __slots__ = ('_val', '_query')
+
     def __init__(self, val):
         self._val = urlsplit(val)
         self._query = None
@@ -69,3 +72,7 @@ class URL:
     @property
     def fragment(self):
         return self._val.fragment
+
+    @property
+    def parent(self):
+        return
