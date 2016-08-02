@@ -116,3 +116,7 @@ def test_ne_str():
 def test_eq():
     url = URL('http://example.com/')
     assert url == URL('http://example.com/')
+
+
+def test_hash():
+    assert hash(URL('http://example.com/')) == hash(URL('http://example.com/'))

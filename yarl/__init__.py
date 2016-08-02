@@ -24,7 +24,7 @@ class URL:
     # it's intended for libraries like aiohttp,
     # not to be passed into standard library functions like os.open etc.
 
-    __slots__ = ('_val', '_query')
+    __slots__ = ('_val', '_query', '_hash')
 
     def __init__(self, val):
         if isinstance(val, str):
@@ -35,6 +35,7 @@ class URL:
             raise TypeError("Constructor parameter should be "
                             "either URL or str")
         self._query = None
+        self._hash = None
 
     def __str__(self):
         return urlunsplit(self._val)
@@ -46,6 +47,11 @@ class URL:
         if not isinstance(other, URL):
             return NotImplemented
         return self._val == other._val
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = hash(self._val)
+        return self._hash
 
     @property
     def host(self):
