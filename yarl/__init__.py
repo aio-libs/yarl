@@ -42,6 +42,11 @@ class URL:
     def __repr__(self):
         return "{}('{}')".format(self.__class__.__name__, str(self))
 
+    def __eq__(self, other):
+        if not isinstance(other, URL):
+            return NotImplemented
+        return self._val == other._val
+
     @property
     def host(self):
         # Use host instead of hostname for sake of shortness

@@ -106,3 +106,13 @@ def test_parent_double():
 def test_parent_empty():
     url = URL('http://example.com/')
     assert url.parent.parent.path == '/'
+
+
+def test_ne_str():
+    url = URL('http://example.com/')
+    assert url != 'http://example.com/'
+
+
+def test_eq():
+    url = URL('http://example.com/')
+    assert url == URL('http://example.com/')
