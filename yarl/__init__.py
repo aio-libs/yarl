@@ -65,3 +65,7 @@ class URL:
         if self._query is None:
             self._query = MultiDict(parse_qsl(self._val.query))
         return MultiDictProxy(self._query)
+
+    @property
+    def fragment(self):
+        return self._val.fragment

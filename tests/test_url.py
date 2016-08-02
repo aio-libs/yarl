@@ -81,3 +81,13 @@ def test_query():
 def test_query_repeated_args():
     url = URL('http://example.com?a=1&b=2&a=3')
     assert url.query == MultiDict([('a', '1'), ('b', '2'), ('a', '3')])
+
+
+def test_fragment_empty():
+    url = URL('http://example.com')
+    assert '' == url.fragment
+
+
+def test_fragment():
+    url = URL('http://example.com/path#anchor')
+    assert 'anchor' == url.fragment
