@@ -91,3 +91,18 @@ def test_fragment_empty():
 def test_fragment():
     url = URL('http://example.com/path#anchor')
     assert 'anchor' == url.fragment
+
+
+def test_parent():
+    url = URL('http://example.com/path/to')
+    assert url.parent.path == '/path'
+
+
+def test_parent_double():
+    url = URL('http://example.com/path/to')
+    assert url.parent.parent.path == '/'
+
+
+def test_parent_empty():
+    url = URL('http://example.com/')
+    assert url.parent.parent.path == '/'

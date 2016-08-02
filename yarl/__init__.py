@@ -1,8 +1,8 @@
-__version__ = '0.0.1'
-
 from multidict import MultiDict, MultiDictProxy
-from urllib.parse import urlsplit, urlunsplit, parse_qsl
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, SplitResult
 
+
+__version__ = '0.0.1'
 
 # Why not furl?
 # Because I pretty sure URL class should be immutable
@@ -27,7 +27,13 @@ class URL:
     __slots__ = ('_val', '_query')
 
     def __init__(self, val):
-        self._val = urlsplit(val)
+        if isinstance(val, str):
+            self._val = urlsplit(val)
+        elif isinstance(val, SplitResult):
+            self._val = val
+        else:
+            raise TypeError("Constructor parameter should be "
+                            "either URL or str")
         self._query = None
 
     def __str__(self):
@@ -75,4 +81,9 @@ class URL:
 
     @property
     def parent(self):
-        return
+        path = self.path
+        if path == '/':
+            return self
+        parts = path.split('/')
+        val = self._val._replace(path='/'.join(parts[:-1]))
+        return URL(val)
