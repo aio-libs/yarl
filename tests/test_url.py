@@ -249,3 +249,29 @@ def test_with_password_and_empty_user():
     url = URL('http://example.com')
     with pytest.raises(ValueError):
         assert str(url.with_password('pass'))
+
+
+def test_with_scheme():
+    url = URL('http://example.com')
+    assert str(url.with_scheme('https')) == 'https://example.com'
+
+
+def test_with_path():
+    url = URL('http://example.com/p1/p2')
+    assert str(url.with_path('/p3/p4')) == 'http://example.com/p3/p4'
+
+
+def test_with_query():
+    url = URL('http://example.com')
+    assert str(url.with_query({'a': 1})) == 'http://example.com?a=1'
+
+
+def test_with_query_multidict():
+    url = URL('http://example.com')
+    q = MultiDict([('a', 'b'), ('c', 'd')])
+    assert str(url.with_query(q)) == 'http://example.com?a=b&c=d'
+
+
+def test_with_fragment():
+    url = URL('http://example.com')
+    assert str(url.with_fragment('frag')) == 'http://example.com#frag'

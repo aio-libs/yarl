@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from multidict import MultiDict, MultiDictProxy
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, SplitResult
 
@@ -164,6 +165,8 @@ class URL:
 
     def with_host(self, host):
         # N.B. doesn't cleanup query/fragment
+        if not isinstance(host, str):
+            raise TypeError("Invalid host type")
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                val.password,
@@ -172,17 +175,46 @@ class URL:
 
     def with_user(self, user):
         # N.B. doesn't cleanup query/fragment
+        if not isinstance(user, str):
+            raise TypeError("Invalid user type")
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(user,
                                                                val.password,
                                                                val.hostname,
                                                                val.port)))
 
-
     def with_password(self, password):
         # N.B. doesn't cleanup query/fragment
+        if not isinstance(password, str):
+            raise TypeError("Invalid password type")
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                password,
                                                                val.hostname,
                                                                val.port)))
+
+    def with_scheme(self, scheme):
+        # N.B. doesn't cleanup query/fragment
+        if not isinstance(scheme, str):
+            raise TypeError("Invalid scheme type")
+        return URL(self._val._replace(scheme=scheme))
+
+    def with_path(self, path):
+        # N.B. doesn't cleanup query/fragment
+        if not isinstance(path, str):
+            raise TypeError("Invalid path type")
+        return URL(self._val._replace(path=path))
+
+    def with_query(self, query):
+        # N.B. doesn't cleanup query/fragment
+        if not isinstance(query, Mapping):
+            raise TypeError("Invalid query type")
+        return URL(self._val._replace(
+            query='&'.join(str(k)+'='+str(v)
+                           for k, v in query.items())))
+
+    def with_fragment(self, fragment):
+        # N.B. doesn't cleanup query/fragment
+        if not isinstance(fragment, str):
+            raise TypeError("Invalid fragment type")
+        return URL(self._val._replace(fragment=fragment))
