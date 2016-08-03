@@ -162,3 +162,13 @@ def test_gt():
     url2 = URL('http://example2.com/')
 
     assert url2 > url1
+
+
+def test_clear_fragment_on_getting_parent():
+    url = URL('http://example.com/path/to#frag')
+    assert URL('http://example.com/path') == url.parent
+
+
+def test_clear_fragment_on_getting_parent_toplevel():
+    url = URL('http://example.com/#frag')
+    assert URL('http://example.com/') == url.parent

@@ -114,7 +114,10 @@ class URL:
     def parent(self):
         path = self.path
         if path == '/':
+            if self.fragment or self.query:
+                return URL(self._val._replace(query='', fragment=''))
             return self
         parts = path.split('/')
-        val = self._val._replace(path='/'.join(parts[:-1]))
+        val = self._val._replace(path='/'.join(parts[:-1]),
+                                 query='', fragment='')
         return URL(val)
