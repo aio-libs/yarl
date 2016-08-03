@@ -73,6 +73,13 @@ class URL:
             return NotImplemented
         return self._val > other._val
 
+    def __truediv__(self, name):
+        path = self._val.path
+        parts = path.split('/')
+        parts.append(name)
+        return URL(self._val._replace(path='/'.join(parts),
+                                      query='', fragment=''))
+
     @property
     def host(self):
         # Use host instead of hostname for sake of shortness

@@ -197,3 +197,13 @@ def test_name_root():
 def test_name_root2():
     url = URL('http://example.com')
     assert '' == url.name
+
+
+def test_div_root():
+    url = URL('http://example.com')
+    assert str(url / 'path' / 'to') == 'http://example.com/path/to'
+
+
+def test_div():
+    url = URL('http://example.com/path')
+    assert str(url / 'to') == 'http://example.com/path/to'
