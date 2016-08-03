@@ -172,3 +172,13 @@ def test_clear_fragment_on_getting_parent():
 def test_clear_fragment_on_getting_parent_toplevel():
     url = URL('http://example.com/#frag')
     assert URL('http://example.com/') == url.parent
+
+
+def test_clear_query_on_getting_parent():
+    url = URL('http://example.com/path/to?a=b')
+    assert URL('http://example.com/path') == url.parent
+
+
+def test_clear_query_on_getting_parent_toplevel():
+    url = URL('http://example.com/?a=b')
+    assert URL('http://example.com/') == url.parent
