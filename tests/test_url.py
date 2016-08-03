@@ -1,3 +1,4 @@
+import pytest
 from yarl import URL
 from multidict import MultiDict, MultiDictProxy
 
@@ -222,3 +223,13 @@ def test_with_port():
 def test_with_port_keeps_query_and_fragment():
     url = URL('http://example.com/?a=1#frag')
     assert str(url.with_port(8888)) == 'http://example.com:8888/?a=1#frag'
+
+
+def test_with_port_invalid_type():
+    with pytest.raises(TypeError):
+        URL('http://example.com').with_port('123')
+
+
+def test_with_host():
+    url = URL('http://example.com:123')
+    assert str(url.with_host('example.org')) == 'http://example.org:123'

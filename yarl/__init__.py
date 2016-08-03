@@ -159,3 +159,11 @@ class URL:
                                                                val.password,
                                                                val.hostname,
                                                                port)))
+
+    def with_host(self, host):
+        # N.B. doesn't cleanup query/fragment
+        val = self._val
+        return URL(self._val._replace(netloc=self._make_netloc(val.username,
+                                                               val.password,
+                                                               host,
+                                                               val.port)))
