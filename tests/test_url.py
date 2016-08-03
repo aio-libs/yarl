@@ -212,3 +212,13 @@ def test_div():
 def test_div_cleanup_query_and_fragment():
     url = URL('http://example.com/path?a=1#frag')
     assert str(url / 'to') == 'http://example.com/path/to'
+
+
+def test_with_port():
+    url = URL('http://example.com')
+    assert str(url.with_port(8888)) == 'http://example.com:8888'
+
+
+def test_with_port_keeps_query_and_fragment():
+    url = URL('http://example.com/?a=1#frag')
+    assert str(url.with_port(8888)) == 'http://example.com:8888/?a=1#frag'

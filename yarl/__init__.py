@@ -137,3 +137,25 @@ class URL:
         else:
             parts = path.split('/')
             return parts[-1]
+
+    @classmethod
+    def _make_netloc(cls, user, password, host, port):
+        ret = host
+        if port:
+            ret = ret + ':' + str(port)
+        if password:
+            user = user + ':' + password
+        if user:
+            ret = user + '@' + ret
+        return ret
+
+    def with_port(self, port):
+        # N.B. doesn't cleanup query/fragment
+        if port is not None and not isinstance(port, int):
+            raise TypeError(
+                "port should be int or None, got {}".format(type(port)))
+        val = self._val
+        return URL(self._val._replace(netloc=self._make_netloc(val.username,
+                                                               val.password,
+                                                               val.hostname,
+                                                               port)))
