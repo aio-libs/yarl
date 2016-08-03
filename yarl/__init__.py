@@ -121,3 +121,12 @@ class URL:
         val = self._val._replace(path='/'.join(parts[:-1]),
                                  query='', fragment='')
         return URL(val)
+
+    @property
+    def name(self):
+        path = self.path
+        if path == '/':
+            return ''
+        else:
+            parts = path.split('/')
+            return parts[-1]

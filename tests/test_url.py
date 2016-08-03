@@ -182,3 +182,18 @@ def test_clear_query_on_getting_parent():
 def test_clear_query_on_getting_parent_toplevel():
     url = URL('http://example.com/?a=b')
     assert URL('http://example.com/') == url.parent
+
+
+def test_name():
+    url = URL('http://example.com/path/to#frag')
+    assert 'to' == url.name
+
+
+def test_name_root():
+    url = URL('http://example.com/#frag')
+    assert '' == url.name
+
+
+def test_name_root2():
+    url = URL('http://example.com')
+    assert '' == url.name
