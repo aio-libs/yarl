@@ -144,6 +144,8 @@ class URL:
         if port:
             ret = ret + ':' + str(port)
         if password:
+            if not user:
+                raise ValueError("Non-empty password requires non-empty user")
             user = user + ':' + password
         if user:
             ret = user + '@' + ret
@@ -166,4 +168,21 @@ class URL:
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                val.password,
                                                                host,
+                                                               val.port)))
+
+    def with_user(self, user):
+        # N.B. doesn't cleanup query/fragment
+        val = self._val
+        return URL(self._val._replace(netloc=self._make_netloc(user,
+                                                               val.password,
+                                                               val.hostname,
+                                                               val.port)))
+
+
+    def with_password(self, password):
+        # N.B. doesn't cleanup query/fragment
+        val = self._val
+        return URL(self._val._replace(netloc=self._make_netloc(val.username,
+                                                               password,
+                                                               val.hostname,
                                                                val.port)))

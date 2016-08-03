@@ -233,3 +233,19 @@ def test_with_port_invalid_type():
 def test_with_host():
     url = URL('http://example.com:123')
     assert str(url.with_host('example.org')) == 'http://example.org:123'
+
+
+def test_with_user():
+    url = URL('http://example.com')
+    assert str(url.with_user('john')) == 'http://john@example.com'
+
+
+def test_with_password():
+    url = URL('http://john@example.com')
+    assert str(url.with_password('pass')) == 'http://john:pass@example.com'
+
+
+def test_with_password_and_empty_user():
+    url = URL('http://example.com')
+    with pytest.raises(ValueError):
+        assert str(url.with_password('pass'))
