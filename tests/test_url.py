@@ -120,3 +120,45 @@ def test_eq():
 
 def test_hash():
     assert hash(URL('http://example.com/')) == hash(URL('http://example.com/'))
+
+
+def test_le_less():
+    url1 = URL('http://example1.com/')
+    url2 = URL('http://example2.com/')
+
+    assert url1 <= url2
+
+
+def test_le_eq():
+    url1 = URL('http://example.com/')
+    url2 = URL('http://example.com/')
+
+    assert url1 <= url2
+
+
+def test_lt():
+    url1 = URL('http://example1.com/')
+    url2 = URL('http://example2.com/')
+
+    assert url1 < url2
+
+
+def test_ge_more():
+    url1 = URL('http://example1.com/')
+    url2 = URL('http://example2.com/')
+
+    assert url2 >= url1
+
+
+def test_ge_eq():
+    url1 = URL('http://example.com/')
+    url2 = URL('http://example.com/')
+
+    assert url2 >= url1
+
+
+def test_gt():
+    url1 = URL('http://example1.com/')
+    url2 = URL('http://example2.com/')
+
+    assert url2 > url1

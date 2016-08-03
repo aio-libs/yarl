@@ -53,6 +53,26 @@ class URL:
             self._hash = hash(self._val)
         return self._hash
 
+    def __le__(self, other):
+        if not isinstance(other, URL):
+            return NotImplemented
+        return self._val <= other._val
+
+    def __lt__(self, other):
+        if not isinstance(other, URL):
+            return NotImplemented
+        return self._val < other._val
+
+    def __ge__(self, other):
+        if not isinstance(other, URL):
+            return NotImplemented
+        return self._val >= other._val
+
+    def __gt__(self, other):
+        if not isinstance(other, URL):
+            return NotImplemented
+        return self._val > other._val
+
     @property
     def host(self):
         # Use host instead of hostname for sake of shortness
