@@ -282,3 +282,8 @@ def test_no_scheme():
     url = URL('example.com')
     assert url.host == 'example.com'
     assert str(url) == 'http://example.com'
+
+
+def test_ctor_from_nonstr():
+    with pytest.raises(TypeError):
+        URL(b'http://example.com')
