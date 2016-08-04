@@ -275,3 +275,10 @@ def test_with_query_multidict():
 def test_with_fragment():
     url = URL('http://example.com')
     assert str(url.with_fragment('frag')) == 'http://example.com#frag'
+
+
+@pytest.mark.xfail
+def test_no_scheme():
+    url = URL('example.com')
+    assert url.host == 'example.com'
+    assert str(url) == 'http://example.com'

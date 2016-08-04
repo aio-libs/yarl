@@ -82,6 +82,19 @@ class URL:
                                       query='', fragment=''))
 
     @property
+    def scheme(self):
+        return self._val.scheme
+
+    @property
+    def user(self):
+        # not .username
+        return self._val.username
+
+    @property
+    def password(self):
+        return self._val.password
+
+    @property
     def host(self):
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
@@ -92,21 +105,8 @@ class URL:
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
     @property
-    def scheme(self):
-        return self._val.scheme
-
-    @property
     def path(self):
         return self._val.path or '/'
-
-    @property
-    def user(self):
-        # not .username
-        return self._val.username
-
-    @property
-    def password(self):
-        return self._val.password
 
     @property
     def query(self):
@@ -152,26 +152,11 @@ class URL:
             ret = user + '@' + ret
         return ret
 
-    def with_port(self, port):
+    def with_scheme(self, scheme):
         # N.B. doesn't cleanup query/fragment
-        if port is not None and not isinstance(port, int):
-            raise TypeError(
-                "port should be int or None, got {}".format(type(port)))
-        val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(val.username,
-                                                               val.password,
-                                                               val.hostname,
-                                                               port)))
-
-    def with_host(self, host):
-        # N.B. doesn't cleanup query/fragment
-        if not isinstance(host, str):
-            raise TypeError("Invalid host type")
-        val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(val.username,
-                                                               val.password,
-                                                               host,
-                                                               val.port)))
+        if not isinstance(scheme, str):
+            raise TypeError("Invalid scheme type")
+        return URL(self._val._replace(scheme=scheme))
 
     def with_user(self, user):
         # N.B. doesn't cleanup query/fragment
@@ -193,11 +178,26 @@ class URL:
                                                                val.hostname,
                                                                val.port)))
 
-    def with_scheme(self, scheme):
+    def with_host(self, host):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(scheme, str):
-            raise TypeError("Invalid scheme type")
-        return URL(self._val._replace(scheme=scheme))
+        if not isinstance(host, str):
+            raise TypeError("Invalid host type")
+        val = self._val
+        return URL(self._val._replace(netloc=self._make_netloc(val.username,
+                                                               val.password,
+                                                               host,
+                                                               val.port)))
+
+    def with_port(self, port):
+        # N.B. doesn't cleanup query/fragment
+        if port is not None and not isinstance(port, int):
+            raise TypeError(
+                "port should be int or None, got {}".format(type(port)))
+        val = self._val
+        return URL(self._val._replace(netloc=self._make_netloc(val.username,
+                                                               val.password,
+                                                               val.hostname,
+                                                               port)))
 
     def with_path(self, path):
         # N.B. doesn't cleanup query/fragment
