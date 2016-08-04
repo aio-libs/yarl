@@ -235,14 +235,32 @@ def test_with_host():
     assert str(url.with_host('example.org')) == 'http://example.org:123'
 
 
+def test_with_host_invalid_type():
+    url = URL('http://example.com:123')
+    with pytest.raises(TypeError):
+        url.with_host(None)
+
+
 def test_with_user():
     url = URL('http://example.com')
     assert str(url.with_user('john')) == 'http://john@example.com'
 
 
+def test_with_user_invalid_type():
+    url = URL('http://example.com:123')
+    with pytest.raises(TypeError):
+        url.with_user(None)
+
+
 def test_with_password():
     url = URL('http://john@example.com')
     assert str(url.with_password('pass')) == 'http://john:pass@example.com'
+
+
+def test_with_password_invalid_type():
+    url = URL('http://example.com:123')
+    with pytest.raises(TypeError):
+        url.with_password(None)
 
 
 def test_with_password_and_empty_user():
@@ -256,9 +274,26 @@ def test_with_scheme():
     assert str(url.with_scheme('https')) == 'https://example.com'
 
 
+def test_with_scheme_invalid_type():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        assert str(url.with_scheme(123))
+
+
 def test_with_path():
     url = URL('http://example.com/p1/p2')
     assert str(url.with_path('/p3/p4')) == 'http://example.com/p3/p4'
+
+
+def test_with_path_empty():
+    url = URL('http://example.com/p1/p2')
+    assert str(url.with_path('')) == 'http://example.com'
+
+
+def test_with_path_invalid_type():
+    url = URL('http://example.com/p1/p2')
+    with pytest.raises(TypeError):
+        url.with_path(None)
 
 
 def test_with_query():
@@ -272,9 +307,21 @@ def test_with_query_multidict():
     assert str(url.with_query(q)) == 'http://example.com?a=b&c=d'
 
 
+def test_with_query_bad_type():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query(None)
+
+
 def test_with_fragment():
     url = URL('http://example.com')
     assert str(url.with_fragment('frag')) == 'http://example.com#frag'
+
+
+def test_with_fragment_bad_type():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_fragment(None)
 
 
 @pytest.mark.xfail
