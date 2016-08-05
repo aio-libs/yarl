@@ -35,8 +35,40 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be "
                             "either URL or str")
+
+        if not self._val.path:
+            # Cannonical absolute URL should contain leading / at least
+            self._val = self._val._replace(path='/')
         self._query = None
         self._hash = None
+
+    @classmethod
+    def from_bytes(cls, val):
+        if not isinstance(val, (bytes, memoryview)):
+            raise TypeError("Parameter should be byte-ish")
+        val = urlsplit(val)
+        new_val = SplitResult(scheme=val.scheme.decode('ascii'),
+                              netloc=cls._decode_netloc(val.netloc),
+                              path=cls._decode_path(val.path),
+                              query=cls._decode_query(val.query),
+                              fragment=cls._decode_fragment(val.fragment))
+        return URL(new_val)
+
+    @classmethod
+    def _decode_netloc(cls, netloc):
+        return netloc.decode('idna')
+
+    @classmethod
+    def _decode_path(cls, path):
+        return path.decode('ascii')
+
+    @classmethod
+    def _decode_query(cls, query):
+        return query.decode('ascii')
+
+    @classmethod
+    def _decode_fragment(cls, fragment):
+        return fragment.decode('ascii')
 
     def __str__(self):
         return urlunsplit(self._val)
@@ -76,10 +108,13 @@ class URL:
 
     def __truediv__(self, name):
         path = self._val.path
-        parts = path.split('/')
-        parts.append(name)
-        return URL(self._val._replace(path='/'.join(parts),
-                                      query='', fragment=''))
+        if path == '/':
+            new_path = '/' + name
+        else:
+            parts = path.split('/')
+            parts.append(name)
+            new_path = '/'.join(parts)
+        return URL(self._val._replace(path=new_path, query='', fragment=''))
 
     @property
     def scheme(self):
@@ -106,7 +141,7 @@ class URL:
 
     @property
     def path(self):
-        return self._val.path or '/'
+        return self._val.path
 
     @property
     def query(self):

@@ -15,7 +15,7 @@ def test_str():
 
 def test_repr():
     url = URL('http://example.com')
-    assert "URL('http://example.com')" == repr(url)
+    assert "URL('http://example.com/')" == repr(url)
 
 
 def test_host():
@@ -217,7 +217,7 @@ def test_div_cleanup_query_and_fragment():
 
 def test_with_port():
     url = URL('http://example.com')
-    assert str(url.with_port(8888)) == 'http://example.com:8888'
+    assert str(url.with_port(8888)) == 'http://example.com:8888/'
 
 
 def test_with_port_keeps_query_and_fragment():
@@ -232,7 +232,7 @@ def test_with_port_invalid_type():
 
 def test_with_host():
     url = URL('http://example.com:123')
-    assert str(url.with_host('example.org')) == 'http://example.org:123'
+    assert str(url.with_host('example.org')) == 'http://example.org:123/'
 
 
 def test_with_host_invalid_type():
@@ -243,7 +243,7 @@ def test_with_host_invalid_type():
 
 def test_with_user():
     url = URL('http://example.com')
-    assert str(url.with_user('john')) == 'http://john@example.com'
+    assert str(url.with_user('john')) == 'http://john@example.com/'
 
 
 def test_with_user_invalid_type():
@@ -254,7 +254,7 @@ def test_with_user_invalid_type():
 
 def test_with_password():
     url = URL('http://john@example.com')
-    assert str(url.with_password('pass')) == 'http://john:pass@example.com'
+    assert str(url.with_password('pass')) == 'http://john:pass@example.com/'
 
 
 def test_with_password_invalid_type():
@@ -271,7 +271,7 @@ def test_with_password_and_empty_user():
 
 def test_with_scheme():
     url = URL('http://example.com')
-    assert str(url.with_scheme('https')) == 'https://example.com'
+    assert str(url.with_scheme('https')) == 'https://example.com/'
 
 
 def test_with_scheme_invalid_type():
@@ -287,7 +287,7 @@ def test_with_path():
 
 def test_with_path_empty():
     url = URL('http://example.com/p1/p2')
-    assert str(url.with_path('')) == 'http://example.com'
+    assert str(url.with_path('')) == 'http://example.com/'
 
 
 def test_with_path_invalid_type():
@@ -298,13 +298,13 @@ def test_with_path_invalid_type():
 
 def test_with_query():
     url = URL('http://example.com')
-    assert str(url.with_query({'a': 1})) == 'http://example.com?a=1'
+    assert str(url.with_query({'a': 1})) == 'http://example.com/?a=1'
 
 
 def test_with_query_multidict():
     url = URL('http://example.com')
     q = MultiDict([('a', 'b'), ('c', 'd')])
-    assert str(url.with_query(q)) == 'http://example.com?a=b&c=d'
+    assert str(url.with_query(q)) == 'http://example.com/?a=b&c=d'
 
 
 def test_with_query_bad_type():
@@ -315,7 +315,7 @@ def test_with_query_bad_type():
 
 def test_with_fragment():
     url = URL('http://example.com')
-    assert str(url.with_fragment('frag')) == 'http://example.com#frag'
+    assert str(url.with_fragment('frag')) == 'http://example.com/#frag'
 
 
 def test_with_fragment_bad_type():
@@ -334,3 +334,13 @@ def test_no_scheme():
 def test_ctor_from_nonstr():
     with pytest.raises(TypeError):
         URL(b'http://example.com')
+
+
+def test_from_bytes():
+    url = URL.from_bytes(b'http://example.com')
+    assert "http://example.com/" == str(url)
+
+
+def test_from_bytes_idna():
+    url = URL.from_bytes(b'http://xn--jxagkqfkduily1i.eu')
+    assert "http://εμπορικόσήμα.eu/" == str(url)
