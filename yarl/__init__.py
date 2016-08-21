@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from multidict import MultiDict, MultiDictProxy
-from urllib.parse import urlsplit, urlunsplit, parse_qsl, SplitResult
+from urllib.parse import (urlsplit, urlunsplit, parse_qsl,
+                          SplitResult, SplitResultBytes)
 
 
 __version__ = '0.0.1'
@@ -70,6 +71,22 @@ class URL:
     def _decode_fragment(cls, fragment):
         return fragment.decode('ascii')
 
+    @classmethod
+    def _encode_netloc(cls, netloc):
+        return netloc.encode('idna')
+
+    @classmethod
+    def _encode_path(cls, path):
+        return path.encode('ascii')
+
+    @classmethod
+    def _encode_query(cls, query):
+        return query.encode('ascii')
+
+    @classmethod
+    def _encode_fragment(cls, fragment):
+        return fragment.encode('ascii')
+
     def __str__(self):
         return urlunsplit(self._val)
 
@@ -115,6 +132,19 @@ class URL:
             parts.append(name)
             new_path = '/'.join(parts)
         return URL(self._val._replace(path=new_path, query='', fragment=''))
+
+    def __bytes__(self):
+        val = self._val
+        return urlunsplit(SplitResultBytes(
+            self.scheme.encode('ascii'),
+            self._encode_netloc(val.netloc),
+            self._encode_path(val.path),
+            self._encode_query(val.query),
+            self._encode_fragment(val.fragment),
+            ))
+
+    def canonical(self):
+        return bytes(self).deocode('ascii')
 
     @property
     def scheme(self):

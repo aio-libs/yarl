@@ -344,3 +344,22 @@ def test_from_bytes():
 def test_from_bytes_idna():
     url = URL.from_bytes(b'http://xn--jxagkqfkduily1i.eu')
     assert "http://εμπορικόσήμα.eu/" == str(url)
+
+
+def test_to_bytes():
+    url = URL("http://εμπορικόσήμα.eu/")
+    assert b"http://xn--jxagkqfkduily1i.eu/" == bytes(url)
+
+
+def test_canonical():
+    url = URL("http://εμπορικόσήμα.eu/")
+    assert "http://xn--jxagkqfkduily1i.eu/" == url.canonical()
+
+
+def test_to_bytes_long():
+    url = URL('https://host-12345678901234567890123456789012345678901234567890'
+              '-name:8888/')
+    expected = (b'https://host-'
+                b'12345678901234567890123456789012345678901234567890'
+                b'-name:8888/')
+    assert expected == bytes(url)
