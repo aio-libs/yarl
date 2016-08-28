@@ -11,6 +11,8 @@ with fname.open() as fp:
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
+install_requires = ['multidict>=2.0']
+
 
 setup(name='yarl',
       version=version,
@@ -30,4 +32,5 @@ setup(name='yarl',
       url='https://github.com/aio-libs/yarl/',
       license='Apache 2',
       packages=['yarl'],
+      install_requires=install_requires,
       include_package_data=True)
