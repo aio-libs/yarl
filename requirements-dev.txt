@@ -1,0 +1,3 @@
+-r requirements-ci.txt
+pytest-sugar
+pytest-cov
