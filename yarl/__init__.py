@@ -236,8 +236,7 @@ class URL:
                     parts = ['/'] + path[1:].split('/')
                 else:
                     parts = path.split('/')
-            self._parts = tuple([part.replace('%2F', '/').replace('%2f', '/')
-                                 for part in parts])
+            self._parts = tuple(parts)
         return self._parts
 
     @property

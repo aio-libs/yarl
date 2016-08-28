@@ -594,9 +594,9 @@ def test_path_parts():
 
 def test_path_parts_with_2F_in_path():
     url = URL('http://example.com/path%2Fto/three')
-    assert ('/', 'path/to', 'three') == url.parts
+    assert ('/', 'path%2Fto', 'three') == url.parts
 
 
 def test_path_parts_with_2f_in_path():
     url = URL('http://example.com/path%2fto/three')
-    assert ('/', 'path/to', 'three') == url.parts
+    assert ('/', 'path%2fto', 'three') == url.parts
