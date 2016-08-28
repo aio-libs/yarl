@@ -545,3 +545,13 @@ def test_is_absolute_for_relative_url():
 def test_is_absolute_for_absolute_url():
     url = URL('http://example.com')
     assert url.is_absolute()
+
+
+def test_not_allowed_query_only_url():
+    with pytest.raises(ValueError):
+        URL('?a=b')
+
+
+def test_not_allowed_fragment_only_url():
+    with pytest.raises(ValueError):
+        URL('?a=b')

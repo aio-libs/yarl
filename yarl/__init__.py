@@ -30,12 +30,18 @@ class URL:
 
     def __init__(self, val):
         if isinstance(val, str):
-            self._val = urlsplit(val)
+            val = urlsplit(val)
         elif isinstance(val, SplitResult):
-            self._val = val
+            pass
         else:
             raise TypeError("Constructor parameter should be "
                             "either URL or str")
+
+        if (not val.scheme and not val.netloc and not val.path and
+                (val.query or val.fragment)):
+            raise ValueError("URL with only query or fragment is not allowed")
+
+        self._val = val
         self._path = None
         self._query = None
         self._hash = None
