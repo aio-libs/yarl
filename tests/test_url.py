@@ -697,3 +697,14 @@ def test_truediv_for_relative_url():
 def test_truediv_for_relative_url_started_with_slash():
     url = URL('/a') / 'b'
     assert url.parts == ('/', 'a', 'b')
+
+
+def test_empty_value_for_query():
+    url = URL('http://example.com/path').with_query({'a': ''})
+    assert str(url) == 'http://example.com/path?a='
+
+
+@pytest.mark.xfail
+def test_none_value_for_query():
+    url = URL('http://example.com/path').with_query({'a': None})
+    assert str(url) == 'http://example.com/path?a'
