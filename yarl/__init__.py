@@ -37,9 +37,12 @@ class URL:
             raise TypeError("Constructor parameter should be "
                             "either URL or str")
 
-        if (not val.scheme and not val.netloc and not val.path and
-                (val.query or val.fragment)):
-            raise ValueError("URL with only query or fragment is not allowed")
+        if not val.scheme and not val.netloc and not val.path:
+            if val.query or val.fragment:
+                raise ValueError("URL with the only query or fragment "
+                                 "is not allowed")
+            else:
+                raise ValueError("Empty URL is not allowed")
 
         self._val = val
         self._path = None
@@ -201,12 +204,25 @@ class URL:
     @property
     def path(self):
         if self._path is None:
-            self._path = tuple(self._val.path.split('/'))
+            path = self._val.path
+            if self.is_absolute():
+                if not path:
+                    self._path = ('/',)
+                else:
+                    self._path = tuple(['/'] + path[1:].split('/'))
+            else:
+                if path.startswith('/'):
+                    self._path = tuple(['/'] + path[1:].split('/'))
+                else:
+                    self._path = tuple(path.split('/'))
         return self._path
 
     @property
     def path_string(self):
-        return self._val.path
+        ret = self._val.path
+        if not ret and self.is_absolute():
+            ret = '/'
+        return ret
 
     @property
     def query(self):

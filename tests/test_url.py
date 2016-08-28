@@ -51,17 +51,17 @@ def test_scheme():
 
 def test_path_string_empty():
     url = URL('http://example.com')
-    assert '' == url.path_string
+    assert '/' == url.path_string
 
 
 def test_path_empty():
     url = URL('http://example.com')
-    assert ('',) == url.path
+    assert ('/',) == url.path
 
 
 def test_path():
     url = URL('http://example.com/path/to')
-    assert ('', 'path', 'to') == url.path
+    assert ('/', 'path', 'to') == url.path
 
 
 def test_path_string():
@@ -117,12 +117,12 @@ def test_parent_path_string():
 
 def test_parent_path():
     url = URL('http://example.com/path/to')
-    assert url.parent.path == ('', 'path')
+    assert url.parent.path == ('/', 'path')
 
 
 def test_parent_double():
     url = URL('http://example.com/path/to')
-    assert url.parent.parent.path_string == ''
+    assert url.parent.parent.path_string == '/'
 
 
 def test_parent_empty():
@@ -132,7 +132,7 @@ def test_parent_empty():
 
 def test_parent_empty2():
     url = URL('http://example.com')
-    assert url.parent.parent.path_string == ''
+    assert url.parent.parent.path_string == '/'
 
 
 def test_ne_str():
@@ -555,3 +555,18 @@ def test_not_allowed_query_only_url():
 def test_not_allowed_fragment_only_url():
     with pytest.raises(ValueError):
         URL('?a=b')
+
+
+def test_not_allowed_empty():
+    with pytest.raises(ValueError):
+        URL('')
+
+
+def test_relative_path():
+    url = URL('path/to')
+    assert ('path', 'to') == url.path
+
+
+def test_relative_path_starting_from_slash():
+    url = URL('/path/to')
+    assert ('/', 'path', 'to') == url.path
