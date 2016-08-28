@@ -166,6 +166,9 @@ class URL:
     def canonical(self):
         return bytes(self).decode('ascii')
 
+    def is_absolute(self):
+        return self.host is not None
+
     @property
     def scheme(self):
         return self._val.scheme

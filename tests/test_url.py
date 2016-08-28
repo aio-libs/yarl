@@ -384,11 +384,18 @@ def test_with_fragment_bad_type():
         url.with_fragment(None)
 
 
-@pytest.mark.xfail
 def test_no_scheme():
     url = URL('example.com')
-    assert url.host == 'example.com'
-    assert str(url) == 'http://example.com'
+    assert url.host is None
+    assert url.path_string == 'example.com'
+    assert str(url) == 'example.com'
+
+
+def test_no_scheme2():
+    url = URL('example.com/a/b')
+    assert url.host is None
+    assert url.path_string == 'example.com/a/b'
+    assert str(url) == 'example.com/a/b'
 
 
 def test_ctor_from_nonstr():
@@ -528,3 +535,13 @@ def test_decoding_with_26_and_3D_in_query():
     url = URL('http://example.com/?%26=%3D')
     assert b'http://example.com/?%2526=%253D' == bytes(url)
     assert url == URL.from_bytes(bytes(url))
+
+
+def test_is_absolute_for_relative_url():
+    url = URL('/path/to')
+    assert not url.is_absolute()
+
+
+def test_is_absolute_for_absolute_url():
+    url = URL('http://example.com')
+    assert url.is_absolute()
