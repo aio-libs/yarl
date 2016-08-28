@@ -340,22 +340,6 @@ def test_with_scheme_invalid_type():
         assert str(url.with_scheme(123))
 
 
-def test_with_path():
-    url = URL('http://example.com/p1/p2')
-    assert str(url.with_path('/p3/p4')) == 'http://example.com/p3/p4'
-
-
-def test_with_path_empty():
-    url = URL('http://example.com/p1/p2')
-    assert str(url.with_path('')) == 'http://example.com'
-
-
-def test_with_path_invalid_type():
-    url = URL('http://example.com/p1/p2')
-    with pytest.raises(TypeError):
-        url.with_path(None)
-
-
 def test_with_query():
     url = URL('http://example.com')
     assert str(url.with_query({'a': 1})) == 'http://example.com/?a=1'

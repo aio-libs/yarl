@@ -332,12 +332,6 @@ class URL:
                                                                val.hostname,
                                                                port)))
 
-    def with_path(self, path):
-        # N.B. doesn't cleanup query/fragment
-        if not isinstance(path, str):
-            raise TypeError("Invalid path type")
-        return URL(self._val._replace(path=path))
-
     def with_query(self, query):
         # N.B. doesn't cleanup query/fragment
         if not isinstance(query, Mapping):
