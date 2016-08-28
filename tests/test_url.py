@@ -493,7 +493,8 @@ def test_decoding_with_2F_in_path():
     assert url == URL.from_bytes(bytes(url))
 
 
-def xtest_decoding_with_26_and_3D_in_query():
+@pytest.mark.xfail
+def test_decoding_with_26_and_3D_in_query():
     url = URL('http://example.com/?%26=%3D')
     assert b'http://example.com/?%2526=%253D' == bytes(url)
     assert url == URL.from_bytes(bytes(url))
