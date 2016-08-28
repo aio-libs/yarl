@@ -190,7 +190,7 @@ class URL:
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
     @property
-    def path(self):
+    def path_string(self):
         return self._val.path
 
     @property
@@ -200,12 +200,16 @@ class URL:
         return MultiDictProxy(self._query)
 
     @property
+    def query_string(self):
+        return self._val.query
+
+    @property
     def fragment(self):
         return self._val.fragment
 
     @property
     def parent(self):
-        path = self.path
+        path = self.path_string
         if path == '/':
             if self.fragment or self.query:
                 return URL(self._val._replace(query='', fragment=''))
@@ -217,7 +221,7 @@ class URL:
 
     @property
     def name(self):
-        path = self.path
+        path = self.path_string
         if path == '/':
             return ''
         else:

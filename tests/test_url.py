@@ -51,12 +51,12 @@ def test_scheme():
 
 def test_path_empty():
     url = URL('http://example.com')
-    assert '/' == url.path
+    assert '/' == url.path_string
 
 
 def test_path():
     url = URL('http://example.com/path/to')
-    assert '/path/to' == url.path
+    assert '/path/to' == url.path_string
 
 
 def test_user():
@@ -80,6 +80,11 @@ def test_query():
     assert url.query == MultiDict([('a', '1'), ('b', '2')])
 
 
+def test_query_string():
+    url = URL('http://example.com?a=1&b=2')
+    assert url.query_string == 'a=1&b=2'
+
+
 def test_query_repeated_args():
     url = URL('http://example.com?a=1&b=2&a=3')
     assert url.query == MultiDict([('a', '1'), ('b', '2'), ('a', '3')])
@@ -97,17 +102,17 @@ def test_fragment():
 
 def test_parent():
     url = URL('http://example.com/path/to')
-    assert url.parent.path == '/path'
+    assert url.parent.path_string == '/path'
 
 
 def test_parent_double():
     url = URL('http://example.com/path/to')
-    assert url.parent.parent.path == '/'
+    assert url.parent.parent.path_string == '/'
 
 
 def test_parent_empty():
     url = URL('http://example.com/')
-    assert url.parent.parent.path == '/'
+    assert url.parent.parent.path_string == '/'
 
 
 def test_ne_str():
