@@ -218,7 +218,7 @@ class URL:
         return self._path
 
     @property
-    def path_string(self):
+    def path(self):
         ret = self._val.path
         if not ret and self.is_absolute():
             ret = '/'
@@ -240,7 +240,7 @@ class URL:
 
     @property
     def parent(self):
-        path = self.path_string
+        path = self.path
         if path == '/':
             if self.fragment or self.query:
                 return URL(self._val._replace(query='', fragment=''))
@@ -252,11 +252,14 @@ class URL:
 
     @property
     def name(self):
-        path = self.path_string
-        if path == '/':
-            return ''
+        parts = self.path_parts
+        if self.is_absolute():
+            parts = parts[1:]
+            if not parts:
+                return ''
+            else:
+                return parts[-1]
         else:
-            parts = path.split('/')
             return parts[-1]
 
     @classmethod

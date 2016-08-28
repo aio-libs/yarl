@@ -6,5 +6,5 @@ vtest:
 
 
 cov:
-	py.test --cov yarl --cov-report html ./tests/ --flake8
+	py.test --cov yarl --cov-report html --cov-report term ./tests/ --flake8
 	@echo "open file://`pwd`/htmlcov/index.html"

@@ -51,7 +51,7 @@ def test_scheme():
 
 def test_path_string_empty():
     url = URL('http://example.com')
-    assert '/' == url.path_string
+    assert '/' == url.path
 
 
 def test_path_empty():
@@ -66,7 +66,7 @@ def test_path():
 
 def test_path_string():
     url = URL('http://example.com/path/to')
-    assert '/path/to' == url.path_string
+    assert '/path/to' == url.path
 
 
 def test_user():
@@ -112,7 +112,7 @@ def test_fragment():
 
 def test_parent_path_string():
     url = URL('http://example.com/path/to')
-    assert url.parent.path_string == '/path'
+    assert url.parent.path == '/path'
 
 
 def test_parent_path():
@@ -122,17 +122,17 @@ def test_parent_path():
 
 def test_parent_double():
     url = URL('http://example.com/path/to')
-    assert url.parent.parent.path_string == '/'
+    assert url.parent.parent.path == '/'
 
 
 def test_parent_empty():
     url = URL('http://example.com/')
-    assert url.parent.parent.path_string == '/'
+    assert url.parent.parent.path == '/'
 
 
 def test_parent_empty2():
     url = URL('http://example.com')
-    assert url.parent.parent.path_string == '/'
+    assert url.parent.parent.path == '/'
 
 
 def test_ne_str():
@@ -387,14 +387,14 @@ def test_with_fragment_bad_type():
 def test_no_scheme():
     url = URL('example.com')
     assert url.host is None
-    assert url.path_string == 'example.com'
+    assert url.path == 'example.com'
     assert str(url) == 'example.com'
 
 
 def test_no_scheme2():
     url = URL('example.com/a/b')
     assert url.host is None
-    assert url.path_string == 'example.com/a/b'
+    assert url.path == 'example.com/a/b'
     assert str(url) == 'example.com/a/b'
 
 
@@ -575,3 +575,18 @@ def test_relative_path_starting_from_slash():
 def test_double_path():
     url = URL('path/to')
     assert url.path_parts == url.path_parts
+
+
+def test_relative_name():
+    url = URL('path/to')
+    assert 'to' == url.name
+
+
+def test_relative_name_starting_from_slash():
+    url = URL('/path/to')
+    assert 'to' == url.name
+
+
+def test_relative_name_slash():
+    url = URL('/')
+    assert '' == url.name
