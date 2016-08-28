@@ -398,67 +398,62 @@ def test_no_scheme2():
     assert str(url) == 'example.com/a/b'
 
 
-def test_ctor_from_nonstr():
-    with pytest.raises(TypeError):
-        URL(b'http://example.com')
-
-
 def test_from_bytes():
-    url = URL.from_bytes(b'http://example.com')
+    url = URL(b'http://example.com')
     assert "http://example.com" == str(url)
 
 
 def test_from_bytes_memoryview():
-    url = URL.from_bytes(memoryview(b'http://example.com'))
+    url = URL(memoryview(b'http://example.com'))
     assert "http://example.com" == str(url)
 
 
 def test_from_bytes_bytearray():
-    url = URL.from_bytes(bytearray(b'http://example.com'))
+    url = URL(bytearray(b'http://example.com'))
     assert "http://example.com" == str(url)
 
 
 def test_from_bytes_non_bytes():
     with pytest.raises(TypeError):
-        URL.from_bytes(1234)
+        URL(1234)
 
 
 def test_from_bytes_idna():
-    url = URL.from_bytes(b'http://xn--jxagkqfkduily1i.eu')
+    url = URL(b'http://xn--jxagkqfkduily1i.eu')
     assert "http://εμπορικόσήμα.eu" == str(url)
 
 
 def test_from_bytes_with_non_ascii_login():
-    url = URL.from_bytes(b'http://'
-                         b'%D0%B2%D0%B0%D1%81%D1%8F'
-                         b'@host:1234/')
+    url = URL(b'http://'
+              b'%D0%B2%D0%B0%D1%81%D1%8F'
+              b'@host:1234/')
     assert 'http://вася@host:1234/' == str(url)
 
 
 def test_from_bytes_with_non_ascii_login_and_password():
-    url = URL.from_bytes(b'http://'
-                         b'%D0%B2%D0%B0%D1%81%D1%8F'
-                         b':%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
-                         b'@host:1234/')
+    url = URL(b'http://'
+              b'%D0%B2%D0%B0%D1%81%D1%8F'
+              b':%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
+              b'@host:1234/')
     assert 'http://вася:пароль@host:1234/' == str(url)
 
 
 def test_from_bytes_with_non_ascii_path():
-    url = URL.from_bytes(b'http://example.com/'
-                         b'%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0')
+    url = URL(b'http://example.com/'
+              b'%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0')
     assert 'http://example.com/путь/туда' == str(url)
 
 
 def test_from_bytes_with_non_ascii_query_parts():
-    url = URL.from_bytes(b'http://example.com/'
-                         b'?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC'
-                         b'=%D0%B7%D0%BD%D0%B0%D1%87')
+    url = URL(b'http://example.com/'
+              b'?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC'
+              b'=%D0%B7%D0%BD%D0%B0%D1%87')
     assert 'http://example.com/?парам=знач' == str(url)
 
 
 def test_from_bytes_with_non_ascii_fragment():
-    url = URL.from_bytes(b'http://example.com/'
-                         b'#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82')
+    url = URL(b'http://example.com/'
+              b'#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82')
     assert 'http://example.com/#фрагмент' == str(url)
 
 
@@ -527,14 +522,14 @@ def test_to_bytes_with_non_ascii_fragment():
 def test_decoding_with_2F_in_path():
     url = URL('http://example.com/path%2Fto')
     assert b'http://example.com/path%252Fto' == bytes(url)
-    assert url == URL.from_bytes(bytes(url))
+    assert url == URL(bytes(url))
 
 
 @pytest.mark.xfail
 def test_decoding_with_26_and_3D_in_query():
     url = URL('http://example.com/?%26=%3D')
     assert b'http://example.com/?%2526=%253D' == bytes(url)
-    assert url == URL.from_bytes(bytes(url))
+    assert url == URL(bytes(url))
 
 
 def test_is_absolute_for_relative_url():

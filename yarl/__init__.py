@@ -31,11 +31,13 @@ class URL:
     def __init__(self, val):
         if isinstance(val, str):
             val = urlsplit(val)
+        elif isinstance(val, (memoryview, bytes, bytearray)):
+            val = self._from_bytes(val)
         elif isinstance(val, SplitResult):
             pass
         else:
             raise TypeError("Constructor parameter should be "
-                            "either URL or str")
+                            "either str or byte-ish")
 
         if not val.scheme and not val.netloc and not val.path:
             if val.query or val.fragment:
@@ -50,18 +52,16 @@ class URL:
         self._hash = None
 
     @classmethod
-    def from_bytes(cls, bval):
+    def _from_bytes(cls, bval):
         if isinstance(bval, memoryview):
             bval = bytes(bval)
-        if not isinstance(bval, (bytes, bytearray)):
-            raise TypeError("Parameter should be byte-ish")
         bval = urlsplit(bval)
         val = SplitResult(scheme=bval.scheme.decode('ascii'),
                           netloc=cls._decode_netloc(bval),
                           path=cls._decode_path(bval),
                           query=cls._decode_query(bval),
                           fragment=cls._decode_fragment(bval))
-        return URL(val)
+        return val
 
     @classmethod
     def _decode_netloc(cls, bval):
