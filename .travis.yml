@@ -10,7 +10,7 @@ install:
 
 
 script:
-  - make vtest
+  - make cov
 
 
 after_success:
