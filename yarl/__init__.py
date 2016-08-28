@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from multidict import MultiDict, MultiDictProxy
 from urllib.parse import (urlsplit, urlunsplit, parse_qsl,
-                          SplitResult, SplitResultBytes)
+                          SplitResult, SplitResultBytes, quote, urlencode)
 
 
 __version__ = '0.0.1'
@@ -44,48 +44,91 @@ class URL:
         self._hash = None
 
     @classmethod
-    def from_bytes(cls, val):
-        if not isinstance(val, (bytes, memoryview)):
+    def from_bytes(cls, bval):
+        if isinstance(bval, memoryview):
+            bval = bytes(bval)
+        if not isinstance(bval, (bytes, bytearray)):
             raise TypeError("Parameter should be byte-ish")
-        val = urlsplit(val)
-        new_val = SplitResult(scheme=val.scheme.decode('ascii'),
-                              netloc=cls._decode_netloc(val.netloc),
-                              path=cls._decode_path(val.path),
-                              query=cls._decode_query(val.query),
-                              fragment=cls._decode_fragment(val.fragment))
-        return URL(new_val)
+        bval = urlsplit(bval)
+        val = SplitResult(scheme=bval.scheme.decode('ascii'),
+                          netloc=cls._decode_netloc(bval),
+                          path=cls._decode_path(bval),
+                          query=cls._decode_query(bval),
+                          fragment=cls._decode_fragment(bval))
+        return URL(val)
 
     @classmethod
-    def _decode_netloc(cls, netloc):
+    def _decode_netloc(cls, bval):
+        return bval.netloc.decode('idna')
+        username = password = host = port = None
+
+        if '@' in netloc:
+            userpass, netloc = netloc.split('@', 1)
+            if ':' in userpass:
+                username, password = userpass.split(':', 1)
+            else:
+                username = userpass
+
+        if ':' in netloc:
+            # IPv6 address literal.
+            if ']' in netloc:
+                colonpos, bracketpos = netloc.rfind(':'), netloc.rfind(']')
+                if colonpos > bracketpos and colonpos != bracketpos + 1:
+                    raise ValueError("Invalid netloc '%s'." % netloc)
+                elif colonpos > bracketpos and colonpos == bracketpos + 1:
+                    host, port = netloc.rsplit(':', 1)
+                else:
+                    host = netloc
+            else:
+                host, port = netloc.rsplit(':', 1)
+                host = host
+        else:
+            host = netloc
+
+        # Avoid side effects by assigning self.port before self.host so
+        # that if an exception is raised when assigning self.port,
+        # self.host isn't updated.
+        self.port = port  # Raises ValueError on invalid port.
+        self.host = host or None
+        self.username = None if username is None else unquote(username)
+        self.password = None if password is None else unquote(password)
         return netloc.decode('idna')
 
     @classmethod
-    def _decode_path(cls, path):
-        return path.decode('ascii')
+    def _decode_path(cls, bval):
+        return bval.path.decode('ascii')
 
     @classmethod
-    def _decode_query(cls, query):
-        return query.decode('ascii')
+    def _decode_query(cls, bval):
+        return bval.query.decode('ascii')
 
     @classmethod
-    def _decode_fragment(cls, fragment):
-        return fragment.decode('ascii')
+    def _decode_fragment(cls, bval):
+        return bval.fragment.decode('ascii')
 
     @classmethod
-    def _encode_netloc(cls, netloc):
-        return netloc.encode('idna')
+    def _encode_netloc(cls, val):
+        ret = val.hostname.encode('idna')
+        if val.port:
+            ret += b':%d' % val.port
+        if val.username:
+            buser = quote(val.username).encode('ascii')
+            if val.password:
+                buser += b':' + quote(val.password).encode('ascii')
+            ret = buser + b'@' + ret
+        return ret
 
     @classmethod
-    def _encode_path(cls, path):
-        return path.encode('ascii')
+    def _encode_path(cls, val):
+        return quote(val.path).encode('ascii')
 
     @classmethod
     def _encode_query(cls, query):
-        return query.encode('ascii')
+        return urlencode(query).encode('ascii')
 
     @classmethod
-    def _encode_fragment(cls, fragment):
-        return fragment.encode('ascii')
+    def _encode_fragment(cls, val):
+        return quote(val.fragment).encode('ascii')
 
     def __str__(self):
         return urlunsplit(self._val)
@@ -137,14 +180,14 @@ class URL:
         val = self._val
         return urlunsplit(SplitResultBytes(
             self.scheme.encode('ascii'),
-            self._encode_netloc(val.netloc),
-            self._encode_path(val.path),
-            self._encode_query(val.query),
-            self._encode_fragment(val.fragment),
+            self._encode_netloc(val),
+            self._encode_path(val),
+            self._encode_query(self.query),
+            self._encode_fragment(val),
             ))
 
     def canonical(self):
-        return bytes(self).deocode('ascii')
+        return bytes(self).decode('ascii')
 
     @property
     def scheme(self):

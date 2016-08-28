@@ -341,6 +341,21 @@ def test_from_bytes():
     assert "http://example.com/" == str(url)
 
 
+def test_from_bytes_memoryview():
+    url = URL.from_bytes(memoryview(b'http://example.com'))
+    assert "http://example.com/" == str(url)
+
+
+def test_from_bytes_bytearray():
+    url = URL.from_bytes(bytearray(b'http://example.com'))
+    assert "http://example.com/" == str(url)
+
+
+def test_from_bytes_non_bytes():
+    with pytest.raises(TypeError):
+        URL.from_bytes(1234)
+
+
 def test_from_bytes_idna():
     url = URL.from_bytes(b'http://xn--jxagkqfkduily1i.eu')
     assert "http://εμπορικόσήμα.eu/" == str(url)
@@ -362,4 +377,39 @@ def test_to_bytes_long():
     expected = (b'https://host-'
                 b'12345678901234567890123456789012345678901234567890'
                 b'-name:8888/')
+    assert expected == bytes(url)
+
+
+def test_to_bytes_with_login_and_password():
+    url = URL('http://user:password@host:1234')
+    assert b'http://user:password@host:1234/' == bytes(url)
+
+
+def test_to_bytes_with_non_ascii_login_and_password():
+    url = URL('http://вася:пароль@host:1234')
+    expected = (b'http://'
+                b'%D0%B2%D0%B0%D1%81%D1%8F'
+                b':%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
+                b'@host:1234/')
+    assert expected == bytes(url)
+
+
+def test_to_bytes_with_non_ascii_path():
+    url = URL('http://example.com/путь/туда')
+    expected = (b'http://example.com/'
+                b'%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0')
+    assert expected == bytes(url)
+
+
+def test_to_bytes_with_non_ascii_query_parts():
+    url = URL('http://example.com/?парам=знач')
+    expected = (b'http://example.com/'
+                b'?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87')
+    assert expected == bytes(url)
+
+
+def test_to_bytes_with_non_ascii_fragment():
+    url = URL('http://example.com/#фрагмент')
+    expected = (b'http://example.com/'
+                b'#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82')
     assert expected == bytes(url)
