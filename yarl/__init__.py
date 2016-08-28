@@ -28,13 +28,13 @@ class URL:
 
     __slots__ = ('_val', '_parts', '_query', '_hash')
 
-    def __new__(cls, val):
+    def __new__(cls, val=''):
         if isinstance(val, URL):
             return val
         else:
             return super(URL, cls).__new__(cls)
 
-    def __init__(self, val):
+    def __init__(self, val=''):
         if isinstance(val, URL):
             return
         if isinstance(val, str):
@@ -51,8 +51,6 @@ class URL:
             if val.query or val.fragment:
                 raise ValueError("URL with the only query or fragment "
                                  "is not allowed")
-            else:
-                raise ValueError("Empty URL is not allowed")
 
         self._val = val
         self._parts = None
@@ -165,6 +163,8 @@ class URL:
         path = self._val.path
         if path == '/':
             new_path = '/' + name
+        elif not path and not self.is_absolute():
+            new_path = name
         else:
             parts = path.split('/')
             parts.append(name)
@@ -251,7 +251,7 @@ class URL:
     @property
     def parent(self):
         path = self.path
-        if path == '/':
+        if not path or path == '/':
             if self.fragment or self.query:
                 return URL(self._val._replace(query='', fragment=''))
             return self

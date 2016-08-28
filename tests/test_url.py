@@ -536,11 +536,6 @@ def test_not_allowed_fragment_only_url():
         URL('?a=b')
 
 
-def test_not_allowed_empty():
-    with pytest.raises(ValueError):
-        URL('')
-
-
 def test_relative_path():
     url = URL('path/to')
     assert ('path', 'to') == url.parts
@@ -652,3 +647,53 @@ def test_with_name_non_str():
 def test_lowercase_scheme():
     url = URL('HTTP://example.com')
     assert str(url) == 'http://example.com'
+
+
+def test_is_non_absolute_for_empty_url():
+    url = URL()
+    assert not url.is_absolute()
+
+
+def test_is_non_absolute_for_empty_url2():
+    url = URL('')
+    assert not url.is_absolute()
+
+
+def test_parts_for_empty_url():
+    url = URL()
+    assert ('',) == url.parts
+
+
+def test_name_for_empty_url():
+    url = URL()
+    assert '' == url.name
+
+
+def test_path_for_empty_url():
+    url = URL()
+    assert '' == url.path
+
+
+def test_str_for_empty_url():
+    url = URL()
+    assert '' == str(url)
+
+
+def test_parent_for_empty_url():
+    url = URL()
+    assert url is url.parent
+
+
+def test_truediv_for_empty_url():
+    url = URL() / 'a'
+    assert url.parts == ('a',)
+
+
+def test_truediv_for_relative_url():
+    url = URL('a') / 'b'
+    assert url.parts == ('a', 'b')
+
+
+def test_truediv_for_relative_url_started_with_slash():
+    url = URL('/a') / 'b'
+    assert url.parts == ('/', 'a', 'b')
