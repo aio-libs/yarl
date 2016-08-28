@@ -87,7 +87,7 @@ class URL:
     def _encode_netloc(cls, val):
         ret = val.hostname.encode('idna')
         if val.port:
-            ret += b':%d' % val.port
+            ret += ':{}'.format(val.port).encode('ascii')
         if val.username:
             buser = quote(val.username).encode('ascii')
             if val.password:
