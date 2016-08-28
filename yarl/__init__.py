@@ -85,11 +85,10 @@ class URL:
 
     @classmethod
     def _decode_path(cls, bval):
-        return unquote(bval.path.decode('ascii'))  # add a check for %2F
+        return unquote(bval.path.decode('ascii'))
 
     @classmethod
     def _decode_query(cls, bval):
-        # add a check for %26 and %3d
         lst = parse_qsl(bval.query.decode('ascii'))
         return '&'.join('{}={}'.format(k, v) for k, v in lst)
 
