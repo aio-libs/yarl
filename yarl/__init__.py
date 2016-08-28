@@ -26,7 +26,7 @@ class URL:
     # it's intended for libraries like aiohttp,
     # not to be passed into standard library functions like os.open etc.
 
-    __slots__ = ('_val', '_query', '_hash')
+    __slots__ = ('_val', '_path', '_query', '_hash')
 
     def __init__(self, val):
         if isinstance(val, str):
@@ -36,10 +36,7 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be "
                             "either URL or str")
-
-        if not self._val.path:
-            # Cannonical absolute URL should contain leading / at least
-            self._val = self._val._replace(path='/')
+        self._path = None
         self._query = None
         self._hash = None
 
@@ -108,7 +105,10 @@ class URL:
         return quote(val.fragment).encode('ascii')
 
     def __str__(self):
-        return urlunsplit(self._val)
+        val = self._val
+        if not val.path and (val.query or val.fragment):
+            val = val._replace(path='/')
+        return urlunsplit(val)
 
     def __repr__(self):
         return "{}('{}')".format(self.__class__.__name__, str(self))
@@ -188,6 +188,12 @@ class URL:
     @property
     def port(self):
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
+
+    @property
+    def path(self):
+        if self._path is None:
+            self._path = tuple(self._val.path.split('/'))
+        return self._path
 
     @property
     def path_string(self):
