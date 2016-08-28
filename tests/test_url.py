@@ -592,6 +592,11 @@ def test_path_parts():
     assert ('/', 'path', 'to', 'three') == url.parts
 
 
+def test_parts_without_path():
+    url = URL('http://example.com')
+    assert ('/',) == url.parts
+
+
 def test_path_parts_with_2F_in_path():
     url = URL('http://example.com/path%2Fto/three')
     assert ('/', 'path%2Fto', 'three') == url.parts
@@ -606,3 +611,55 @@ def test_url_from_url():
     url = URL('http://example.com')
     assert URL(url) is url
     assert URL(url).parts == ('/',)
+
+
+def test_with_name():
+    url = URL('http://example.com/a/b')
+    assert url.parts == ('/', 'a', 'b')
+    url2 = url.with_name('c')
+    assert url2.parts == ('/', 'a', 'c')
+
+
+def test_with_name_for_naked_path():
+    url = URL('http://example.com')
+    url2 = url.with_name('a')
+    assert url2.parts == ('/', 'a')
+
+
+def test_with_name_for_relative_path():
+    url = URL('a')
+    url2 = url.with_name('b')
+    assert url2.parts == ('b',)
+
+
+def test_with_name_for_relative_path2():
+    url = URL('a/b')
+    url2 = url.with_name('c')
+    assert url2.parts == ('a', 'c')
+
+
+def test_with_name_for_relative_path_starting_from_slash():
+    url = URL('/a')
+    url2 = url.with_name('b')
+    assert url2.parts == ('/', 'b')
+
+
+def test_with_name_for_relative_path_starting_from_slash2():
+    url = URL('/a/b')
+    url2 = url.with_name('c')
+    assert url2.parts == ('/', 'a', 'c')
+
+
+def test_with_name_empty():
+    with pytest.raises(ValueError):
+        URL('http://example.com').with_name('')
+
+
+def test_with_name_with_slash():
+    with pytest.raises(ValueError):
+        URL('http://example.com').with_name('a/b')
+
+
+def test_with_name_non_str():
+    with pytest.raises(TypeError):
+        URL('http://example.com').with_name(123)

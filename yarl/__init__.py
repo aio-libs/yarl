@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
-                          unquote, urlencode, urlsplit, urlunsplit)
+                          quote_plus, unquote, urlsplit, urlunsplit)
 
 from multidict import MultiDict, MultiDictProxy
 
@@ -114,7 +114,9 @@ class URL:
 
     @classmethod
     def _encode_query(cls, query):
-        return urlencode(query).encode('ascii')
+        lst = [quote_plus(k)+'='+quote_plus(v)
+               for k, v in query.items()]
+        return '&'.join(lst).encode('ascii')
 
     @classmethod
     def _encode_fragment(cls, val):
@@ -349,3 +351,25 @@ class URL:
         if not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
         return URL(self._val._replace(fragment=fragment))
+
+    def with_name(self, name):
+        # N.B. DOES cleanup query/fragment
+        if not isinstance(name, str):
+            raise TypeError("Invalid name type")
+        if not name:
+            raise ValueError("Empty name is not allowed")
+        if '/' in name:
+            raise ValueError("Slash in name is not allowed")
+        parts = list(self.parts)
+        if self.is_absolute():
+            if len(parts) == 1:
+                parts.append(name)
+            else:
+                parts[-1] = name
+            parts[0] = ''  # replace leading '/'
+        else:
+            parts[-1] = name
+            if parts[0] == '/':
+                parts[0] = ''  # replace leading '/'
+        return URL(self._val._replace(path='/'.join(parts),
+                                      query='', fragment=''))
