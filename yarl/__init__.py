@@ -28,7 +28,15 @@ class URL:
 
     __slots__ = ('_val', '_parts', '_query', '_hash')
 
+    def __new__(cls, val):
+        if isinstance(val, URL):
+            return val
+        else:
+            return super(URL, cls).__new__(cls)
+
     def __init__(self, val):
+        if isinstance(val, URL):
+            return
         if isinstance(val, str):
             val = urlsplit(val)
         elif isinstance(val, (memoryview, bytes, bytearray)):

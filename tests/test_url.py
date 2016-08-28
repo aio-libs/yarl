@@ -600,3 +600,9 @@ def test_path_parts_with_2F_in_path():
 def test_path_parts_with_2f_in_path():
     url = URL('http://example.com/path%2fto/three')
     assert ('/', 'path%2fto', 'three') == url.parts
+
+
+def test_url_from_url():
+    url = URL('http://example.com')
+    assert URL(url) is url
+    assert URL(url).parts == ('/',)
