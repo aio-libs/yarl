@@ -110,9 +110,14 @@ def test_fragment():
     assert 'anchor' == url.fragment
 
 
-def test_parent():
+def test_parent_path_string():
     url = URL('http://example.com/path/to')
     assert url.parent.path_string == '/path'
+
+
+def test_parent_path():
+    url = URL('http://example.com/path/to')
+    assert url.parent.path == ('', 'path')
 
 
 def test_parent_double():
@@ -123,6 +128,11 @@ def test_parent_double():
 def test_parent_empty():
     url = URL('http://example.com/')
     assert url.parent.parent.path_string == '/'
+
+
+def test_parent_empty2():
+    url = URL('http://example.com')
+    assert url.parent.parent.path_string == ''
 
 
 def test_ne_str():
@@ -247,6 +257,11 @@ def test_name_root2():
 
 def test_div_root():
     url = URL('http://example.com')
+    assert str(url / 'path' / 'to') == 'http://example.com/path/to'
+
+
+def test_div_root_with_slash():
+    url = URL('http://example.com/')
     assert str(url / 'path' / 'to') == 'http://example.com/path/to'
 
 
