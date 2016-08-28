@@ -1,8 +1,8 @@
 from collections.abc import Mapping
-from multidict import MultiDict, MultiDictProxy
-from urllib.parse import (urlsplit, urlunsplit, parse_qsl,
-                          SplitResult, SplitResultBytes, quote, urlencode)
+from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
+                          unquote, urlencode, urlsplit, urlunsplit)
 
+from multidict import MultiDict, MultiDictProxy
 
 __version__ = '0.0.1'
 
@@ -59,52 +59,29 @@ class URL:
 
     @classmethod
     def _decode_netloc(cls, bval):
-        return bval.netloc.decode('idna')
-        username = password = host = port = None
-
-        if '@' in netloc:
-            userpass, netloc = netloc.split('@', 1)
-            if ':' in userpass:
-                username, password = userpass.split(':', 1)
-            else:
-                username = userpass
-
-        if ':' in netloc:
-            # IPv6 address literal.
-            if ']' in netloc:
-                colonpos, bracketpos = netloc.rfind(':'), netloc.rfind(']')
-                if colonpos > bracketpos and colonpos != bracketpos + 1:
-                    raise ValueError("Invalid netloc '%s'." % netloc)
-                elif colonpos > bracketpos and colonpos == bracketpos + 1:
-                    host, port = netloc.rsplit(':', 1)
-                else:
-                    host = netloc
-            else:
-                host, port = netloc.rsplit(':', 1)
-                host = host
-        else:
-            host = netloc
-
-        # Avoid side effects by assigning self.port before self.host so
-        # that if an exception is raised when assigning self.port,
-        # self.host isn't updated.
-        self.port = port  # Raises ValueError on invalid port.
-        self.host = host or None
-        self.username = None if username is None else unquote(username)
-        self.password = None if password is None else unquote(password)
-        return netloc.decode('idna')
+        ret = bval.hostname.decode('idna')
+        if bval.port:
+            ret += ":%d" % bval.port
+        if bval.username:
+            user = unquote(bval.username.decode('ascii'))
+            if bval.password:
+                user += ':' + unquote(bval.password.decode('ascii'))
+            ret = user + '@' + ret
+        return ret
 
     @classmethod
     def _decode_path(cls, bval):
-        return bval.path.decode('ascii')
+        return unquote(bval.path.decode('ascii'))  # add a check for %2F
 
     @classmethod
     def _decode_query(cls, bval):
-        return bval.query.decode('ascii')
+        # add a check for %26 and %3d
+        lst = parse_qsl(bval.query.decode('ascii'))
+        return '&'.join('{}={}'.format(k, v) for k, v in lst)
 
     @classmethod
     def _decode_fragment(cls, bval):
-        return bval.fragment.decode('ascii')
+        return unquote(bval.fragment.decode('ascii'))
 
     @classmethod
     def _encode_netloc(cls, val):

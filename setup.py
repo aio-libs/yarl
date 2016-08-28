@@ -1,7 +1,7 @@
 import pathlib
 import re
-from setuptools import setup
 
+from setuptools import setup
 
 fname = pathlib.Path(__file__).parent / 'yarl' / '__init__.py'
 

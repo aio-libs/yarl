@@ -1,6 +1,7 @@
 import pytest
-from yarl import URL
 from multidict import MultiDict, MultiDictProxy
+
+from yarl import URL
 
 
 def test_url_is_not_str():
@@ -359,6 +360,33 @@ def test_from_bytes_non_bytes():
 def test_from_bytes_idna():
     url = URL.from_bytes(b'http://xn--jxagkqfkduily1i.eu')
     assert "http://εμπορικόσήμα.eu/" == str(url)
+
+
+def test_from_bytes_with_non_ascii_login_and_password():
+    url = URL.from_bytes(b'http://'
+                         b'%D0%B2%D0%B0%D1%81%D1%8F'
+                         b':%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
+                         b'@host:1234/')
+    assert 'http://вася:пароль@host:1234/' == str(url)
+
+
+def test_from_bytes_with_non_ascii_path():
+    url = URL.from_bytes(b'http://example.com/'
+                         b'%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0')
+    assert 'http://example.com/путь/туда' == str(url)
+
+
+def test_from_bytes_with_non_ascii_query_parts():
+    url = URL.from_bytes(b'http://example.com/'
+                         b'?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC'
+                         b'=%D0%B7%D0%BD%D0%B0%D1%87')
+    assert 'http://example.com/?парам=знач' == str(url)
+
+
+def test_from_bytes_with_non_ascii_fragment():
+    url = URL.from_bytes(b'http://example.com/'
+                         b'#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82')
+    assert 'http://example.com/#фрагмент' == str(url)
 
 
 def test_to_bytes():
