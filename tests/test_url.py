@@ -647,3 +647,8 @@ def test_with_name_with_slash():
 def test_with_name_non_str():
     with pytest.raises(TypeError):
         URL('http://example.com').with_name(123)
+
+
+def test_lowercase_scheme():
+    url = URL('HTTP://example.com')
+    assert str(url) == 'http://example.com'
