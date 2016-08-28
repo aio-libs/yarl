@@ -485,3 +485,15 @@ def test_to_bytes_with_non_ascii_fragment():
     expected = (b'http://example.com/'
                 b'#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82')
     assert expected == bytes(url)
+
+
+def test_decoding_with_2F_in_path():
+    url = URL('http://example.com/path%2Fto')
+    assert b'http://example.com/path%252Fto' == bytes(url)
+    assert url == URL.from_bytes(bytes(url))
+
+
+def xtest_decoding_with_26_and_3D_in_query():
+    url = URL('http://example.com/?%26=%3D')
+    assert b'http://example.com/?%2526=%253D' == bytes(url)
+    assert url == URL.from_bytes(bytes(url))

@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
-                          unquote, urlencode, urlsplit, urlunsplit)
+                          quote_plus, unquote, urlencode, urlsplit, urlunsplit)
 
 from multidict import MultiDict, MultiDictProxy
 
@@ -100,8 +100,15 @@ class URL:
         return quote(val.path).encode('ascii')
 
     @classmethod
+    def _encode_query_param(cls, val, safe='', encoding=None, errors=None):
+        val = val.replace('%', '%25')
+        return quote_plus(val, safe, encoding, errors)
+
+    @classmethod
     def _encode_query(cls, query):
-        return urlencode(query).encode('ascii')
+        ret = urlencode(query,
+                        quote_via=cls._encode_query_param)
+        return ret.encode('ascii')
 
     @classmethod
     def _encode_fragment(cls, val):
