@@ -75,7 +75,7 @@ class URL:
     def _decode_netloc(cls, bval):
         ret = bval.hostname.decode('idna')
         if bval.port:
-            ret += ":%d" % bval.port
+            ret += ":{}".format(bval.port)
         if bval.username:
             user = unquote(bval.username.decode('ascii'))
             if bval.password:
