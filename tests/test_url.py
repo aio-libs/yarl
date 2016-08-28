@@ -590,3 +590,18 @@ def test_relative_name_starting_from_slash():
 def test_relative_name_slash():
     url = URL('/')
     assert '' == url.name
+
+
+def test_path_parts():
+    url = URL('http://example.com/path/to/three')
+    assert ('/', 'path', 'to', 'three') == url.path_parts
+
+
+def test_path_parts_with_2F_in_path():
+    url = URL('http://example.com/path%2Fto/three')
+    assert ('/', 'path/to', 'three') == url.path_parts
+
+
+def test_path_parts_with_2f_in_path():
+    url = URL('http://example.com/path%2fto/three')
+    assert ('/', 'path/to', 'three') == url.path_parts

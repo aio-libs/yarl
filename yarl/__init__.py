@@ -26,7 +26,7 @@ class URL:
     # it's intended for libraries like aiohttp,
     # not to be passed into standard library functions like os.open etc.
 
-    __slots__ = ('_val', '_path', '_query', '_hash')
+    __slots__ = ('_val', '_parts', '_query', '_hash')
 
     def __init__(self, val):
         if isinstance(val, str):
@@ -45,7 +45,7 @@ class URL:
                 raise ValueError("Empty URL is not allowed")
 
         self._val = val
-        self._path = None
+        self._parts = None
         self._query = None
         self._hash = None
 
@@ -203,19 +203,21 @@ class URL:
 
     @property
     def path_parts(self):
-        if self._path is None:
+        if self._parts is None:
             path = self._val.path
             if self.is_absolute():
                 if not path:
-                    self._path = ('/',)
+                    parts = ['/']
                 else:
-                    self._path = tuple(['/'] + path[1:].split('/'))
+                    parts = ['/'] + path[1:].split('/')
             else:
                 if path.startswith('/'):
-                    self._path = tuple(['/'] + path[1:].split('/'))
+                    parts = ['/'] + path[1:].split('/')
                 else:
-                    self._path = tuple(path.split('/'))
-        return self._path
+                    parts = path.split('/')
+            self._parts = tuple([part.replace('%2F', '/').replace('%2f', '/')
+                                 for part in parts])
+        return self._parts
 
     @property
     def path(self):
