@@ -202,7 +202,7 @@ class URL:
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
     @property
-    def path(self):
+    def path_parts(self):
         if self._path is None:
             path = self._val.path
             if self.is_absolute():

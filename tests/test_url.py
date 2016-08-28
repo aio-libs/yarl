@@ -56,12 +56,12 @@ def test_path_string_empty():
 
 def test_path_empty():
     url = URL('http://example.com')
-    assert ('/',) == url.path
+    assert ('/',) == url.path_parts
 
 
 def test_path():
     url = URL('http://example.com/path/to')
-    assert ('/', 'path', 'to') == url.path
+    assert ('/', 'path', 'to') == url.path_parts
 
 
 def test_path_string():
@@ -117,7 +117,7 @@ def test_parent_path_string():
 
 def test_parent_path():
     url = URL('http://example.com/path/to')
-    assert url.parent.path == ('/', 'path')
+    assert url.parent.path_parts == ('/', 'path')
 
 
 def test_parent_double():
@@ -564,9 +564,14 @@ def test_not_allowed_empty():
 
 def test_relative_path():
     url = URL('path/to')
-    assert ('path', 'to') == url.path
+    assert ('path', 'to') == url.path_parts
 
 
 def test_relative_path_starting_from_slash():
     url = URL('/path/to')
-    assert ('/', 'path', 'to') == url.path
+    assert ('/', 'path', 'to') == url.path_parts
+
+
+def test_double_path():
+    url = URL('path/to')
+    assert url.path_parts == url.path_parts
