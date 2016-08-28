@@ -56,12 +56,12 @@ def test_path_string_empty():
 
 def test_path_empty():
     url = URL('http://example.com')
-    assert ('/',) == url.path_parts
+    assert ('/',) == url.parts
 
 
 def test_path():
     url = URL('http://example.com/path/to')
-    assert ('/', 'path', 'to') == url.path_parts
+    assert ('/', 'path', 'to') == url.parts
 
 
 def test_path_string():
@@ -117,7 +117,7 @@ def test_parent_path_string():
 
 def test_parent_path():
     url = URL('http://example.com/path/to')
-    assert url.parent.path_parts == ('/', 'path')
+    assert url.parent.parts == ('/', 'path')
 
 
 def test_parent_double():
@@ -564,17 +564,17 @@ def test_not_allowed_empty():
 
 def test_relative_path():
     url = URL('path/to')
-    assert ('path', 'to') == url.path_parts
+    assert ('path', 'to') == url.parts
 
 
 def test_relative_path_starting_from_slash():
     url = URL('/path/to')
-    assert ('/', 'path', 'to') == url.path_parts
+    assert ('/', 'path', 'to') == url.parts
 
 
 def test_double_path():
     url = URL('path/to')
-    assert url.path_parts == url.path_parts
+    assert url.parts == url.parts
 
 
 def test_relative_name():
@@ -594,14 +594,14 @@ def test_relative_name_slash():
 
 def test_path_parts():
     url = URL('http://example.com/path/to/three')
-    assert ('/', 'path', 'to', 'three') == url.path_parts
+    assert ('/', 'path', 'to', 'three') == url.parts
 
 
 def test_path_parts_with_2F_in_path():
     url = URL('http://example.com/path%2Fto/three')
-    assert ('/', 'path/to', 'three') == url.path_parts
+    assert ('/', 'path/to', 'three') == url.parts
 
 
 def test_path_parts_with_2f_in_path():
     url = URL('http://example.com/path%2fto/three')
-    assert ('/', 'path/to', 'three') == url.path_parts
+    assert ('/', 'path/to', 'three') == url.parts

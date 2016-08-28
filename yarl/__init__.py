@@ -202,24 +202,6 @@ class URL:
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
     @property
-    def path_parts(self):
-        if self._parts is None:
-            path = self._val.path
-            if self.is_absolute():
-                if not path:
-                    parts = ['/']
-                else:
-                    parts = ['/'] + path[1:].split('/')
-            else:
-                if path.startswith('/'):
-                    parts = ['/'] + path[1:].split('/')
-                else:
-                    parts = path.split('/')
-            self._parts = tuple([part.replace('%2F', '/').replace('%2f', '/')
-                                 for part in parts])
-        return self._parts
-
-    @property
     def path(self):
         ret = self._val.path
         if not ret and self.is_absolute():
@@ -241,6 +223,24 @@ class URL:
         return self._val.fragment
 
     @property
+    def parts(self):
+        if self._parts is None:
+            path = self._val.path
+            if self.is_absolute():
+                if not path:
+                    parts = ['/']
+                else:
+                    parts = ['/'] + path[1:].split('/')
+            else:
+                if path.startswith('/'):
+                    parts = ['/'] + path[1:].split('/')
+                else:
+                    parts = path.split('/')
+            self._parts = tuple([part.replace('%2F', '/').replace('%2f', '/')
+                                 for part in parts])
+        return self._parts
+
+    @property
     def parent(self):
         path = self.path
         if path == '/':
@@ -254,7 +254,7 @@ class URL:
 
     @property
     def name(self):
-        parts = self.path_parts
+        parts = self.parts
         if self.is_absolute():
             parts = parts[1:]
             if not parts:
