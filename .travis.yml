@@ -5,8 +5,13 @@ python:
   - nightly
 
 install:
-- pip install -r requirements.txt
+  - pip install -r requirements.txt
+  - pip install codecov
 
 
 script:
-- make cov
+  - make cov
+
+
+after_success:
+  - codecov
