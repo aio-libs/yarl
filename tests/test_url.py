@@ -362,6 +362,13 @@ def test_from_bytes_idna():
     assert "http://εμπορικόσήμα.eu/" == str(url)
 
 
+def test_from_bytes_with_non_ascii_login():
+    url = URL.from_bytes(b'http://'
+                         b'%D0%B2%D0%B0%D1%81%D1%8F'
+                         b'@host:1234/')
+    assert 'http://вася@host:1234/' == str(url)
+
+
 def test_from_bytes_with_non_ascii_login_and_password():
     url = URL.from_bytes(b'http://'
                          b'%D0%B2%D0%B0%D1%81%D1%8F'
@@ -411,6 +418,14 @@ def test_to_bytes_long():
 def test_to_bytes_with_login_and_password():
     url = URL('http://user:password@host:1234')
     assert b'http://user:password@host:1234/' == bytes(url)
+
+
+def test_to_bytes_with_non_ascii_login():
+    url = URL('http://вася@host:1234')
+    expected = (b'http://'
+                b'%D0%B2%D0%B0%D1%81%D1%8F'
+                b'@host:1234/')
+    assert expected == bytes(url)
 
 
 def test_to_bytes_with_non_ascii_login_and_password():
