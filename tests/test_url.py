@@ -24,6 +24,11 @@ def test_host():
     assert "example.com" == url.host
 
 
+def test_origin():
+    url = URL('http://user:password@example.com:8888/path/to?a=1&b=2')
+    assert URL('http://example.com:8888') == url.origin
+
+
 def test_host_when_port_is_specified():
     url = URL('http://example.com:8888')
     assert "example.com" == url.host

@@ -188,6 +188,13 @@ class URL:
         return self.host is not None
 
     @property
+    def origin(self):
+        v = self._val
+        netloc = self._make_netloc(None, None, v.hostname, v.port)
+        val = v._replace(netloc=netloc, path='', query='', fragment='')
+        return URL(val)
+
+    @property
     def scheme(self):
         return self._val.scheme
 
