@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
-                          quote_plus, unquote, urlsplit, urlunsplit)
+                          quote_plus, unquote, urljoin, urlsplit, urlunsplit)
 
 from multidict import MultiDict, MultiDictProxy
 
@@ -367,3 +367,9 @@ class URL:
                 parts[0] = ''  # replace leading '/'
         return URL(self._val._replace(path='/'.join(parts),
                                       query='', fragment=''))
+
+    def join(self, url, *, allow_fragments=True):
+        # See docs for urllib.parse.urljoin
+        if not isinstance(url, URL):
+            raise TypeError("url should be URL")
+        return URL(urljoin(str(self), str(url), allow_fragments))

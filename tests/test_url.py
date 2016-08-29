@@ -718,3 +718,23 @@ def test_is_absolute_path_starting_from_double_slash():
 def test_decode_pct_in_path():
     url = URL(b'http://www.python.org/%7Eguido')
     assert 'http://www.python.org/~guido' == str(url)
+
+
+def test_join():
+    base = URL(b'http://www.cwi.nl/%7Eguido/Python.html')
+    url = URL('FAQ.html')
+    url2 = base.join(url)
+    assert bytes(url2) == b'http://www.cwi.nl/%7Eguido/FAQ.html'
+
+
+def test_join_absolute():
+    base = URL(b'http://www.cwi.nl/%7Eguido/Python.html')
+    url = URL(b'//www.python.org/%7Eguido')
+    url2 = base.join(url)
+    assert bytes(url2) == b'http://www.python.org/%7Eguido'
+
+
+def test_join_non_url():
+    base = URL(b'http://example.com')
+    with pytest.raises(TypeError):
+        base.join('path/to')
