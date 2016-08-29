@@ -531,9 +531,9 @@ def test_not_allowed_query_only_url():
         URL('?a=b')
 
 
-def test_not_allowed_fragment_only_url():
-    with pytest.raises(ValueError):
-        URL('?a=b')
+def test_fragment_only_url():
+    url = URL('#frag')
+    assert str(url) == "#frag"
 
 
 def test_relative_path():

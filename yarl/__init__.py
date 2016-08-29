@@ -48,8 +48,8 @@ class URL:
                             "either str or byte-ish")
 
         if not val.scheme and not val.netloc and not val.path:
-            if val.query or val.fragment:
-                raise ValueError("URL with the only query or fragment "
+            if val.query:
+                raise ValueError("URL with the only query "
                                  "is not allowed")
 
         self._val = val
@@ -122,7 +122,7 @@ class URL:
 
     def __str__(self):
         val = self._val
-        if not val.path and (val.query or val.fragment):
+        if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path='/')
         return urlunsplit(val)
 
