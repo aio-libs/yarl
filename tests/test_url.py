@@ -708,3 +708,13 @@ def test_empty_value_for_query():
 def test_none_value_for_query():
     url = URL('http://example.com/path').with_query({'a': None})
     assert str(url) == 'http://example.com/path?a'
+
+
+def test_is_absolute_path_starting_from_double_slash():
+    url = URL('//www.python.org')
+    assert url.is_absolute()
+
+
+def test_decode_pct_in_path():
+    url = URL(b'http://www.python.org/%7Eguido')
+    assert 'http://www.python.org/~guido' == str(url)
