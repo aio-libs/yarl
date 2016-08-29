@@ -25,6 +25,23 @@ def test_host():
     assert "example.com" == url.host
 
 
+def test_origin():
+    url = URL('http://user:password@example.com:8888/path/to?a=1&b=2')
+    assert URL('http://example.com:8888') == url.origin()
+
+
+def test_origin_not_absolute_url():
+    url = URL('/path/to?a=1&b=2')
+    with pytest.raises(ValueError):
+        url.origin()
+
+
+def test_origin_no_scheme():
+    url = URL('//user:password@example.com:8888/path/to?a=1&b=2')
+    with pytest.raises(ValueError):
+        url.origin()
+
+
 def test_host_when_port_is_specified():
     url = URL('http://example.com:8888')
     assert "example.com" == url.host
