@@ -187,7 +187,6 @@ class URL:
     def is_absolute(self):
         return self.host is not None
 
-    @property
     def origin(self):
         if not self.is_absolute():
             raise ValueError("URL should be absolute")
