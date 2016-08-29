@@ -47,11 +47,6 @@ class URL:
             raise TypeError("Constructor parameter should be "
                             "either str or byte-ish")
 
-        if not val.scheme and not val.netloc and not val.path:
-            if val.query:
-                raise ValueError("URL with the only query "
-                                 "is not allowed")
-
         self._val = val
         self._parts = None
         self._query = None

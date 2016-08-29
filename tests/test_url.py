@@ -526,11 +526,6 @@ def test_is_absolute_for_absolute_url():
     assert url.is_absolute()
 
 
-def test_not_allowed_query_only_url():
-    with pytest.raises(ValueError):
-        URL('?a=b')
-
-
 def test_fragment_only_url():
     url = URL('#frag')
     assert str(url) == "#frag"
@@ -738,3 +733,73 @@ def test_join_non_url():
     base = URL(b'http://example.com')
     with pytest.raises(TypeError):
         base.join('path/to')
+
+
+NORMAL = [
+    ("g:h", "g:h"),
+    ("g", "http://a/b/c/g"),
+    ("./g", "http://a/b/c/g"),
+    ("g/", "http://a/b/c/g/"),
+    ("/g", "http://a/g"),
+    ("//g", "http://g"),
+    ("?y", "http://a/b/c/d;p?y"),
+    ("g?y", "http://a/b/c/g?y"),
+    ("#s", "http://a/b/c/d;p?q#s"),
+    ("g#s", "http://a/b/c/g#s"),
+    ("g?y#s", "http://a/b/c/g?y#s"),
+    (";x", "http://a/b/c/;x"),
+    ("g;x", "http://a/b/c/g;x"),
+    ("g;x?y#s", "http://a/b/c/g;x?y#s"),
+    ("", "http://a/b/c/d;p?q"),
+    (".", "http://a/b/c/"),
+    ("./", "http://a/b/c/"),
+    ("..", "http://a/b/"),
+    ("../", "http://a/b/"),
+    ("../g", "http://a/b/g"),
+    ("../..", "http://a/"),
+    ("../../", "http://a/"),
+    ("../../g", "http://a/g")
+]
+
+
+@pytest.mark.parametrize('url,expected', NORMAL)
+def test_join_from_rfc_3986_normal(url, expected):
+    # test case from https://tools.ietf.org/html/rfc3986.html#section-5.4
+    base = URL('http://a/b/c/d;p?q')
+    url = URL(url)
+    expected = URL(expected)
+    assert base.join(url) == expected
+
+
+ABNORMAL = [
+    ("../../../g", "http://a/g"),
+    ("../../../../g", "http://a/g"),
+
+    ("/./g", "http://a/g"),
+    ("/../g", "http://a/g"),
+    ("g.", "http://a/b/c/g."),
+    (".g", "http://a/b/c/.g"),
+    ("g..", "http://a/b/c/g.."),
+    ("..g", "http://a/b/c/..g"),
+
+    ("./../g", "http://a/b/g"),
+    ("./g/.", "http://a/b/c/g/"),
+    ("g/./h", "http://a/b/c/g/h"),
+    ("g/../h", "http://a/b/c/h"),
+    ("g;x=1/./y", "http://a/b/c/g;x=1/y"),
+    ("g;x=1/../y", "http://a/b/c/y"),
+
+    ("g?y/./x", "http://a/b/c/g?y/./x"),
+    ("g?y/../x", "http://a/b/c/g?y/../x"),
+    ("g#s/./x", "http://a/b/c/g#s/./x"),
+    ("g#s/../x", "http://a/b/c/g#s/../x"),
+]
+
+
+@pytest.mark.parametrize('url,expected', ABNORMAL)
+def test_join_from_rfc_3986_abnormal(url, expected):
+    # test case from https://tools.ietf.org/html/rfc3986.html#section-5.4.2
+    base = URL('http://a/b/c/d;p?q')
+    url = URL(url)
+    expected = URL(expected)
+    assert base.join(url) == expected
