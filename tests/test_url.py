@@ -1,3 +1,4 @@
+import sys
 import pytest
 from multidict import MultiDict, MultiDictProxy
 
@@ -796,6 +797,8 @@ ABNORMAL = [
 ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 5),
+                    reason="Python 3.4 doen't support abnormal cases")
 @pytest.mark.parametrize('url,expected', ABNORMAL)
 def test_join_from_rfc_3986_abnormal(url, expected):
     # test case from https://tools.ietf.org/html/rfc3986.html#section-5.4.2
