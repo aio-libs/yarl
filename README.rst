@@ -1,2 +1,4 @@
-# yarl
+yarl
+====
+
 Yet another URL library
