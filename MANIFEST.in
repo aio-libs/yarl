@@ -1,0 +1,9 @@
+include LICENSE
+include CHANGES.rst
+include README.rst
+graft yarl
+graft docs
+graft tests
+global-exclude *.pyc
+global-exclude *.cache
+prune docs/_build
