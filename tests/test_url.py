@@ -464,11 +464,6 @@ def test_to_bytes():
     assert b"http://xn--jxagkqfkduily1i.eu/" == bytes(url)
 
 
-def test_canonical():
-    url = URL("http://εμπορικόσήμα.eu/")
-    assert "http://xn--jxagkqfkduily1i.eu/" == url.canonical()
-
-
 def test_to_bytes_long():
     url = URL('https://host-12345678901234567890123456789012345678901234567890'
               '-name:8888/')

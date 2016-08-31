@@ -177,9 +177,6 @@ class URL:
             self._encode_fragment(val),
             ))
 
-    def canonical(self):
-        return bytes(self).decode('ascii')
-
     def is_absolute(self):
         return self.host is not None
 
