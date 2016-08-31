@@ -19,7 +19,7 @@ The only public *yarl* class is ``URL``:
 Represents URL as
 ``[scheme:]//[user:[password]@]host[:port][/path][?query][#fragment]``
 for absolute URLs and ``[/path][?query][#fragment]`` for relative
-ones.
+ones (:ref:`yarl-api-relative-urls`).
 
 It accepts either :class:`str` or :class:`bytes` as an argument.
 
@@ -76,7 +76,8 @@ You migth to get the following data from :class:`URL` object:
       >>> url.scheme
       'http'
 
-   ``None`` for relative URLs or URLs starting with `'//'`.
+   ``None`` for relative URLs or URLs starting with `'//'`
+   (:ref:`yarl-api-relative-urls`).
 
 .. attribute:: URL.user
 
@@ -104,7 +105,7 @@ You migth to get the following data from :class:`URL` object:
       >>> url.host
       'example.com'
 
-   Empty string for relative URLs.
+   Empty string for relative URLs (:ref:`yarl-api-relative-urls`).
 
 
 .. attribute:: URL.port
@@ -115,7 +116,7 @@ You migth to get the following data from :class:`URL` object:
       8080
 
    ``None`` for relative URLs or for :attr:`URL.scheme`
-   without default port substitution.
+   without default port substitution (:ref:`yarl-api-relative-urls`).
 
    .. seealso::
 
@@ -165,7 +166,7 @@ For *path* and *query* :mod:`yarl` supports additional helpers:
       ('/', 'path', 'to')
 
    If *path* was not set the value is ``('/',)`` for absolute URLs and
-   empty tuple ``()`` for relative ones.
+   empty tuple ``()`` for relative ones (:ref:`yarl-api-relative-urls`).
 
 .. attribute:: URL.query
 
@@ -185,6 +186,26 @@ For *path* and *query* :mod:`yarl` supports additional helpers:
 Absolute and relative URLs
 --------------------------
 
+:mod:`yarl` supports both absolute an relative URLs.
+
+Absulute URL should start from either *scheme* or ``'//'``.
+
+
+.. attribute:: URL.is_absolute()
+
+   .. doctest::
+
+      >>> URL('http://example.com').is_absolute()
+      True
+
+      >>> URL('//example.com').is_absolute()
+      True
+
+      >>> URL('/path/to').is_absolute()
+      False
+
+      >>> URL('path').is_absolute()
+      False
 
 
 .. _yarl-api-default-ports:
