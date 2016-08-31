@@ -58,7 +58,8 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/3', None)}
+    'python': ('http://docs.python.org/3', None),
+    'multidict': ('http://multidict.readthedocs.io/', None)}
 
 
 # Add any paths that contain templates here, relative to this directory.

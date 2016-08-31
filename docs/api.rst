@@ -76,7 +76,7 @@ You migth to get the following data from :class:`URL` object:
       >>> url.scheme
       'http'
 
-   The value is ``None`` for relative URLs or URLs starting with `'//'`.
+   ``None`` for relative URLs or URLs starting with `'//'`.
 
 .. attribute:: URL.user
 
@@ -85,7 +85,7 @@ You migth to get the following data from :class:`URL` object:
       >>> url.user
       'user'
 
-   The value is ``None`` if *user* was not set.
+   ``None`` if *user* was not set.
 
 .. attribute:: URL.password
 
@@ -94,7 +94,7 @@ You migth to get the following data from :class:`URL` object:
       >>> url.password
       'pass'
 
-   The value is ``None`` if *password* was not set.
+   ``None`` if *password* was not set.
 
 
 .. attribute:: URL.host
@@ -104,7 +104,7 @@ You migth to get the following data from :class:`URL` object:
       >>> url.host
       'example.com'
 
-   The value is empty string for relative URLs.
+   Empty string for relative URLs.
 
 
 .. attribute:: URL.port
@@ -114,7 +114,7 @@ You migth to get the following data from :class:`URL` object:
       >>> url.port
       8080
 
-   The value is ``None`` for relative URLs or for :attr:`URL.scheme`
+   ``None`` for relative URLs or for :attr:`URL.scheme`
    without default port substitution.
 
    .. seealso::
@@ -129,8 +129,61 @@ You migth to get the following data from :class:`URL` object:
       >>> url.path
       '/path/to'
 
-   The value is empty string if *path* part is not present.
+   The value is empty string if *path* part of URL is not present.
 
+
+.. attribute:: URL.query_string
+
+   .. doctest::
+
+      >>> url.query_string
+      'a1=a&a2=b'
+
+   The value is empty string if *query* part of URL is not present.
+
+
+.. attribute:: URL.fragment
+
+   .. doctest::
+
+      >>> url.fragment
+      'frag'
+
+   The value is empty string if *fragment* part of URL is not present.
+
+
+For *path* and *query* :mod:`yarl` supports additional helpers:
+
+
+.. attribute:: URL.parts
+
+   A :class:`tuple` containing *path* parts.
+
+   .. doctest::
+
+      >>> url.parts
+      ('/', 'path', 'to')
+
+   If *path* was not set the value is ``('/',)`` for absolute URLs and
+   empty tuple ``()`` for relative ones.
+
+.. attribute:: URL.query
+
+   A :class:`multidict.MultiDictProxy` representing parsed *query* parameters.
+
+   .. doctest::
+
+      >>> url.query
+      <MultiDictProxy('a1': 'a', 'a2': 'b')>
+
+   Empty value if URL has no *query* part.
+
+
+
+.. _yarl-api-relative-urls:
+
+Absolute and relative URLs
+--------------------------
 
 
 
@@ -160,6 +213,9 @@ References
 
 :mod:`yarl` stays on shoulders of giants: several RFC documents and
 low-level :mod:`urllib.parse` which performs almost all gory work.
+
+The module borrowed design from :mod:`pathlib` in any place where it was
+possible.
 
 .. seealso::
 
