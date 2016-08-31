@@ -51,7 +51,7 @@ Constructing URL from bytes performs unquoting as well::
    >>> URL(b'https://www.python.org/%7Eguido')
    URL('https://www.python.org/~guido')
 
-For full documentation please read :ref:`api` section.
+For full documentation please read :ref:`yarl-api` section.
 
 
 Installation
@@ -62,6 +62,12 @@ Installation
    $ pip install yarl
 
 The library is Python 3 only!
+
+
+API documentation
+------------------
+
+Open :ref:`yarl-api` for reading full list of available methods.
 
 Source code
 -----------
@@ -100,7 +106,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
+   api
 
 Indices and tables
 ==================
