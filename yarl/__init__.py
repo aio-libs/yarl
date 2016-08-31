@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from ipaddress import ip_address
 from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
                           quote_plus, unquote, urljoin, urlsplit, urlunsplit)
 
@@ -320,6 +321,13 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
+        try:
+            ip = ip_address(host)
+        except:
+            pass
+        else:
+            if ip.version == 6:
+                host = '['+host+']'
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                val.password,

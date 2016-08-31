@@ -823,3 +823,14 @@ def test_join_from_rfc_3986_abnormal(url, expected):
     url = URL(url)
     expected = URL(expected)
     assert base.join(url) == expected
+
+
+def test_from_str_with_ipv6():
+    url = URL('http://[::1]:80')
+    assert url.host == '::1'
+
+
+def test_from_str_with_host_ipv6():
+    url = URL('http://host:80')
+    url = url.with_host('::1')
+    assert url.host == '::1'
