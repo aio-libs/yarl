@@ -268,8 +268,18 @@ def test_name_root():
     assert '' == url.name
 
 
+def test_path_root():
+    url = URL('http://example.com/#frag')
+    assert '' == url.name
+
+
 def test_name_root2():
     url = URL('http://example.com')
+    assert '' == url.name
+
+
+def test_name_root3():
+    url = URL('http://example.com/')
     assert '' == url.name
 
 

@@ -168,6 +168,18 @@ For *path* and *query* :mod:`yarl` supports additional helpers:
    If *path* was not set the value is ``('/',)`` for absolute URLs and
    empty tuple ``()`` for relative ones (:ref:`yarl-api-relative-urls`).
 
+
+.. attribute:: URL.name
+
+   The last part of :attr:`parts`.
+
+   .. doctest::
+
+      >>> url.name
+      'to'
+
+   May be an empty string if *path* is not present.
+
 .. attribute:: URL.query
 
    A :class:`multidict.MultiDictProxy` representing parsed *query* parameters.
@@ -206,6 +218,36 @@ Absulute URL should start from either *scheme* or ``'//'``.
 
       >>> URL('path').is_absolute()
       False
+
+New URL generaion
+-----------------
+
+:class:`URL` is an immutable object every operation described in the
+section generates a new *URL* instance.
+
+.. doctest::
+
+   >>> url = URL('http://example.com/path/to/?arg1=a&arg2=b#fragment')
+
+
+.. method:: URL.with_scheme(scheme)
+
+   Replaces *scheme*:
+
+   .. doctest::
+
+      >>> url.with_scheme('https')
+      URL('https://example.com/path/to/?arg1=a&arg2=b#fragment')
+
+.. method:: URL.with_user(scheme)
+
+   Replaces *user*:
+
+   .. doctest::
+
+      >>> url.with_scheme('https')
+      URL('https://example.com/path/to/?arg1=a&arg2=b#fragment')
+
 
 
 .. _yarl-api-default-ports:

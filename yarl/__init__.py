@@ -292,6 +292,8 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
+        if not self.is_absolute():
+            raise RuntimeError
         return URL(self._val._replace(scheme=scheme))
 
     def with_user(self, user):
