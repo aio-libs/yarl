@@ -16,9 +16,15 @@ The only public *yarl* class is ``URL``:
 
 .. class:: URL(arg)
 
-Represents URL as
-``[scheme:]//[user:[password]@]host[:port][/path][?query][#fragment]``
-for absolute URLs and ``[/path][?query][#fragment]`` for relative
+Represents URL as ::
+
+   [scheme:]//[user[:password]@]host[:port][/path][?query][#fragment]
+
+for absolute URLs and ::
+
+   [/path][?query][#fragment]
+
+for relative
 ones (:ref:`yarl-api-relative-urls`).
 
 It accepts either :class:`str` or :class:`bytes` as an argument.
@@ -290,7 +296,7 @@ section generates a new *URL* instance.
       >>> URL('http://example.com/path/to?arg#frag').parent
       URL('http://example.com/path')
 
-Division (`/`) operator creates a new URL with appeded *path* parts
+Division (``/``) operator creates a new URL with appeded *path* parts
 and cleaned up *query* and *fragment* parts.
 
    .. doctest::
