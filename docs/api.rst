@@ -301,8 +301,11 @@ and cleaned up *query* and *fragment* parts.
 
    .. doctest::
 
-      >>> URL('http://example.com/path?arg#frag') / 'to/subpath'
+      >>> url = URL('http://example.com/path?arg#frag') / 'to/subpath'
+      >>> url
       URL('http://example.com/path/to/subpath')
+      >>> url.parts
+      ('/', 'path', 'to', 'subpath')
 
 .. _yarl-api-default-ports:
 
