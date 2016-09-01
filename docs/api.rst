@@ -222,7 +222,7 @@ Absulute URL should start from either *scheme* or ``'//'``.
 New URL generaion
 -----------------
 
-:class:`URL` is an immutable object every operation described in the
+:class:`URL` is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
 .. doctest::
