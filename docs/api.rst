@@ -227,7 +227,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_scheme(scheme)
 
-   Replaces *scheme*:
+   Return a new URL with *scheme* replaced:
 
    .. doctest::
 
@@ -236,7 +236,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_user(user)
 
-   Replaces *user*:
+   Return a new URL with *user* replaced:
 
    .. doctest::
 
@@ -245,7 +245,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_password(password)
 
-   Replaces *password*:
+   Return a new URL with *password* replaced:
 
    .. doctest::
 
@@ -254,7 +254,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_host(host)
 
-   Replaces *host*:
+   Return a new URL with *host* replaced:
 
    .. doctest::
 
@@ -263,14 +263,40 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_port(port)
 
-   Replaces *host*:
+   Return a new URL with *port* replaced:
 
    .. doctest::
 
       >>> URL('http://example.com:8888').with_port(9999)
       URL('http://example.com:9999')
 
+.. method:: URL.with_name(name)
 
+   Return a new URL with *name* (last part of *path*) replaced and
+   cleaned up *query* and *fragment* parts.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to?arg#frag').with_name('new')
+      URL('http://example.com/path/new')
+
+.. attr:: URL.parent
+
+   A new URL with last part of *path* removed and
+   cleaned up *query* and *fragment* parts.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to?arg#frag').parent
+      URL('http://example.com/path')
+
+Division (`/`) operator creates a new URL with appeded *path* parts
+and cleaned up *query* and *fragment* parts.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?arg#frag') / 'to/subpath'
+      URL('http://example.com/path/to/subpath')
 
 .. _yarl-api-default-ports:
 
