@@ -225,28 +225,50 @@ New URL generaion
 :class:`URL` is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
-.. doctest::
-
-   >>> url = URL('http://example.com/path/to/?arg1=a&arg2=b#fragment')
-
-
 .. method:: URL.with_scheme(scheme)
 
    Replaces *scheme*:
 
    .. doctest::
 
-      >>> url.with_scheme('https')
+      >>> URL('http://example.com').with_scheme('https')
       URL('https://example.com/path/to/?arg1=a&arg2=b#fragment')
 
-.. method:: URL.with_user(scheme)
+.. method:: URL.with_user(user)
 
    Replaces *user*:
 
    .. doctest::
 
-      >>> url.with_scheme('https')
-      URL('https://example.com/path/to/?arg1=a&arg2=b#fragment')
+      >>> URL('http://user:pass@example.com').with_user('new_user')
+      URL('http://new_user:pass@example.com')
+
+.. method:: URL.with_password(password)
+
+   Replaces *password*:
+
+   .. doctest::
+
+      >>> URL('http://user:pass@example.com').with_password('new_pass')
+      URL('http://new:new_pass@example.com')
+
+.. method:: URL.with_host(host)
+
+   Replaces *host*:
+
+   .. doctest::
+
+      >>> url.with_host('python.org')
+      URL('http://new_user:pass@example.com')
+
+.. method:: URL.with_port(port)
+
+   Replaces *host*:
+
+   .. doctest::
+
+      >>> url.with_port(9999)
+      URL('https://new_user:pass@example.com')
 
 
 
