@@ -835,7 +835,38 @@ def test_from_str_with_ipv6():
     assert url.host == '::1'
 
 
+def test_from_str_with_host_ipv4():
+    url = URL('http://host:80')
+    url = url.with_host('192.168.1.1')
+    assert url.host == '192.168.1.1'
+
+
 def test_from_str_with_host_ipv6():
     url = URL('http://host:80')
     url = url.with_host('::1')
     assert url.host == '::1'
+
+
+def test_with_scheme_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_scheme('http')
+
+
+def test_with_user_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_user('user')
+
+
+def test_with_password_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_password('pass')
+
+
+def test_with_host_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_host('example.com')
+
+
+def test_with_port_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_port(1234)

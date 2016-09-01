@@ -293,7 +293,7 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         if not self.is_absolute():
-            raise RuntimeError("scheme replacement is not allowed "
+            raise ValueError("scheme replacement is not allowed "
                                "for relative URLs")
         return URL(self._val._replace(scheme=scheme))
 
@@ -302,8 +302,8 @@ class URL:
         if not isinstance(user, str):
             raise TypeError("Invalid user type")
         if not self.is_absolute():
-            raise RuntimeError("user replacement is not allowed "
-                               "for relative URLs")
+            raise ValueError("user replacement is not allowed "
+                             "for relative URLs")
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(user,
                                                                val.password,
@@ -315,8 +315,8 @@ class URL:
         if not isinstance(password, str):
             raise TypeError("Invalid password type")
         if not self.is_absolute():
-            raise RuntimeError("password replacement is not allowed "
-                               "for relative URLs")
+            raise ValueError("password replacement is not allowed "
+                             "for relative URLs")
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                password,
@@ -328,8 +328,8 @@ class URL:
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
         if not self.is_absolute():
-            raise RuntimeError("host replacement is not allowed "
-                               "for relative URLs")
+            raise ValueError("host replacement is not allowed "
+                             "for relative URLs")
         try:
             ip = ip_address(host)
         except:
@@ -349,8 +349,8 @@ class URL:
             raise TypeError(
                 "port should be int or None, got {}".format(type(port)))
         if not self.is_absolute():
-            raise RuntimeError("port replacement is not allowed "
-                               "for relative URLs")
+            raise ValueError("port replacement is not allowed "
+                             "for relative URLs")
         val = self._val
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                val.password,

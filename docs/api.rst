@@ -232,7 +232,7 @@ section generates a new *URL* instance.
    .. doctest::
 
       >>> URL('http://example.com').with_scheme('https')
-      URL('https://example.com/path/to/?arg1=a&arg2=b#fragment')
+      URL('https://example.com')
 
 .. method:: URL.with_user(user)
 
@@ -250,7 +250,7 @@ section generates a new *URL* instance.
    .. doctest::
 
       >>> URL('http://user:pass@example.com').with_password('new_pass')
-      URL('http://new:new_pass@example.com')
+      URL('http://user:new_pass@example.com')
 
 .. method:: URL.with_host(host)
 
@@ -258,8 +258,8 @@ section generates a new *URL* instance.
 
    .. doctest::
 
-      >>> url.with_host('python.org')
-      URL('http://new_user:pass@example.com')
+      >>> URL('http://example.com').with_host('python.org')
+      URL('http://python.org')
 
 .. method:: URL.with_port(port)
 
@@ -267,8 +267,8 @@ section generates a new *URL* instance.
 
    .. doctest::
 
-      >>> url.with_port(9999)
-      URL('https://new_user:pass@example.com')
+      >>> URL('http://example.com:8888').with_port(9999)
+      URL('http://example.com:9999')
 
 
 
