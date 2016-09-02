@@ -307,6 +307,32 @@ and cleaned up *query* and *fragment* parts.
       >>> url.parts
       ('/', 'path', 'to', 'subpath')
 
+.. method:: join(url)
+
+   Construct a full (“absolute”) URL by combining a “base URL”
+   (``self``) with another URL (``url``). Informally, this uses
+   components of the base URL, in particular the addressing scheme,
+   the network location and (part of) the path, to provide missing
+   components in the relative URL, e.g.:
+
+   .. doctest::
+
+      >>> base = URL('http://example.com/path/index.html')
+      >>> base.join(URL('page.html'))
+      URL('http://example.com/path/page.html')
+
+   .. note::
+
+      If ``url`` is an absolute URL (that is, starting with ``//`` or
+      ``scheme://``), the url‘s host name and/or scheme will be
+      present in the result, e.g.:
+
+      .. doctest::
+
+         >>> base = URL('http://example.com/path/index.html')
+         >>> base.join(URL('//python.org/page.html'))
+         URL('http://python.org/page.html')
+
 .. _yarl-api-default-ports:
 
 Default port substitution

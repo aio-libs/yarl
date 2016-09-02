@@ -294,7 +294,7 @@ class URL:
             raise TypeError("Invalid scheme type")
         if not self.is_absolute():
             raise ValueError("scheme replacement is not allowed "
-                               "for relative URLs")
+                             "for relative URLs")
         return URL(self._val._replace(scheme=scheme))
 
     def with_user(self, user):
@@ -393,8 +393,8 @@ class URL:
         return URL(self._val._replace(path='/'.join(parts),
                                       query='', fragment=''))
 
-    def join(self, url, *, allow_fragments=True):
+    def join(self, url):
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url), allow_fragments))
+        return URL(urljoin(str(self), str(url)))
