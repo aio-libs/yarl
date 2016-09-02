@@ -7,7 +7,7 @@ yarl
 ====
 
 The module provides handy :class:`~yarl.URL` class for url parsing and
-manipulating.
+changing.
 
 Introduction
 ------------

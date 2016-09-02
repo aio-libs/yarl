@@ -3,7 +3,8 @@ import re
 
 from setuptools import setup
 
-fname = pathlib.Path(__file__).parent / 'yarl' / '__init__.py'
+here = pathlib.Path(__file__).parent
+fname = here / 'yarl' / '__init__.py'
 
 with fname.open() as fp:
     try:
@@ -14,11 +15,17 @@ with fname.open() as fp:
 install_requires = ['multidict>=2.0']
 
 
+def read(name):
+    fname = here / name
+    with fname.open() as f:
+        f.read()
+
+
 setup(name='yarl',
       version=version,
       description=("Yet another URL library"),
-      # long_description='\n\n'.join((read('README.rst'),
-      # read('CHANGES.txt'))),
+      long_description='\n\n'.join([read('README.rst'),
+                                    read('CHANGES.rst')]),
       classifiers=[
           'License :: OSI Approved :: Apache Software License',
           'Intended Audience :: Developers',
