@@ -18,7 +18,7 @@ install_requires = ['multidict>=2.0']
 def read(name):
     fname = here / name
     with fname.open() as f:
-        f.read()
+        return f.read()
 
 
 setup(name='yarl',
