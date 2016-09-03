@@ -65,7 +65,7 @@ YARL requires multidict library.
 API documentation
 ------------------
 
-The documentation is located at https:://yarl.readthedocs.org
+The documentation is located at https://yarl.readthedocs.org
 
 Source code
 -----------
