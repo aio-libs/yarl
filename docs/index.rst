@@ -64,6 +64,12 @@ Installation
 The library is Python 3 only!
 
 
+Dependencies
+------------
+
+YARL requires multidict library.
+
+
 API documentation
 ------------------
 
