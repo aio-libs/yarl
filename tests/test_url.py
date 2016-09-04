@@ -50,6 +50,11 @@ def test_raw_user():
     assert 'user' == url.raw_user
 
 
+def test_raw_user_non_ascii():
+    url = URL('http://вася@example.com')
+    assert 'user' == url.raw_user
+
+
 def test_raw_password():
     url = URL('http://user:password@example.com')
     assert 'password' == url.raw_password
