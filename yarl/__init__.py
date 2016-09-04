@@ -1,7 +1,8 @@
 from collections.abc import Mapping
 from ipaddress import ip_address
-from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
-                          quote_plus, unquote, urljoin, urlsplit, urlunsplit)
+from urllib.parse import (SplitResult, parse_qsl,
+                          quote, quote_plus, unquote, unquote_plus,
+                          urljoin, urlsplit, urlunsplit)
 from string import ascii_letters, digits
 
 from multidict import MultiDict, MultiDictProxy
@@ -212,14 +213,26 @@ class URL:
         return self._val.username
 
     @property
+    def user(self):
+        return unquote(self.raw_user)
+
+    @property
     def raw_password(self):
         return self._val.password
+
+    @property
+    def password(self):
+        return unquote(self.raw_password)
 
     @property
     def raw_host(self):
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         return self._val.hostname
+
+    @property
+    def host(self):
+        return self.raw_host.encode('ascii').decode('idna')
 
     @property
     def port(self):
@@ -233,9 +246,13 @@ class URL:
         return ret
 
     @property
+    def path(self):
+        return unquote(self.raw_path)
+
+    @property
     def query(self):
         if self._query is None:
-            self._query = MultiDict(parse_qsl(self._val.query))
+            self._query = MultiDict(parse_qsl(self.query_string))
         return MultiDictProxy(self._query)
 
     @property
@@ -243,11 +260,16 @@ class URL:
         return self._val.query
 
     @property
+    def query_string(self):
+        return unquote_plus(self.raw_query_string)
+
+    @property
     def raw_fragment(self):
         return self._val.fragment
 
-    def human(self):
-        return
+    @property
+    def fragment(self):
+        return unquote(self.raw_fragment)
 
     @property
     def raw_parts(self):
@@ -265,6 +287,10 @@ class URL:
                     parts = path.split('/')
             self._parts = tuple(parts)
         return self._parts
+
+    @property
+    def parts(self):
+        return tuple(unquote(part) for part in self.raw_parts)
 
     @property
     def parent(self):
@@ -290,6 +316,10 @@ class URL:
                 return parts[-1]
         else:
             return parts[-1]
+
+    @property
+    def name(self):
+        return unquote(self.raw_name)
 
     @classmethod
     def _make_netloc(cls, user, password, host, port):
@@ -421,3 +451,6 @@ class URL:
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
         return URL(urljoin(str(self), str(url)), encoded=True)
+
+    def human(self):
+        return

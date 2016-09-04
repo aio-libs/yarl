@@ -52,7 +52,12 @@ def test_raw_user():
 
 def test_raw_user_non_ascii():
     url = URL('http://вася@example.com')
-    assert 'user' == url.raw_user
+    assert '%D0%B2%D0%B0%D1%81%D1%8F' == url.raw_user
+
+
+def test_user_non_ascii():
+    url = URL('http://вася@example.com')
+    assert 'вася' == url.user
 
 
 def test_raw_password():
@@ -60,9 +65,29 @@ def test_raw_password():
     assert 'password' == url.raw_password
 
 
+def test_raw_password_non_ascii():
+    url = URL('http://user:пароль@example.com')
+    assert '%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C' == url.raw_password
+
+
+def test_password_non_ascii():
+    url = URL('http://user:пароль@example.com')
+    assert 'пароль' == url.password
+
+
 def test_raw_host():
     url = URL('http://example.com')
     assert "example.com" == url.raw_host
+
+
+def test_raw_host_non_ascii():
+    url = URL('http://историк.рф')
+    assert "xn--h1aagokeh.xn--p1ai" == url.raw_host
+
+
+def test_host_non_ascii():
+    url = URL('http://историк.рф')
+    assert "историк.рф" == url.host
 
 
 def test_raw_host_when_port_is_specified():
@@ -105,7 +130,17 @@ def test_raw_path():
     assert '/path/to' == url.raw_path
 
 
-def test_path_for_empty_url():
+def test_raw_path_non_ascii():
+    url = URL('http://example.com/путь/сюда')
+    assert '/%D0%BF%D1%83%D1%82%D1%8C/%D1%81%D1%8E%D0%B4%D0%B0' == url.raw_path
+
+
+def test_path_non_ascii():
+    url = URL('http://example.com/путь/сюда')
+    assert '/путь/сюда' == url.path
+
+
+def test_raw_path_for_empty_url():
     url = URL()
     assert '' == url.raw_path
 
@@ -113,6 +148,16 @@ def test_path_for_empty_url():
 def test_raw_query_string():
     url = URL('http://example.com?a=1&b=2')
     assert url.raw_query_string == 'a=1&b=2'
+
+
+def test_raw_query_string_non_ascii():
+    url = URL('http://example.com?б=в&ю=к')
+    assert url.raw_query_string == '%D0%B1=%D0%B2&%D1%8E=%D0%BA'
+
+
+def test_query_string_non_ascii():
+    url = URL('http://example.com?б=в&ю=к')
+    assert url.query_string == 'б=в&ю=к'
 
 
 def test_query_empty():
@@ -139,6 +184,16 @@ def test_raw_fragment_empty():
 def test_raw_fragment():
     url = URL('http://example.com/path#anchor')
     assert 'anchor' == url.raw_fragment
+
+
+def test_raw_fragment_non_ascii():
+    url = URL('http://example.com/path#якорь')
+    assert '%D1%8F%D0%BA%D0%BE%D1%80%D1%8C' == url.raw_fragment
+
+
+def test_fragment_non_ascii():
+    url = URL('http://example.com/path#якорь')
+    assert 'якорь' == url.fragment
 
 
 def test_raw_parts_empty():
@@ -184,6 +239,20 @@ def test_raw_parts_for_relative_double_path():
 def test_parts_for_empty_url():
     url = URL()
     assert ('',) == url.raw_parts
+
+
+def test_raw_parts_non_ascii():
+    url = URL('http://example.com/путь/сюда')
+    assert ('/',
+            '%D0%BF%D1%83%D1%82%D1%8C',
+            '%D1%81%D1%8E%D0%B4%D0%B0') == url.raw_parts
+
+
+def test_parts_non_ascii():
+    url = URL('http://example.com/путь/сюда')
+    assert ('/',
+            'путь',
+            'сюда') == url.parts
 
 
 def test_name_for_empty_url():
