@@ -21,11 +21,6 @@ def test_repr():
     assert "URL('http://example.com')" == repr(url)
 
 
-def test_host():
-    url = URL('http://example.com')
-    assert "example.com" == url.host
-
-
 def test_origin():
     url = URL('http://user:password@example.com:8888/path/to?a=1&b=2')
     assert URL('http://example.com:8888') == url.origin()
@@ -42,10 +37,42 @@ def test_origin_no_scheme():
     with pytest.raises(ValueError):
         url.origin()
 
+# properties
 
-def test_host_when_port_is_specified():
+
+def test_scheme():
+    url = URL('http://example.com')
+    assert 'http' == url.scheme
+
+
+def test_raw_user():
+    url = URL('http://user@example.com')
+    assert 'user' == url.raw_user
+
+
+def test_raw_password():
+    url = URL('http://user:password@example.com')
+    assert 'password' == url.raw_password
+
+
+def test_raw_host():
+    url = URL('http://example.com')
+    assert "example.com" == url.raw_host
+
+
+def test_raw_host_when_port_is_specified():
     url = URL('http://example.com:8888')
-    assert "example.com" == url.host
+    assert "example.com" == url.raw_host
+
+
+def test_raw_host_from_str_with_ipv4():
+    url = URL('http://127.0.0.1:80')
+    assert url.raw_host == '127.0.0.1'
+
+
+def test_raw_host_from_str_with_ipv6():
+    url = URL('http://[::1]:80')
+    assert url.raw_host == '::1'
 
 
 def test_explicit_port():
@@ -63,42 +90,27 @@ def test_port_for_unknown_scheme():
     assert url.port is None
 
 
-def test_scheme():
+def test_raw_path_string_empty():
     url = URL('http://example.com')
-    assert 'http' == url.scheme
+    assert '/' == url.raw_path
 
 
-def test_path_string_empty():
-    url = URL('http://example.com')
-    assert '/' == url.path
-
-
-def test_path_empty():
-    url = URL('http://example.com')
-    assert ('/',) == url.parts
-
-
-def test_path():
+def test_raw_path():
     url = URL('http://example.com/path/to')
-    assert ('/', 'path', 'to') == url.parts
+    assert '/path/to' == url.raw_path
 
 
-def test_path_string():
-    url = URL('http://example.com/path/to')
-    assert '/path/to' == url.path
+def test_path_for_empty_url():
+    url = URL()
+    assert '' == url.raw_path
 
 
-def test_user():
-    url = URL('http://user@example.com')
-    assert 'user' == url.user
+def test_raw_query_string():
+    url = URL('http://example.com?a=1&b=2')
+    assert url.raw_query_string == 'a=1&b=2'
 
 
-def test_password():
-    url = URL('http://user:password@example.com')
-    assert 'password' == url.password
-
-
-def test_empty_query():
+def test_query_empty():
     url = URL('http://example.com')
     assert isinstance(url.query, MultiDictProxy)
     assert url.query == MultiDict()
@@ -109,50 +121,192 @@ def test_query():
     assert url.query == MultiDict([('a', '1'), ('b', '2')])
 
 
-def test_query_string():
-    url = URL('http://example.com?a=1&b=2')
-    assert url.query_string == 'a=1&b=2'
-
-
 def test_query_repeated_args():
     url = URL('http://example.com?a=1&b=2&a=3')
     assert url.query == MultiDict([('a', '1'), ('b', '2'), ('a', '3')])
 
 
-def test_fragment_empty():
+def test_raw_fragment_empty():
     url = URL('http://example.com')
-    assert '' == url.fragment
+    assert '' == url.raw_fragment
 
 
-def test_fragment():
+def test_raw_fragment():
     url = URL('http://example.com/path#anchor')
-    assert 'anchor' == url.fragment
+    assert 'anchor' == url.raw_fragment
 
 
-def test_parent_path_string():
-    url = URL('http://example.com/path/to')
-    assert url.parent.path == '/path'
-
-
-def test_parent_path():
-    url = URL('http://example.com/path/to')
-    assert url.parent.parts == ('/', 'path')
-
-
-def test_parent_double():
-    url = URL('http://example.com/path/to')
-    assert url.parent.parent.path == '/'
-
-
-def test_parent_empty():
-    url = URL('http://example.com/')
-    assert url.parent.parent.path == '/'
-
-
-def test_parent_empty2():
+def test_raw_parts_empty():
     url = URL('http://example.com')
-    assert url.parent.parent.path == '/'
+    assert ('/',) == url.raw_parts
 
+
+def test_raw_parts():
+    url = URL('http://example.com/path/to')
+    assert ('/', 'path', 'to') == url.raw_parts
+
+
+def test_raw_parts_without_path():
+    url = URL('http://example.com')
+    assert ('/',) == url.raw_parts
+
+
+def test_raw_path_parts_with_2F_in_path():
+    url = URL('http://example.com/path%2Fto/three')
+    assert ('/', 'path%2Fto', 'three') == url.raw_parts
+
+
+def test_raw_path_parts_with_2f_in_path():
+    url = URL('http://example.com/path%2fto/three')
+    assert ('/', 'path%2Fto', 'three') == url.raw_parts
+
+
+def test_raw_parts_for_relative_path():
+    url = URL('path/to')
+    assert ('path', 'to') == url.raw_parts
+
+
+def test_raw_parts_for_relative_path_starting_from_slash():
+    url = URL('/path/to')
+    assert ('/', 'path', 'to') == url.raw_parts
+
+
+def test_raw_parts_for_relative_double_path():
+    url = URL('path/to')
+    assert url.raw_parts == url.raw_parts
+
+
+def test_parts_for_empty_url():
+    url = URL()
+    assert ('',) == url.raw_parts
+
+
+def test_name_for_empty_url():
+    url = URL()
+    assert '' == url.raw_name
+
+
+def test_raw_name():
+    url = URL('http://example.com/path/to#frag')
+    assert 'to' == url.raw_name
+
+
+def test_raw_name_root():
+    url = URL('http://example.com/#frag')
+    assert '' == url.raw_name
+
+
+def test_raw_name_root2():
+    url = URL('http://example.com')
+    assert '' == url.raw_name
+
+
+def test_raw_name_root3():
+    url = URL('http://example.com/')
+    assert '' == url.raw_name
+
+
+def test_relative_raw_name():
+    url = URL('path/to')
+    assert 'to' == url.raw_name
+
+
+def test_relative_raw_name_starting_from_slash():
+    url = URL('/path/to')
+    assert 'to' == url.raw_name
+
+
+def test_relative_raw_name_slash():
+    url = URL('/')
+    assert '' == url.raw_name
+
+
+# modifiers
+
+
+def test_parent_raw_path():
+    url = URL('http://example.com/path/to')
+    assert url.parent.raw_path == '/path'
+
+
+def test_parent_raw_parts():
+    url = URL('http://example.com/path/to')
+    assert url.parent.raw_parts == ('/', 'path')
+
+
+def test_double_parent_raw_path():
+    url = URL('http://example.com/path/to')
+    assert url.parent.parent.raw_path == '/'
+
+
+def test_empty_parent_raw_path():
+    url = URL('http://example.com/')
+    assert url.parent.parent.raw_path == '/'
+
+
+def test_empty_parent_raw_path2():
+    url = URL('http://example.com')
+    assert url.parent.parent.raw_path == '/'
+
+
+def test_clear_fragment_on_getting_parent():
+    url = URL('http://example.com/path/to#frag')
+    assert URL('http://example.com/path') == url.parent
+
+
+def test_clear_fragment_on_getting_parent_toplevel():
+    url = URL('http://example.com/#frag')
+    assert URL('http://example.com/') == url.parent
+
+
+def test_clear_query_on_getting_parent():
+    url = URL('http://example.com/path/to?a=b')
+    assert URL('http://example.com/path') == url.parent
+
+
+def test_clear_query_on_getting_parent_toplevel():
+    url = URL('http://example.com/?a=b')
+    assert URL('http://example.com/') == url.parent
+
+
+# truediv
+
+def test_div_root():
+    url = URL('http://example.com')
+    assert str(url / 'path' / 'to') == 'http://example.com/path/to'
+
+
+def test_div_root_with_slash():
+    url = URL('http://example.com/')
+    assert str(url / 'path' / 'to') == 'http://example.com/path/to'
+
+
+def test_div():
+    url = URL('http://example.com/path')
+    assert str(url / 'to') == 'http://example.com/path/to'
+
+
+def test_div_cleanup_query_and_fragment():
+    url = URL('http://example.com/path?a=1#frag')
+    assert str(url / 'to') == 'http://example.com/path/to'
+
+
+def test_div_for_empty_url():
+    url = URL() / 'a'
+    assert url.raw_parts == ('a',)
+
+
+def test_div_for_relative_url():
+    url = URL('a') / 'b'
+    assert url.raw_parts == ('a', 'b')
+
+
+def test_div_for_relative_url_started_with_slash():
+    url = URL('/a') / 'b'
+    assert url.raw_parts == ('/', 'a', 'b')
+
+
+# comparison and hashing
 
 def test_ne_str():
     url = URL('http://example.com/')
@@ -239,95 +393,23 @@ def test_gt_not_implemented():
     assert url.__gt__(123) is NotImplemented
 
 
-def test_clear_fragment_on_getting_parent():
-    url = URL('http://example.com/path/to#frag')
-    assert URL('http://example.com/path') == url.parent
+# with_*
 
 
-def test_clear_fragment_on_getting_parent_toplevel():
-    url = URL('http://example.com/#frag')
-    assert URL('http://example.com/') == url.parent
-
-
-def test_clear_query_on_getting_parent():
-    url = URL('http://example.com/path/to?a=b')
-    assert URL('http://example.com/path') == url.parent
-
-
-def test_clear_query_on_getting_parent_toplevel():
-    url = URL('http://example.com/?a=b')
-    assert URL('http://example.com/') == url.parent
-
-
-def test_name():
-    url = URL('http://example.com/path/to#frag')
-    assert 'to' == url.name
-
-
-def test_name_root():
-    url = URL('http://example.com/#frag')
-    assert '' == url.name
-
-
-def test_path_root():
-    url = URL('http://example.com/#frag')
-    assert '' == url.name
-
-
-def test_name_root2():
+def test_with_scheme():
     url = URL('http://example.com')
-    assert '' == url.name
+    assert str(url.with_scheme('https')) == 'https://example.com'
 
 
-def test_name_root3():
-    url = URL('http://example.com/')
-    assert '' == url.name
-
-
-def test_div_root():
+def test_with_scheme_uppercased():
     url = URL('http://example.com')
-    assert str(url / 'path' / 'to') == 'http://example.com/path/to'
+    assert str(url.with_scheme('HTTPS')) == 'https://example.com'
 
 
-def test_div_root_with_slash():
-    url = URL('http://example.com/')
-    assert str(url / 'path' / 'to') == 'http://example.com/path/to'
-
-
-def test_div():
-    url = URL('http://example.com/path')
-    assert str(url / 'to') == 'http://example.com/path/to'
-
-
-def test_div_cleanup_query_and_fragment():
-    url = URL('http://example.com/path?a=1#frag')
-    assert str(url / 'to') == 'http://example.com/path/to'
-
-
-def test_with_port():
+def test_with_scheme_invalid_type():
     url = URL('http://example.com')
-    assert str(url.with_port(8888)) == 'http://example.com:8888'
-
-
-def test_with_port_keeps_query_and_fragment():
-    url = URL('http://example.com/?a=1#frag')
-    assert str(url.with_port(8888)) == 'http://example.com:8888/?a=1#frag'
-
-
-def test_with_port_invalid_type():
     with pytest.raises(TypeError):
-        URL('http://example.com').with_port('123')
-
-
-def test_with_host():
-    url = URL('http://example.com:123')
-    assert str(url.with_host('example.org')) == 'http://example.org:123'
-
-
-def test_with_host_invalid_type():
-    url = URL('http://example.com:123')
-    with pytest.raises(TypeError):
-        url.with_host(None)
+        assert str(url.with_scheme(123))
 
 
 def test_with_user():
@@ -358,20 +440,42 @@ def test_with_password_and_empty_user():
         assert str(url.with_password('pass'))
 
 
-def test_with_scheme():
-    url = URL('http://example.com')
-    assert str(url.with_scheme('https')) == 'https://example.com'
+def test_from_str_with_host_ipv4():
+    url = URL('http://host:80')
+    url = url.with_host('192.168.1.1')
+    assert url.raw_host == '192.168.1.1'
 
 
-def test_with_scheme_uppercased():
-    url = URL('http://example.com')
-    assert str(url.with_scheme('HTTPS')) == 'https://example.com'
+def test_from_str_with_host_ipv6():
+    url = URL('http://host:80')
+    url = url.with_host('::1')
+    assert url.raw_host == '::1'
 
 
-def test_with_scheme_invalid_type():
-    url = URL('http://example.com')
+def test_with_host():
+    url = URL('http://example.com:123')
+    assert str(url.with_host('example.org')) == 'http://example.org:123'
+
+
+def test_with_host_invalid_type():
+    url = URL('http://example.com:123')
     with pytest.raises(TypeError):
-        assert str(url.with_scheme(123))
+        url.with_host(None)
+
+
+def test_with_port():
+    url = URL('http://example.com')
+    assert str(url.with_port(8888)) == 'http://example.com:8888'
+
+
+def test_with_port_keeps_query_and_fragment():
+    url = URL('http://example.com/?a=1#frag')
+    assert str(url.with_port(8888)) == 'http://example.com:8888/?a=1#frag'
+
+
+def test_with_port_invalid_type():
+    with pytest.raises(TypeError):
+        URL('http://example.com').with_port('123')
 
 
 def test_with_query():
@@ -402,17 +506,99 @@ def test_with_fragment_bad_type():
         url.with_fragment(None)
 
 
+def test_with_name():
+    url = URL('http://example.com/a/b')
+    assert url.raw_parts == ('/', 'a', 'b')
+    url2 = url.with_name('c')
+    assert url2.raw_parts == ('/', 'a', 'c')
+
+
+def test_with_name_for_naked_path():
+    url = URL('http://example.com')
+    url2 = url.with_name('a')
+    assert url2.raw_parts == ('/', 'a')
+
+
+def test_with_name_for_relative_path():
+    url = URL('a')
+    url2 = url.with_name('b')
+    assert url2.raw_parts == ('b',)
+
+
+def test_with_name_for_relative_path2():
+    url = URL('a/b')
+    url2 = url.with_name('c')
+    assert url2.raw_parts == ('a', 'c')
+
+
+def test_with_name_for_relative_path_starting_from_slash():
+    url = URL('/a')
+    url2 = url.with_name('b')
+    assert url2.raw_parts == ('/', 'b')
+
+
+def test_with_name_for_relative_path_starting_from_slash2():
+    url = URL('/a/b')
+    url2 = url.with_name('c')
+    assert url2.raw_parts == ('/', 'a', 'c')
+
+
+def test_with_name_empty():
+    with pytest.raises(ValueError):
+        URL('http://example.com').with_name('')
+
+
+def test_with_name_with_slash():
+    with pytest.raises(ValueError):
+        URL('http://example.com').with_name('a/b')
+
+
+def test_with_name_non_str():
+    with pytest.raises(TypeError):
+        URL('http://example.com').with_name(123)
+
+
+# is_absolute
+
+
+def test_is_absolute_for_relative_url():
+    url = URL('/path/to')
+    assert not url.is_absolute()
+
+
+def test_is_absolute_for_absolute_url():
+    url = URL('http://example.com')
+    assert url.is_absolute()
+
+
+def test_is_non_absolute_for_empty_url():
+    url = URL()
+    assert not url.is_absolute()
+
+
+def test_is_non_absolute_for_empty_url2():
+    url = URL('')
+    assert not url.is_absolute()
+
+
+def test_is_absolute_path_starting_from_double_slash():
+    url = URL('//www.python.org')
+    assert url.is_absolute()
+
+#
+
+
 def test_no_scheme():
     url = URL('example.com')
-    assert url.host is None
-    assert url.path == 'example.com'
+    assert url.raw_host is None
+    assert url.raw_path == 'example.com'
     assert str(url) == 'example.com'
 
 
 def test_no_scheme2():
     url = URL('example.com/a/b')
-    assert url.host is None
-    assert url.path == 'example.com/a/b'
+    assert url.raw_host is None
+    assert url.raw_path == 'example.com/a/b'
     assert str(url) == 'example.com/a/b'
 
 
@@ -546,157 +732,20 @@ def test_decoding_with_26_and_3D_in_query():
     assert url == URL(str(url))
 
 
-def test_is_absolute_for_relative_url():
-    url = URL('/path/to')
-    assert not url.is_absolute()
-
-
-def test_is_absolute_for_absolute_url():
-    url = URL('http://example.com')
-    assert url.is_absolute()
-
-
 def test_fragment_only_url():
     url = URL('#frag')
     assert str(url) == "#frag"
 
 
-def test_relative_path():
-    url = URL('path/to')
-    assert ('path', 'to') == url.parts
-
-
-def test_relative_path_starting_from_slash():
-    url = URL('/path/to')
-    assert ('/', 'path', 'to') == url.parts
-
-
-def test_double_path():
-    url = URL('path/to')
-    assert url.parts == url.parts
-
-
-def test_relative_name():
-    url = URL('path/to')
-    assert 'to' == url.name
-
-
-def test_relative_name_starting_from_slash():
-    url = URL('/path/to')
-    assert 'to' == url.name
-
-
-def test_relative_name_slash():
-    url = URL('/')
-    assert '' == url.name
-
-
-def test_path_parts():
-    url = URL('http://example.com/path/to/three')
-    assert ('/', 'path', 'to', 'three') == url.parts
-
-
-def test_parts_without_path():
-    url = URL('http://example.com')
-    assert ('/',) == url.parts
-
-
-def test_path_parts_with_2F_in_path():
-    url = URL('http://example.com/path%2Fto/three')
-    assert ('/', 'path%2Fto', 'three') == url.parts
-
-
-def test_path_parts_with_2f_in_path():
-    url = URL('http://example.com/path%2fto/three')
-    assert ('/', 'path%2Fto', 'three') == url.parts
-
-
 def test_url_from_url():
     url = URL('http://example.com')
     assert URL(url) is url
-    assert URL(url).parts == ('/',)
-
-
-def test_with_name():
-    url = URL('http://example.com/a/b')
-    assert url.parts == ('/', 'a', 'b')
-    url2 = url.with_name('c')
-    assert url2.parts == ('/', 'a', 'c')
-
-
-def test_with_name_for_naked_path():
-    url = URL('http://example.com')
-    url2 = url.with_name('a')
-    assert url2.parts == ('/', 'a')
-
-
-def test_with_name_for_relative_path():
-    url = URL('a')
-    url2 = url.with_name('b')
-    assert url2.parts == ('b',)
-
-
-def test_with_name_for_relative_path2():
-    url = URL('a/b')
-    url2 = url.with_name('c')
-    assert url2.parts == ('a', 'c')
-
-
-def test_with_name_for_relative_path_starting_from_slash():
-    url = URL('/a')
-    url2 = url.with_name('b')
-    assert url2.parts == ('/', 'b')
-
-
-def test_with_name_for_relative_path_starting_from_slash2():
-    url = URL('/a/b')
-    url2 = url.with_name('c')
-    assert url2.parts == ('/', 'a', 'c')
-
-
-def test_with_name_empty():
-    with pytest.raises(ValueError):
-        URL('http://example.com').with_name('')
-
-
-def test_with_name_with_slash():
-    with pytest.raises(ValueError):
-        URL('http://example.com').with_name('a/b')
-
-
-def test_with_name_non_str():
-    with pytest.raises(TypeError):
-        URL('http://example.com').with_name(123)
+    assert URL(url).raw_parts == ('/',)
 
 
 def test_lowercase_scheme():
     url = URL('HTTP://example.com')
     assert str(url) == 'http://example.com'
-
-
-def test_is_non_absolute_for_empty_url():
-    url = URL()
-    assert not url.is_absolute()
-
-
-def test_is_non_absolute_for_empty_url2():
-    url = URL('')
-    assert not url.is_absolute()
-
-
-def test_parts_for_empty_url():
-    url = URL()
-    assert ('',) == url.parts
-
-
-def test_name_for_empty_url():
-    url = URL()
-    assert '' == url.name
-
-
-def test_path_for_empty_url():
-    url = URL()
-    assert '' == url.path
 
 
 def test_str_for_empty_url():
@@ -707,21 +756,6 @@ def test_str_for_empty_url():
 def test_parent_for_empty_url():
     url = URL()
     assert url is url.parent
-
-
-def test_truediv_for_empty_url():
-    url = URL() / 'a'
-    assert url.parts == ('a',)
-
-
-def test_truediv_for_relative_url():
-    url = URL('a') / 'b'
-    assert url.parts == ('a', 'b')
-
-
-def test_truediv_for_relative_url_started_with_slash():
-    url = URL('/a') / 'b'
-    assert url.parts == ('/', 'a', 'b')
 
 
 def test_empty_value_for_query():
@@ -735,11 +769,6 @@ def test_none_value_for_query():
     assert str(url) == 'http://example.com/path?a'
 
 
-def test_is_absolute_path_starting_from_double_slash():
-    url = URL('//www.python.org')
-    assert url.is_absolute()
-
-
 def test_decode_pct_in_path():
     url = URL('http://www.python.org/%7Eguido')
     assert 'http://www.python.org/~guido' == str(url)
@@ -748,6 +777,8 @@ def test_decode_pct_in_path():
 def test_decode_pct_in_path_lower_case():
     url = URL('http://www.python.org/%7eguido')
     assert 'http://www.python.org/~guido' == str(url)
+
+# join
 
 
 def test_join():
@@ -840,28 +871,6 @@ def test_join_from_rfc_3986_abnormal(url, expected):
     url = URL(url)
     expected = URL(expected)
     assert base.join(url) == expected
-
-
-def test_from_str_with_ipv4():
-    url = URL('http://127.0.0.1:80')
-    assert url.host == '127.0.0.1'
-
-
-def test_from_str_with_ipv6():
-    url = URL('http://[::1]:80')
-    assert url.host == '::1'
-
-
-def test_from_str_with_host_ipv4():
-    url = URL('http://host:80')
-    url = url.with_host('192.168.1.1')
-    assert url.host == '192.168.1.1'
-
-
-def test_from_str_with_host_ipv6():
-    url = URL('http://host:80')
-    url = url.with_host('::1')
-    assert url.host == '::1'
 
 
 def test_with_scheme_for_relative_url():

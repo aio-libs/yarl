@@ -190,7 +190,7 @@ class URL:
                    encoded=True)
 
     def is_absolute(self):
-        return self.host is not None
+        return self.raw_host is not None
 
     def origin(self):
         if not self.is_absolute():
@@ -207,16 +207,16 @@ class URL:
         return self._val.scheme
 
     @property
-    def user(self):
+    def raw_user(self):
         # not .username
         return self._val.username
 
     @property
-    def password(self):
+    def raw_password(self):
         return self._val.password
 
     @property
-    def host(self):
+    def raw_host(self):
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         return self._val.hostname
@@ -226,7 +226,7 @@ class URL:
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
     @property
-    def path(self):
+    def raw_path(self):
         ret = self._val.path
         if not ret and self.is_absolute():
             ret = '/'
@@ -239,15 +239,18 @@ class URL:
         return MultiDictProxy(self._query)
 
     @property
-    def query_string(self):
+    def raw_query_string(self):
         return self._val.query
 
     @property
-    def fragment(self):
+    def raw_fragment(self):
         return self._val.fragment
 
+    def human(self):
+        return
+
     @property
-    def parts(self):
+    def raw_parts(self):
         if self._parts is None:
             path = self._val.path
             if self.is_absolute():
@@ -265,9 +268,9 @@ class URL:
 
     @property
     def parent(self):
-        path = self.path
+        path = self.raw_path
         if not path or path == '/':
-            if self.fragment or self.query:
+            if self.raw_fragment or self.raw_query_string:
                 return URL(self._val._replace(query='', fragment=''),
                            encoded=True)
             return self
@@ -277,8 +280,8 @@ class URL:
         return URL(val, encoded=True)
 
     @property
-    def name(self):
-        parts = self.parts
+    def raw_name(self):
+        parts = self.raw_parts
         if self.is_absolute():
             parts = parts[1:]
             if not parts:
@@ -399,7 +402,7 @@ class URL:
             raise ValueError("Empty name is not allowed")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        parts = list(self.parts)
+        parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:
                 parts.append(name)
