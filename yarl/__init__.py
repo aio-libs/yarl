@@ -178,6 +178,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
+        name = self._quote(name)
         path = self._val.path
         if path == '/':
             new_path = '/' + name
@@ -352,11 +353,13 @@ class URL:
             raise ValueError("user replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(user,
-                                                               val.password,
-                                                               val.hostname,
-                                                               val.port)),
-                   encoded=True)
+        return URL(
+            self._val._replace(
+                netloc=self._make_netloc(self._quote(user),
+                                         val.password,
+                                         val.hostname,
+                                         val.port)),
+            encoded=True)
 
     def with_password(self, password):
         # N.B. doesn't cleanup query/fragment
@@ -366,11 +369,13 @@ class URL:
             raise ValueError("password replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(val.username,
-                                                               password,
-                                                               val.hostname,
-                                                               val.port)),
-                   encoded=True)
+        return URL(
+            self._val._replace(
+                netloc=self._make_netloc(val.username,
+                                         self._quote(password),
+                                         val.hostname,
+                                         val.port)),
+            encoded=True)
 
     def with_host(self, host):
         # N.B. doesn't cleanup query/fragment
@@ -382,7 +387,7 @@ class URL:
         try:
             ip = ip_address(host)
         except:
-            pass
+            host = host.encode('idna').decode('ascii')
         else:
             if ip.version == 6:
                 host = '['+host+']'
@@ -410,28 +415,31 @@ class URL:
 
     def with_query(self, query):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(query, Mapping):
+        if isinstance(query, Mapping):
+            query = '&'.join(quote_plus(str(k))+'='+quote_plus(str(v))
+                             for k, v in query.items())
+        elif isinstance(query, str):
+            pass
+        else:
             raise TypeError("Invalid query type")
         # TODO: str()? self._quote()?
-        return URL(self._val._replace(
-            query='&'.join(quote_plus(str(k))+'='+quote_plus(str(v))
-                           for k, v in query.items())),
+        return URL(self._val._replace(query=query),
                    encoded=True)
 
     def with_fragment(self, fragment):
         # N.B. doesn't cleanup query/fragment
         if not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(fragment=fragment), encoded=True)
+        return URL(self._val._replace(fragment=self._quote(fragment)),
+                   encoded=True)
 
     def with_name(self, name):
         # N.B. DOES cleanup query/fragment
         if not isinstance(name, str):
             raise TypeError("Invalid name type")
-        if not name:
-            raise ValueError("Empty name is not allowed")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
+        name = self._quote(name)
         parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:

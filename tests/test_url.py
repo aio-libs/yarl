@@ -380,6 +380,15 @@ def test_div_for_relative_url_started_with_slash():
     assert url.raw_parts == ('/', 'a', 'b')
 
 
+def test_div_non_ascii():
+    url = URL('http://example.com/path')
+    url2 = url / 'сюда'
+    assert url2.path == '/path/сюда'
+    assert url2.raw_path == '/path/%D1%81%D1%8E%D0%B4%D0%B0'
+    assert url2.parts == ('/', 'path', 'сюда')
+    assert url2.raw_parts == ('/', 'path', '%D1%81%D1%8E%D0%B4%D0%B0')
+
+
 # comparison and hashing
 
 def test_ne_str():
@@ -491,6 +500,13 @@ def test_with_user():
     assert str(url.with_user('john')) == 'http://john@example.com'
 
 
+def test_with_user_non_ascii():
+    url = URL('http://example.com')
+    url2 = url.with_user('вася')
+    assert url2.raw_user == '%D0%B2%D0%B0%D1%81%D1%8F'
+    assert url2.user == 'вася'
+
+
 def test_with_user_invalid_type():
     url = URL('http://example.com:123')
     with pytest.raises(TypeError):
@@ -500,6 +516,13 @@ def test_with_user_invalid_type():
 def test_with_password():
     url = URL('http://john@example.com')
     assert str(url.with_password('pass')) == 'http://john:pass@example.com'
+
+
+def test_with_password_non_ascii():
+    url = URL('http://john@example.com')
+    url2 = url.with_password('пароль')
+    assert url2.raw_password == '%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
+    assert url2.password == 'пароль'
 
 
 def test_with_password_invalid_type():
@@ -529,6 +552,13 @@ def test_from_str_with_host_ipv6():
 def test_with_host():
     url = URL('http://example.com:123')
     assert str(url.with_host('example.org')) == 'http://example.org:123'
+
+
+def test_with_host_non_ascii():
+    url = URL('http://example.com:123')
+    url2 = url.with_host('историк.рф')
+    assert url2.raw_host == 'xn--h1aagokeh.xn--p1ai'
+    assert url2.host == 'историк.рф'
 
 
 def test_with_host_invalid_type():
@@ -572,6 +602,13 @@ def test_with_query_bad_type():
 def test_with_fragment():
     url = URL('http://example.com')
     assert str(url.with_fragment('frag')) == 'http://example.com/#frag'
+
+
+def test_with_fragment_non_ascii():
+    url = URL('http://example.com')
+    url2 = url.with_fragment('фрагм')
+    assert url2.raw_fragment == '%D1%84%D1%80%D0%B0%D0%B3%D0%BC'
+    assert url2.fragment == 'фрагм'
 
 
 def test_with_fragment_bad_type():
@@ -618,8 +655,16 @@ def test_with_name_for_relative_path_starting_from_slash2():
 
 
 def test_with_name_empty():
-    with pytest.raises(ValueError):
-        URL('http://example.com').with_name('')
+    url = URL('http://example.com/path/to').with_name('')
+    assert str(url) == 'http://example.com/path/'
+
+
+def test_with_name_non_ascii():
+    url = URL('http://example.com/path').with_name('путь')
+    assert url.path == '/путь'
+    assert url.raw_path == '/%D0%BF%D1%83%D1%82%D1%8C'
+    assert url.parts == ('/', 'путь')
+    assert url.raw_parts == ('/', '%D0%BF%D1%83%D1%82%D1%8C')
 
 
 def test_with_name_with_slash():
