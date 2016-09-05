@@ -231,7 +231,7 @@ class URL:
 
     @property
     def query_string(self):
-        return unquote(self.raw_query_string)  # , safe='?&=+')
+        return unquote(self.raw_query_string, unsafe='?&=+')
 
     @property
     def raw_fragment(self):

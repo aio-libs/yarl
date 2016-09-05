@@ -65,16 +65,28 @@ def unquote(val, *, unsafe='', plus=False):
                 pcts.append(int(pct[1:], base=16))
                 pct = ''
             continue
-        elif ch == '%':
+        if pcts:
+            try:
+                unquoted = pcts.decode('utf8')
+            except UnicodeDecodeError:
+                pass
+            else:
+                if unquoted in unsafe:
+                    ret.append(quote(unquoted))
+                else:
+                    ret.append(unquoted)
+                del pcts[:]
+
+        if ch == '%':
             pct = ch
             continue
-
-        if pcts:
-            ret.append(pcts.decode('utf8'))
-            del pcts[:]
 
         ret.append(ch)
 
     if pcts:
-        ret.append(pcts.decode('utf8'))
+        unquoted = pcts.decode('utf8')
+        if unquoted in unsafe:
+            ret.append(quote(unquoted))
+        else:
+            ret.append(unquoted)
     return ''.join(ret)
