@@ -27,72 +27,98 @@ for absolute URLs and ::
 for relative
 ones (:ref:`yarl-api-relative-urls`).
 
-It accepts either :class:`str` or :class:`bytes` as an argument.
+Internally all data are stored as *percent-encoded* strings for
+*user*, *path*, *query* and *fragment* and *IDNA-encoded* for *host*
+URL parts.
 
-:class:`str` assumes your *arg* is an *decoded* url:
+Constructor and midification operators perform *encoding* for all
+parts automatically.
+The library assumes all data uses *UTF-8* for *percent-encoded* tokens.
 
 .. doctest::
 
-   >>> url = URL('http://example.com/path/to/?arg1=a&arg2=b#fragment')
-   >>> url
+   >>> URL('http://example.com/path/to/?arg1=a&arg2=b#fragment')
    URL('http://example.com/path/to/?arg1=a&arg2=b#fragment')
 
-For giving *encoded* version you need conversion to :class:`bytes`:
+Unless URL contain the only *ascii* characters there is no differences.
 
-.. doctest::
-
-   >>> bytes(url)
-   b'http://example.com/path/to/?arg1=a&arg2=b#fragment'
-
-Unless *arg* contains the only *ascii* characters there is no differences.
-
-But for *non-ascii* case *url quoting* and *idna encoding* should be applyed.
+But for *non-ascii* case *encoding* is applyed.
 
 .. doctest::
 
    >>> url = URL('http://εμπορικόσήμα.eu/путь/這裡')
-   >>> bytes(url)
-   b'http://xn--jxagkqfkduily1i.eu/%D0%BF%D1%83%D1%82%D1%8C/%E9%80%99%E8%A3%A1'
+   >>> str(url)
+   'http://xn--jxagkqfkduily1i.eu/%D0%BF%D1%83%D1%82%D1%8C/%E9%80%99%E8%A3%A1'
 
 The same is true for *user*, *password*, *query* and *fragment* parts of URL.
 
-The reverse translations are performed when you push :class:`bytes` into URL
-constructor:
+Already encoded URL is not changed:
 
 .. doctest::
 
-   >>> url = URL(b'http://xn--jxagkqfkduily1i.eu/%E9%80%99%E8%A3%A1')
-   >>> str(url)
-   'http://εμπορικόσήμα.eu/這裡'
+   >>> URL('http://xn--jxagkqfkduily1i.eu')
+   URL('http://xn--jxagkqfkduily1i.eu')
 
+Use :meth:`URL.human_repr` getting human readable representation:
+
+.. doctest::
+
+   >>> url = URL('http://εμπορικόσήμα.eu/путь/這裡')
+   >>> str(url)
+   'http://xn--jxagkqfkduily1i.eu/%D0%BF%D1%83%D1%82%D1%8C/%E9%80%99%E8%A3%A1'
+   >>> url.human_repr()
+   'http://εμπορικόσήμα.eu/путь/這裡'
 
 URL properties
 --------------
 
-You migth to get the following data from :class:`URL` object:
+There are tho kinds of properties: *decoded* and *encoded* (with
+``raw_`` prefix):
 
-.. doctest::
-
-   >>> url = URL('http://user:pass@example.com:8080/path/to?a1=a&a2=b#frag')
 
 .. attribute:: URL.scheme
 
+   Scheme for absolute URLs.
+
    .. doctest::
 
+      >>> url = URL('http://example.com')
       >>> url.scheme
       'http'
 
    ``None`` for relative URLs or URLs starting with `'//'`
    (:ref:`yarl-api-relative-urls`).
 
+   .. doctest::
+
+      >>> url = URL('page.html')
+      >>> url.scheme
+      None
+
 .. attribute:: URL.user
+
+   Decoded *user* part of URL.
 
    .. doctest::
 
+      >>> url = URL('http://john@example.com')
       >>> url.user
-      'user'
+      'john'
 
-   ``None`` if *user* was not set.
+   .. doctest::
+
+      >>> url = URL('http://андрей@example.com')
+      >>> url.user
+      'андрей'
+
+   ``None`` if *user* is not set.
+
+   .. doctest::
+
+      >>> url = URL('http://example.com')
+      >>> url.user
+      None
+
 
 .. attribute:: URL.password
 
