@@ -12,6 +12,8 @@ BUNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
 
 
 def quote(val, *, safe='', plus=False):
+    if val is None:
+        return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     val = val.encode('utf8')
@@ -54,6 +56,8 @@ def quote(val, *, safe='', plus=False):
 
 
 def unquote(val, *, unsafe='', plus=False):
+    if val is None:
+        return None
     pct = ''
     pcts = bytearray()
     ret = []

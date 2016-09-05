@@ -235,7 +235,10 @@ class URL:
 
     @cached_property
     def host(self):
-        return self.raw_host.encode('ascii').decode('idna')
+        raw = self.raw_host
+        if raw is None:
+            return None
+        return raw.encode('ascii').decode('idna')
 
     @cached_property
     def port(self):
@@ -471,8 +474,8 @@ class URL:
 
     def human_repr(self):
         return urlunsplit(SplitResult(self.scheme,
-                                      self._make_netloc(self.user or "",
-                                                        self.password or "",
+                                      self._make_netloc(self.user,
+                                                        self.password,
                                                         self.host,
                                                         self.port),
                                       self.path,

@@ -1088,3 +1088,9 @@ def test_human_repr():
     url = URL('http://вася:пароль@хост.домен:8080/путь/сюда?арг=вал#фраг')
     s = url.human_repr()
     assert s == 'http://вася:пароль@хост.домен:8080/путь/сюда?арг=вал#фраг'
+
+
+def test_human_repr_defaults():
+    url = URL('путь')
+    s = url.human_repr()
+    assert s == 'путь'

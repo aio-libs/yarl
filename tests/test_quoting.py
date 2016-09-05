@@ -185,3 +185,8 @@ def test_unquoting_parts():
     assert expect == result
     result = unquote(given, plus=True)
     assert expect == result
+
+
+def test_None():
+    assert quote(None) is None
+    assert unquote(None) is None
