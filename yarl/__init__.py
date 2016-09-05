@@ -28,6 +28,40 @@ DEFAULT_PORTS = {
 }
 
 
+sentinel = object()
+
+
+class cached_property:
+    """Use as a class method decorator.  It operates almost exactly like
+    the Python `@property` decorator, but it puts the result of the
+    method it decorates into the instance dict after the first call,
+    effectively replacing the function it decorates with an instance
+    variable.  It is, in Python parlance, a data descriptor.
+
+    """
+
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+        try:
+            self.__doc__ = wrapped.__doc__
+        except:  # pragma: no cover
+            self.__doc__ = ""
+        self.name = wrapped.__name__
+
+    def __get__(self, inst, owner, _sentinel=sentinel):
+        if inst is None:
+            return self
+        val = inst._cache.get(self.name, _sentinel)
+        if val is not _sentinel:
+            return val
+        val = self.wrapped(inst)
+        inst._cache[self.name] = val
+        return val
+
+    def __set__(self, inst, value):
+        raise AttributeError("cached property is read-only")
+
+
 class URL:
     # don't derive from str
     # follow pathlib.Path design
@@ -35,7 +69,7 @@ class URL:
     # it's intended for libraries like aiohttp,
     # not to be passed into standard library functions like os.open etc.
 
-    __slots__ = ('_val', '_parts', '_query', '_hash')
+    __slots__ = ('_cache', '_val')
 
     def __new__(cls, val='', *, encoded=False):
         if isinstance(val, URL):
@@ -58,9 +92,7 @@ class URL:
             val = self._encode(val)
 
         self._val = val
-        self._parts = None
-        self._query = None
-        self._hash = None
+        self._cache = {}
 
     @classmethod
     def _encode(cls, val):
@@ -122,9 +154,10 @@ class URL:
         return self._val == other._val
 
     def __hash__(self):
-        if self._hash is None:
-            self._hash = hash(self._val)
-        return self._hash
+        ret = self._cache.get('hash')
+        if ret is None:
+            ret = self._cache['hash'] = hash(self._val)
+        return ret
 
     def __le__(self, other):
         if not isinstance(other, URL):
@@ -173,96 +206,93 @@ class URL:
         val = v._replace(netloc=netloc, path='', query='', fragment='')
         return URL(val, encoded=True)
 
-    @property
+    @cached_property
     def scheme(self):
         return self._val.scheme
 
-    @property
+    @cached_property
     def raw_user(self):
         # not .username
         return self._val.username
 
-    @property
+    @cached_property
     def user(self):
         return unquote(self.raw_user)
 
-    @property
+    @cached_property
     def raw_password(self):
         return self._val.password
 
-    @property
+    @cached_property
     def password(self):
         return unquote(self.raw_password)
 
-    @property
+    @cached_property
     def raw_host(self):
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         return self._val.hostname
 
-    @property
+    @cached_property
     def host(self):
         return self.raw_host.encode('ascii').decode('idna')
 
-    @property
+    @cached_property
     def port(self):
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
-    @property
+    @cached_property
     def raw_path(self):
         ret = self._val.path
         if not ret and self.is_absolute():
             ret = '/'
         return ret
 
-    @property
+    @cached_property
     def path(self):
         return unquote(self.raw_path)
 
-    @property
+    @cached_property
     def query(self):
-        if self._query is None:
-            self._query = MultiDict(parse_qsl(self.query_string))
-        return MultiDictProxy(self._query)
+        ret = MultiDict(parse_qsl(self.query_string))
+        return MultiDictProxy(ret)
 
-    @property
+    @cached_property
     def raw_query_string(self):
         return self._val.query
 
-    @property
+    @cached_property
     def query_string(self):
         return unquote(self.raw_query_string, unsafe='?&=+')
 
-    @property
+    @cached_property
     def raw_fragment(self):
         return self._val.fragment
 
-    @property
+    @cached_property
     def fragment(self):
         return unquote(self.raw_fragment)
 
-    @property
+    @cached_property
     def raw_parts(self):
-        if self._parts is None:
-            path = self._val.path
-            if self.is_absolute():
-                if not path:
-                    parts = ['/']
-                else:
-                    parts = ['/'] + path[1:].split('/')
+        path = self._val.path
+        if self.is_absolute():
+            if not path:
+                parts = ['/']
             else:
-                if path.startswith('/'):
-                    parts = ['/'] + path[1:].split('/')
-                else:
-                    parts = path.split('/')
-            self._parts = tuple(parts)
-        return self._parts
+                parts = ['/'] + path[1:].split('/')
+        else:
+            if path.startswith('/'):
+                parts = ['/'] + path[1:].split('/')
+            else:
+                parts = path.split('/')
+        return tuple(parts)
 
-    @property
+    @cached_property
     def parts(self):
         return tuple(unquote(part) for part in self.raw_parts)
 
-    @property
+    @cached_property
     def parent(self):
         path = self.raw_path
         if not path or path == '/':
@@ -275,7 +305,7 @@ class URL:
                                  query='', fragment='')
         return URL(val, encoded=True)
 
-    @property
+    @cached_property
     def raw_name(self):
         parts = self.raw_parts
         if self.is_absolute():
@@ -287,7 +317,7 @@ class URL:
         else:
             return parts[-1]
 
-    @property
+    @cached_property
     def name(self):
         return unquote(self.raw_name)
 
