@@ -305,6 +305,10 @@ def test_relative_raw_name_slash():
     assert '' == url.raw_name
 
 
+def test_name_non_ascii():
+    url = URL('http://example.com/путь')
+    assert url.name == 'путь'
+
 # modifiers
 
 
@@ -499,6 +503,11 @@ def test_with_scheme_uppercased():
     assert str(url.with_scheme('HTTPS')) == 'https://example.com'
 
 
+def test_with_scheme_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_scheme('http')
+
+
 def test_with_scheme_invalid_type():
     url = URL('http://example.com')
     with pytest.raises(TypeError):
@@ -517,6 +526,11 @@ def test_with_user_non_ascii():
     assert url2.user == 'вася'
 
 
+def test_with_user_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_user('user')
+
+
 def test_with_user_invalid_type():
     url = URL('http://example.com:123')
     with pytest.raises(TypeError):
@@ -533,6 +547,11 @@ def test_with_password_non_ascii():
     url2 = url.with_password('пароль')
     assert url2.raw_password == '%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
     assert url2.password == 'пароль'
+
+
+def test_with_password_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_password('pass')
 
 
 def test_with_password_invalid_type():
@@ -571,6 +590,11 @@ def test_with_host_non_ascii():
     assert url2.host == 'историк.рф'
 
 
+def test_with_host_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_host('example.com')
+
+
 def test_with_host_invalid_type():
     url = URL('http://example.com:123')
     with pytest.raises(TypeError):
@@ -585,6 +609,11 @@ def test_with_port():
 def test_with_port_keeps_query_and_fragment():
     url = URL('http://example.com/?a=1#frag')
     assert str(url.with_port(8888)) == 'http://example.com:8888/?a=1#frag'
+
+
+def test_with_port_for_relative_url():
+    with pytest.raises(ValueError):
+        URL('path/to').with_port(1234)
 
 
 def test_with_port_invalid_type():
@@ -1032,31 +1061,6 @@ def test_join_from_rfc_3986_abnormal(url, expected):
     url = URL(url)
     expected = URL(expected)
     assert base.join(url) == expected
-
-
-def test_with_scheme_for_relative_url():
-    with pytest.raises(ValueError):
-        URL('path/to').with_scheme('http')
-
-
-def test_with_user_for_relative_url():
-    with pytest.raises(ValueError):
-        URL('path/to').with_user('user')
-
-
-def test_with_password_for_relative_url():
-    with pytest.raises(ValueError):
-        URL('path/to').with_password('pass')
-
-
-def test_with_host_for_relative_url():
-    with pytest.raises(ValueError):
-        URL('path/to').with_host('example.com')
-
-
-def test_with_port_for_relative_url():
-    with pytest.raises(ValueError):
-        URL('path/to').with_port(1234)
 
 
 def test_split_result_non_decoded():

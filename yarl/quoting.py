@@ -24,7 +24,7 @@ def quote(val, *, safe='', plus=False):
             if ch in BASCII_LOWERCASE:
                 ch = ch - 32
             pct.append(ch)
-            if len(pct) == 3:
+            if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pct = bytes(pct)
                 unquoted = BUNRESERVED_QUOTED.get(pct)
                 if unquoted:
@@ -36,8 +36,6 @@ def quote(val, *, safe='', plus=False):
                 pct = b''
             continue
         elif ch == ord('%'):
-            if pct:
-                raise ValueError("Unfinished PCT {}".format(pct))
             pct = bytearray()
             pct.append(ch)
             continue
@@ -51,6 +49,7 @@ def quote(val, *, safe='', plus=False):
             continue
 
         ret.extend(('%{:02X}'.format(ch)).encode('ascii'))
+
     return ret.decode('ascii')
 
 
@@ -61,7 +60,7 @@ def unquote(val, *, unsafe='', plus=False):
     for ch in val:
         if pct:
             pct += ch
-            if len(pct) == 3:
+            if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pcts.append(int(pct[1:], base=16))
                 pct = ''
             continue
