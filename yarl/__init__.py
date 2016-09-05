@@ -316,7 +316,11 @@ class URL:
 
     def with_user(self, user):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(user, str):
+        if user is None:
+            pass
+        elif isinstance(user, str):
+            user = quote(user)
+        else:
             raise TypeError("Invalid user type")
         if not self.is_absolute():
             raise ValueError("user replacement is not allowed "
@@ -324,7 +328,7 @@ class URL:
         val = self._val
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(quote(user),
+                netloc=self._make_netloc(user,
                                          val.password,
                                          val.hostname,
                                          val.port)),
@@ -332,7 +336,11 @@ class URL:
 
     def with_password(self, password):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(password, str):
+        if password is None:
+            pass
+        elif isinstance(password, str):
+            password = quote(password)
+        else:
             raise TypeError("Invalid password type")
         if not self.is_absolute():
             raise ValueError("password replacement is not allowed "
@@ -341,7 +349,7 @@ class URL:
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(val.username,
-                                         quote(password),
+                                         password,
                                          val.hostname,
                                          val.port)),
             encoded=True)
@@ -353,6 +361,8 @@ class URL:
         if not self.is_absolute():
             raise ValueError("host replacement is not allowed "
                              "for relative URLs")
+        if not host:
+            raise ValueError("host removing is not allowed")
         try:
             ip = ip_address(host)
         except:
@@ -429,5 +439,12 @@ class URL:
             raise TypeError("url should be URL")
         return URL(urljoin(str(self), str(url)), encoded=True)
 
-    def human(self):
-        return
+    def human_repr(self):
+        return urlunsplit(SplitResult(self.scheme,
+                                      self._make_netloc(self.user or "",
+                                                        self.password or "",
+                                                        self.host,
+                                                        self.port),
+                                      self.path,
+                                      self.query_string,
+                                      self.fragment))

@@ -534,7 +534,12 @@ def test_with_user_for_relative_url():
 def test_with_user_invalid_type():
     url = URL('http://example.com:123')
     with pytest.raises(TypeError):
-        url.with_user(None)
+        url.with_user(123)
+
+
+def test_with_user_None():
+    url = URL('http://john@example.com')
+    assert str(url.with_user(None)) == 'http://example.com'
 
 
 def test_with_password():
@@ -554,10 +559,15 @@ def test_with_password_for_relative_url():
         URL('path/to').with_password('pass')
 
 
+def test_with_password_None():
+    url = URL('http://john:pass@example.com')
+    assert str(url.with_password(None)) == 'http://john@example.com'
+
+
 def test_with_password_invalid_type():
     url = URL('http://example.com:123')
     with pytest.raises(TypeError):
-        url.with_password(None)
+        url.with_password(123)
 
 
 def test_with_password_and_empty_user():
@@ -581,6 +591,12 @@ def test_from_str_with_host_ipv6():
 def test_with_host():
     url = URL('http://example.com:123')
     assert str(url.with_host('example.org')) == 'http://example.org:123'
+
+
+def test_with_host_empty():
+    url = URL('http://example.com:123')
+    with pytest.raises(ValueError):
+        url.with_host('')
 
 
 def test_with_host_non_ascii():
@@ -1066,3 +1082,9 @@ def test_join_from_rfc_3986_abnormal(url, expected):
 def test_split_result_non_decoded():
     with pytest.raises(ValueError):
         URL(SplitResult('http', 'example.com', 'path', 'qs', 'frag'))
+
+
+def test_human_repr():
+    url = URL('http://вася:пароль@хост.домен:8080/путь/сюда?арг=вал#фраг')
+    s = url.human_repr()
+    assert s == 'http://вася:пароль@хост.домен:8080/путь/сюда?арг=вал#фраг'
