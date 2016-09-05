@@ -12,15 +12,19 @@ changing.
 Introduction
 ------------
 
-Url could be constructed from :class:`str`::
+Url could be constructed from :class:`str`:
+
+.. doctest::
 
    >>> from yarl import URL
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')
 
-All url parts: scheme, host, port, path, query and fragment are
-accessible by properties::
+All url parts: scheme, user, passsword, host, port, path, query and fragment are
+accessible by properties:
+
+.. doctest::
 
    >>> url.scheme
    'https'
@@ -37,19 +41,35 @@ accessible by properties::
 
 All url manipulations produces a new url object::
 
+.. doctest::
+
    >>> url.parent / 'downloads/source'
    URL('https://www.python.org/downloads/source')
 
-Strings in :class:`~yarl.URL` object are always unquoted, for getting
-quoted version please convert URL into :class:`bytes`::
+Strings passed to constructor and modification methods are
+automatically encoded giving canonical representation as result:
 
-   >>> bytes(url)
-   b'https://www.python.org/%7Eguido?arg=1#frag'
+.. doctest::
 
-Constructing URL from bytes performs unquoting as well::
+   >>> url = URL('https://www.python.org/путь')
+   >>> url
+   URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
 
-   >>> URL(b'https://www.python.org/%7Eguido')
-   URL('https://www.python.org/~guido')
+Regular properties are *percent-encoded*, use ``raw_`` versions for
+getting *decoded* strings:
+
+.. doctest::
+
+   >>> url.path
+   '/путь'
+
+   >>> url.raw_path
+   '/%D0%BF%D1%83%D1%82%D1%8C'
+
+Human readable representation of URL is available as ``.human_repr()``:
+
+   >>> url.human_repr()
+   'https://www.python.org:443/путь'
 
 For full documentation please read :ref:`yarl-api` section.
 
