@@ -160,6 +160,16 @@ def test_query_string_non_ascii():
     assert url.query_string == 'б=в&ю=к'
 
 
+def test_query_string_spaces():
+    url = URL('http://example.com?a+b=c+d&e=f+g')
+    assert url.query_string == 'a+b=c+d&e=f+g'
+
+
+def test_query_spaces():
+    url = URL('http://example.com?a+b=c+d')
+    assert url.query == MultiDict({'a b': 'c d'})
+
+
 def test_query_empty():
     url = URL('http://example.com')
     assert isinstance(url.query, MultiDictProxy)
@@ -584,13 +594,44 @@ def test_with_port_invalid_type():
 
 def test_with_query():
     url = URL('http://example.com')
-    assert str(url.with_query({'a': 1})) == 'http://example.com/?a=1'
+    assert str(url.with_query({'a': '1'})) == 'http://example.com/?a=1'
+
+
+def test_with_query_str():
+    url = URL('http://example.com')
+    assert str(url.with_query('a=1&b=2')) == 'http://example.com/?a=1&b=2'
+
+
+def test_with_query_str_non_ascii_and_spaces():
+    url = URL('http://example.com')
+    url2 = url.with_query('a=1 2&b=знач')
+    assert url2.raw_query_string == 'a=1+2&b=%D0%B7%D0%BD%D0%B0%D1%87'
+    assert url2.query_string == 'a=1+2&b=знач'
+
+
+def test_with_query_non_str():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query({'a': 1})
 
 
 def test_with_query_multidict():
     url = URL('http://example.com/path')
     q = MultiDict([('a', 'b'), ('c', 'd')])
     assert str(url.with_query(q)) == 'http://example.com/path?a=b&c=d'
+
+
+def test_with_multidict_with_spaces_and_non_ascii():
+    url = URL('http://example.com')
+    url2 = url.with_query({'a b': 'ю б'})
+    assert url2.raw_query_string == 'a+b=%D1%8E+%D0%B1'
+
+
+def test_with_query_multidict_with_nonsafe():
+    url = URL('http://example.com/path')
+    url2 = url.with_query({'a+b': '?=+&'})
+    assert url2.raw_query_string == 'a%2Bb=%3F%3D%2B%26'
+    assert url2.query_string == 'a%2Bb=%3F%3D%2B%26'
 
 
 def test_with_query_bad_type():

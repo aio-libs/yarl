@@ -1,11 +1,13 @@
 from collections.abc import Mapping
+from functools import partial
 from ipaddress import ip_address
 from urllib.parse import (SplitResult, parse_qsl,
-                          quote, quote_plus, unquote, unquote_plus,
                           urljoin, urlsplit, urlunsplit)
-from string import ascii_letters, digits
 
 from multidict import MultiDict, MultiDictProxy
+
+
+from .quoting import quote, unquote
 
 __version__ = '0.0.1'
 
@@ -14,19 +16,16 @@ __version__ = '0.0.1'
 # but furl is a mutable class.
 
 
+# is_leaf()
+# path normalization
+
+
 DEFAULT_PORTS = {
     'http': 80,
     'https': 443,
     'ws': 80,
     'wss': 443,
 }
-
-
-GEN_DELIMS = ":/?#[]@"
-SUB_DELIMS = "!$&'()*+,;="
-RESERVED = GEN_DELIMS + SUB_DELIMS
-UNRESERVED = ascii_letters + digits + '-._~'
-UNRESERVED_QUOTED = {'%'+hex(ord(ch))[2:].upper(): ch for ch in UNRESERVED}
 
 
 class URL:
@@ -64,36 +63,6 @@ class URL:
         self._hash = None
 
     @classmethod
-    def _quote(cls, val, *, safe='', via=quote,
-               UNRESERVED_QUOTED=UNRESERVED_QUOTED):
-        try:
-            val.encode('ascii')
-            if '%' not in val:
-                return val
-        except UnicodeEncodeError:
-            pass
-        ret = []
-        pct = ''
-        safe += UNRESERVED
-        for ch in val:
-            if pct:
-                pct += ch.upper()
-                if len(pct) == 3:
-                    unquoted = UNRESERVED_QUOTED.get(pct)
-                    if unquoted:
-                        ret.append(unquoted)
-                    else:
-                        ret.append(pct)
-                    pct = ''
-            elif ch == '%':
-                pct = ch
-            elif ch in safe:
-                ret.append(ch)
-            else:
-                ret.append(via(ch))
-        return ''.join(ret)
-
-    @classmethod
     def _encode(cls, val):
         return val._replace(netloc=cls._encode_netloc(val),
                             path=cls._encode_path(val),
@@ -120,23 +89,23 @@ class URL:
         if val.port:
             ret += ':{}'.format(val.port)
         if val.username:
-            user = cls._quote(val.username)
+            user = quote(val.username)
             if val.password:
-                user += ':' + cls._quote(val.password)
+                user += ':' + quote(val.password)
             ret = user + '@' + ret
         return ret
 
     @classmethod
     def _encode_path(cls, val):
-        return cls._quote(val.path)
+        return quote(val.path, safe='/')
 
     @classmethod
     def _encode_query(cls, val):
-        return cls._quote(val.query, safe='=&', via=quote_plus)
+        return quote(val.query, safe='=+&', plus=True)
 
     @classmethod
     def _encode_fragment(cls, val):
-        return cls._quote(val.fragment)
+        return quote(val.fragment)
 
     def __str__(self):
         val = self._val
@@ -178,7 +147,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = self._quote(name)
+        name = quote(name, safe='/')
         path = self._val.path
         if path == '/':
             new_path = '/' + name
@@ -262,7 +231,7 @@ class URL:
 
     @property
     def query_string(self):
-        return unquote_plus(self.raw_query_string)
+        return unquote(self.raw_query_string)  # , safe='?&=+')
 
     @property
     def raw_fragment(self):
@@ -355,7 +324,7 @@ class URL:
         val = self._val
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(self._quote(user),
+                netloc=self._make_netloc(quote(user),
                                          val.password,
                                          val.hostname,
                                          val.port)),
@@ -372,7 +341,7 @@ class URL:
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(val.username,
-                                         self._quote(password),
+                                         quote(password),
                                          val.hostname,
                                          val.port)),
             encoded=True)
@@ -416,13 +385,13 @@ class URL:
     def with_query(self, query):
         # N.B. doesn't cleanup query/fragment
         if isinstance(query, Mapping):
-            query = '&'.join(quote_plus(str(k))+'='+quote_plus(str(v))
+            quoter = partial(quote, safe='', plus=True)
+            query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query.items())
         elif isinstance(query, str):
-            pass
+            query = quote(query, safe='=+&', plus=True)
         else:
             raise TypeError("Invalid query type")
-        # TODO: str()? self._quote()?
         return URL(self._val._replace(query=query),
                    encoded=True)
 
@@ -430,7 +399,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(fragment=self._quote(fragment)),
+        return URL(self._val._replace(fragment=quote(fragment)),
                    encoded=True)
 
     def with_name(self, name):
@@ -439,7 +408,7 @@ class URL:
             raise TypeError("Invalid name type")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        name = self._quote(name)
+        name = quote(name, safe='/')
         parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:
