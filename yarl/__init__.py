@@ -1,15 +1,23 @@
 from collections.abc import Mapping
+from functools import partial
 from ipaddress import ip_address
-from urllib.parse import (SplitResult, SplitResultBytes, parse_qsl, quote,
-                          quote_plus, unquote, urljoin, urlsplit, urlunsplit)
+from urllib.parse import (SplitResult, parse_qsl,
+                          urljoin, urlsplit, urlunsplit)
 
 from multidict import MultiDict, MultiDictProxy
+
+
+from .quoting import quote, unquote
 
 __version__ = '0.0.1'
 
 # Why not furl?
 # Because I pretty sure URL class should be immutable
 # but furl is a mutable class.
+
+
+# is_leaf()
+# path normalization
 
 
 DEFAULT_PORTS = {
@@ -29,24 +37,25 @@ class URL:
 
     __slots__ = ('_val', '_parts', '_query', '_hash')
 
-    def __new__(cls, val=''):
+    def __new__(cls, val='', *, encoded=False):
         if isinstance(val, URL):
             return val
         else:
             return super(URL, cls).__new__(cls)
 
-    def __init__(self, val=''):
+    def __init__(self, val='', *, encoded=False):
         if isinstance(val, URL):
             return
         if isinstance(val, str):
             val = urlsplit(val)
-        elif isinstance(val, (memoryview, bytes, bytearray)):
-            val = self._from_bytes(val)
         elif isinstance(val, SplitResult):
-            pass
+            if not encoded:
+                raise ValueError("Cannot apply decoding to SplitResult")
         else:
-            raise TypeError("Constructor parameter should be "
-                            "either str or byte-ish")
+            raise TypeError("Constructor parameter should be str")
+
+        if not encoded:
+            val = self._encode(val)
 
         self._val = val
         self._parts = None
@@ -54,67 +63,49 @@ class URL:
         self._hash = None
 
     @classmethod
-    def _from_bytes(cls, bval):
-        if isinstance(bval, memoryview):
-            bval = bytes(bval)
-        bval = urlsplit(bval)
-        val = SplitResult(scheme=bval.scheme.decode('ascii'),
-                          netloc=cls._decode_netloc(bval),
-                          path=cls._decode_path(bval),
-                          query=cls._decode_query(bval),
-                          fragment=cls._decode_fragment(bval))
-        return val
+    def _encode(cls, val):
+        return val._replace(netloc=cls._encode_netloc(val),
+                            path=cls._encode_path(val),
+                            query=cls._encode_query(val),
+                            fragment=cls._encode_fragment(val))
 
     @classmethod
-    def _decode_netloc(cls, bval):
-        ret = bval.hostname.decode('idna')
-        if bval.port:
-            ret += ":{}".format(bval.port)
-        if bval.username:
-            user = unquote(bval.username.decode('ascii'))
-            if bval.password:
-                user += ':' + unquote(bval.password.decode('ascii'))
+    def _encode_netloc(cls, val):
+        if not val.netloc:
+            return ''
+        ret = val.hostname
+        try:
+            ret.encode('ascii')
+        except UnicodeEncodeError:
+            ret = ret.encode('idna').decode('ascii')
+        else:
+            try:
+                ip = ip_address(ret)
+            except:
+                pass
+            else:
+                if ip.version == 6:
+                    ret = '['+ret+']'
+        if val.port:
+            ret += ':{}'.format(val.port)
+        if val.username:
+            user = quote(val.username)
+            if val.password:
+                user += ':' + quote(val.password)
             ret = user + '@' + ret
         return ret
 
     @classmethod
-    def _decode_path(cls, bval):
-        return unquote(bval.path.decode('ascii'))
-
-    @classmethod
-    def _decode_query(cls, bval):
-        lst = parse_qsl(bval.query.decode('ascii'))
-        return '&'.join('{}={}'.format(k, v) for k, v in lst)
-
-    @classmethod
-    def _decode_fragment(cls, bval):
-        return unquote(bval.fragment.decode('ascii'))
-
-    @classmethod
-    def _encode_netloc(cls, val):
-        ret = val.hostname.encode('idna')
-        if val.port:
-            ret += ':{}'.format(val.port).encode('ascii')
-        if val.username:
-            buser = quote(val.username).encode('ascii')
-            if val.password:
-                buser += b':' + quote(val.password).encode('ascii')
-            ret = buser + b'@' + ret
-        return ret
-
-    @classmethod
     def _encode_path(cls, val):
-        return quote(val.path).encode('ascii')
+        return quote(val.path, safe='/')
 
     @classmethod
-    def _encode_query(cls, query):
-        lst = [quote_plus(k)+'='+quote_plus(v)
-               for k, v in query.items()]
-        return '&'.join(lst).encode('ascii')
+    def _encode_query(cls, val):
+        return quote(val.query, safe='=+&', plus=True)
 
     @classmethod
     def _encode_fragment(cls, val):
-        return quote(val.fragment).encode('ascii')
+        return quote(val.fragment)
 
     def __str__(self):
         val = self._val
@@ -156,6 +147,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
+        name = quote(name, safe='/')
         path = self._val.path
         if path == '/':
             new_path = '/' + name
@@ -165,20 +157,11 @@ class URL:
             parts = path.split('/')
             parts.append(name)
             new_path = '/'.join(parts)
-        return URL(self._val._replace(path=new_path, query='', fragment=''))
-
-    def __bytes__(self):
-        val = self._val
-        return urlunsplit(SplitResultBytes(
-            self.scheme.encode('ascii'),
-            self._encode_netloc(val),
-            self._encode_path(val),
-            self._encode_query(self.query),
-            self._encode_fragment(val),
-            ))
+        return URL(self._val._replace(path=new_path, query='', fragment=''),
+                   encoded=True)
 
     def is_absolute(self):
-        return self.host is not None
+        return self.raw_host is not None
 
     def origin(self):
         if not self.is_absolute():
@@ -188,54 +171,78 @@ class URL:
         v = self._val
         netloc = self._make_netloc(None, None, v.hostname, v.port)
         val = v._replace(netloc=netloc, path='', query='', fragment='')
-        return URL(val)
+        return URL(val, encoded=True)
 
     @property
     def scheme(self):
         return self._val.scheme
 
     @property
-    def user(self):
+    def raw_user(self):
         # not .username
         return self._val.username
 
     @property
-    def password(self):
+    def user(self):
+        return unquote(self.raw_user)
+
+    @property
+    def raw_password(self):
         return self._val.password
 
     @property
-    def host(self):
+    def password(self):
+        return unquote(self.raw_password)
+
+    @property
+    def raw_host(self):
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         return self._val.hostname
+
+    @property
+    def host(self):
+        return self.raw_host.encode('ascii').decode('idna')
 
     @property
     def port(self):
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
     @property
-    def path(self):
+    def raw_path(self):
         ret = self._val.path
         if not ret and self.is_absolute():
             ret = '/'
         return ret
 
     @property
+    def path(self):
+        return unquote(self.raw_path)
+
+    @property
     def query(self):
         if self._query is None:
-            self._query = MultiDict(parse_qsl(self._val.query))
+            self._query = MultiDict(parse_qsl(self.query_string))
         return MultiDictProxy(self._query)
 
     @property
-    def query_string(self):
+    def raw_query_string(self):
         return self._val.query
 
     @property
-    def fragment(self):
+    def query_string(self):
+        return unquote(self.raw_query_string, unsafe='?&=+')
+
+    @property
+    def raw_fragment(self):
         return self._val.fragment
 
     @property
-    def parts(self):
+    def fragment(self):
+        return unquote(self.raw_fragment)
+
+    @property
+    def raw_parts(self):
         if self._parts is None:
             path = self._val.path
             if self.is_absolute():
@@ -252,20 +259,25 @@ class URL:
         return self._parts
 
     @property
+    def parts(self):
+        return tuple(unquote(part) for part in self.raw_parts)
+
+    @property
     def parent(self):
-        path = self.path
+        path = self.raw_path
         if not path or path == '/':
-            if self.fragment or self.query:
-                return URL(self._val._replace(query='', fragment=''))
+            if self.raw_fragment or self.raw_query_string:
+                return URL(self._val._replace(query='', fragment=''),
+                           encoded=True)
             return self
         parts = path.split('/')
         val = self._val._replace(path='/'.join(parts[:-1]),
                                  query='', fragment='')
-        return URL(val)
+        return URL(val, encoded=True)
 
     @property
-    def name(self):
-        parts = self.parts
+    def raw_name(self):
+        parts = self.raw_parts
         if self.is_absolute():
             parts = parts[1:]
             if not parts:
@@ -274,6 +286,10 @@ class URL:
                 return parts[-1]
         else:
             return parts[-1]
+
+    @property
+    def name(self):
+        return unquote(self.raw_name)
 
     @classmethod
     def _make_netloc(cls, user, password, host, port):
@@ -295,33 +311,48 @@ class URL:
         if not self.is_absolute():
             raise ValueError("scheme replacement is not allowed "
                              "for relative URLs")
-        return URL(self._val._replace(scheme=scheme))
+        return URL(self._val._replace(scheme=scheme.lower()),
+                   encoded=True)
 
     def with_user(self, user):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(user, str):
+        if user is None:
+            pass
+        elif isinstance(user, str):
+            user = quote(user)
+        else:
             raise TypeError("Invalid user type")
         if not self.is_absolute():
             raise ValueError("user replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(user,
-                                                               val.password,
-                                                               val.hostname,
-                                                               val.port)))
+        return URL(
+            self._val._replace(
+                netloc=self._make_netloc(user,
+                                         val.password,
+                                         val.hostname,
+                                         val.port)),
+            encoded=True)
 
     def with_password(self, password):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(password, str):
+        if password is None:
+            pass
+        elif isinstance(password, str):
+            password = quote(password)
+        else:
             raise TypeError("Invalid password type")
         if not self.is_absolute():
             raise ValueError("password replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(val.username,
-                                                               password,
-                                                               val.hostname,
-                                                               val.port)))
+        return URL(
+            self._val._replace(
+                netloc=self._make_netloc(val.username,
+                                         password,
+                                         val.hostname,
+                                         val.port)),
+            encoded=True)
 
     def with_host(self, host):
         # N.B. doesn't cleanup query/fragment
@@ -330,10 +361,12 @@ class URL:
         if not self.is_absolute():
             raise ValueError("host replacement is not allowed "
                              "for relative URLs")
+        if not host:
+            raise ValueError("host removing is not allowed")
         try:
             ip = ip_address(host)
         except:
-            pass
+            host = host.encode('idna').decode('ascii')
         else:
             if ip.version == 6:
                 host = '['+host+']'
@@ -341,7 +374,8 @@ class URL:
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                val.password,
                                                                host,
-                                                               val.port)))
+                                                               val.port)),
+                   encoded=True)
 
     def with_port(self, port):
         # N.B. doesn't cleanup query/fragment
@@ -355,31 +389,37 @@ class URL:
         return URL(self._val._replace(netloc=self._make_netloc(val.username,
                                                                val.password,
                                                                val.hostname,
-                                                               port)))
+                                                               port)),
+                   encoded=True)
 
     def with_query(self, query):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(query, Mapping):
+        if isinstance(query, Mapping):
+            quoter = partial(quote, safe='', plus=True)
+            query = '&'.join(quoter(k)+'='+quoter(v)
+                             for k, v in query.items())
+        elif isinstance(query, str):
+            query = quote(query, safe='=+&', plus=True)
+        else:
             raise TypeError("Invalid query type")
-        return URL(self._val._replace(
-            query='&'.join(str(k)+'='+str(v)
-                           for k, v in query.items())))
+        return URL(self._val._replace(query=query),
+                   encoded=True)
 
     def with_fragment(self, fragment):
         # N.B. doesn't cleanup query/fragment
         if not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(fragment=fragment))
+        return URL(self._val._replace(fragment=quote(fragment)),
+                   encoded=True)
 
     def with_name(self, name):
         # N.B. DOES cleanup query/fragment
         if not isinstance(name, str):
             raise TypeError("Invalid name type")
-        if not name:
-            raise ValueError("Empty name is not allowed")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        parts = list(self.parts)
+        name = quote(name, safe='/')
+        parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:
                 parts.append(name)
@@ -391,10 +431,20 @@ class URL:
             if parts[0] == '/':
                 parts[0] = ''  # replace leading '/'
         return URL(self._val._replace(path='/'.join(parts),
-                                      query='', fragment=''))
+                                      query='', fragment=''), encoded=True)
 
     def join(self, url):
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)))
+        return URL(urljoin(str(self), str(url)), encoded=True)
+
+    def human_repr(self):
+        return urlunsplit(SplitResult(self.scheme,
+                                      self._make_netloc(self.user or "",
+                                                        self.password or "",
+                                                        self.host,
+                                                        self.port),
+                                      self.path,
+                                      self.query_string,
+                                      self.fragment))
