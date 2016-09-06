@@ -349,20 +349,21 @@ class URL:
 
     def with_user(self, user):
         # N.B. doesn't cleanup query/fragment
+        val = self._val
         if user is None:
-            pass
+            password = None
         elif isinstance(user, str):
             user = quote(user)
+            password = val.password
         else:
             raise TypeError("Invalid user type")
         if not self.is_absolute():
             raise ValueError("user replacement is not allowed "
                              "for relative URLs")
-        val = self._val
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(user,
-                                         val.password,
+                                         password,
                                          val.hostname,
                                          val.port)),
             encoded=True)

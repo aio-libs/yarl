@@ -12,7 +12,7 @@ changing.
 Introduction
 ------------
 
-Url could be constructed from :class:`str`:
+Url is constructed from :class:`str`:
 
 .. doctest::
 
@@ -39,7 +39,7 @@ accessible by properties:
    >>> url.fragment
    'frag'
 
-All url manipulations produces a new url object::
+All url manipulations produces a new url object:
 
 .. doctest::
 
@@ -69,7 +69,7 @@ getting *decoded* strings:
 Human readable representation of URL is available as ``.human_repr()``:
 
    >>> url.human_repr()
-   'https://www.python.org:443/путь'
+   'https://www.python.org/путь'
 
 For full documentation please read :ref:`yarl-api` section.
 

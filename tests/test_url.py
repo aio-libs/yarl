@@ -542,6 +542,11 @@ def test_with_user_None():
     assert str(url.with_user(None)) == 'http://example.com'
 
 
+def test_with_user_None_when_password_present():
+    url = URL('http://john:pass@example.com')
+    assert str(url.with_user(None)) == 'http://example.com'
+
+
 def test_with_password():
     url = URL('http://john@example.com')
     assert str(url.with_password('pass')) == 'http://john:pass@example.com'

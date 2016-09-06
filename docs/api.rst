@@ -46,8 +46,7 @@ But for *non-ascii* case *encoding* is applyed.
 
 .. doctest::
 
-   >>> url = URL('http://εμπορικόσήμα.eu/путь/這裡')
-   >>> str(url)
+   >>> str(URL('http://εμπορικόσήμα.eu/путь/這裡'))
    'http://xn--jxagkqfkduily1i.eu/%D0%BF%D1%83%D1%82%D1%8C/%E9%80%99%E8%A3%A1'
 
 The same is true for *user*, *password*, *query* and *fragment* parts of URL.
@@ -59,7 +58,7 @@ Already encoded URL is not changed:
    >>> URL('http://xn--jxagkqfkduily1i.eu')
    URL('http://xn--jxagkqfkduily1i.eu')
 
-Use :meth:`URL.human_repr` getting human readable representation:
+Use :meth:`URL.human_repr` for getting human readable representation:
 
 .. doctest::
 
@@ -82,124 +81,218 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
    .. doctest::
 
-      >>> url = URL('http://example.com')
-      >>> url.scheme
+      >>> URL('http://example.com').scheme
       'http'
 
-   ``None`` for relative URLs or URLs starting with `'//'`
+   Empty string for relative URLs or URLs starting with `'//'`
    (:ref:`yarl-api-relative-urls`).
 
    .. doctest::
 
-      >>> url = URL('page.html')
-      >>> url.scheme
-      None
+      >>> URL('//example.com').scheme
+      ''
+      >>> URL('page.html').scheme
+      ''
 
 .. attribute:: URL.user
 
-   Decoded *user* part of URL.
+   Decoded *user* part of URL, ``None`` if *user* is missing.
 
    .. doctest::
 
-      >>> url = URL('http://john@example.com')
-      >>> url.user
+      >>> URL('http://john@example.com').user
       'john'
-
-   .. doctest::
-
-      >>> url = URL('http://андрей@example.com')
-      >>> url.user
+      >>> URL('http://андрей@example.com').user
       'андрей'
+      >>> URL('http://example.com').user is None
+      True
 
-   ``None`` if *user* is not set.
+
+.. attribute:: URL.raw_user
+
+   Encoded *user* part of URL, ``None`` if *user* is missing.
+
 
    .. doctest::
 
-      >>> url = URL('http://example.com')
-      >>> url.user
-      None
+      >>> URL('http://андрей@example.com').raw_user
+      '%D0%B0%D0%BD%D0%B4%D1%80%D0%B5%D0%B9'
+      >>> URL('http://example.com').raw_user is None
+      True
 
 
 .. attribute:: URL.password
 
+   Decoded *password* part of URL, ``None`` if *user* is missing.
+
    .. doctest::
 
-      >>> url.password
+      >>> URL('http://john:pass@example.com').password
       'pass'
+      >>> URL('http://андрей:пароль@example.com').password
+      'пароль'
+      >>> URL('http://example.com').password is None
+      True
 
-   ``None`` if *password* was not set.
+
+.. attribute:: URL.raw_password
+
+   Encoded *password* part of URL, ``None`` if *user* is missing.
+
+   .. doctest::
+
+      >>> URL('http://user:пароль@example.com').raw_password
+      '%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
 
 
 .. attribute:: URL.host
 
+   Encoded *host* part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   Brackets are stripped for IPv6.
+
    .. doctest::
 
-      >>> url.host
+      >>> URL('http://example.com').host
       'example.com'
 
-   Empty string for relative URLs (:ref:`yarl-api-relative-urls`).
+      >>> URL('http://хост.домен').host
+      'хост.домен'
+
+      >>> URL('page.html').host is None
+      True
+
+      >>> URL('http://[::1]').host
+      '::1'
+
+.. attribute:: URL.raw_host
+
+   IDNA decoded *host* part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   .. doctest::
+
+      >>> URL('http://хост.домен').raw_host
+      'xn--n1agdj.xn--d1acufc'
 
 
 .. attribute:: URL.port
 
+   *port* part of URL.
+
+   ``None`` for relative URLs (:ref:`yarl-api-relative-urls`) or for
+   :attr:`URL.scheme` without :ref:`default port substitution
+   <yarl-api-default-ports>`.
+
    .. doctest::
 
-      >>> url.port
+      >>> URL('http://example.com:8080').port
       8080
-
-   ``None`` for relative URLs or for :attr:`URL.scheme`
-   without default port substitution (:ref:`yarl-api-relative-urls`).
-
-   .. seealso::
-
-      :ref:`yarl-api-default-ports`
+      >>> URL('http://example.com').port
+      80
+      >>> URL('page.html').port is None
+      True
 
 
 .. attribute:: URL.path
 
+   Decoded *path* part of URL, ``'/'`` for absolute URLs without *path* part.
+
    .. doctest::
 
-      >>> url.path
+      >>> URL('http://example.com/path/to').path
       '/path/to'
+      >>> URL('http://example.com/путь/сюда').path
+      '/путь/сюда'
+      >>> URL('http://example.com').path
+      '/'
 
-   The value is empty string if *path* part of URL is not present.
+.. attribute:: URL.raw_path
+
+   Encoded *path* part of URL, ``'/'`` for absolute URLs without *path* part.
+
+   .. doctest::
+
+      >>> URL('http://example.com/путь/сюда').raw_path
+      '/%D0%BF%D1%83%D1%82%D1%8C/%D1%81%D1%8E%D0%B4%D0%B0'
+      >>> URL('http://example.com').path
+      '/'
 
 
 .. attribute:: URL.query_string
 
+   Encoded *query* part of URL, empty string if *query* is missing.
+
    .. doctest::
 
-      >>> url.query_string
+      >>> URL('http://example.com/path?a1=a&a2=b').query_string
       'a1=a&a2=b'
+      >>> URL('http://example.com/path?ключ=знач').query_string
+      'ключ=знач'
+      >>> URL('http://example.com/path').query_string
+      ''
 
-   The value is empty string if *query* part of URL is not present.
+.. attribute:: URL.raw_query_string
+
+   Decoded *query* part of URL, empty string if *query* is missing.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?ключ=знач').raw_query_string
+      '%D0%BA%D0%BB%D1%8E%D1%87=%D0%B7%D0%BD%D0%B0%D1%87'
 
 
 .. attribute:: URL.fragment
 
+   Encoded *fragment* part of URL, empty string if *fragment* is missing.
+
    .. doctest::
 
-      >>> url.fragment
-      'frag'
+      >>> URL('http://example.com/path#fragment').fragment
+      'fragment'
+      >>> URL('http://example.com/path#якорь').fragment
+      'якорь'
+      >>> URL('http://example.com/path').fragment
+      ''
 
-   The value is empty string if *fragment* part of URL is not present.
+.. attribute:: URL.raw_fragment
+
+   Edcoded *fragment* part of URL, empty string if *fragment* is missing.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path#якорь').raw_fragment
+      '%D1%8F%D0%BA%D0%BE%D1%80%D1%8C'
 
 
-For *path* and *query* :mod:`yarl` supports additional helpers:
+
+For *path* and *query* *yarl* supports additional helpers:
 
 
 .. attribute:: URL.parts
 
-   A :class:`tuple` containing *path* parts.
+   A :class:`tuple` containing decoded *path* parts, ``('/',)`` for
+   absolute URLs if *path* is missing.
 
    .. doctest::
 
-      >>> url.parts
+      >>> URL('http://example.com/path/to').parts
       ('/', 'path', 'to')
+      >>> URL('http://example.com/путь/сюда').parts
+      ('/', 'путь', 'сюда')
+      >>> URL('http://example.com').parts
+      ('/',)
 
-   If *path* was not set the value is ``('/',)`` for absolute URLs and
-   empty tuple ``()`` for relative ones (:ref:`yarl-api-relative-urls`).
+.. attribute:: URL.raw_parts
 
+   A :class:`tuple` containing encoded *path* parts, ``('/',)`` for
+   absolute URLs if *path* is missing.
+
+   .. doctest::
+
+      >>> URL('http://example.com/путь/сюда').raw_parts
+      ('/', '%D0%BF%D1%83%D1%82%D1%8C', '%D1%81%D1%8E%D0%B4%D0%B0')
 
 .. attribute:: URL.name
 
@@ -207,21 +300,37 @@ For *path* and *query* :mod:`yarl` supports additional helpers:
 
    .. doctest::
 
-      >>> url.name
+      >>> URL('http://example.com/path/to').name
       'to'
+      >>> URL('http://example.com/путь/сюда').name
+      'сюда'
+      >>> URL('http://example.com/path/').name
+      ''
 
-   May be an empty string if *path* is not present.
+.. attribute:: URL.raw_name
 
-.. attribute:: URL.query
-
-   A :class:`multidict.MultiDictProxy` representing parsed *query* parameters.
+   The last part of :attr:`raw_parts`.
 
    .. doctest::
 
-      >>> url.query
-      <MultiDictProxy('a1': 'a', 'a2': 'b')>
+      >>> URL('http://example.com/путь/сюда').raw_name
+      '%D1%81%D1%8E%D0%B4%D0%B0'
 
-   Empty value if URL has no *query* part.
+
+.. attribute:: URL.query
+
+   A :class:`multidict.MultiDictProxy` representing parsed *query*
+   parameters in decded representation.  Empty value if URL has no
+   *query* part.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?a1=a&a2=b').query
+      <MultiDictProxy('a1': 'a', 'a2': 'b')>
+      >>> URL('http://example.com/path?ключ=знач').query
+      <MultiDictProxy('ключ': 'знач')>
+      >>> URL('http://example.com/path').query
+      <MultiDictProxy()>
 
 
 
@@ -230,7 +339,7 @@ For *path* and *query* :mod:`yarl` supports additional helpers:
 Absolute and relative URLs
 --------------------------
 
-:mod:`yarl` supports both absolute an relative URLs.
+The module supports both absolute an relative URLs.
 
 Absulute URL should start from either *scheme* or ``'//'``.
 
@@ -251,10 +360,11 @@ Absulute URL should start from either *scheme* or ``'//'``.
       >>> URL('path').is_absolute()
       False
 
+
 New URL generaion
 -----------------
 
-:class:`URL` is an immutable object, every operation described in the
+URL is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
 .. method:: URL.with_scheme(scheme)
@@ -268,30 +378,38 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_user(user)
 
-   Return a new URL with *user* replaced:
+   Return a new URL with *user* replaced, autoencode *user* if needed.
+
+   Clears user/password if *user* is ``None``.
 
    .. doctest::
 
       >>> URL('http://user:pass@example.com').with_user('new_user')
       URL('http://new_user:pass@example.com')
+      >>> URL('http://user:pass@example.com').with_user('вася')
+      URL('http://%D0%B2%D0%B0%D1%81%D1%8F:pass@example.com')
+      >>> URL('http://user:pass@example.com').with_user(None)
+      URL('http://new_user:pass@example.com')
 
 .. method:: URL.with_password(password)
 
-   Return a new URL with *password* replaced:
+   Return a new URL with *password* replaced, autoencode *password* if needed.
 
    .. doctest::
 
-      >>> URL('http://user:pass@example.com').with_password('new_pass')
-      URL('http://user:new_pass@example.com')
+      >>> URL('http://user:pass@example.com').with_password('пароль')
+      URL('http://user:%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C@example.com')
 
 .. method:: URL.with_host(host)
 
-   Return a new URL with *host* replaced:
+   Return a new URL with *host* replaced, autoencode *host* if needed.
 
    .. doctest::
 
-      >>> URL('http://example.com').with_host('python.org')
-      URL('http://python.org')
+      >>> URL('http://example.com/path/to').with_host('python.org')
+      URL('http://python.org/path/to')
+      >>> URL('http://example.com/path').with_host('хост.домен')
+      URL('http://xn--n1agdj.xn--d1acufc/path')
 
 .. method:: URL.with_port(port)
 
@@ -312,7 +430,7 @@ section generates a new *URL* instance.
       >>> URL('http://example.com/path/to?arg#frag').with_name('new')
       URL('http://example.com/path/new')
 
-.. attr:: URL.parent
+.. attribute:: URL.parent
 
    A new URL with last part of *path* removed and
    cleaned up *query* and *fragment* parts.
