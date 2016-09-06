@@ -21,8 +21,8 @@ Url is constructed from :class:`str`:
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')
 
-All url parts: scheme, user, passsword, host, port, path, query and fragment are
-accessible by properties:
+All url parts: *scheme*, *user*, *passsword*, *host*, *port*, *path*,
+*query* and *fragment* are accessible by properties:
 
 .. doctest::
 

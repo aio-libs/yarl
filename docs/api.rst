@@ -28,8 +28,8 @@ for relative
 ones (:ref:`yarl-api-relative-urls`).
 
 Internally all data are stored as *percent-encoded* strings for
-*user*, *path*, *query* and *fragment* and *IDNA-encoded* for *host*
-URL parts.
+*user*, *path*, *query* and *fragment* URL parts and
+*IDNA-encoded* (:rfc:`5891`) for *host*.
 
 Constructor and midification operators perform *encoding* for all
 parts automatically.
@@ -77,18 +77,13 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
 .. attribute:: URL.scheme
 
-   Scheme for absolute URLs.
+   Scheme for absolute URLs, empty string for relative URLs or URLs
+   starting with `'//'` (:ref:`yarl-api-relative-urls`).
 
    .. doctest::
 
       >>> URL('http://example.com').scheme
       'http'
-
-   Empty string for relative URLs or URLs starting with `'//'`
-   (:ref:`yarl-api-relative-urls`).
-
-   .. doctest::
-
       >>> URL('//example.com').scheme
       ''
       >>> URL('page.html').scheme
@@ -156,13 +151,10 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
       >>> URL('http://example.com').host
       'example.com'
-
       >>> URL('http://хост.домен').host
       'хост.домен'
-
       >>> URL('page.html').host is None
       True
-
       >>> URL('http://[::1]').host
       '::1'
 
@@ -216,8 +208,6 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
       >>> URL('http://example.com/путь/сюда').raw_path
       '/%D0%BF%D1%83%D1%82%D1%8C/%D1%81%D1%8E%D0%B4%D0%B0'
-      >>> URL('http://example.com').path
-      '/'
 
 
 .. attribute:: URL.query_string
@@ -350,13 +340,10 @@ Absulute URL should start from either *scheme* or ``'//'``.
 
       >>> URL('http://example.com').is_absolute()
       True
-
       >>> URL('//example.com').is_absolute()
       True
-
       >>> URL('/path/to').is_absolute()
       False
-
       >>> URL('path').is_absolute()
       False
 
@@ -380,7 +367,7 @@ section generates a new *URL* instance.
 
    Return a new URL with *user* replaced, autoencode *user* if needed.
 
-   Clears user/password if *user* is ``None``.
+   Clear user/password if *user* is ``None``.
 
    .. doctest::
 
@@ -389,20 +376,27 @@ section generates a new *URL* instance.
       >>> URL('http://user:pass@example.com').with_user('вася')
       URL('http://%D0%B2%D0%B0%D1%81%D1%8F:pass@example.com')
       >>> URL('http://user:pass@example.com').with_user(None)
-      URL('http://new_user:pass@example.com')
+      URL('http://example.com')
 
 .. method:: URL.with_password(password)
 
    Return a new URL with *password* replaced, autoencode *password* if needed.
 
+   Clear password if ``None`` is passed.
+
    .. doctest::
 
       >>> URL('http://user:pass@example.com').with_password('пароль')
       URL('http://user:%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C@example.com')
+      >>> URL('http://user:pass@example.com').with_password(None)
+      URL('http://user@example.com')
 
 .. method:: URL.with_host(host)
 
    Return a new URL with *host* replaced, autoencode *host* if needed.
+
+   Changing *host* for relative URLs is not allowed, use
+   :meth:`URL.join` instead.
 
    .. doctest::
 
@@ -413,22 +407,30 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_port(port)
 
-   Return a new URL with *port* replaced:
+   Return a new URL with *port* replaced.
+
+   Clear port to default if ``None`` is passed.
 
    .. doctest::
 
       >>> URL('http://example.com:8888').with_port(9999)
       URL('http://example.com:9999')
+      >>> URL('http://example.com:8888').with_port(None)
+      URL('http://example.com')
 
 .. method:: URL.with_name(name)
 
    Return a new URL with *name* (last part of *path*) replaced and
    cleaned up *query* and *fragment* parts.
 
+   Name is encoded if needed.
+
    .. doctest::
 
       >>> URL('http://example.com/path/to?arg#frag').with_name('new')
       URL('http://example.com/path/new')
+      >>> URL('http://example.com/path/to').with_name('имя')
+      URL('http://example.com/path/%D0%B8%D0%BC%D1%8F')
 
 .. attribute:: URL.parent
 
@@ -443,6 +445,8 @@ section generates a new *URL* instance.
 Division (``/``) operator creates a new URL with appeded *path* parts
 and cleaned up *query* and *fragment* parts.
 
+The path is encoded if needed.
+
    .. doctest::
 
       >>> url = URL('http://example.com/path?arg#frag') / 'to/subpath'
@@ -450,6 +454,9 @@ and cleaned up *query* and *fragment* parts.
       URL('http://example.com/path/to/subpath')
       >>> url.parts
       ('/', 'path', 'to', 'subpath')
+      >>> url = URL('http://example.com/path?arg#frag') / 'сюда'
+      >>> url
+      URL('http://example.com/path/%D1%81%D1%8E%D0%B4%D0%B0')
 
 .. method:: join(url)
 
@@ -476,6 +483,25 @@ and cleaned up *query* and *fragment* parts.
          >>> base = URL('http://example.com/path/index.html')
          >>> base.join(URL('//python.org/page.html'))
          URL('http://python.org/page.html')
+
+Human readable representation
+-----------------------------
+
+All URL data is stored in encoded form internally. It's pretty good
+for passing ``str(url)`` everywhere url string is accepted but quite
+bad for memorizing by humans.
+
+.. method:: human_repr()
+
+   Return decoded human readable string for URL representation.
+
+   .. doctest::
+
+      >>> url = URL('http://εμπορικόσήμα.eu/這裡')
+      >>> str(url)
+      'http://xn--jxagkqfkduily1i.eu/%E9%80%99%E8%A3%A1'
+      >>> url.human_repr()
+      'http://εμπορικόσήμα.eu/這裡'
 
 .. _yarl-api-default-ports:
 
@@ -508,6 +534,12 @@ The module borrowed design from :mod:`pathlib` in any place where it was
 possible.
 
 .. seealso::
+
+   :rfc:`5891` - Internationalized Domain Names in Applications (IDNA): Protocol
+      Document describing non-ascii domain name encoding.
+
+   :rfc:`3987` - Internationalized Resource Identifiers
+      This specifies convertion rules for non-ascii characters in URL.
 
    :rfc:`3986` - Uniform Resource Identifiers
       This is the current standard (STD66). Any changes to :mod:`yarl` module
