@@ -66,7 +66,7 @@ getting *decoded* strings:
    >>> url.raw_path
    '/%D0%BF%D1%83%D1%82%D1%8C'
 
-Human readable representation of URL is available as ``.human_repr()``:
+Human readable representation of URL is available as `~yarl.URL..human_repr()`:
 
    >>> url.human_repr()
    'https://www.python.org/путь'
@@ -87,13 +87,40 @@ The library is Python 3 only!
 Dependencies
 ------------
 
-YARL requires multidict library.
+YARL requires :mod:`multidict` library.
+
+It installs it automatically.
 
 
 API documentation
 ------------------
 
 Open :ref:`yarl-api` for reading full list of available methods.
+
+
+Comparison with other URL libraries
+------------------------------------
+
+* furl (https://pypi.python.org/pypi/furl)
+
+  The libray has a rich functionality but ``furl`` object is mutable.
+
+  I afraid to pass this object into foreign code: who knows if the
+  code will modifiy my url in a terrible way while I just want to send URL
+  with handy helpers for accessing URL properies.
+
+  ``furl`` has other non obvious tricky things but the main objection
+  is mutability.
+
+* URLObject (https://pypi.python.org/pypi/URLObject)
+
+  URLObject is immutable, that's pretty good.
+
+  Every URL change generates a new URL object.
+
+  But the library doesn't any decode/encode transormations leaving end
+  user to cope with these gory details.
+
 
 Source code
 -----------

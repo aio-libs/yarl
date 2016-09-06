@@ -4,15 +4,15 @@ yarl
 Introduction
 ------------
 
-Url could be constructed from ``str``::
+Url is constructed from ``str``:
 
    >>> from yarl import URL
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')
 
-All url parts: scheme, host, port, path, query and fragment are
-accessible by properties::
+All url parts: *scheme*, *user*, *passsword*, *host*, *port*, *path*,
+*query* and *fragment* are accessible by properties:
 
    >>> url.scheme
    'https'
@@ -27,21 +27,33 @@ accessible by properties::
    >>> url.fragment
    'frag'
 
-All url manipulations produces a new url object::
+All url manipulations produces a new url object:
 
    >>> url.parent / 'downloads/source'
    URL('https://www.python.org/downloads/source')
 
-Strings in ``URL`` object are always unquoted, for getting
-quoted version please convert URL into ``bytes``::
+Strings passed to constructor and modification methods are
+automatically encoded giving canonical representation as result:
 
-   >>> bytes(url)
-   b'https://www.python.org/%7Eguido?arg=1#frag'
+.. doctest::
 
-Constructing URL from bytes performs unquoting as well::
+   >>> url = URL('https://www.python.org/путь')
+   >>> url
+   URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
 
-   >>> URL(b'https://www.python.org/%7Eguido')
-   URL('https://www.python.org/~guido')
+Regular properties are *percent-encoded*, use ``raw_`` versions for
+getting *decoded* strings:
+
+   >>> url.path
+   '/путь'
+
+   >>> url.raw_path
+   '/%D0%BF%D1%83%D1%82%D1%8C'
+
+Human readable representation of URL is available as ``.human_repr()``:
+
+   >>> url.human_repr()
+   'https://www.python.org/путь'
 
 For full documentation please read https:://yarl.readthedocs.org.
 
@@ -66,6 +78,30 @@ API documentation
 ------------------
 
 The documentation is located at https://yarl.readthedocs.org
+
+Comparison with other URL libraries
+------------------------------------
+
+* furl (https://pypi.python.org/pypi/furl)
+
+  The libray has a rich functionality but ``furl`` object is mutable.
+
+  I afraid to pass this object into foreign code: who knows if the
+  code will modifiy my url in a terrible way while I just want to send URL
+  with handy helpers for accessing URL properies.
+
+  ``furl`` has other non obvious tricky things but the main objection
+  is mutability.
+
+* URLObject (https://pypi.python.org/pypi/URLObject)
+
+  URLObject is immutable, that's pretty good.
+
+  Every URL change generates a new URL object.
+
+  But the library doesn't any decode/encode transormations leaving end
+  user to cope with these gory details.
+
 
 Source code
 -----------
