@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.1.1 (2016-09-06)
+------------------
+
+* Update REAMDE, old version used obsolete AIP
+
 0.1.0 (2016-09-06)
 ------------------
 
