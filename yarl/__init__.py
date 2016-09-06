@@ -477,7 +477,7 @@ class URL:
                                       self._make_netloc(self.user,
                                                         self.password,
                                                         self.host,
-                                                        self.port),
+                                                        self._val.port),
                                       self.path,
                                       self.query_string,
                                       self.fragment))
