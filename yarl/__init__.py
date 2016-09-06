@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.0.1'
+__version__ = '0.1.0'
 
 # Why not furl?
 # Because I pretty sure URL class should be immutable
