@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 # is_leaf()

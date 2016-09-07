@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+0.1.3 (2016-09-07)
+------------------
+
+* Document with_query(), with_fragment() and origin()
+
+* Allow None for with_query() and with_fragment()
+
 0.1.2 (2016-09-07)
 ------------------
 
