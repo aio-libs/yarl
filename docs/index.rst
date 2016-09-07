@@ -169,4 +169,4 @@ Indices and tables
 * :ref:`search`
 
 
-.. _GitHub: https://github.com/aio-libs/multidict
+.. _GitHub: https://github.com/aio-libs/yarl

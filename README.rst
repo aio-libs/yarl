@@ -129,4 +129,4 @@ The ``yarl`` package is written by Andrew Svetlov.
 It's *Apache 2* licensed and freely available.
 
 
-.. _GitHub: https://github.com/aio-libs/multidict
+.. _GitHub: https://github.com/aio-libs/yarl

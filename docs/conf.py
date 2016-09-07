@@ -160,12 +160,14 @@ html_theme_options = {
     'github_button': True,
     'github_banner': True,
     'travis_button': True,
+    'codecov_button': True,
     'pre_bg': '#FFF6E5',
     'note_bg': '#E5ECD1',
     'note_border': '#BFCF8C',
     'body_text': '#482C0A',
     'sidebar_text': '#49443E',
     'sidebar_header': '#4B4032',
+    'sidebar_collapse': False,
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -223,11 +225,11 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-# html_sidebars = {
-#     '**': [
-#         'about.html', 'navigation.html', 'searchbox.html',
-#     ]
-# }
+html_sidebars = {
+    '**': [
+        'about.html', 'navigation.html', 'searchbox.html',
+    ]
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
