@@ -19,7 +19,7 @@ yarl
 Introduction
 ------------
 
-Url is constructed from ``str``:
+Url is constructed from ``str``::
 
    >>> from yarl import URL
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
@@ -27,7 +27,7 @@ Url is constructed from ``str``:
    URL('https://www.python.org/~guido?arg=1#frag')
 
 All url parts: *scheme*, *user*, *passsword*, *host*, *port*, *path*,
-*query* and *fragment* are accessible by properties:
+*query* and *fragment* are accessible by properties::
 
    >>> url.scheme
    'https'
@@ -42,20 +42,20 @@ All url parts: *scheme*, *user*, *passsword*, *host*, *port*, *path*,
    >>> url.fragment
    'frag'
 
-All url manipulations produces a new url object:
+All url manipulations produces a new url object::
 
    >>> url.parent / 'downloads/source'
    URL('https://www.python.org/downloads/source')
 
 Strings passed to constructor and modification methods are
-automatically encoded giving canonical representation as result:
+automatically encoded giving canonical representation as result::
 
    >>> url = URL('https://www.python.org/путь')
    >>> url
    URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
 
 Regular properties are *percent-encoded*, use ``raw_`` versions for
-getting *decoded* strings:
+getting *decoded* strings::
 
    >>> url.path
    '/путь'
@@ -63,7 +63,7 @@ getting *decoded* strings:
    >>> url.raw_path
    '/%D0%BF%D1%83%D1%82%D1%8C'
 
-Human readable representation of URL is available as ``.human_repr()``:
+Human readable representation of URL is available as ``.human_repr()``::
 
    >>> url.human_repr()
    'https://www.python.org/путь'
@@ -84,7 +84,7 @@ The library is Python 3 only!
 Dependencies
 ------------
 
-YARL requires multidict library.
+YARL requires multidict_ library.
 
 
 API documentation
@@ -145,3 +145,5 @@ It's *Apache 2* licensed and freely available.
 
 
 .. _GitHub: https://github.com/aio-libs/yarl
+
+.. _multidict: https://github.com/aio-libs/multidict
