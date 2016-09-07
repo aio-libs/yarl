@@ -1,6 +1,17 @@
 yarl
 ====
 
+.. image:: https://travis-ci.org/aio-libs/yarl.svg?branch=master
+  :target:  https://travis-ci.org/aio-libs/yarl
+  :align: right
+
+.. image:: https://codecov.io/gh/aio-libs/yarl/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/aio-libs/yarl
+
+.. image:: https://badge.fury.io/py/yarl.svg
+    :target: https://badge.fury.io/py/yarl
+
+
 Introduction
 ------------
 
