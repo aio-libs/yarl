@@ -55,8 +55,8 @@ automatically encoded giving canonical representation as result:
    >>> url
    URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
 
-Regular properties are *percent-encoded*, use ``raw_`` versions for
-getting *decoded* strings:
+Regular properties are *percent-decoded*, use ``raw_`` versions for
+getting *encoded* strings:
 
 .. doctest::
 
