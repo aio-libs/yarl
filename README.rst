@@ -53,7 +53,7 @@ Human readable representation of URL is available as ``.human_repr()``:
    >>> url.human_repr()
    'https://www.python.org/путь'
 
-For full documentation please read https:://yarl.readthedocs.org.
+For full documentation please read https://yarl.readthedocs.org.
 
 
 Installation
