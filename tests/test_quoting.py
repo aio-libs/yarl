@@ -190,3 +190,15 @@ def test_unquoting_parts():
 def test_None():
     assert quote(None) is None
     assert unquote(None) is None
+
+
+def test_empty_string():
+    assert quote('') == ''
+    assert unquote('') == ''
+
+
+def test_bad_types():
+    with pytest.raises(TypeError):
+        quote(123)
+    with pytest.raises(TypeError):
+        unquote(123)

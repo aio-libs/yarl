@@ -424,7 +424,9 @@ class URL:
 
     def with_query(self, query):
         # N.B. doesn't cleanup query/fragment
-        if isinstance(query, Mapping):
+        if query is None:
+            query = ''
+        elif isinstance(query, Mapping):
             quoter = partial(quote, safe='', plus=True)
             query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query.items())
@@ -437,7 +439,9 @@ class URL:
 
     def with_fragment(self, fragment):
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(fragment, str):
+        if fragment is None:
+            fragment = ''
+        elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
         return URL(self._val._replace(fragment=quote(fragment)),
                    encoded=True)

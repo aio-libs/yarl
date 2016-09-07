@@ -418,6 +418,42 @@ section generates a new *URL* instance.
       >>> URL('http://example.com:8888').with_port(None)
       URL('http://example.com')
 
+.. method:: URL.with_query(query)
+
+   Return a new URL with *query* part replaced.
+
+   Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
+   :class:`~multidict.MultiDict` instances) or :class:`str`,
+   autoencode the argument if needed.
+
+   Clear *query* if ``None`` is passed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?a=b').with_query('c=d')
+      URL('http://example.com/path?c=d')
+      >>> URL('http://example.com/path?a=b').with_query({'c': 'd'})
+      URL('http://example.com/path?c=d')
+      >>> URL('http://example.com/path?a=b').with_query({'кл': 'зн'})
+      URL('http://example.com/path?%D0%BA%D0%BB=%D0%B7%D0%BD')
+      >>> URL('http://example.com/path?a=b').with_query(None)
+      URL('http://example.com/path')
+
+.. method:: URL.with_fragment(port)
+
+   Return a new URL with *fragment* replaced, autoencode *fragment* if needed.
+
+   Clear *fragment* to default if ``None`` is passed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path#frag').with_fragment('anchor')
+      URL('http://example.com/path#anchor')
+      >>> URL('http://example.com/path#frag').with_fragment('якорь')
+      URL('http://example.com/path#%D1%8F%D0%BA%D0%BE%D1%80%D1%8C')
+      >>> URL('http://example.com/path#frag').with_fragment(None)
+      URL('http://example.com/path')
+
 .. method:: URL.with_name(name)
 
    Return a new URL with *name* (last part of *path*) replaced and
@@ -441,6 +477,18 @@ section generates a new *URL* instance.
 
       >>> URL('http://example.com/path/to?arg#frag').parent
       URL('http://example.com/path')
+
+.. method:: URL.origin
+
+   A new URL with *scheme*, *host* and *port* parts only.
+   *user*, *password*, *path*, *query* and *fragment* are removed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to?arg#frag').origin()
+      URL('http://example.com')
+      >>> URL('http://user:pass@example.com/path').origin()
+      URL('http://example.com')
 
 Division (``/``) operator creates a new URL with appeded *path* parts
 and cleaned up *query* and *fragment* parts.

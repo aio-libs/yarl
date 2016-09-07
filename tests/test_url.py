@@ -685,10 +685,15 @@ def test_with_query_multidict_with_unsafe():
     assert url2.query == {'a+b': '?=+&'}
 
 
+def test_with_query_None():
+    url = URL('http://example.com/path?a=b')
+    assert url.with_query(None).query_string == ''
+
+
 def test_with_query_bad_type():
     url = URL('http://example.com')
     with pytest.raises(TypeError):
-        url.with_query(None)
+        url.with_query(123)
 
 
 def test_with_fragment():
@@ -703,10 +708,16 @@ def test_with_fragment_non_ascii():
     assert url2.fragment == 'фрагм'
 
 
+def test_with_fragment_None():
+    url = URL('http://example.com/path#frag')
+    url2 = url.with_fragment(None)
+    assert str(url2) == 'http://example.com/path'
+
+
 def test_with_fragment_bad_type():
     url = URL('http://example.com')
     with pytest.raises(TypeError):
-        url.with_fragment(None)
+        url.with_fragment(123)
 
 
 def test_with_name():

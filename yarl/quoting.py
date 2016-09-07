@@ -16,6 +16,8 @@ def quote(val, *, safe='', plus=False):
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
+    if not val:
+        return ''
     val = val.encode('utf8')
     ret = bytearray()
     pct = b''
@@ -58,6 +60,10 @@ def quote(val, *, safe='', plus=False):
 def unquote(val, *, unsafe='', plus=False):
     if val is None:
         return None
+    if not isinstance(val, str):
+        raise TypeError("Argument should be str")
+    if not val:
+        return ''
     pct = ''
     pcts = bytearray()
     ret = []
