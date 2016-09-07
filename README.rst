@@ -35,8 +35,6 @@ All url manipulations produces a new url object:
 Strings passed to constructor and modification methods are
 automatically encoded giving canonical representation as result:
 
-.. doctest::
-
    >>> url = URL('https://www.python.org/путь')
    >>> url
    URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
