@@ -12,6 +12,10 @@ yarl
     :target: https://badge.fury.io/py/yarl
 
 
+.. image:: https://readthedocs.org/projects/yarl/badge/?version=latest
+    :target: https://yarl.readthedocs.io
+
+
 Introduction
 ------------
 
