@@ -7,6 +7,7 @@ python:
 install:
   - pip install -r requirements-ci.txt
   - pip install codecov
+  - pip install mypy
 
 
 script:
@@ -15,6 +16,7 @@ script:
   - if python -c "import sys; sys.exit(sys.version_info < (3,5))"; then
         python setup.py check -s;
     fi
+  - mypy yarl --silent-imports
 
 
 after_success:

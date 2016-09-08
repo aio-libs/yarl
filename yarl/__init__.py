@@ -11,6 +11,8 @@ from .quoting import quote, unquote
 
 __version__ = '0.1.3'
 
+__all__ = ['URL']
+
 
 # is_leaf()
 # path normalization
