@@ -647,6 +647,11 @@ def test_with_query():
     assert str(url.with_query({'a': '1'})) == 'http://example.com/?a=1'
 
 
+def test_with_query_kwargs():
+    url = URL('http://example.com')
+    assert str(url.with_query(a='1')) == 'http://example.com/?a=1'
+
+
 def test_with_query_str():
     url = URL('http://example.com')
     assert str(url.with_query('a=1&b=2')) == 'http://example.com/?a=1&b=2'
