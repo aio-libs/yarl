@@ -431,6 +431,8 @@ section generates a new *URL* instance.
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
 
+   It also can take an arbitrary number of keyword arguments.
+
    Clear *query* if ``None`` is passed.
 
    .. doctest::
