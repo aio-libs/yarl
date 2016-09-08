@@ -445,6 +445,8 @@ section generates a new *URL* instance.
       URL('http://example.com/path?%D0%BA%D0%BB=%D0%B7%D0%BD')
       >>> URL('http://example.com/path?a=b').with_query(None)
       URL('http://example.com/path')
+      >>> URL('http://example.com/path?a=b&b=1').with_query(b='1')
+      URL('http://example.com/path?b=1')
 
 .. method:: URL.with_fragment(port)
 

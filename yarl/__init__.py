@@ -557,7 +557,7 @@ class URL:
                                                                port)),
                    encoded=True)
 
-    def with_query(self, query=None, **kwargs):
+    def with_query(self, *args, **kwargs):
         """Return a new URL with query part replaced.
 
         Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
@@ -569,8 +569,14 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
+
         if kwargs:
             query = kwargs
+        elif len(args) == 1:
+            query = args[0]
+        else:
+            raise TypeError("Invalid query type")
+
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
