@@ -572,10 +572,13 @@ class URL:
 
         if kwargs:
             query = kwargs
+            for _, value in kwargs.items():
+                if not isinstance(value, str):
+                    raise TypeError("Invalid variable type")
         elif len(args) == 1:
             query = args[0]
         else:
-            raise TypeError("Invalid query type")
+            raise ValueError("Either kwargs or query must be present")
 
         if query is None:
             query = ''

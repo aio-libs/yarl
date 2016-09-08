@@ -424,6 +424,7 @@ section generates a new *URL* instance.
       URL('http://example.com')
 
 .. method:: URL.with_query(query)
+            URL.with_query(**kwargs)
 
    Return a new URL with *query* part replaced.
 
@@ -431,7 +432,7 @@ section generates a new *URL* instance.
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
 
-   It also can take an arbitrary number of keyword arguments.
+   Also it also can take an arbitrary number of keyword arguments. 
 
    Clear *query* if ``None`` is passed.
 
