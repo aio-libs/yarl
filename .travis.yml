@@ -7,7 +7,7 @@ python:
 install:
   - pip install -r requirements-ci.txt
   - pip install codecov
-  - pip install mypy
+  - pip install mypy-lang
 
 
 script:
