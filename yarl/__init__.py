@@ -571,6 +571,8 @@ class URL:
         # N.B. doesn't cleanup query/fragment
 
         if kwargs:
+            if len(args) > 0:
+                raise ValueError("Either kwargs or single query parameter must be present")
             query = kwargs
             for _, value in kwargs.items():
                 if not isinstance(value, str):
@@ -578,7 +580,7 @@ class URL:
         elif len(args) == 1:
             query = args[0]
         else:
-            raise ValueError("Either kwargs or query must be present")
+            raise ValueError("Either kwargs or single query parameter must be present")
 
         if query is None:
             query = ''

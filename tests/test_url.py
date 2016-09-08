@@ -649,8 +649,9 @@ def test_with_query():
 
 def test_with_query_kwargs():
     url = URL('http://example.com')
-    assert str(url.with_query(
-        {'a': '2', 'b': '4'}, a='1')) == 'http://example.com/?a=1'
+    with pytest.raises(ValueError):
+        assert str(url.with_query(
+            {'a': '2', 'b': '4'}, a='1')) == 'http://example.com/?a=1'
     assert 'query2=1' in str(url.with_query(query='1', query2='1'))
     assert 'query=1' in str(url.with_query(query='1', query2='1'))
 
