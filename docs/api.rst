@@ -174,8 +174,8 @@ There are tho kinds of properties: *decoded* and *encoded* (with
    *port* part of URL.
 
    ``None`` for relative URLs (:ref:`yarl-api-relative-urls`) or for
-   :attr:`URL.scheme` without :ref:`default port substitution
-   <yarl-api-default-ports>`.
+   URLs without explicit port and :attr:`URL.scheme` without
+   :ref:`default port substitution <yarl-api-default-ports>`.
 
    .. doctest::
 
@@ -335,6 +335,11 @@ Absulute URL should start from either *scheme* or ``'//'``.
 
 
 .. attribute:: URL.is_absolute()
+
+    A check for absolute URLs.
+
+    Return ``True`` for absolute ones (having *scheme* or starting
+    from ``//``), ``False`` otherwise.
 
    .. doctest::
 
