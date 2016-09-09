@@ -557,16 +557,31 @@ class URL:
                                                                port)),
                    encoded=True)
 
-    def with_query(self, query):
+    def with_query(self, *args, **kwargs):
         """Return a new URL with query part replaced.
 
         Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
         or str, autoencode the argument if needed.
 
+        It also can take an arbitrary number of keyword arguments.
+
         Clear query if None is passed.
 
         """
         # N.B. doesn't cleanup query/fragment
+
+        if kwargs:
+            if len(args) > 0:
+                raise ValueError("Either kwargs or single query parameter must be present")
+            query = kwargs
+            for _, value in kwargs.items():
+                if not isinstance(value, str):
+                    raise TypeError("Invalid variable type")
+        elif len(args) == 1:
+            query = args[0]
+        else:
+            raise ValueError("Either kwargs or single query parameter must be present")
+
         if query is None:
             query = ''
         elif isinstance(query, Mapping):

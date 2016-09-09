@@ -424,12 +424,15 @@ section generates a new *URL* instance.
       URL('http://example.com')
 
 .. method:: URL.with_query(query)
+            URL.with_query(**kwargs)
 
    Return a new URL with *query* part replaced.
 
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
+
+   Also it also can take an arbitrary number of keyword arguments. 
 
    Clear *query* if ``None`` is passed.
 
@@ -443,6 +446,8 @@ section generates a new *URL* instance.
       URL('http://example.com/path?%D0%BA%D0%BB=%D0%B7%D0%BD')
       >>> URL('http://example.com/path?a=b').with_query(None)
       URL('http://example.com/path')
+      >>> URL('http://example.com/path?a=b&b=1').with_query(b='1')
+      URL('http://example.com/path?b=1')
 
 .. method:: URL.with_fragment(port)
 
