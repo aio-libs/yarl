@@ -656,8 +656,10 @@ def test_with_query_kwargs():
         url.with_query(b=3)
     with pytest.raises(ValueError):
         url.with_query('a=1', 'a=b')
-    assert 'query2=1' in str(url.with_query(query='1', query2='1'))
-    assert 'query=1' in str(url.with_query(query='1', query2='1'))
+
+    assert ['query', 'query2'] == sorted(url.with_query(query='1', query2='1').query)
+    assert '1' == url.with_query(query='1', query2='1').query['query']
+    assert '1' == url.with_query(query='1', query2='1').query['query2']
 
 
 def test_with_query_str():
