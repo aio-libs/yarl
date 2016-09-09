@@ -649,18 +649,39 @@ def test_with_query():
 
 def test_with_query_kwargs():
     url = URL('http://example.com')
+    q = url.with_query(query='1', query2='1').query
+    assert q == dict(query='1', query2='1')
+
+
+def test_with_query_kwargs_and_args_are_mutually_exclusive():
+    url = URL('http://example.com')
     with pytest.raises(ValueError):
         url.with_query(
             {'a': '2', 'b': '4'}, a='1')
+
+
+def test_with_query_kwargs_should_be_str():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query(b=3)
+
+
+def test_with_query_only_single_arg_is_supported():
+    url = URL('http://example.com')
     with pytest.raises(TypeError):
         url.with_query(b=3)
     with pytest.raises(ValueError):
         url.with_query('a=1', 'a=b')
 
-    assert ['query', 'query2'] == sorted(url.with_query(query='1',
-                                                        query2='1').query)
-    assert '1' == url.with_query(query='1', query2='1').query['query']
-    assert '1' == url.with_query(query='1', query2='1').query['query2']
+
+def test_with_query_empty_dict():
+    url = URL('http://example.com/?a=b')
+    assert str(url.with_query({})) == 'http://example.com/'
+
+
+def test_with_query_empty_str():
+    url = URL('http://example.com/?a=b')
+    assert str(url.with_query('')) == 'http://example.com/'
 
 
 def test_with_query_str():
