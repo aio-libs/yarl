@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+x.x.x (2016-xx-xx)
+------------------
+
+* Avoid doubling slashes when joining paths #13
+
 0.1.4 (2016-09-09)
 ------------------
 
