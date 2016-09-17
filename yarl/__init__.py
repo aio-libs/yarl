@@ -185,7 +185,7 @@ class URL:
         elif not path and not self.is_absolute():
             new_path = name
         else:
-            parts = path.split('/')
+            parts = path.rstrip('/').split('/')
             parts.append(name)
             new_path = '/'.join(parts)
         return URL(self._val._replace(path=new_path, query='', fragment=''),
