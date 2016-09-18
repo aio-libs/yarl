@@ -179,6 +179,9 @@ class URL:
 
     def __truediv__(self, name):
         name = quote(name, safe='/')
+        if name.startswith('/'):
+            raise ValueError("Appending path "
+                             "starting from slash is forbidden")
         path = self._val.path
         if path == '/':
             new_path = '/' + name
@@ -572,7 +575,8 @@ class URL:
 
         if kwargs:
             if len(args) > 0:
-                raise ValueError("Either kwargs or single query parameter must be present")
+                raise ValueError("Either kwargs or single query parameter "
+                                 "must be present")
             query = kwargs
             for _, value in kwargs.items():
                 if not isinstance(value, str):
@@ -580,7 +584,8 @@ class URL:
         elif len(args) == 1:
             query = args[0]
         else:
-            raise ValueError("Either kwargs or single query parameter must be present")
+            raise ValueError("Either kwargs or single query parameter "
+                             "must be present")
 
         if query is None:
             query = ''

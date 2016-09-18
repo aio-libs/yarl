@@ -1,10 +1,12 @@
 CHANGES
 =======
 
-x.x.x (2016-xx-xx)
+0.2.0 (2016-09-18)
 ------------------
 
 * Avoid doubling slashes when joining paths #13
+
+* Appending path starting from slash is forbidden #12
 
 0.1.4 (2016-09-09)
 ------------------

@@ -379,6 +379,12 @@ def test_div_with_slash():
     assert str(url / 'to') == 'http://example.com/path/to'
 
 
+def test_div_path_starting_from_slash_is_forbidden():
+    url = URL('http://example.com/path/')
+    with pytest.raises(ValueError):
+        url / '/to/others'
+
+
 def test_div_cleanup_query_and_fragment():
     url = URL('http://example.com/path?a=1#frag')
     assert str(url / 'to') == 'http://example.com/path/to'
