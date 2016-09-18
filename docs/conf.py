@@ -153,7 +153,7 @@ todo_include_todos = False
 html_theme = 'alabaster'
 
 html_theme_options = {
-    # 'logo': 'aiohttp-icon-128x128.png',
+    'logo': 'yarl-icon-128x128.png',
     'description': 'Yet another URL library',
     'github_user': 'aio-libs',
     'github_repo': 'yarl',
