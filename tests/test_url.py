@@ -120,6 +120,11 @@ def test_implicit_port():
     assert 80 == url.port
 
 
+def test_port_for_relative_url():
+    url = URL('/path/to')
+    assert url.port is None
+
+
 def test_port_for_unknown_scheme():
     url = URL('unknown://example.com')
     assert url.port is None
@@ -859,6 +864,34 @@ def test_is_non_absolute_for_empty_url2():
 def test_is_absolute_path_starting_from_double_slash():
     url = URL('//www.python.org')
     assert url.is_absolute()
+
+
+# is_default_port
+
+def test_is_default_port_for_relative_url():
+    url = URL('/path/to')
+    assert not url.is_default_port()
+
+
+def test_is_default_port_for_absolute_url_without_port():
+    url = URL('http://example.com')
+    assert url.is_default_port()
+
+
+def test_is_default_port_for_absolute_url_with_default_port():
+    url = URL('http://example.com:80')
+    assert url.is_default_port()
+
+
+def test_is_default_port_for_absolute_url_with_nondefault_port():
+    url = URL('http://example.com:8080')
+    assert not url.is_default_port()
+
+
+def test_is_default_port_for_unknown_scheme():
+    url = URL('unknown://example.com:8080')
+    assert not url.is_default_port()
+
 
 #
 

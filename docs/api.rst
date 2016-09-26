@@ -334,7 +334,7 @@ The module supports both absolute an relative URLs.
 Absulute URL should start from either *scheme* or ``'//'``.
 
 
-.. attribute:: URL.is_absolute()
+.. method:: URL.is_absolute()
 
     A check for absolute URLs.
 
@@ -579,6 +579,27 @@ Default port substitution
 +------------------+-------+
 | ``'wss'``        | 443   |
 +------------------+-------+
+
+
+.. method:: URL.is_default_port()
+
+    A check for default port.
+
+    Return ``True`` if URL's :attr:`~URL.port` is *default* for used
+    :attr:`~URL.scheme`, ``False`` otherwise.
+
+    Relative URLs have no default port.
+
+   .. doctest::
+
+      >>> URL('http://example.com').is_default_port()
+      True
+      >>> URL('http://example.com:80').is_default_port()
+      True
+      >>> URL('http://example.com:8080').is_default_port()
+      False
+      >>> URL('/path/to').is_default_port()
+      False
 
 
 

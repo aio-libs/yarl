@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 __all__ = ['URL']
 
@@ -204,6 +204,21 @@ class URL:
 
         """
         return self.raw_host is not None
+
+    def is_default_port(self):
+        """A check for default port.
+
+        Return True if port is default for specified scheme,
+        e.g. 'http://python.org' or 'http://python.org:80', False
+        otherwise.
+
+        """
+        if self.port is None:
+            return False
+        default = DEFAULT_PORTS.get(self.scheme)
+        if default is None:
+            return False
+        return self.port == default
 
     def origin(self):
         """Return an URL with scheme, host and port parts only.
