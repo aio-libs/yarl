@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.3.1 (2016-09-26)
+------------------
+
+* Support sequience of pairs as with_query() parameter
+
 0.3.0 (2016-09-26)
 ------------------
 

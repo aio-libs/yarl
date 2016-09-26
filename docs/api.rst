@@ -432,6 +432,8 @@ section generates a new *URL* instance.
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
 
+   A sequence of ``(key, value)`` pairs is suuported as well.
+
    Also it also can take an arbitrary number of keyword arguments.
 
    Clear *query* if ``None`` is passed.
@@ -447,6 +449,8 @@ section generates a new *URL* instance.
       >>> URL('http://example.com/path?a=b').with_query(None)
       URL('http://example.com/path')
       >>> URL('http://example.com/path?a=b&b=1').with_query(b='2')
+      URL('http://example.com/path?b=2')
+      >>> URL('http://example.com/path?a=b&b=1').with_query([('b', '2')])
       URL('http://example.com/path?b=2')
 
 .. method:: URL.with_fragment(port)

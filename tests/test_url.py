@@ -668,6 +668,11 @@ def test_with_query():
     assert str(url.with_query({'a': '1'})) == 'http://example.com/?a=1'
 
 
+def test_with_query_list_of_pairs():
+    url = URL('http://example.com')
+    assert str(url.with_query([('a', '1')])) == 'http://example.com/?a=1'
+
+
 def test_with_query_kwargs():
     url = URL('http://example.com')
     q = url.with_query(query='1', query2='1').query
@@ -752,6 +757,24 @@ def test_with_query_bad_type():
     url = URL('http://example.com')
     with pytest.raises(TypeError):
         url.with_query(123)
+
+
+def test_with_query_bytes():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query(b'123')
+
+
+def test_with_query_bytearray():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query(bytearray(b'123'))
+
+
+def test_with_query_memoryview():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query(memoryview(b'123'))
 
 
 def test_with_fragment():

@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from functools import partial
 from ipaddress import ip_address
 from urllib.parse import (SplitResult, parse_qsl,
@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 __all__ = ['URL']
 
@@ -612,6 +612,12 @@ class URL:
                              for k, v in query.items())
         elif isinstance(query, str):
             query = quote(query, safe='=+&', plus=True)
+        elif isinstance(query, (bytes, bytearray, memoryview)):
+            raise TypeError("Invalid query type")
+        elif isinstance(query, Sequence):
+            quoter = partial(quote, safe='', plus=True)
+            query = '&'.join(quoter(k)+'='+quoter(v)
+                             for k, v in query)
         else:
             raise TypeError("Invalid query type")
         return URL(self._val._replace(query=query),
