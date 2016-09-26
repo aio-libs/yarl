@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 __all__ = ['URL']
 
@@ -104,6 +104,8 @@ class URL:
         if not val.netloc:
             return ''
         ret = val.hostname
+        if ret is None:
+            raise ValueError("Invalid URL: host is required for abolute urls.")
         try:
             ret.encode('ascii')
         except UnicodeEncodeError:

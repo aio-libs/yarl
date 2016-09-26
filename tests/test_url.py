@@ -6,6 +6,11 @@ from multidict import MultiDict, MultiDictProxy
 from yarl import URL
 
 
+def test_absolute_url_without_host():
+    with pytest.raises(ValueError):
+        URL('http://:8080/')
+
+
 def test_url_is_not_str():
     url = URL('http://example.com')
     assert not isinstance(url, str)
