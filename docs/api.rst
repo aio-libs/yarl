@@ -432,7 +432,7 @@ section generates a new *URL* instance.
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
 
-   A sequence of ``(key, value)`` pairs is suuported as well.
+   A sequence of ``(key, value)`` pairs is supported as well.
 
    Also it also can take an arbitrary number of keyword arguments.
 
