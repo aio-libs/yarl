@@ -1,2 +1,2 @@
 -r requirements-ci.txt
-pytest-sugar
+pytest-sugar==0.7.1
