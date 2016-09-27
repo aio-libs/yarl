@@ -1225,3 +1225,32 @@ def test_human_repr_default_port():
     url = URL('http://вася:пароль@хост.домен/путь/сюда?арг=вал#фраг')
     s = url.human_repr()
     assert s == 'http://вася:пароль@хост.домен/путь/сюда?арг=вал#фраг'
+
+
+# relative
+
+def test_relative():
+    url = URL('http://user:pass@example.com:8080/path?a=b#frag')
+    rel = url.relative()
+    assert str(rel) == '/path?a=b#frag'
+
+
+def test_relative_is_relative():
+    url = URL('http://user:pass@example.com:8080/path?a=b#frag')
+    rel = url.relative()
+    assert not rel.is_absolute()
+
+
+def test_relative_abs_parts_are_removed():
+    url = URL('http://user:pass@example.com:8080/path?a=b#frag')
+    rel = url.relative()
+    assert not rel.scheme
+    assert not rel.user
+    assert not rel.password
+    assert not rel.host
+    assert not rel.port
+
+
+def test_relative_fails_on_rel_url():
+    with pytest.raises(ValueError):
+        URL('/path?a=b#frag').relative()

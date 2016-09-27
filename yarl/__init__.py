@@ -236,6 +236,17 @@ class URL:
         val = v._replace(netloc=netloc, path='', query='', fragment='')
         return URL(val, encoded=True)
 
+    def relative(self):
+        """Return a relative part of the URL.
+
+        scheme, user, password, host and port are removed.
+
+        """
+        if not self.is_absolute():
+            raise ValueError("URL should be absolute")
+        val = self._val._replace(scheme='', netloc='')
+        return URL(val, encoded=True)
+
     @cached_property
     def scheme(self):
         """Scheme for absolute URLs.
