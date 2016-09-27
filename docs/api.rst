@@ -31,7 +31,7 @@ Internally all data are stored as *percent-encoded* strings for
 *user*, *path*, *query* and *fragment* URL parts and
 *IDNA-encoded* (:rfc:`5891`) for *host*.
 
-Constructor and midification operators perform *encoding* for all
+Constructor and modification operators perform *encoding* for all
 parts automatically.
 The library assumes all data uses *UTF-8* for *percent-encoded* tokens.
 
@@ -71,7 +71,7 @@ Use :meth:`URL.human_repr` for getting human readable representation:
 URL properties
 --------------
 
-There are tho kinds of properties: *decoded* and *encoded* (with
+There are two kinds of properties: *decoded* and *encoded* (with
 ``raw_`` prefix):
 
 
@@ -212,7 +212,7 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
 .. attribute:: URL.query_string
 
-   Encoded *query* part of URL, empty string if *query* is missing.
+   Decoded *query* part of URL, empty string if *query* is missing.
 
    .. doctest::
 
@@ -225,7 +225,7 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
 .. attribute:: URL.raw_query_string
 
-   Decoded *query* part of URL, empty string if *query* is missing.
+   Encoded *query* part of URL, empty string if *query* is missing.
 
    .. doctest::
 
@@ -248,7 +248,7 @@ There are tho kinds of properties: *decoded* and *encoded* (with
 
 .. attribute:: URL.raw_fragment
 
-   Edcoded *fragment* part of URL, empty string if *fragment* is missing.
+   Decoded *fragment* part of URL, empty string if *fragment* is missing.
 
    .. doctest::
 
@@ -310,7 +310,7 @@ For *path* and *query* *yarl* supports additional helpers:
 .. attribute:: URL.query
 
    A :class:`multidict.MultiDictProxy` representing parsed *query*
-   parameters in decded representation.  Empty value if URL has no
+   parameters in decoded representation.  Empty value if URL has no
    *query* part.
 
    .. doctest::
@@ -339,7 +339,7 @@ Absulute URL should start from either *scheme* or ``'//'``.
     A check for absolute URLs.
 
     Return ``True`` for absolute ones (having *scheme* or starting
-    from ``//``), ``False`` otherwise.
+    with ``//``), ``False`` otherwise.
 
    .. doctest::
 
@@ -434,7 +434,7 @@ section generates a new *URL* instance.
 
    A sequence of ``(key, value)`` pairs is supported as well.
 
-   Also it also can take an arbitrary number of keyword arguments.
+   Also it can take an arbitrary number of keyword arguments.
 
    Clear *query* if ``None`` is passed.
 
@@ -504,7 +504,7 @@ section generates a new *URL* instance.
       >>> URL('http://user:pass@example.com/path').origin()
       URL('http://example.com')
 
-Division (``/``) operator creates a new URL with appeded *path* parts
+Division (``/``) operator creates a new URL with appended *path* parts
 and cleaned up *query* and *fragment* parts.
 
 The path is encoded if needed.
@@ -520,7 +520,7 @@ The path is encoded if needed.
       >>> url
       URL('http://example.com/path/%D1%81%D1%8E%D0%B4%D0%B0')
 
-.. method:: join(url)
+.. method:: URL.join(url)
 
    Construct a full (“absolute”) URL by combining a “base URL”
    (``self``) with another URL (``url``). Informally, this uses

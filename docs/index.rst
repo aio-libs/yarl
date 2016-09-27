@@ -68,6 +68,8 @@ getting *encoded* strings:
 
 Human readable representation of URL is available as :meth:`~yarl.URL.human_repr()`:
 
+.. doctest::
+
    >>> url.human_repr()
    'https://www.python.org/путь'
 
