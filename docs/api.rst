@@ -504,6 +504,16 @@ section generates a new *URL* instance.
       >>> URL('http://user:pass@example.com/path').origin()
       URL('http://example.com')
 
+.. method:: URL.relative
+
+   A new *relative* URL with  *path*, *query* and *fragment* parts only.
+   *scheme*, *user*, *password*, *host* and *port* are removed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to?arg#frag').relative()
+      URL('/path/to?arg#frag')
+
 Division (``/``) operator creates a new URL with appended *path* parts
 and cleaned up *query* and *fragment* parts.
 
