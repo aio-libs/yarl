@@ -200,7 +200,7 @@ class URL:
         """A check for absolute URLs.
 
         Return True for absolute ones (having scheme or starting
-        from //), False otherwise.
+        with //), False otherwise.
 
         """
         return self.raw_host is not None
@@ -338,7 +338,7 @@ class URL:
 
     @cached_property
     def query(self):
-        """A MultiDictProxy representing parsed query parameters in decded
+        """A MultiDictProxy representing parsed query parameters in decoded
         representation.
 
         Empty value if URL has no query part.
@@ -351,7 +351,7 @@ class URL:
     def raw_query_string(self):
         """Encoded query part of URL.
 
-        Empty string is query is missing.
+        Empty string if query is missing.
 
         """
         return self._val.query
@@ -360,7 +360,7 @@ class URL:
     def query_string(self):
         """Decoded query part of URL.
 
-        Empty string is query is missing.
+        Empty string if query is missing.
 
         """
         return unquote(self.raw_query_string, unsafe='?&=+')
@@ -369,7 +369,7 @@ class URL:
     def raw_fragment(self):
         """Encoded fragment part of URL.
 
-        Empty string is fragment is missing.
+        Empty string if fragment is missing.
 
         """
         return self._val.fragment
@@ -378,7 +378,7 @@ class URL:
     def fragment(self):
         """Decoded fragment part of URL.
 
-        Empty string is fragment is missing.
+        Empty string if fragment is missing.
 
         """
         return unquote(self.raw_fragment)
