@@ -196,6 +196,11 @@ def test_query_repeated_args():
     assert url.query == MultiDict([('a', '1'), ('b', '2'), ('a', '3')])
 
 
+def test_query_empty_arg():
+    url = URL('http://example.com?a')
+    assert url.query == MultiDict([('a', '')])
+
+
 def test_raw_fragment_empty():
     url = URL('http://example.com')
     assert '' == url.raw_fragment

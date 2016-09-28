@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 
 __all__ = ['URL']
 
@@ -355,7 +355,7 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        ret = MultiDict(parse_qsl(self.query_string))
+        ret = MultiDict(parse_qsl(self.query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
 
     @cached_property
