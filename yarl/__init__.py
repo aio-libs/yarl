@@ -9,9 +9,9 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
-__all__ = ['URL']
+__all__ = ['URL', 'quote', 'unquote']
 
 
 # is_leaf()
