@@ -492,7 +492,7 @@ section generates a new *URL* instance.
       >>> URL('http://example.com/path/to?arg#frag').parent
       URL('http://example.com/path')
 
-.. method:: URL.origin
+.. method:: URL.origin()
 
    A new URL with *scheme*, *host* and *port* parts only.
    *user*, *password*, *path*, *query* and *fragment* are removed.
@@ -504,7 +504,7 @@ section generates a new *URL* instance.
       >>> URL('http://user:pass@example.com/path').origin()
       URL('http://example.com')
 
-.. method:: URL.relative
+.. method:: URL.relative()
 
    A new *relative* URL with  *path*, *query* and *fragment* parts only.
    *scheme*, *user*, *password*, *host* and *port* are removed.
