@@ -11,7 +11,7 @@ BUNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
                       for ch in UNRESERVED}
 
 
-def quote(val, *, safe='', plus=False):
+def _py_quote(val, *, safe='', plus=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -57,7 +57,7 @@ def quote(val, *, safe='', plus=False):
     return ret.decode('ascii')
 
 
-def unquote(val, *, unsafe='', plus=False):
+def _py_unquote(val, *, unsafe='', plus=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -81,7 +81,7 @@ def unquote(val, *, unsafe='', plus=False):
                 pass
             else:
                 if unquoted in unsafe:
-                    ret.append(quote(unquoted))
+                    ret.append(_py_quote(unquoted))
                 else:
                     ret.append(unquoted)
                 del pcts[:]
@@ -95,7 +95,16 @@ def unquote(val, *, unsafe='', plus=False):
     if pcts:
         unquoted = pcts.decode('utf8')
         if unquoted in unsafe:
-            ret.append(quote(unquoted))
+            ret.append(_py_quote(unquoted))
         else:
             ret.append(unquoted)
     return ''.join(ret)
+
+
+try:
+    from ._quoting import _quote, _unquote
+    quote = _quote
+    unquote = _unquote
+except ImportError:
+    quote = _py_quote
+    unquote = _py_unquote

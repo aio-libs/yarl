@@ -1,6 +1,17 @@
 import pytest
 
-from yarl.quoting import quote, unquote
+from yarl.quoting import _py_quote, _py_unquote, _quote, _unquote
+
+
+@pytest.fixture(params=[_py_quote, _quote], ids=['py_quote', 'c_quote'])
+def quote(request):
+    return request.param
+
+
+@pytest.fixture(params=[_py_unquote, _unquote],
+                ids=['py_unquote', 'c_unquote'])
+def unquote(request):
+    return request.param
 
 
 def hexescape(char):
@@ -11,27 +22,27 @@ def hexescape(char):
     return "%" + hex_repr
 
 
-def test_quote_not_allowed():
+def test_quote_not_allowed(quote):
     with pytest.raises(ValueError):
         quote('%HH')
 
 
-def test_quote_unfinished():
+def test_quote_unfinished(quote):
     with pytest.raises(ValueError):
         quote('%F%F')
 
 
-def test_quote_from_bytes():
+def test_quote_from_bytes(quote):
     assert quote('archaeological arcana') == 'archaeological%20arcana'
     assert quote('') == ''
 
 
-def test_unquote_to_bytes():
+def test_unquote_to_bytes(unquote):
     assert unquote('abc%20def') == 'abc def'
     assert unquote('') == ''
 
 
-def test_never_quote():
+def test_never_quote(quote):
     # Make sure quote() does not quote letters, digits, and "_,.-"
     do_not_quote = '' .join(["ABCDEFGHIJKLMNOPQRSTUVWXYZ",
                              "abcdefghijklmnopqrstuvwxyz",
@@ -41,7 +52,7 @@ def test_never_quote():
     quote(do_not_quote, plus=True) == do_not_quote
 
 
-def test_safe():
+def test_safe(quote):
     # Test setting 'safe' parameter does what it should do
     quote_by_default = "<>"
     assert quote(quote_by_default, safe=quote_by_default) == quote_by_default
@@ -57,7 +68,7 @@ SHOULD_QUOTE = ''.join(SHOULD_QUOTE)
 
 
 @pytest.mark.parametrize('char', SHOULD_QUOTE)
-def test_default_quoting(char):
+def test_default_quoting(char, quote):
     # Make sure all characters that should be quoted are by default sans
     # space (separate test for that).
     result = quote(char)
@@ -67,14 +78,14 @@ def test_default_quoting(char):
 
 
 # TODO: should it encode percent?
-def test_default_quoting_percent():
+def test_default_quoting_percent(quote):
     result = quote('%25')
     assert '%25' == result
     result = quote('%25', plus=True)
     assert '%25' == result
 
 
-def test_default_quoting_partial():
+def test_default_quoting_partial(quote):
     partial_quote = "ab[]cd"
     expected = "ab%5B%5Dcd"
     result = quote(partial_quote)
@@ -83,7 +94,7 @@ def test_default_quoting_partial():
     assert expected == result
 
 
-def test_quoting_space():
+def test_quoting_space(quote):
     # Make sure quote() and quote_plus() handle spaces as specified in
     # their unique way
     result = quote(' ')
@@ -100,12 +111,12 @@ def test_quoting_space():
     assert expect == result
 
 
-def test_quoting_plus():
+def test_quoting_plus(quote):
     assert quote('alpha+beta gamma', plus=True) == 'alpha%2Bbeta+gamma'
     assert quote('alpha+beta gamma', safe='+', plus=True) == 'alpha+beta+gamma'
 
 
-def test_quote_with_unicode():
+def test_quote_with_unicode(quote):
     # Characters in Latin-1 range, encoded by default in UTF-8
     given = "\xa2\xd8ab\xff"
     expect = "%C2%A2%C3%98ab%C3%BF"
@@ -118,7 +129,7 @@ def test_quote_with_unicode():
     assert expect == result
 
 
-def test_quote_plus_with_unicode():
+def test_quote_plus_with_unicode(quote):
     # Characters in Latin-1 range, encoded by default in UTF-8
     given = "\xa2\xd8ab\xff"
     expect = "%C2%A2%C3%98ab%C3%BF"
@@ -132,7 +143,7 @@ def test_quote_plus_with_unicode():
 
 
 @pytest.mark.parametrize('num', list(range(128)))
-def test_unquoting(num):
+def test_unquoting(num, unquote):
     # Make sure unquoting of all ASCII values works
     given = hexescape(chr(num))
     expect = chr(num)
@@ -143,7 +154,7 @@ def test_unquoting(num):
 
 
 @pytest.mark.xfail
-def test_unquoting_badpercent():
+def test_unquoting_badpercent(unquote):
     # Test unquoting on bad percent-escapes
     given = '%xab'
     expect = given
@@ -152,7 +163,7 @@ def test_unquoting_badpercent():
 
 
 @pytest.mark.xfail
-def test_unquoting_badpercent2():
+def test_unquoting_badpercent2(unquote):
     given = '%x'
     expect = given
     result = unquote(given)
@@ -160,7 +171,7 @@ def test_unquoting_badpercent2():
 
 
 @pytest.mark.xfail
-def test_unquoting_badpercent3():
+def test_unquoting_badpercent3(unquote):
     given = '%'
     expect = given
     result = unquote(given)
@@ -168,7 +179,7 @@ def test_unquoting_badpercent3():
 
 
 @pytest.mark.xfail
-def test_unquoting_mixed_case():
+def test_unquoting_mixed_case(unquote):
     # Test unquoting on mixed-case hex digits in the percent-escapes
     given = '%Ab%eA'
     expect = '\xab\xea'
@@ -176,7 +187,7 @@ def test_unquoting_mixed_case():
     assert expect == result
 
 
-def test_unquoting_parts():
+def test_unquoting_parts(unquote):
     # Make sure unquoting works when have non-quoted characters
     # interspersed
     given = 'ab%sd' % hexescape('c')
@@ -187,18 +198,27 @@ def test_unquoting_parts():
     assert expect == result
 
 
-def test_None():
+def test_quote_None(quote):
     assert quote(None) is None
+
+
+def test_unquote_None(unquote):
     assert unquote(None) is None
 
 
-def test_empty_string():
+def test_quote_empty_string(quote):
     assert quote('') == ''
+
+
+def test_unempty_string(unquote):
     assert unquote('') == ''
 
 
-def test_bad_types():
+def test_quote_bad_types(quote):
     with pytest.raises(TypeError):
         quote(123)
+
+
+def test_unquote_bad_types(unquote):
     with pytest.raises(TypeError):
         unquote(123)
