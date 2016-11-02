@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.5.3 (2016-11-02)
+------------------
+
+* Don't use namedtuple fields but indexes on URL construction
+
 0.5.2 (2016-11-02)
 ------------------
 

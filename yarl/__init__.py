@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 __all__ = ['URL', 'quote', 'unquote']
 
@@ -87,7 +87,7 @@ class URL:
             raise TypeError("Constructor parameter should be str")
 
         if not encoded:
-            if not val.netloc:
+            if not val[1]:  # netloc
                 netloc = ''
             else:
                 netloc = val.hostname
@@ -114,10 +114,11 @@ class URL:
                         user += ':' + quote(val.password)
                     netloc = user + '@' + netloc
 
-            val = val._replace(netloc=netloc,
-                               path=quote(val.path, safe='/'),
-                               query=quote(val.query, safe='=+&', plus=True),
-                               fragment=quote(val.fragment))
+            val = SplitResult(val[0],  # scheme
+                              netloc,
+                              quote(val[2], safe='/'),
+                              query=quote(val[3], safe='=+&', plus=True),
+                              fragment=quote(val[4]))
 
         self._val = val
         self._cache = {}
