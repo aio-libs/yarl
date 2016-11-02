@@ -1,0 +1,39 @@
+version: 1.0.0a0.dev{build}
+
+environment:
+  PYPI_PASSWD:
+    secure: u+K6dKi7+CXXVFEUG4V7zUyV3w7Ntg0Ork/RGVV0eSQ=
+  matrix:
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python35-x64"
+
+install:
+  - "build.cmd %PYTHON%\\python.exe -m pip install wheel"
+  - "build.cmd %PYTHON%\\python.exe -m pip install twine"
+  - "build.cmd %PYTHON%\\python.exe -m pip install -r requirements-ci.txt"
+
+build: false
+
+test_script:
+  - "build.cmd %PYTHON%\\python.exe setup.py test"
+
+after_test:
+  - "build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
+
+artifacts:
+  - path: dist\*
+
+deploy_script:
+  - ps: >-
+      if($env:appveyor_repo_tag -eq 'True') {
+          Invoke-Expression "$env:PYTHON\\python.exe -m twine upload dist/* --username andrew.svetlov --password $env:PYPI_PASSWD"
+      }
+
+#notifications:
+#  - provider: Webhook
+#    url: https://ci.appveyor.com/api/github/webhook?id=08c7793w1tp839fl
+#    on_build_success: false
+#    on_build_failure: True
