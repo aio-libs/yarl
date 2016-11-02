@@ -28,6 +28,17 @@ cdef inline Py_UCS4 _hex(uint8_t v):
         return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
 
 
+cdef inline int _from_hex(Py_UCS4 v):
+    if '0' <= v <= '9':
+        return <int>(v) - 0x30  # ord('0') == 0x30
+    elif 'A' <= v <= 'F':
+        return <int>(v) - 0x41 + 10  # ord('A') == 0x41
+    elif 'a' <= v <= 'f':
+        return <int>(v) - 0x61 + 10  # ord('a') == 0x61
+    else:
+        return -1
+
+
 def _quote(val, *, str safe='', bint plus=False):
     if val is None:
         return None
@@ -36,36 +47,45 @@ def _quote(val, *, str safe='', bint plus=False):
     if not val:
         return ''
     cdef str _val = <str>val
-    cdef list pct = []
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
     cdef char tmpbuf[6]  # place for UTF-8 encoded char plus zero terminator
     cdef Py_ssize_t i, tmpbuf_size
-    cdef Py_ssize_t ret_size = len(_val)*6 + 1
+    # UTF8 may take up to 5 bytes per symbol
+    # every byte is encoded as %XX -- 3 bytes
+    cdef Py_ssize_t ret_size = len(_val)*3*5 + 1
     cdef object ret = PyUnicode_New(ret_size, 1114111)
     cdef Py_ssize_t ret_idx = 0
+    cdef int has_pct = 0
+    cdef Py_UCS4 pct[2]
+    cdef int digit1, digit2
     for ch in _val:
-        if pct:
-            if u'a' <= ch <= u'z':
-                ch = <Py_UCS4>(<uint64_t>ch - 32)
-            pct.append(ch)
-            if len(pct) == 3:
-                tmp = "".join(pct)
-                unquoted = UNRESERVED_QUOTED.get(tmp)
-                if unquoted:
-                    PyUnicode_WriteChar(ret, ret_idx, unquoted)
+        if has_pct:
+            pct[has_pct-1] = ch
+            has_pct += 1
+            if has_pct == 3:
+                digit1 = _from_hex(pct[0])
+                digit2 = _from_hex(pct[1])
+                if digit1 == -1 or digit2 == -1:
+                    raise ValueError("Unallowed PCT %{}{}".format(pct[0],
+                                                                  pct[1]))
+                ch = <Py_UCS4>(digit1 << 4 | digit2)
+                has_pct = 0
+
+                if ch in UNRESERVED:
+                    PyUnicode_WriteChar(ret, ret_idx, ch)
                     ret_idx += 1
-                elif tmp not in PCT_ALLOWED:
-                    raise ValueError("Unallowed PCT {}".format(pct))
                 else:
-                    for i in range(3):
-                        PyUnicode_WriteChar(ret, ret_idx, pct[i])
-                        ret_idx += 1
-                    del pct[:]
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch >> 4))
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch & 0x0f))
+                    ret_idx += 1
             continue
         elif ch == '%':
-            pct = ['%']
+            has_pct = 1
             continue
 
         if plus:
@@ -94,7 +114,6 @@ def _quote(val, *, str safe='', bint plus=False):
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
 
-    assert ret_idx < len(ret)
     return PyUnicode_Substring(ret, 0, ret_idx)
 
 
