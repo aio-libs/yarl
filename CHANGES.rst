@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.5.0 (2016-11-02)
+------------------
+
+* Add cython optimization for quoting/unquoting
+* Provide binary wheels
+
 0.4.3 (2016-09-29)
 ------------------
 
