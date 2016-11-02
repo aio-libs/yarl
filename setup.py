@@ -1,3 +1,4 @@
+import codecs
 import pathlib
 import re
 
@@ -50,7 +51,7 @@ class ve_build_ext(build_ext):
 here = pathlib.Path(__file__).parent
 fname = here / 'yarl' / '__init__.py'
 
-with fname.open() as fp:
+with codecs.open(str(fname), 'r', 'latin1') as fp:
     try:
         version = re.findall(r"^__version__ = '([^']+)'$", fp.read(), re.M)[0]
     except IndexError:
