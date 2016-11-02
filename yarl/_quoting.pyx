@@ -1,8 +1,12 @@
 # cython: language_level=3
 
-from string import ascii_letters, ascii_lowercase, digits
+cdef extern from "Python.h":
 
-cdef str ASCII_LOWERCASE = ascii_lowercase
+    char * PyUnicode_AsUTF8AndSize(object s, Py_ssize_t * l)
+
+
+from string import ascii_letters, digits
+
 cdef str GEN_DELIMS = ":/?#[]@"
 cdef str SUB_DELIMS = "!$&'()*+,;="
 cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
@@ -33,6 +37,8 @@ def _quote(val, *, str safe='', bint plus=False):
     cdef unsigned char b
     cdef Py_UCS4 ch
     cdef str tmp
+    cdef char tmpbuf[5]  # place for UTF-8 encoded char plus zero terminator
+    cdef Py_ssize_t i, tmpbuf_size
     for ch in _val:
         if pct:
             if u'a' <= ch <= u'z':
@@ -64,7 +70,9 @@ def _quote(val, *, str safe='', bint plus=False):
             ret.append(ch)
             continue
 
-        for b in <bytes>ch.encode('utf8'):
+        tmpbuf = PyUnicode_AsUTF8AndSize(ch, &tmpbuf_size)
+        for i in range(tmpbuf_size):
+            b = tmpbuf[i]
             ret.append('%')
             ret.append(_hex(<unsigned char>b >> 4))
             ret.append(_hex(<unsigned char>b & 0x0f))
