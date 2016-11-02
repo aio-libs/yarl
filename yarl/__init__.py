@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 
 __all__ = ['URL', 'quote', 'unquote']
 
@@ -87,44 +87,40 @@ class URL:
             raise TypeError("Constructor parameter should be str")
 
         if not encoded:
-            val = self._encode(val)
+            if not val.netloc:
+                netloc = ''
+            else:
+                netloc = val.hostname
+                if netloc is None:
+                    raise ValueError(
+                        "Invalid URL: host is required for abolute urls.")
+                try:
+                    netloc.encode('ascii')
+                except UnicodeEncodeError:
+                    netloc = netloc.encode('idna').decode('ascii')
+                else:
+                    try:
+                        ip = ip_address(netloc)
+                    except:
+                        pass
+                    else:
+                        if ip.version == 6:
+                            netloc = '['+netloc+']'
+                if val.port:
+                    netloc += ':{}'.format(val.port)
+                if val.username:
+                    user = quote(val.username)
+                    if val.password:
+                        user += ':' + quote(val.password)
+                    netloc = user + '@' + netloc
+
+            val = val._replace(netloc=netloc,
+                               path=quote(val.path, safe='/'),
+                               query=quote(val.query, safe='=+&', plus=True),
+                               fragment=quote(val.fragment))
 
         self._val = val
         self._cache = {}
-
-    @classmethod
-    def _encode(cls, val):
-        if not val.netloc:
-            netloc = ''
-        else:
-            netloc = val.hostname
-            if netloc is None:
-                raise ValueError(
-                    "Invalid URL: host is required for abolute urls.")
-            try:
-                netloc.encode('ascii')
-            except UnicodeEncodeError:
-                netloc = netloc.encode('idna').decode('ascii')
-            else:
-                try:
-                    ip = ip_address(netloc)
-                except:
-                    pass
-                else:
-                    if ip.version == 6:
-                        netloc = '['+netloc+']'
-            if val.port:
-                netloc += ':{}'.format(val.port)
-            if val.username:
-                user = quote(val.username)
-                if val.password:
-                    user += ':' + quote(val.password)
-                netloc = user + '@' + netloc
-
-        return val._replace(netloc=netloc,
-                            path=quote(val.path, safe='/'),
-                            query=quote(val.query, safe='=+&', plus=True),
-                            fragment=quote(val.fragment))
 
     def __str__(self):
         val = self._val
