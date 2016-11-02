@@ -52,7 +52,7 @@ def _quote(val, *, str safe='', bint plus=False):
         if pct:
             if u'a' <= ch <= u'z':
                 ch = <Py_UCS4>(<uint64_t>ch - 32)
-                pct.append(ch)
+            pct.append(ch)
             if len(pct) == 3:
                 tmp = "".join(pct)
                 unquoted = UNRESERVED_QUOTED.get(tmp)
