@@ -5,6 +5,7 @@ python:
   - nightly
 
 install:
+  - pip install cython
   - pip install -r requirements-ci.txt
   - pip install codecov
   - pip install mypy-lang
