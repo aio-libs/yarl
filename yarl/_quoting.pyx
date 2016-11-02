@@ -17,7 +17,7 @@ cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
 cdef str UNRESERVED = ascii_letters + digits + '-._~'
 
 cdef set PCT_ALLOWED = {'%{:02X}'.format(i) for i in range(256)}
-cdef dict UNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)): ch
+cdef dict UNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)): ord(ch)
                                for ch in UNRESERVED}
 
 
@@ -38,16 +38,13 @@ def _quote(val, *, str safe='', bint plus=False):
     cdef str _val = <str>val
     cdef list pct = []
     cdef uint8_t b
-    cdef Py_UCS4 ch
+    cdef Py_UCS4 ch, unquoted
     cdef str tmp
     cdef char tmpbuf[6]  # place for UTF-8 encoded char plus zero terminator
     cdef Py_ssize_t i, tmpbuf_size
-    cdef object ret
-    cdef Py_ssize_t ret_idx
-    cdef Py_ssize_t ret_size
-    ret_size = len(_val)*6 + 1
-    ret = PyUnicode_New(ret_size, 1114111)
-    ret_idx = 0
+    cdef Py_ssize_t ret_size = len(_val)*6 + 1
+    cdef object ret = PyUnicode_New(ret_size, 1114111)
+    cdef Py_ssize_t ret_idx = 0
     for ch in _val:
         if pct:
             if u'a' <= ch <= u'z':
@@ -57,7 +54,7 @@ def _quote(val, *, str safe='', bint plus=False):
                 tmp = "".join(pct)
                 unquoted = UNRESERVED_QUOTED.get(tmp)
                 if unquoted:
-                    ret[ret_idx] = unquoted
+                    PyUnicode_WriteChar(ret, ret_idx, unquoted)
                     ret_idx += 1
                 elif tmp not in PCT_ALLOWED:
                     raise ValueError("Unallowed PCT {}".format(pct))
@@ -97,6 +94,7 @@ def _quote(val, *, str safe='', bint plus=False):
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
 
+    assert ret_idx < len(ret)
     return PyUnicode_Substring(ret, 0, ret_idx)
 
 
