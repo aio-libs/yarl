@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 __all__ = ['URL', 'quote', 'unquote']
 
@@ -94,50 +94,37 @@ class URL:
 
     @classmethod
     def _encode(cls, val):
-        return val._replace(netloc=cls._encode_netloc(val),
-                            path=cls._encode_path(val),
-                            query=cls._encode_query(val),
-                            fragment=cls._encode_fragment(val))
-
-    @classmethod
-    def _encode_netloc(cls, val):
         if not val.netloc:
-            return ''
-        ret = val.hostname
-        if ret is None:
-            raise ValueError("Invalid URL: host is required for abolute urls.")
-        try:
-            ret.encode('ascii')
-        except UnicodeEncodeError:
-            ret = ret.encode('idna').decode('ascii')
+            netloc = ''
         else:
+            netloc = val.hostname
+            if netloc is None:
+                raise ValueError(
+                    "Invalid URL: host is required for abolute urls.")
             try:
-                ip = ip_address(ret)
-            except:
-                pass
+                netloc.encode('ascii')
+            except UnicodeEncodeError:
+                netloc = netloc.encode('idna').decode('ascii')
             else:
-                if ip.version == 6:
-                    ret = '['+ret+']'
-        if val.port:
-            ret += ':{}'.format(val.port)
-        if val.username:
-            user = quote(val.username)
-            if val.password:
-                user += ':' + quote(val.password)
-            ret = user + '@' + ret
-        return ret
+                try:
+                    ip = ip_address(netloc)
+                except:
+                    pass
+                else:
+                    if ip.version == 6:
+                        netloc = '['+netloc+']'
+            if val.port:
+                netloc += ':{}'.format(val.port)
+            if val.username:
+                user = quote(val.username)
+                if val.password:
+                    user += ':' + quote(val.password)
+                netloc = user + '@' + netloc
 
-    @classmethod
-    def _encode_path(cls, val):
-        return quote(val.path, safe='/')
-
-    @classmethod
-    def _encode_query(cls, val):
-        return quote(val.query, safe='=+&', plus=True)
-
-    @classmethod
-    def _encode_fragment(cls, val):
-        return quote(val.fragment)
+        return val._replace(netloc=netloc,
+                            path=quote(val.path, safe='/'),
+                            query=quote(val.query, safe='=+&', plus=True),
+                            fragment=quote(val.fragment))
 
     def __str__(self):
         val = self._val

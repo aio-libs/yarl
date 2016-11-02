@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.5.1 (2016-11-02)
+------------------
+
+* Make URL counstruction faster by removing extra classmethod calls
+
 0.5.0 (2016-11-02)
 ------------------
 
