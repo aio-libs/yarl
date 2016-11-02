@@ -39,7 +39,7 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-def _quote(val, *, str safe='', bint plus=False):
+cpdef _quote(val, *, str safe='', bint plus=False):
     if val is None:
         return None
     if not isinstance(val, str):
