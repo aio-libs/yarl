@@ -39,14 +39,17 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-cpdef _quote(val, *, str safe='', bint plus=False):
+def _quote(val, *, str safe='', bint plus=False):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    cdef str _val = <str>val
+    return _do_quote(val, safe, plus)
+
+
+cdef str _do_quote(str val, str safe, bint plus):
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
@@ -54,13 +57,13 @@ cpdef _quote(val, *, str safe='', bint plus=False):
     cdef Py_ssize_t i, tmpbuf_size
     # UTF8 may take up to 5 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
-    cdef Py_ssize_t ret_size = len(_val)*3*5 + 1
+    cdef Py_ssize_t ret_size = len(val)*3*5 + 1
     cdef object ret = PyUnicode_New(ret_size, 1114111)
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
     cdef Py_UCS4 pct[2]
     cdef int digit1, digit2
-    for ch in _val:
+    for ch in val:
         if has_pct:
             pct[has_pct-1] = ch
             has_pct += 1
@@ -141,7 +144,7 @@ def _unquote(val, *, unsafe='', plus=False):
                 pass
             else:
                 if unquoted in unsafe:
-                    ret.append(_quote(unquoted))
+                    ret.append(_do_quote(unquoted, '', False))
                 else:
                     ret.append(unquoted)
                 del pcts[:]
@@ -155,7 +158,7 @@ def _unquote(val, *, unsafe='', plus=False):
     if pcts:
         unquoted = pcts.decode('utf8')
         if unquoted in unsafe:
-            ret.append(_quote(unquoted))
+            ret.append(_do_quote(unquoted, '', False))
         else:
             ret.append(unquoted)
     return ''.join(ret)
