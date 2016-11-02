@@ -3,7 +3,11 @@
 cdef extern from "Python.h":
 
     char * PyUnicode_AsUTF8AndSize(object s, Py_ssize_t * l)
+    object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
+    void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
+    object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
+from libc.stdint cimport uint8_t, uint64_t
 
 from string import ascii_letters, digits
 
@@ -17,7 +21,7 @@ cdef dict UNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)): ch
                                for ch in UNRESERVED}
 
 
-cdef Py_UCS4 _hex(unsigned long v):
+cdef inline Py_UCS4 _hex(uint8_t v):
     if v < 10:
         return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
     else:
@@ -32,52 +36,68 @@ def _quote(val, *, str safe='', bint plus=False):
     if not val:
         return ''
     cdef str _val = <str>val
-    cdef list ret = []
     cdef list pct = []
-    cdef unsigned char b
+    cdef uint8_t b
     cdef Py_UCS4 ch
     cdef str tmp
-    cdef char tmpbuf[5]  # place for UTF-8 encoded char plus zero terminator
+    cdef char tmpbuf[6]  # place for UTF-8 encoded char plus zero terminator
     cdef Py_ssize_t i, tmpbuf_size
+    cdef object ret
+    cdef Py_ssize_t ret_idx
+    cdef Py_ssize_t ret_size
+    ret_size = len(_val)*6 + 1
+    ret = PyUnicode_New(ret_size, 1114111)
+    ret_idx = 0
     for ch in _val:
         if pct:
             if u'a' <= ch <= u'z':
-                ch = <Py_UCS4>(<unsigned long>ch - 32)
-            pct.append(ch)
+                ch = <Py_UCS4>(<uint64_t>ch - 32)
+                pct.append(ch)
             if len(pct) == 3:
                 tmp = "".join(pct)
                 unquoted = UNRESERVED_QUOTED.get(tmp)
                 if unquoted:
-                    ret.append(unquoted)
+                    ret[ret_idx] = unquoted
+                    ret_idx += 1
                 elif tmp not in PCT_ALLOWED:
                     raise ValueError("Unallowed PCT {}".format(pct))
                 else:
-                    ret.append(tmp)
-                del pct[:]
+                    for i in range(3):
+                        PyUnicode_WriteChar(ret, ret_idx, pct[i])
+                        ret_idx += 1
+                    del pct[:]
             continue
-        elif ch == u'%':
-            pct = [ch]
+        elif ch == '%':
+            pct = ['%']
             continue
 
         if plus:
-            if ch == u' ':
-                ret.append(u'+')
+            if ch == ' ':
+                PyUnicode_WriteChar(ret, ret_idx, '+')
+                ret_idx += 1
                 continue
         if ch in UNRESERVED:
-            ret.append(ch)
+            PyUnicode_WriteChar(ret, ret_idx, ch)
+            ret_idx +=1
             continue
         if ch in safe:
-            ret.append(ch)
+            PyUnicode_WriteChar(ret, ret_idx, ch)
+            ret_idx +=1
             continue
 
         tmpbuf = PyUnicode_AsUTF8AndSize(ch, &tmpbuf_size)
         for i in range(tmpbuf_size):
             b = tmpbuf[i]
-            ret.append('%')
-            ret.append(_hex(<unsigned char>b >> 4))
-            ret.append(_hex(<unsigned char>b & 0x0f))
+            PyUnicode_WriteChar(ret, ret_idx, '%')
+            ret_idx += 1
+            ch = _hex(<uint8_t>b >> 4)
+            PyUnicode_WriteChar(ret, ret_idx, ch)
+            ret_idx += 1
+            ch = _hex(<uint8_t>b & 0x0f)
+            PyUnicode_WriteChar(ret, ret_idx, ch)
+            ret_idx += 1
 
-    return ''.join(ret)
+    return PyUnicode_Substring(ret, 0, ret_idx)
 
 
 def _unquote(val, *, unsafe='', plus=False):
