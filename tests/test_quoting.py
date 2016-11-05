@@ -222,3 +222,11 @@ def test_quote_bad_types(quote):
 def test_unquote_bad_types(unquote):
     with pytest.raises(TypeError):
         unquote(123)
+
+
+def test_quote_lowercase(quote):
+    assert quote('%d1%84') == '%D1%84'
+
+
+def test_quote_unquoted(quote):
+    assert quote('%41') == 'A'
