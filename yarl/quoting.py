@@ -105,6 +105,6 @@ try:
     from ._quoting import _quote, _unquote
     quote = _quote
     unquote = _unquote
-except ImportError:
+except ImportError:  # pragma: no cover
     quote = _py_quote
     unquote = _py_unquote

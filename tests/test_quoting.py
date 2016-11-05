@@ -230,3 +230,11 @@ def test_quote_lowercase(quote):
 
 def test_quote_unquoted(quote):
     assert quote('%41') == 'A'
+
+
+def test_unquote_unsafe(unquote):
+    assert unquote('%26', unsafe='&') == '%26'
+
+
+def test_unquote_unsafe2(unquote):
+    assert unquote('%26abc', unsafe='&') == '%26abc'
