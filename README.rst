@@ -16,6 +16,10 @@ yarl
     :target: https://yarl.readthedocs.io
 
 
+.. image:: https://img.shields.io/pypi/pyversions/yarl.svg
+    :target: https://pypi.python.org/pypi/yarl
+
+
 Introduction
 ------------
 
