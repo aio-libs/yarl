@@ -691,16 +691,11 @@ def test_with_query_kwargs_and_args_are_mutually_exclusive():
             {'a': '2', 'b': '4'}, a='1')
 
 
-def test_with_query_kwargs_should_be_str():
-    url = URL('http://example.com')
-    with pytest.raises(TypeError):
-        url.with_query(b=3)
-
-
 def test_with_query_only_single_arg_is_supported():
     url = URL('http://example.com')
-    with pytest.raises(TypeError):
-        url.with_query(b=3)
+    u1 = url.with_query(b=3)
+    u2 = URL('http://example.com/?b=3')
+    assert u1 == u2
     with pytest.raises(ValueError):
         url.with_query('a=1', 'a=b')
 
@@ -727,10 +722,15 @@ def test_with_query_str_non_ascii_and_spaces():
     assert url2.query_string == 'a=1+2&b=знач'
 
 
+def test_with_query_int():
+    url = URL('http://example.com')
+    assert url.with_query({'a': 1}) == URL('http://example.com/?a=1')
+
+
 def test_with_query_non_str():
     url = URL('http://example.com')
     with pytest.raises(TypeError):
-        url.with_query({'a': 1})
+        url.with_query({'a': 1.1})
 
 
 def test_with_query_multidict():

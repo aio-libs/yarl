@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.6.0'
+__version__ = '0.7.0'
 
 __all__ = ['URL', 'quote', 'unquote']
 
@@ -653,9 +653,6 @@ class URL:
                 raise ValueError("Either kwargs or single query parameter "
                                  "must be present")
             query = kwargs
-            for _, value in kwargs.items():
-                if not isinstance(value, str):
-                    raise TypeError("Invalid variable type")
         elif len(args) == 1:
             query = args[0]
         else:
@@ -666,8 +663,16 @@ class URL:
             query = ''
         elif isinstance(query, Mapping):
             quoter = partial(quote, safe='', plus=True)
-            query = '&'.join(quoter(k)+'='+quoter(v)
-                             for k, v in query.items())
+            lst = []
+            for k, v in query.items():
+                if isinstance(v, str):
+                    pass
+                elif type(v) == int:  # no subclasses like bool
+                    v = str(v)
+                else:
+                    raise TypeError("Invalid variable type")
+                lst.append(quoter(k)+'='+quoter(v))
+            query = '&'.join(lst)
         elif isinstance(query, str):
             query = quote(query, safe='=+&', plus=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
@@ -678,7 +683,10 @@ class URL:
                              for k, v in query)
         else:
             raise TypeError("Invalid query type")
-        return URL(self._val._replace(query=query),
+        path = self._val.path
+        if path == '':
+            path = '/'
+        return URL(self._val._replace(path=path, query=query),
                    encoded=True)
 
     def with_fragment(self, fragment):
