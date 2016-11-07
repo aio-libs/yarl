@@ -241,8 +241,8 @@ def test_unquote_unsafe2(unquote):
 
 
 def test_unquote_non_ascii(unquote):
-    assert unquote('%F8') == '%25F8'
+    assert unquote('%F8') == '%F8'
 
 
 def test_unquote_non_ascii_non_tailing(unquote):
-    assert unquote('%F8ab') == '%25F8ab'
+    assert unquote('%F8ab') == '%F8ab'

@@ -93,7 +93,7 @@ def _py_unquote(val, *, unsafe='', plus=False):
             continue
 
         if pcts:
-            ret.append(last_pct.replace('%', '%25'))  # %F8ab -> %25F8ab
+            ret.append(last_pct)  # %F8ab
             last_pct = ''
 
         ret.append(ch)
@@ -102,7 +102,7 @@ def _py_unquote(val, *, unsafe='', plus=False):
         try:
             unquoted = pcts.decode('utf8')
         except UnicodeDecodeError:
-            ret.append(last_pct.replace('%', '%25'))  # %F8 -> %25F8
+            ret.append(last_pct)  # %F8
         else:
             if unquoted in unsafe:
                 ret.append(_py_quote(unquoted))
