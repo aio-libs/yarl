@@ -127,14 +127,21 @@ def _unquote(val, *, unsafe='', plus=False):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    pct = ''
-    pcts = bytearray()
-    ret = []
+    return _do_unquote(<str>val, unsafe, plus)
+
+
+cdef str _do_unquote(str val, str unsafe='', bint plus=False):
+    cdef str pct = ''
+    cdef str last_pct = ''
+    cdef bytearray pcts = bytearray()
+    cdef list ret = []
+    cdef str unquoted
     for ch in val:
         if pct:
             pct += ch
             if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pcts.append(int(pct[1:], base=16))
+                last_pct = pct
                 pct = ''
             continue
         if pcts:
@@ -153,12 +160,20 @@ def _unquote(val, *, unsafe='', plus=False):
             pct = ch
             continue
 
+        if pcts:
+            ret.append(last_pct.replace('%', '%25'))  # %F8ab -> %25F8ab
+            last_pct = ''
+
         ret.append(ch)
 
     if pcts:
-        unquoted = pcts.decode('utf8')
-        if unquoted in unsafe:
-            ret.append(_do_quote(unquoted, '', False))
+        try:
+            unquoted = pcts.decode('utf8')
+        except UnicodeDecodeError:
+            ret.append(last_pct.replace('%', '%25'))  # %F8 -> %25F8
         else:
-            ret.append(unquoted)
+            if unquoted in unsafe:
+                ret.append(_do_quote(unquoted, '', False))
+            else:
+                ret.append(unquoted)
     return ''.join(ret)

@@ -65,6 +65,7 @@ def _py_unquote(val, *, unsafe='', plus=False):
     if not val:
         return ''
     pct = ''
+    last_pct = ''
     pcts = bytearray()
     ret = []
     for ch in val:
@@ -72,6 +73,7 @@ def _py_unquote(val, *, unsafe='', plus=False):
             pct += ch
             if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pcts.append(int(pct[1:], base=16))
+                last_pct = pct
                 pct = ''
             continue
         if pcts:
@@ -90,14 +92,22 @@ def _py_unquote(val, *, unsafe='', plus=False):
             pct = ch
             continue
 
+        if pcts:
+            ret.append(last_pct.replace('%', '%25'))  # %F8ab -> %25F8ab
+            last_pct = ''
+
         ret.append(ch)
 
     if pcts:
-        unquoted = pcts.decode('utf8')
-        if unquoted in unsafe:
-            ret.append(_py_quote(unquoted))
+        try:
+            unquoted = pcts.decode('utf8')
+        except UnicodeDecodeError:
+            ret.append(last_pct.replace('%', '%25'))  # %F8 -> %25F8
         else:
-            ret.append(unquoted)
+            if unquoted in unsafe:
+                ret.append(_py_quote(unquoted))
+            else:
+                ret.append(unquoted)
     return ''.join(ret)
 
 

@@ -238,3 +238,11 @@ def test_unquote_unsafe(unquote):
 
 def test_unquote_unsafe2(unquote):
     assert unquote('%26abc', unsafe='&') == '%26abc'
+
+
+def test_unquote_non_ascii(unquote):
+    assert unquote('%F8') == '%25F8'
+
+
+def test_unquote_non_ascii_non_tailing(unquote):
+    assert unquote('%F8ab') == '%25F8ab'

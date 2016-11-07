@@ -1259,3 +1259,13 @@ def test_relative_abs_parts_are_removed():
 def test_relative_fails_on_rel_url():
     with pytest.raises(ValueError):
         URL('/path?a=b#frag').relative()
+
+
+def test_slash_and_question_in_query():
+    u = URL('http://example.com/path?http://example.com/p?a#b')
+    assert u.query_string == 'http://example.com/p?a'
+
+
+def test_slash_and_question_in_fragment():
+    u = URL('http://example.com/path#http://example.com/p?a')
+    assert u.fragment == 'http://example.com/p?a'
