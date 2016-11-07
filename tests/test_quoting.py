@@ -246,3 +246,11 @@ def test_unquote_non_ascii(unquote):
 
 def test_unquote_non_ascii_non_tailing(unquote):
     assert unquote('%F8ab') == '%F8ab'
+
+
+def test_quote_non_ascii(quote):
+    assert quote('%F8') == '%F8'
+
+
+def test_quote_non_ascii2(quote):
+    assert quote('a%F8b') == 'a%F8b'

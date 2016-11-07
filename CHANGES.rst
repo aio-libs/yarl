@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.6.0 (2016-11-07)
+------------------
+
+* Explicitly use UTF8 encoding in setup.py #20
+* Properly unquote non-UTF8 strings #19
+
 0.5.3 (2016-11-02)
 ------------------
 
