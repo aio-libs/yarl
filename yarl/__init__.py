@@ -60,6 +60,18 @@ class cached_property:
         raise AttributeError("cached property is read-only")
 
 
+def dict_to_multidict(data: dict) -> MultiDict:
+    """Convert dict into multidict."""
+    data_tuples = []
+    for key, value in data.items():
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            for item in value:
+                data_tuples.append((key, item))
+        else:
+            data_tuples.append((key, value))
+    return MultiDict(data_tuples)
+
+
 class URL:
     # Don't derive from str
     # follow pathlib.Path design
@@ -662,6 +674,9 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
+            # need to convert into multidict for proper handling multiple params
+            if not isinstance(query, (MultiDict, MultiDictProxy)):
+                query = dict_to_multidict(query)
             quoter = partial(quote, safe='', plus=True)
             lst = []
             for k, v in query.items():
