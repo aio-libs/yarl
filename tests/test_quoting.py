@@ -254,3 +254,15 @@ def test_quote_non_ascii(quote):
 
 def test_quote_non_ascii2(quote):
     assert quote('a%F8b') == 'a%F8b'
+
+
+class StrLike(str):
+    pass
+
+
+def test_quote_str_like(quote):
+    assert quote(StrLike('abc')) == 'abc'
+
+
+def test_unquote_str_like(unquote):
+    assert unquote(StrLike('abc')) == 'abc'

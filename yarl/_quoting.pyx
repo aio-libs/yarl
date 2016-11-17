@@ -46,7 +46,7 @@ def _quote(val, *, str safe='', bint plus=False):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    return _do_quote(val, safe, plus)
+    return _do_quote(<str>val, safe, plus)
 
 
 cdef str _do_quote(str val, str safe, bint plus):
