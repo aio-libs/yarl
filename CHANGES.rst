@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.7.1 (2016-11-XX)
+------------------
+
+* Accept not only `str` but all classes inherited from `str` also #25
+
 0.7.0 (2016-11-07)
 ------------------
 
