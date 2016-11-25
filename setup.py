@@ -1,4 +1,5 @@
 import pathlib
+import sys
 import re
 
 from setuptools import setup, Extension
@@ -58,6 +59,12 @@ with fname.open(encoding='utf8') as fp:
 
 install_requires = ['multidict>=2.0']
 
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+if needs_pytest:
+    setup_requires = ['pytest-runner']
+else:
+    setup_requires = []
+
 
 def read(name):
     fname = here / name
@@ -86,7 +93,7 @@ args = dict(
     packages=['yarl'],
     install_requires=install_requires,
     include_package_data=True,
-    setup_requires=['pytest-runner'],
+    setup_requires=setup_requires,
     tests_require=['pytest'],
     ext_modules=extensions,
     cmdclass=dict(build_ext=ve_build_ext))
