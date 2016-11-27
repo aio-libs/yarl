@@ -739,6 +739,13 @@ def test_with_query_multidict():
     assert str(url.with_query(q)) == 'http://example.com/path?a=b&c=d'
 
 
+def test_with_query_dict():
+    url = URL('http://example.com/path')
+    q = {'list': [1, 2, 3, 4]}
+    assert str(url.with_query(q)) == ('http://example.com/path?'
+                                      'list=1&list=2&list=3&list=4')
+
+
 def test_with_multidict_with_spaces_and_non_ascii():
     url = URL('http://example.com')
     url2 = url.with_query({'a b': 'ю б'})

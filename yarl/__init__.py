@@ -8,6 +8,7 @@ from multidict import MultiDict, MultiDictProxy
 
 
 from .quoting import quote, unquote
+from .dict_to_multidict import dict_to_multidict
 
 __version__ = '0.7.1'
 
@@ -662,6 +663,10 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
+            # need to convert into multidict for
+            # proper handling multiple params
+            if not isinstance(query, (MultiDict, MultiDictProxy)):
+                query = dict_to_multidict(query)
             quoter = partial(quote, safe='', plus=True)
             lst = []
             for k, v in query.items():
