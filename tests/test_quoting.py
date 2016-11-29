@@ -233,11 +233,11 @@ def test_quote_unquoted(quote):
 
 
 def test_unquote_unsafe(unquote):
-    assert unquote('%26', unsafe='&') == '%26'
+    assert unquote('%40', unsafe='@') == '%40'
 
 
 def test_unquote_unsafe2(unquote):
-    assert unquote('%26abc', unsafe='&') == '%26abc'
+    assert unquote('%40abc', unsafe='@') == '%40abc'
 
 
 def test_unquote_non_ascii(unquote):
@@ -266,3 +266,15 @@ def test_quote_str_like(quote):
 
 def test_unquote_str_like(unquote):
     assert unquote(StrLike('abc')) == 'abc'
+
+
+def test_quote_sub_delims(quote):
+    assert quote("!$&'()*+,;=") == "!$&'()*+,;="
+
+
+def test_requote_sub_delims(quote):
+    assert quote("%21%24%26%27%28%29%2A%2B%2C%3B%3D") == "!$&'()*+,;="
+
+
+def test_unquote_plus_to_space(unquote):
+    assert unquote('a+b', plus=True) == 'a b'

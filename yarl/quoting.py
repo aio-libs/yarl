@@ -3,12 +3,14 @@ from string import ascii_letters, ascii_lowercase, digits
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
 BPCT_ALLOWED = {'%{:02X}'.format(i).encode('ascii') for i in range(256)}
 GEN_DELIMS = ":/?#[]@"
-SUB_DELIMS = "!$&'()*+,;="
+SUB_DELIMS_WITHOUT_PLUS = "!$&'()*,;="
+SUB_DELIMS = SUB_DELIMS_WITHOUT_PLUS + '+'
 RESERVED = GEN_DELIMS + SUB_DELIMS
 UNRESERVED = ascii_letters + digits + '-._~'
-BUNRESERVED = UNRESERVED.encode('ascii')
-BUNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
-                      for ch in UNRESERVED}
+ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_PLUS
+BALLOWED = ALLOWED.encode('ascii')
+BALLOWED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
+                   for ch in ALLOWED}
 
 
 def _py_quote(val, *, safe='', plus=False):
@@ -21,7 +23,9 @@ def _py_quote(val, *, safe='', plus=False):
     val = val.encode('utf8')
     ret = bytearray()
     pct = b''
-    safe += UNRESERVED
+    safe += ALLOWED
+    if not plus:
+        safe += '+'
     bsafe = safe.encode('ascii')
     for ch in val:
         if pct:
@@ -30,7 +34,11 @@ def _py_quote(val, *, safe='', plus=False):
             pct.append(ch)
             if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pct = bytes(pct)
-                unquoted = BUNRESERVED_QUOTED.get(pct)
+                if not plus and pct == b'%2B':
+                    ret.append(ord('+'))
+                    pct = b''
+                    continue
+                unquoted = BALLOWED_QUOTED.get(pct)
                 if unquoted:
                     ret.append(unquoted)
                 elif pct not in BPCT_ALLOWED:
@@ -95,6 +103,9 @@ def _py_unquote(val, *, unsafe='', plus=False):
         if pcts:
             ret.append(last_pct)  # %F8ab
             last_pct = ''
+
+        if plus and ch == '+':
+            ch = ' '
 
         ret.append(ch)
 

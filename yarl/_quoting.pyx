@@ -164,6 +164,9 @@ cdef str _do_unquote(str val, str unsafe='', bint plus=False):
             ret.append(last_pct)  # %F8ab
             last_pct = ''
 
+        if plus and ch == '+':
+            ch = ' '
+
         ret.append(ch)
 
     if pcts:

@@ -93,3 +93,5 @@ coverage
 
 yarl/_quoting.c
 yarl/_quoting.html
+
+.develop
