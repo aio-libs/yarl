@@ -748,8 +748,8 @@ def test_with_multidict_with_spaces_and_non_ascii():
 def test_with_query_multidict_with_unsafe():
     url = URL('http://example.com/path')
     url2 = url.with_query({'a+b': '?=+&'})
-    assert url2.raw_query_string == 'a%2Bb=%3F%3D%2B%26'
-    assert url2.query_string == 'a%2Bb=%3F%3D%2B%26'
+    assert url2.raw_query_string == 'a%2Bb=?%3D%2B%26'
+    assert url2.query_string == 'a%2Bb=?%3D%2B%26'
     assert url2.query == {'a+b': '?=+&'}
 
 

@@ -180,7 +180,7 @@ class URL:
             val = SplitResult(val[0],  # scheme
                               netloc,
                               quote(val[2], safe='/'),
-                              query=quote(val[3], safe='=+&?', plus=True),
+                              query=quote(val[3], safe='=+&?/', qs=True),
                               fragment=quote(val[4]))
 
         self._val = val
@@ -421,7 +421,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        return unquote(self.raw_query_string, unsafe='?&=+')
+        return unquote(self.raw_query_string, unsafe='&=+')
 
     @cached_property
     def raw_fragment(self):
@@ -662,7 +662,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(quote, safe='', plus=True)
+            quoter = partial(quote, safe='/?', qs=True)
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -674,11 +674,11 @@ class URL:
                 lst.append(quoter(k)+'='+quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
-            query = quote(query, safe='=+&', plus=True)
+            query = quote(query, safe='=+&/?', qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type")
         elif isinstance(query, Sequence):
-            quoter = partial(quote, safe='', plus=True)
+            quoter = partial(quote, safe='/?', qs=True)
             query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query)
         else:

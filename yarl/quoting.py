@@ -3,17 +3,17 @@ from string import ascii_letters, ascii_lowercase, digits
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
 BPCT_ALLOWED = {'%{:02X}'.format(i).encode('ascii') for i in range(256)}
 GEN_DELIMS = ":/?#[]@"
-SUB_DELIMS_WITHOUT_PLUS = "!$&'()*,;="
-SUB_DELIMS = SUB_DELIMS_WITHOUT_PLUS + '+'
+SUB_DELIMS_WITHOUT_QS = "!$'()*,;"
+SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+&='
 RESERVED = GEN_DELIMS + SUB_DELIMS
 UNRESERVED = ascii_letters + digits + '-._~'
-ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_PLUS
+ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 BALLOWED = ALLOWED.encode('ascii')
 BALLOWED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
                    for ch in ALLOWED}
 
 
-def _py_quote(val, *, safe='', plus=False):
+def _py_quote(val, *, safe='', qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -24,8 +24,8 @@ def _py_quote(val, *, safe='', plus=False):
     ret = bytearray()
     pct = b''
     safe += ALLOWED
-    if not plus:
-        safe += '+'
+    if not qs:
+        safe += '+&='
     bsafe = safe.encode('ascii')
     for ch in val:
         if pct:
@@ -34,10 +34,21 @@ def _py_quote(val, *, safe='', plus=False):
             pct.append(ch)
             if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pct = bytes(pct)
-                if not plus and pct == b'%2B':
-                    ret.append(ord('+'))
-                    pct = b''
-                    continue
+                if not qs:
+                    if pct == b'%2B':
+                        ret.append(ord('+'))
+                        pct = b''
+                        continue
+                if not qs:
+                    if pct == b'%26':
+                        ret.append(ord('&'))
+                        pct = b''
+                        continue
+                if not qs:
+                    if pct == b'%3D':
+                        ret.append(ord('='))
+                        pct = b''
+                        continue
                 unquoted = BALLOWED_QUOTED.get(pct)
                 if unquoted:
                     ret.append(unquoted)
@@ -52,7 +63,7 @@ def _py_quote(val, *, safe='', plus=False):
             pct.append(ch)
             continue
 
-        if plus:
+        if qs:
             if ch == ord(' '):
                 ret.append(ord('+'))
                 continue
@@ -65,7 +76,7 @@ def _py_quote(val, *, safe='', plus=False):
     return ret.decode('ascii')
 
 
-def _py_unquote(val, *, unsafe='', plus=False):
+def _py_unquote(val, *, unsafe='', qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -104,7 +115,7 @@ def _py_unquote(val, *, unsafe='', plus=False):
             ret.append(last_pct)  # %F8ab
             last_pct = ''
 
-        if plus and ch == '+':
+        if qs and ch == '+':
             ch = ' '
 
         ret.append(ch)

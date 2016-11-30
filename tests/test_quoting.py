@@ -49,7 +49,7 @@ def test_never_quote(quote):
                              "0123456789",
                              "_.-"])
     assert quote(do_not_quote) == do_not_quote
-    quote(do_not_quote, plus=True) == do_not_quote
+    quote(do_not_quote, qs=True) == do_not_quote
 
 
 def test_safe(quote):
@@ -57,7 +57,7 @@ def test_safe(quote):
     quote_by_default = "<>"
     assert quote(quote_by_default, safe=quote_by_default) == quote_by_default
 
-    ret = quote(quote_by_default, safe=quote_by_default, plus=True)
+    ret = quote(quote_by_default, safe=quote_by_default, qs=True)
     assert ret == quote_by_default
 
 
@@ -73,7 +73,7 @@ def test_default_quoting(char, quote):
     # space (separate test for that).
     result = quote(char)
     assert hexescape(char) == result
-    result = quote(char, plus=True)
+    result = quote(char, qs=True)
     assert hexescape(char) == result
 
 
@@ -81,7 +81,7 @@ def test_default_quoting(char, quote):
 def test_default_quoting_percent(quote):
     result = quote('%25')
     assert '%25' == result
-    result = quote('%25', plus=True)
+    result = quote('%25', qs=True)
     assert '%25' == result
 
 
@@ -90,7 +90,7 @@ def test_default_quoting_partial(quote):
     expected = "ab%5B%5Dcd"
     result = quote(partial_quote)
     assert expected == result
-    result = quote(partial_quote, plus=True)
+    result = quote(partial_quote, qs=True)
     assert expected == result
 
 
@@ -99,7 +99,7 @@ def test_quoting_space(quote):
     # their unique way
     result = quote(' ')
     assert result == hexescape(' ')
-    result = quote(' ', plus=True)
+    result = quote(' ', qs=True)
     assert result == '+'
 
     given = "a b cd e f"
@@ -107,13 +107,13 @@ def test_quoting_space(quote):
     result = quote(given)
     assert expect == result
     expect = given.replace(' ', '+')
-    result = quote(given, plus=True)
+    result = quote(given, qs=True)
     assert expect == result
 
 
 def test_quoting_plus(quote):
-    assert quote('alpha+beta gamma', plus=True) == 'alpha%2Bbeta+gamma'
-    assert quote('alpha+beta gamma', safe='+', plus=True) == 'alpha+beta+gamma'
+    assert quote('alpha+beta gamma', qs=True) == 'alpha%2Bbeta+gamma'
+    assert quote('alpha+beta gamma', safe='+', qs=True) == 'alpha+beta+gamma'
 
 
 def test_quote_with_unicode(quote):
@@ -133,12 +133,12 @@ def test_quote_plus_with_unicode(quote):
     # Characters in Latin-1 range, encoded by default in UTF-8
     given = "\xa2\xd8ab\xff"
     expect = "%C2%A2%C3%98ab%C3%BF"
-    result = quote(given, plus=True)
+    result = quote(given, qs=True)
     assert expect == result
     # Characters in BMP, encoded by default in UTF-8
     given = "\u6f22\u5b57"              # "Kanji"
     expect = "%E6%BC%A2%E5%AD%97"
-    result = quote(given, plus=True)
+    result = quote(given, qs=True)
     assert expect == result
 
 
@@ -149,7 +149,7 @@ def test_unquoting(num, unquote):
     expect = chr(num)
     result = unquote(given)
     assert expect == result
-    result = unquote(given, plus=True)
+    result = unquote(given, qs=True)
     assert expect == result
 
 
@@ -194,7 +194,7 @@ def test_unquoting_parts(unquote):
     expect = "abcd"
     result = unquote(given)
     assert expect == result
-    result = unquote(given, plus=True)
+    result = unquote(given, qs=True)
     assert expect == result
 
 
@@ -277,4 +277,4 @@ def test_requote_sub_delims(quote):
 
 
 def test_unquote_plus_to_space(unquote):
-    assert unquote('a+b', plus=True) == 'a b'
+    assert unquote('a+b', qs=True) == 'a b'
