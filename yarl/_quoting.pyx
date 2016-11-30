@@ -12,13 +12,11 @@ from libc.stdint cimport uint8_t, uint64_t
 from string import ascii_letters, digits
 
 cdef str GEN_DELIMS = ":/?#[]@"
-cdef str SUB_DELIMS = "!$&'()*+,;="
+cdef str SUB_DELIMS_WITHOUT_PLUS = "!$&'()*,;="
+cdef str SUB_DELIMS = SUB_DELIMS_WITHOUT_PLUS + '+'
 cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
 cdef str UNRESERVED = ascii_letters + digits + '-._~'
-
-cdef set PCT_ALLOWED = {'%{:02X}'.format(i) for i in range(256)}
-cdef dict UNRESERVED_QUOTED = {'%{:02X}'.format(ord(ch)): ord(ch)
-                               for ch in UNRESERVED}
+cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_PLUS
 
 
 cdef inline Py_UCS4 _hex(uint8_t v):
@@ -63,7 +61,10 @@ cdef str _do_quote(str val, str safe, bint plus):
     cdef int has_pct = 0
     cdef Py_UCS4 pct[2]
     cdef int digit1, digit2
+    if not plus:
+        safe += '+'
     for ch in val:
+        print(ch)
         if has_pct:
             pct[has_pct-1] = ch
             has_pct += 1
@@ -76,7 +77,10 @@ cdef str _do_quote(str val, str safe, bint plus):
                 ch = <Py_UCS4>(digit1 << 4 | digit2)
                 has_pct = 0
 
-                if ch in UNRESERVED:
+                if not plus and ch == '+':
+                    PyUnicode_WriteChar(ret, ret_idx, ch)
+                    ret_idx += 1
+                elif ch in ALLOWED:
                     PyUnicode_WriteChar(ret, ret_idx, ch)
                     ret_idx += 1
                 else:
@@ -96,11 +100,11 @@ cdef str _do_quote(str val, str safe, bint plus):
                 PyUnicode_WriteChar(ret, ret_idx, '+')
                 ret_idx += 1
                 continue
-        if ch in UNRESERVED:
+        if ch in safe:
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
             continue
-        if ch in safe:
+        if ch in ALLOWED:
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
             continue

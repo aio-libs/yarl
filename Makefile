@@ -1,4 +1,4 @@
-.develop:
+.develop: $(shell find yarl -type f)
 	@pip install -e .
 	@touch .develop
 
