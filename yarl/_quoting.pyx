@@ -159,7 +159,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             except UnicodeDecodeError:
                 pass
             else:
-                if unquoted in unsafe:
+                if qs and unquoted in '+=&':
+                    ret.append(_do_quote(unquoted, '', True))
+                elif unquoted in unsafe:
                     ret.append(_do_quote(unquoted, '', False))
                 else:
                     ret.append(unquoted)
@@ -173,8 +175,19 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             ret.append(last_pct)  # %F8ab
             last_pct = ''
 
-        if qs and ch == '+':
-            ch = ' '
+        if ch == '+':
+            if ch in unsafe:
+                ret.append('+')
+            else:
+                ret.append(' ')
+            continue
+
+        if ch in unsafe:
+            ret.append('%')
+            h = hex(ord(ch)).upper()[2:]
+            for ch in h:
+                ret.append(ch)
+            continue
 
         ret.append(ch)
 
@@ -184,7 +197,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
         except UnicodeDecodeError:
             ret.append(last_pct)  # %F8
         else:
-            if unquoted in unsafe:
+            if qs and unquoted in '+=&':
+                ret.append(_do_quote(unquoted, '', True))
+            elif unquoted in unsafe:
                 ret.append(_do_quote(unquoted, '', False))
             else:
                 ret.append(unquoted)

@@ -101,7 +101,9 @@ def _py_unquote(val, *, unsafe='', qs=False):
             except UnicodeDecodeError:
                 pass
             else:
-                if unquoted in unsafe:
+                if qs and unquoted in '+=&':
+                    ret.append(_py_quote(unquoted, qs=True))
+                elif unquoted in unsafe:
                     ret.append(_py_quote(unquoted))
                 else:
                     ret.append(unquoted)
@@ -115,8 +117,19 @@ def _py_unquote(val, *, unsafe='', qs=False):
             ret.append(last_pct)  # %F8ab
             last_pct = ''
 
-        if qs and ch == '+':
-            ch = ' '
+        if ch == '+':
+            if ch in unsafe:
+                ret.append('+')
+            else:
+                ret.append(' ')
+            continue
+
+        if ch in unsafe:
+            ret.append('%')
+            h = hex(ord(ch)).upper()[2:]
+            for ch in h:
+                ret.append(ch)
+            continue
 
         ret.append(ch)
 
@@ -126,7 +139,9 @@ def _py_unquote(val, *, unsafe='', qs=False):
         except UnicodeDecodeError:
             ret.append(last_pct)  # %F8
         else:
-            if unquoted in unsafe:
+            if qs and unquoted in '+=&':
+                ret.append(_py_quote(unquoted, qs=True))
+            elif unquoted in unsafe:
                 ret.append(_py_quote(unquoted))
             else:
                 ret.append(unquoted)

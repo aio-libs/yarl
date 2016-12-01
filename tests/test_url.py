@@ -172,7 +172,7 @@ def test_query_string_non_ascii():
 
 def test_query_string_spaces():
     url = URL('http://example.com?a+b=c+d&e=f+g')
-    assert url.query_string == 'a+b=c+d&e=f+g'
+    assert url.query_string == 'a b=c d&e=f g'
 
 
 def test_query_spaces():
@@ -719,7 +719,7 @@ def test_with_query_str_non_ascii_and_spaces():
     url = URL('http://example.com')
     url2 = url.with_query('a=1 2&b=знач')
     assert url2.raw_query_string == 'a=1+2&b=%D0%B7%D0%BD%D0%B0%D1%87'
-    assert url2.query_string == 'a=1+2&b=знач'
+    assert url2.query_string == 'a=1 2&b=знач'
 
 
 def test_with_query_int():

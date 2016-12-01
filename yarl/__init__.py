@@ -421,7 +421,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        return unquote(self.raw_query_string, unsafe='&=+')
+        return unquote(self.raw_query_string, qs=True)
 
     @cached_property
     def raw_fragment(self):

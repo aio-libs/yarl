@@ -149,8 +149,9 @@ def test_unquoting(num, unquote):
     expect = chr(num)
     result = unquote(given)
     assert expect == result
-    result = unquote(given, qs=True)
-    assert expect == result
+    if expect not in '+=&':
+        result = unquote(given, qs=True)
+        assert expect == result
 
 
 @pytest.mark.xfail
@@ -240,6 +241,10 @@ def test_unquote_unsafe2(unquote):
     assert unquote('%40abc', unsafe='@') == '%40abc'
 
 
+def test_unquote_unsafe3(unquote):
+    assert unquote('a%2Bb=?%3D%2B%26', qs=True) == 'a%2Bb=?%3D%2B%26'
+
+
 def test_unquote_non_ascii(unquote):
     assert unquote('%F8') == '%F8'
 
@@ -278,3 +283,7 @@ def test_requote_sub_delims(quote):
 
 def test_unquote_plus_to_space(unquote):
     assert unquote('a+b', qs=True) == 'a b'
+
+
+def test_unquote_plus_to_space_unsafe(unquote):
+    assert unquote('a+b', unsafe='+', qs=True) == 'a+b'
