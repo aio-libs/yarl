@@ -670,19 +670,22 @@ class URL:
                 elif type(v) == int:  # no subclasses like bool
                     v = str(v)
                 else:
-                    raise TypeError("Invalid variable type")
+                    raise TypeError("Invalid variable type: mapping value "
+                                    "should be str or int, got {!r}".format(v))
                 lst.append(quoter(k)+'='+quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
             query = quote(query, safe='=+&/?', qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
-            raise TypeError("Invalid query type")
+            raise TypeError("Invalid query type: bytes, bytearray and "
+                            "memoryview are forbidden")
         elif isinstance(query, Sequence):
             quoter = partial(quote, safe='/?', qs=True)
             query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query)
         else:
-            raise TypeError("Invalid query type")
+            raise TypeError("Invalid query type: only str, mapping or "
+                            "sequence of (str, str) pairs is allowed")
         path = self._val.path
         if path == '':
             path = '/'
