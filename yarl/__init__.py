@@ -7,11 +7,11 @@ from urllib.parse import (SplitResult, parse_qsl,
 from multidict import MultiDict, MultiDictProxy
 
 
-from .quoting import quote, unquote
+from .quoting import quote as _quote, unquote as _unquote
 
 __version__ = '0.7.1'
 
-__all__ = ['URL', 'quote', 'unquote']
+__all__ = ['URL']
 
 
 # is_leaf()
@@ -172,16 +172,16 @@ class URL:
                 if val.port:
                     netloc += ':{}'.format(val.port)
                 if val.username:
-                    user = quote(val.username)
+                    user = _quote(val.username)
                     if val.password:
-                        user += ':' + quote(val.password)
+                        user += ':' + _quote(val.password)
                     netloc = user + '@' + netloc
 
             val = SplitResult(val[0],  # scheme
                               netloc,
-                              quote(val[2], safe='/@:'),
-                              query=quote(val[3], safe='=+&?/', qs=True),
-                              fragment=quote(val[4]))
+                              _quote(val[2], safe='/@:'),
+                              query=_quote(val[3], safe='=+&?/', qs=True),
+                              fragment=_quote(val[4]))
 
         self._val = val
         self._cache = {}
@@ -227,7 +227,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = quote(name, safe='/:@')
+        name = _quote(name, safe='/:@')
         if name.startswith('/'):
             raise ValueError("Appending path "
                              "starting from slash is forbidden")
@@ -294,7 +294,7 @@ class URL:
         val = self._val._replace(scheme='', netloc='')
         return URL(val, encoded=True)
 
-    @cached_property
+    @property
     def scheme(self):
         """Scheme for absolute URLs.
 
@@ -303,7 +303,7 @@ class URL:
         """
         return self._val.scheme
 
-    @cached_property
+    @property
     def raw_user(self):
         """Encoded user part of URL.
 
@@ -320,9 +320,9 @@ class URL:
         None if user is missing.
 
         """
-        return unquote(self.raw_user)
+        return _unquote(self.raw_user)
 
-    @cached_property
+    @property
     def raw_password(self):
         """Encoded password part of URL.
 
@@ -338,9 +338,9 @@ class URL:
         None if password is missing.
 
         """
-        return unquote(self.raw_password)
+        return _unquote(self.raw_password)
 
-    @cached_property
+    @property
     def raw_host(self):
         """Encoded host part of URL.
 
@@ -363,7 +363,7 @@ class URL:
             return None
         return raw.encode('ascii').decode('idna')
 
-    @cached_property
+    @property
     def port(self):
         """Port part of URL.
 
@@ -373,7 +373,7 @@ class URL:
         """
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
 
-    @cached_property
+    @property
     def raw_path(self):
         """Encoded path of URL.
 
@@ -392,7 +392,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return unquote(self.raw_path)
+        return _unquote(self.raw_path)
 
     @cached_property
     def query(self):
@@ -405,7 +405,7 @@ class URL:
         ret = MultiDict(parse_qsl(self.query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
 
-    @cached_property
+    @property
     def raw_query_string(self):
         """Encoded query part of URL.
 
@@ -421,9 +421,9 @@ class URL:
         Empty string if query is missing.
 
         """
-        return unquote(self.raw_query_string, qs=True)
+        return _unquote(self.raw_query_string, qs=True)
 
-    @cached_property
+    @property
     def raw_fragment(self):
         """Encoded fragment part of URL.
 
@@ -439,7 +439,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        return unquote(self.raw_fragment)
+        return _unquote(self.raw_fragment)
 
     @cached_property
     def raw_parts(self):
@@ -468,7 +468,7 @@ class URL:
         ('/',) for absolute URLs if *path* is missing.
 
         """
-        return tuple(unquote(part) for part in self.raw_parts)
+        return tuple(_unquote(part) for part in self.raw_parts)
 
     @cached_property
     def parent(self):
@@ -503,7 +503,7 @@ class URL:
     @cached_property
     def name(self):
         """The last part of parts."""
-        return unquote(self.raw_name)
+        return _unquote(self.raw_name)
 
     @classmethod
     def _make_netloc(cls, user, password, host, port):
@@ -542,7 +542,7 @@ class URL:
         if user is None:
             password = None
         elif isinstance(user, str):
-            user = quote(user)
+            user = _quote(user)
             password = val.password
         else:
             raise TypeError("Invalid user type")
@@ -569,7 +569,7 @@ class URL:
         if password is None:
             pass
         elif isinstance(password, str):
-            password = quote(password)
+            password = _quote(password)
         else:
             raise TypeError("Invalid password type")
         if not self.is_absolute():
@@ -662,7 +662,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(quote, safe='/?', qs=True)
+            quoter = partial(_quote, safe='/?', qs=True)
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -675,12 +675,12 @@ class URL:
                 lst.append(quoter(k)+'='+quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
-            query = quote(query, safe='=+&/?', qs=True)
+            query = _quote(query, safe='=+&/?', qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(quote, safe='/?', qs=True)
+            quoter = partial(_quote, safe='/?', qs=True)
             query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query)
         else:
@@ -705,7 +705,7 @@ class URL:
             fragment = ''
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(fragment=quote(fragment)),
+        return URL(self._val._replace(fragment=_quote(fragment)),
                    encoded=True)
 
     def with_name(self, name):
@@ -721,7 +721,7 @@ class URL:
             raise TypeError("Invalid name type")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        name = quote(name, safe='/@:')
+        name = _quote(name, safe='/@:')
         parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:

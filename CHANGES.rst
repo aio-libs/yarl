@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+* Support more verbose error messages in `.with_query()` #24
+
+* Don't percent-encode `@` and `:` in path #32
+
+* Don't expose `yarl.quote` and `yarl.unquote`, these functions are
+  part of private API
+
 0.7.1 (2016-11-18)
 ------------------
 
