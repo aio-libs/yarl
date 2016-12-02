@@ -179,7 +179,7 @@ class URL:
 
             val = SplitResult(val[0],  # scheme
                               netloc,
-                              quote(val[2], safe='/'),
+                              quote(val[2], safe='/@:'),
                               query=quote(val[3], safe='=+&?/', qs=True),
                               fragment=quote(val[4]))
 
@@ -227,7 +227,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = quote(name, safe='/')
+        name = quote(name, safe='/:@')
         if name.startswith('/'):
             raise ValueError("Appending path "
                              "starting from slash is forbidden")
@@ -718,7 +718,7 @@ class URL:
             raise TypeError("Invalid name type")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        name = quote(name, safe='/')
+        name = quote(name, safe='/@:')
         parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:

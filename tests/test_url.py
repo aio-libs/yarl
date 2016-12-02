@@ -155,6 +155,11 @@ def test_raw_path_for_empty_url():
     assert '' == url.raw_path
 
 
+def test_raw_path_for_colon_and_at():
+    url = URL('http://example.com/path:abc@123')
+    assert url.raw_path == '/path:abc@123'
+
+
 def test_raw_query_string():
     url = URL('http://example.com?a=1&b=2')
     assert url.raw_query_string == 'a=1&b=2'
@@ -427,6 +432,11 @@ def test_div_non_ascii():
     assert url2.raw_path == '/path/%D1%81%D1%8E%D0%B4%D0%B0'
     assert url2.parts == ('/', 'path', 'сюда')
     assert url2.raw_parts == ('/', 'path', '%D1%81%D1%8E%D0%B4%D0%B0')
+
+
+def test_div_with_colon_and_at():
+    url = URL('http://example.com/base') / 'path:abc@123'
+    assert url.raw_path == '/base/path:abc@123'
 
 
 # comparison and hashing
@@ -865,6 +875,10 @@ def test_with_name_non_str():
     with pytest.raises(TypeError):
         URL('http://example.com').with_name(123)
 
+
+def test_with_name_within_colon_and_at():
+    url = URL('http://example.com/oldpath').with_name('path:abc@123')
+    assert url.raw_path == '/path:abc@123'
 
 # is_absolute
 
