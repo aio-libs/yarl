@@ -179,8 +179,9 @@ class URL:
 
             val = SplitResult(val[0],  # scheme
                               netloc,
-                              _quote(val[2], safe='/@:'),
-                              query=_quote(val[3], safe='=+&?/', qs=True),
+                              _quote(val[2], safe='@:', protected='/'),
+                              query=_quote(val[3], safe='=+&?/:@',
+                                           protected='=+&', qs=True),
                               fragment=_quote(val[4]))
 
         self._val = val
@@ -227,7 +228,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = _quote(name, safe='/:@')
+        name = _quote(name, safe=':@', protected='/')
         if name.startswith('/'):
             raise ValueError("Appending path "
                              "starting from slash is forbidden")
@@ -662,7 +663,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(_quote, safe='/?', qs=True)
+            quoter = partial(_quote, safe='/?:@', qs=True)
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -675,12 +676,12 @@ class URL:
                 lst.append(quoter(k)+'='+quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
-            query = _quote(query, safe='=+&/?', qs=True)
+            query = _quote(query, safe='/?:@', protected='=&+', qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(_quote, safe='/?', qs=True)
+            quoter = partial(_quote, safe='/?:@', qs=True)
             query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query)
         else:
@@ -721,7 +722,7 @@ class URL:
             raise TypeError("Invalid name type")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        name = _quote(name, safe='/@:')
+        name = _quote(name, safe='@:', protected='/')
         parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:

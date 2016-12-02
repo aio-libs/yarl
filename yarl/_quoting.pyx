@@ -37,17 +37,17 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-def _quote(val, *, str safe='', bint qs=False):
+def _quote(val, *, str safe='', str protected='', bint qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    return _do_quote(<str>val, safe, qs)
+    return _do_quote(<str>val, safe, protected, qs)
 
 
-cdef str _do_quote(str val, str safe, bint qs):
+cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
@@ -61,8 +61,10 @@ cdef str _do_quote(str val, str safe, bint qs):
     cdef int has_pct = 0
     cdef Py_UCS4 pct[2]
     cdef int digit1, digit2
+    safe += ALLOWED
     if not qs:
         safe += '+&='
+    safe += protected
     for ch in val:
         if has_pct:
             pct[has_pct-1] = ch
@@ -76,16 +78,14 @@ cdef str _do_quote(str val, str safe, bint qs):
                 ch = <Py_UCS4>(digit1 << 4 | digit2)
                 has_pct = 0
 
-                if not qs and ch == '+':
-                    PyUnicode_WriteChar(ret, ret_idx, ch)
+                if ch in protected:
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
-                elif not qs and ch == '&':
-                    PyUnicode_WriteChar(ret, ret_idx, ch)
+                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch >> 4))
                     ret_idx += 1
-                elif not qs and ch == '=':
-                    PyUnicode_WriteChar(ret, ret_idx, ch)
+                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch & 0x0f))
                     ret_idx += 1
-                elif ch in ALLOWED:
+                elif ch in safe:
                     PyUnicode_WriteChar(ret, ret_idx, ch)
                     ret_idx += 1
                 else:
@@ -160,9 +160,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
                 pass
             else:
                 if qs and unquoted in '+=&':
-                    ret.append(_do_quote(unquoted, '', True))
+                    ret.append(_do_quote(unquoted, '', '', True))
                 elif unquoted in unsafe:
-                    ret.append(_do_quote(unquoted, '', False))
+                    ret.append(_do_quote(unquoted, '', '', False))
                 else:
                     ret.append(unquoted)
                 del pcts[:]
@@ -198,9 +198,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             ret.append(last_pct)  # %F8
         else:
             if qs and unquoted in '+=&':
-                ret.append(_do_quote(unquoted, '', True))
+                ret.append(_do_quote(unquoted, '', '', True))
             elif unquoted in unsafe:
-                ret.append(_do_quote(unquoted, '', False))
+                ret.append(_do_quote(unquoted, '', '', False))
             else:
                 ret.append(unquoted)
     return ''.join(ret)

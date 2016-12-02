@@ -13,7 +13,7 @@ BALLOWED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
                    for ch in ALLOWED}
 
 
-def _py_quote(val, *, safe='', qs=False):
+def _py_quote(val, *, safe='', protected='', qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -26,6 +26,7 @@ def _py_quote(val, *, safe='', qs=False):
     safe += ALLOWED
     if not qs:
         safe += '+&='
+    safe += protected
     bsafe = safe.encode('ascii')
     for ch in val:
         if pct:
@@ -34,24 +35,14 @@ def _py_quote(val, *, safe='', qs=False):
             pct.append(ch)
             if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                 pct = bytes(pct)
-                if not qs:
-                    if pct == b'%2B':
-                        ret.append(ord('+'))
-                        pct = b''
-                        continue
-                if not qs:
-                    if pct == b'%26':
-                        ret.append(ord('&'))
-                        pct = b''
-                        continue
-                if not qs:
-                    if pct == b'%3D':
-                        ret.append(ord('='))
-                        pct = b''
-                        continue
-                unquoted = BALLOWED_QUOTED.get(pct)
-                if unquoted:
-                    ret.append(unquoted)
+                try:
+                    unquoted = chr(int(pct[1:].decode('ascii'), base=16))
+                except ValueError:
+                    raise ValueError("Unallowed PCT {}".format(pct))
+                if unquoted in protected:
+                    ret.extend(pct)
+                elif unquoted in safe:
+                    ret.append(ord(unquoted))
                 elif pct not in BPCT_ALLOWED:
                     raise ValueError("Unallowed PCT {}".format(pct))
                 else:

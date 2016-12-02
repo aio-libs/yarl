@@ -287,3 +287,13 @@ def test_unquote_plus_to_space(unquote):
 
 def test_unquote_plus_to_space_unsafe(unquote):
     assert unquote('a+b', unsafe='+', qs=True) == 'a+b'
+
+
+def test_qoute_qs_with_colon(quote):
+    s = quote('next=http%3A//example.com/', safe='=+&?/:@', qs=True)
+    assert s == 'next=http://example.com/'
+
+
+def test_protected(quote):
+    s = quote('/path%2fto/three', protected='/')
+    assert s == '/path%2Fto/three'

@@ -1283,3 +1283,9 @@ def test_slash_and_question_in_query():
 def test_slash_and_question_in_fragment():
     u = URL('http://example.com/path#http://example.com/p?a')
     assert u.fragment == 'http://example.com/p?a'
+
+
+def test_requoting():
+    u = URL('http://127.0.0.1/?next=http%3A//example.com/')
+    assert u.raw_query_string == 'next=http://example.com/'
+    assert str(u) == 'http://127.0.0.1/?next=http://example.com/'
