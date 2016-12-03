@@ -221,6 +221,11 @@ def test_raw_fragment_non_ascii():
     assert '%D1%8F%D0%BA%D0%BE%D1%80%D1%8C' == url.raw_fragment
 
 
+def test_raw_fragment_safe():
+    url = URL('http://example.com/path#a?b/c:d@e')
+    assert 'a?b/c:d@e' == url.raw_fragment
+
+
 def test_fragment_non_ascii():
     url = URL('http://example.com/path#якорь')
     assert 'якорь' == url.fragment
@@ -795,6 +800,12 @@ def test_with_query_memoryview():
 def test_with_fragment():
     url = URL('http://example.com')
     assert str(url.with_fragment('frag')) == 'http://example.com/#frag'
+
+
+def test_with_fragment_safe():
+    url = URL('http://example.com')
+    u2 = url.with_fragment('a:b?c@d/e')
+    assert str(u2) == 'http://example.com/#a:b?c@d/e'
 
 
 def test_with_fragment_non_ascii():

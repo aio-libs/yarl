@@ -182,7 +182,7 @@ class URL:
                               _quote(val[2], safe='@:', protected='/'),
                               query=_quote(val[3], safe='=+&?/:@',
                                            protected='=+&', qs=True),
-                              fragment=_quote(val[4]))
+                              fragment=_quote(val[4], safe='?/:@'))
 
         self._val = val
         self._cache = {}
@@ -706,7 +706,7 @@ class URL:
             fragment = ''
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(fragment=_quote(fragment)),
+        return URL(self._val._replace(fragment=_quote(fragment, safe='?/:@')),
                    encoded=True)
 
     def with_name(self, name):
