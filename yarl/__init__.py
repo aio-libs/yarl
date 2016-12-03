@@ -7,9 +7,9 @@ from urllib.parse import (SplitResult, parse_qsl,
 from multidict import MultiDict, MultiDictProxy
 
 
-from .quoting import quote as _quote, unquote as _unquote
+from .quoting import quote, unquote
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 __all__ = ['URL']
 
@@ -27,6 +27,9 @@ DEFAULT_PORTS = {
 
 
 sentinel = object()
+
+_quote = quote
+_unquote = unquote
 
 
 class cached_property:
