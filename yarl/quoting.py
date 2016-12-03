@@ -8,9 +8,6 @@ SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+&='
 RESERVED = GEN_DELIMS + SUB_DELIMS
 UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
-BALLOWED = ALLOWED.encode('ascii')
-BALLOWED_QUOTED = {'%{:02X}'.format(ord(ch)).encode('ascii'): ord(ch)
-                   for ch in ALLOWED}
 
 
 def _py_quote(val, *, safe='', protected='', qs=False):
@@ -43,8 +40,6 @@ def _py_quote(val, *, safe='', protected='', qs=False):
                     ret.extend(pct)
                 elif unquoted in safe:
                     ret.append(ord(unquoted))
-                elif pct not in BPCT_ALLOWED:
-                    raise ValueError("Unallowed PCT {}".format(pct))
                 else:
                     ret.extend(pct)
                 pct = b''
