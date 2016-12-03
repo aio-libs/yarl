@@ -1,6 +1,9 @@
 CHANGES
 =======
 
+0.8.0 (2016-12-03)
+------------------
+
 * Support more verbose error messages in `.with_query()` #24
 
 * Don't percent-encode `@` and `:` in path #32
