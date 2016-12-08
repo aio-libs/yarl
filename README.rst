@@ -116,7 +116,7 @@ Comparison with other URL libraries
 
   Every URL change generates a new URL object.
 
-  But the library doesn't any decode/encode transormations leaving end
+  But the library doesn't any decode/encode transformations leaving end
   user to cope with these gory details.
 
 
