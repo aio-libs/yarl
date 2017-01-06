@@ -149,7 +149,7 @@ def test_unquoting(num, unquote):
     expect = chr(num)
     result = unquote(given)
     assert expect == result
-    if expect not in '+=&':
+    if expect not in '+=&;':
         result = unquote(given, qs=True)
         assert expect == result
 
