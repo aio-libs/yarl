@@ -693,18 +693,11 @@ def test_update_query():
     assert str(url.update_query({'a': '1'})) == 'http://example.com/?a=1'
 
     url = URL('http://example.com/?foo=bar')
+    expected_url = URL('http://example.com/?foo=bar&baz=foo')
 
-    assert (
-        url.update_query({'baz': 'foo'}) == URL('http://example.com/?foo=bar&baz=foo')
-    )
-
-    assert (
-        url.update_query(baz='foo') == URL('http://example.com/?foo=bar&baz=foo')
-    )
-
-    assert (
-        url.update_query("?baz=foo") == URL('http://example.com/?foo=bar&baz=foo')
-    )
+    assert url.update_query({'baz': 'foo'}) == expected_url
+    assert url.update_query(baz='foo') == expected_url
+    assert url.update_query("?baz=foo") == expected_url
 
 
 def test_with_query_list_of_pairs():
