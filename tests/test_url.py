@@ -1,6 +1,6 @@
 import sys
-from urllib.parse import SplitResult
 import pytest
+from urllib.parse import SplitResult
 from multidict import MultiDict, MultiDictProxy
 
 from yarl import URL
@@ -686,6 +686,16 @@ def test_with_port_invalid_type():
 def test_with_query():
     url = URL('http://example.com')
     assert str(url.with_query({'a': '1'})) == 'http://example.com/?a=1'
+
+
+def test_update_query():
+    url = URL('http://example.com/')
+    assert str(url.update_query({'a': '1'})) == 'http://example.com/?a=1'
+
+    url = URL('http://example.com/?foo=bar')
+    assert url.update_query({'baz': 'foo'}) == URL('http://example.com/?foo=bar&baz=foo')
+    assert url.update_query(baz='foo') == URL('http://example.com/?foo=bar&baz=foo')
+    assert url.update_query("?baz=foo") == URL('http://example.com/?foo=bar&baz=foo')
 
 
 def test_with_query_list_of_pairs():
