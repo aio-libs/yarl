@@ -37,6 +37,12 @@ def test_quote_from_bytes(quote):
     assert quote('') == ''
 
 
+def test_issue_41(quote):
+    with pytest.raises(UnicodeEncodeError):
+        quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
+              '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16')
+
+
 def test_unquote_to_bytes(unquote):
     assert unquote('abc%20def') == 'abc def'
     assert unquote('') == ''
