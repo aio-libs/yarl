@@ -1,8 +1,6 @@
 # cython: language_level=3
 
 cdef extern from "Python.h":
-
-    char * PyUnicode_AsUTF8AndSize(object s, Py_ssize_t * l)
     object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
     object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
@@ -114,9 +112,9 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
             ret_idx +=1
             continue
 
-        tmpbuf = PyUnicode_AsUTF8AndSize(ch, &tmpbuf_size)
-        for i in range(tmpbuf_size):
-            b = tmpbuf[i]
+        ch_bytes = ch.encode("utf-8")
+
+        for b in ch_bytes:
             PyUnicode_WriteChar(ret, ret_idx, '%')
             ret_idx += 1
             ch = _hex(<uint8_t>b >> 4)
