@@ -700,6 +700,20 @@ def test_update_query():
     assert url.update_query("?baz=foo") == expected_url
 
 
+def test_update_query_with_args_and_kwargs():
+    url = URL('http://example.com/')
+
+    with pytest.raises(ValueError):
+        url.update_query('a', foo='bar')
+
+
+def test_update_query_with_multiple_args():
+    url = URL('http://example.com/')
+
+    with pytest.raises(ValueError):
+        url.update_query('a', 'b')
+
+
 def test_with_query_list_of_pairs():
     url = URL('http://example.com')
     assert str(url.with_query([('a', '1')])) == 'http://example.com/?a=1'
