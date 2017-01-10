@@ -49,8 +49,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
-    cdef char tmpbuf[6]  # place for UTF-8 encoded char plus zero terminator
-    cdef Py_ssize_t i, tmpbuf_size
+    cdef Py_ssize_t i
     # UTF8 may take up to 5 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
     cdef Py_ssize_t ret_size = len(val)*3*5 + 1
