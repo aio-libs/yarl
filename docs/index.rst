@@ -21,7 +21,7 @@ Url is constructed from :class:`str`:
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')
 
-All url parts: *scheme*, *user*, *passsword*, *host*, *port*, *path*,
+All url parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
 *query* and *fragment* are accessible by properties:
 
 .. doctest::
@@ -105,11 +105,11 @@ Comparison with other URL libraries
 
 * furl (https://pypi.python.org/pypi/furl)
 
-  The libray has a rich functionality but ``furl`` object is mutable.
+  The library has a rich functionality but ``furl`` object is mutable.
 
   I afraid to pass this object into foreign code: who knows if the
-  code will modifiy my url in a terrible way while I just want to send URL
-  with handy helpers for accessing URL properies.
+  code will modify my url in a terrible way while I just want to send URL
+  with handy helpers for accessing URL properties.
 
   ``furl`` has other non obvious tricky things but the main objection
   is mutability.
@@ -120,7 +120,7 @@ Comparison with other URL libraries
 
   Every URL change generates a new URL object.
 
-  But the library doesn't any decode/encode transormations leaving end
+  But the library doesn't any decode/encode transformations leaving end
   user to cope with these gory details.
 
 

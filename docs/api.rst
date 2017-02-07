@@ -42,7 +42,7 @@ The library assumes all data uses *UTF-8* for *percent-encoded* tokens.
 
 Unless URL contain the only *ascii* characters there is no differences.
 
-But for *non-ascii* case *encoding* is applyed.
+But for *non-ascii* case *encoding* is applied.
 
 .. doctest::
 
@@ -329,9 +329,9 @@ For *path* and *query* *yarl* supports additional helpers:
 Absolute and relative URLs
 --------------------------
 
-The module supports both absolute an relative URLs.
+The module supports both absolute and relative URLs.
 
-Absulute URL should start from either *scheme* or ``'//'``.
+Absolute URL should start from either *scheme* or ``'//'``.
 
 
 .. method:: URL.is_absolute()
@@ -353,8 +353,8 @@ Absulute URL should start from either *scheme* or ``'//'``.
       False
 
 
-New URL generaion
------------------
+New URL generation
+------------------
 
 URL is an immutable object, every operation described in the
 section generates a new *URL* instance.
@@ -642,7 +642,7 @@ possible.
       Document describing non-ascii domain name encoding.
 
    :rfc:`3987` - Internationalized Resource Identifiers
-      This specifies convertion rules for non-ascii characters in URL.
+      This specifies conversion rules for non-ascii characters in URL.
 
    :rfc:`3986` - Uniform Resource Identifiers
       This is the current standard (STD66). Any changes to :mod:`yarl` module

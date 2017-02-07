@@ -68,7 +68,7 @@ CHANGES
 0.5.1 (2016-11-02)
 ------------------
 
-* Make URL counstruction faster by removing extra classmethod calls
+* Make URL construction faster by removing extra classmethod calls
 
 0.5.0 (2016-11-02)
 ------------------
@@ -104,7 +104,7 @@ CHANGES
 0.3.1 (2016-09-26)
 ------------------
 
-* Support sequience of pairs as with_query() parameter
+* Support sequence of pairs as with_query() parameter
 
 0.3.0 (2016-09-26)
 ------------------
@@ -143,7 +143,7 @@ CHANGES
 0.1.1 (2016-09-06)
 ------------------
 
-* Update REAMDE, old version used obsolete AIP
+* Update README, old version used obsolete API
 
 0.1.0 (2016-09-06)
 ------------------
