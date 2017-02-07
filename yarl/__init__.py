@@ -185,7 +185,7 @@ class URL:
                               netloc,
                               _quote(val[2], safe='@:', protected='/'),
                               query=_quote(val[3], safe='=+&?/:@',
-                                           protected='=+&', qs=True),
+                                           protected='=+&;', qs=True),
                               fragment=_quote(val[4], safe='?/:@'))
 
         self._val = val
@@ -680,7 +680,7 @@ class URL:
                 lst.append(quoter(k)+'='+quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
-            query = _quote(query, safe='/?:@', protected='=&+', qs=True)
+            query = _quote(query, safe='/?:@', protected='=&+;', qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")

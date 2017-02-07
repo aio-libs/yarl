@@ -10,8 +10,8 @@ from libc.stdint cimport uint8_t, uint64_t
 from string import ascii_letters, digits
 
 cdef str GEN_DELIMS = ":/?#[]@"
-cdef str SUB_DELIMS_WITHOUT_QS = "!$'()*,;"
-cdef str SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+?='
+cdef str SUB_DELIMS_WITHOUT_QS = "!$'()*,"
+cdef str SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+?=;'
 cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
 cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
@@ -60,7 +60,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, errors):
     cdef int digit1, digit2
     safe += ALLOWED
     if not qs:
-        safe += '+&='
+        safe += '+&=;'
     safe += protected
     for ch in val:
         if has_pct:
@@ -156,7 +156,7 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             except UnicodeDecodeError:
                 pass
             else:
-                if qs and unquoted in '+=&':
+                if qs and unquoted in '+=&;':
                     ret.append(_do_quote(unquoted, '', '', True, 'strict'))
                 elif unquoted in unsafe:
                     ret.append(_do_quote(unquoted, '', '', False, 'strict'))
@@ -194,7 +194,7 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
         except UnicodeDecodeError:
             ret.append(last_pct)  # %F8
         else:
-            if qs and unquoted in '+=&':
+            if qs and unquoted in '+=&;':
                 ret.append(_do_quote(unquoted, '', '', True, 'strict'))
             elif unquoted in unsafe:
                 ret.append(_do_quote(unquoted, '', '', False, 'strict'))

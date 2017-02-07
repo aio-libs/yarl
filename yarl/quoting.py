@@ -3,8 +3,8 @@ from string import ascii_letters, ascii_lowercase, digits
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
 BPCT_ALLOWED = {'%{:02X}'.format(i).encode('ascii') for i in range(256)}
 GEN_DELIMS = ":/?#[]@"
-SUB_DELIMS_WITHOUT_QS = "!$'()*,;"
-SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+&='
+SUB_DELIMS_WITHOUT_QS = "!$'()*,"
+SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+&=;'
 RESERVED = GEN_DELIMS + SUB_DELIMS
 UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
@@ -22,7 +22,7 @@ def _py_quote(val, *, safe='', protected='', qs=False, errors='strict'):
     pct = b''
     safe += ALLOWED
     if not qs:
-        safe += '+&='
+        safe += '+&=;'
     safe += protected
     bsafe = safe.encode('ascii')
     for ch in val:
@@ -87,7 +87,7 @@ def _py_unquote(val, *, unsafe='', qs=False):
             except UnicodeDecodeError:
                 pass
             else:
-                if qs and unquoted in '+=&':
+                if qs and unquoted in '+=&;':
                     ret.append(_py_quote(unquoted, qs=True))
                 elif unquoted in unsafe:
                     ret.append(_py_quote(unquoted))
@@ -125,7 +125,7 @@ def _py_unquote(val, *, unsafe='', qs=False):
         except UnicodeDecodeError:
             ret.append(last_pct)  # %F8
         else:
-            if qs and unquoted in '+=&':
+            if qs and unquoted in '+=&;':
                 ret.append(_py_quote(unquoted, qs=True))
             elif unquoted in unsafe:
                 ret.append(_py_quote(unquoted))
