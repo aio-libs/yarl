@@ -46,7 +46,7 @@ def test_quate_broken_unicode(quote):
 def test_quate_ignore_broken_unicode(quote):
     s = quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
               '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16',
-              errors='ignore')
+              strict=False)
 
     assert s == 'j%1Aq%2Fg%0Ch%18v%1Bcom%2Fypj%16'
 

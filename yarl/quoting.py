@@ -10,14 +10,14 @@ UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-def _py_quote(val, *, safe='', protected='', qs=False, errors='strict'):
+def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    val = val.encode('utf8', errors=errors)
+    val = val.encode('utf8', errors='strict' if strict else 'ignore')
     ret = bytearray()
     pct = b''
     safe += ALLOWED
@@ -25,7 +25,11 @@ def _py_quote(val, *, safe='', protected='', qs=False, errors='strict'):
         safe += '+&=;'
     safe += protected
     bsafe = safe.encode('ascii')
-    for ch in val:
+    idx = 0
+    while idx < len(val):
+        ch = val[idx]
+        idx += 1
+
         if pct:
             if ch in BASCII_LOWERCASE:
                 ch = ch - 32
@@ -35,7 +39,14 @@ def _py_quote(val, *, safe='', protected='', qs=False, errors='strict'):
                 try:
                     unquoted = chr(int(pct[1:].decode('ascii'), base=16))
                 except ValueError:
-                    raise ValueError("Unallowed PCT {}".format(pct))
+                    if strict:
+                        raise ValueError("Unallowed PCT {}".format(pct))
+                    else:
+                        ret.extend(b'%25')
+                        pct = b''
+                        idx -= 2
+                        continue
+
                 if unquoted in protected:
                     ret.extend(pct)
                 elif unquoted in safe:

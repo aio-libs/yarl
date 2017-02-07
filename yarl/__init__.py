@@ -135,15 +135,15 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ('_cache', '_val')
+    __slots__ = ('_cache', '_val', '_strict')
 
-    def __new__(cls, val='', *, encoded=False):
+    def __new__(cls, val='', *, encoded=False, strict=False):
         if isinstance(val, URL):
             return val
         else:
             return super(URL, cls).__new__(cls)
 
-    def __init__(self, val='', *, encoded=False):
+    def __init__(self, val='', *, encoded=False, strict=False):
         if isinstance(val, URL):
             return
         if isinstance(val, str):
@@ -153,6 +153,8 @@ class URL:
                 raise ValueError("Cannot apply decoding to SplitResult")
         else:
             raise TypeError("Constructor parameter should be str")
+
+        self._strict = strict
 
         if not encoded:
             if not val[1]:  # netloc
@@ -185,10 +187,10 @@ class URL:
             val = SplitResult(
                 val[0],  # scheme
                 netloc,
-                _quote(val[2], safe='@:', protected='/'),
+                _quote(val[2], safe='@:', protected='/', strict=strict),
                 query=_quote(val[3], safe='=+&?/:@',
-                             protected=PROTECT_CHARS, qs=True),
-                fragment=_quote(val[4], safe='?/:@'))
+                            protected=PROTECT_CHARS, qs=True, strict=strict),
+                fragment=_quote(val[4], safe='?/:@', strict=strict))
 
         self._val = val
         self._cache = {}
@@ -234,7 +236,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = _quote(name, safe=':@', protected='/')
+        name = _quote(name, safe=':@', protected='/', strict=self._strict)
         if name.startswith('/'):
             raise ValueError("Appending path "
                              "starting from slash is forbidden")
@@ -645,7 +647,7 @@ class URL:
     def with_path(self, path, encoded=False):
         """Return a new URL with path replaced."""
         if not encoded:
-            path=_quote(path, safe='@:', protected='/')
+            path=_quote(path, safe='@:', protected='/', strict=self._strict)
         return URL(self._val._replace(path=path), encoded=True)
 
     def with_query(self, *args, **kwargs):
@@ -675,7 +677,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(_quote, safe='/?:@', qs=True)
+            quoter = partial(_quote, safe='/?:@', qs=True, strict=self._strict)
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -689,12 +691,13 @@ class URL:
             query = '&'.join(lst)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
-                           protected=PROTECT_CHARS, qs=True)
+                           protected=PROTECT_CHARS,
+                           qs=True, strict=self._strict)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(_quote, safe='/?:@', qs=True)
+            quoter = partial(_quote, safe='/?:@', qs=True, strict=self._strict)
             query = '&'.join(quoter(k)+'='+quoter(v)
                              for k, v in query)
         else:
@@ -722,8 +725,8 @@ class URL:
                         lambda x: x.split('=', 1),
                         _quote(new_query,
                                safe='/?:@', protected=PROTECT_CHARS,
-                               qs=True).lstrip("?").split("&")
-                    )
+                               qs=True, strict=self._strict).lstrip("?").split("&")
+                        )
                 )
 
         else:
@@ -747,8 +750,9 @@ class URL:
             fragment = ''
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(fragment=_quote(fragment, safe='?/:@')),
-                   encoded=True)
+        return URL(self._val._replace(
+            fragment=_quote(fragment, safe='?/:@', strict=self._strict)),
+            encoded=True)
 
     def with_name(self, name):
         """Return a new URL with name (last part of path) replaced.
