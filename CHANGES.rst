@@ -4,6 +4,8 @@ CHANGES
 0.9.0 (2017-02-07)
 ------------------
 
+* Allow to quote % in non strict mode #21
+
 * Incorrect parsing of query parameters with %3B (;) inside #34
 
 * core dumps #41
