@@ -1,8 +1,6 @@
 # cython: language_level=3
 
 cdef extern from "Python.h":
-
-    char * PyUnicode_AsUTF8AndSize(object s, Py_ssize_t * l)
     object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
     object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
@@ -37,22 +35,21 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-def _quote(val, *, str safe='', str protected='', bint qs=False):
+def _quote(val, *, str safe='', str protected='', bint qs=False, errors='strict'):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    return _do_quote(<str>val, safe, protected, qs)
+    return _do_quote(<str>val, safe, protected, qs, errors)
 
 
-cdef str _do_quote(str val, str safe, str protected, bint qs):
+cdef str _do_quote(str val, str safe, str protected, bint qs, errors):
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
-    cdef char tmpbuf[6]  # place for UTF-8 encoded char plus zero terminator
-    cdef Py_ssize_t i, tmpbuf_size
+    cdef Py_ssize_t i
     # UTF8 may take up to 5 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
     cdef Py_ssize_t ret_size = len(val)*3*5 + 1
@@ -114,9 +111,9 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
             ret_idx +=1
             continue
 
-        tmpbuf = PyUnicode_AsUTF8AndSize(ch, &tmpbuf_size)
-        for i in range(tmpbuf_size):
-            b = tmpbuf[i]
+        ch_bytes = ch.encode("utf-8", errors=errors)
+
+        for b in ch_bytes:
             PyUnicode_WriteChar(ret, ret_idx, '%')
             ret_idx += 1
             ch = _hex(<uint8_t>b >> 4)
@@ -160,9 +157,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
                 pass
             else:
                 if qs and unquoted in '+=&;':
-                    ret.append(_do_quote(unquoted, '', '', True))
+                    ret.append(_do_quote(unquoted, '', '', True, 'strict'))
                 elif unquoted in unsafe:
-                    ret.append(_do_quote(unquoted, '', '', False))
+                    ret.append(_do_quote(unquoted, '', '', False, 'strict'))
                 else:
                     ret.append(unquoted)
                 del pcts[:]
@@ -198,9 +195,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             ret.append(last_pct)  # %F8
         else:
             if qs and unquoted in '+=&;':
-                ret.append(_do_quote(unquoted, '', '', True))
+                ret.append(_do_quote(unquoted, '', '', True, 'strict'))
             elif unquoted in unsafe:
-                ret.append(_do_quote(unquoted, '', '', False))
+                ret.append(_do_quote(unquoted, '', '', False, 'strict'))
             else:
                 ret.append(unquoted)
     return ''.join(ret)

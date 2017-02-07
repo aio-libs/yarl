@@ -10,14 +10,14 @@ UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-def _py_quote(val, *, safe='', protected='', qs=False):
+def _py_quote(val, *, safe='', protected='', qs=False, errors='strict'):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    val = val.encode('utf8')
+    val = val.encode('utf8', errors=errors)
     ret = bytearray()
     pct = b''
     safe += ALLOWED
