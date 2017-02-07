@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 
 __all__ = ['URL']
 
