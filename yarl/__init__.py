@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.8.1'
+__version__ = '0.9.0'
 
 __all__ = ['URL']
 
@@ -26,6 +26,7 @@ DEFAULT_PORTS = {
     'wss': 443,
 }
 
+PROTECT_CHARS = '=+&;'
 
 sentinel = object()
 
@@ -181,12 +182,13 @@ class URL:
                         user += ':' + _quote(val.password)
                     netloc = user + '@' + netloc
 
-            val = SplitResult(val[0],  # scheme
-                              netloc,
-                              _quote(val[2], safe='@:', protected='/'),
-                              query=_quote(val[3], safe='=+&?/:@',
-                                           protected='=+&;', qs=True),
-                              fragment=_quote(val[4], safe='?/:@'))
+            val = SplitResult(
+                val[0],  # scheme
+                netloc,
+                _quote(val[2], safe='@:', protected='/'),
+                query=_quote(val[3], safe='=+&?/:@',
+                             protected=PROTECT_CHARS, qs=True),
+                fragment=_quote(val[4], safe='?/:@'))
 
         self._val = val
         self._cache = {}
@@ -640,6 +642,12 @@ class URL:
                                                                port)),
                    encoded=True)
 
+    def with_path(self, path, encoded=False):
+        """Return a new URL with path replaced."""
+        if not encoded:
+            path=_quote(path, safe='@:', protected='/')
+        return URL(self._val._replace(path=path), encoded=True)
+
     def with_query(self, *args, **kwargs):
         """Return a new URL with query part replaced.
 
@@ -680,7 +688,8 @@ class URL:
                 lst.append(quoter(k)+'='+quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
-            query = _quote(query, safe='/?:@', protected='=&+;', qs=True)
+            query = _quote(query, safe='/?:@',
+                           protected=PROTECT_CHARS, qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
@@ -711,7 +720,9 @@ class URL:
                 new_query = OrderedDict(
                     map(
                         lambda x: x.split('=', 1),
-                        _quote(new_query, safe='/?:@', protected='=&+', qs=True).lstrip("?").split("&")
+                        _quote(new_query,
+                               safe='/?:@', protected=PROTECT_CHARS,
+                               qs=True).lstrip("?").split("&")
                     )
                 )
 

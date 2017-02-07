@@ -1,12 +1,18 @@
 CHANGES
 =======
 
-0.8.2 (2017-02-07)
+0.9.0 (2017-02-07)
 ------------------
+
+* Incorrect parsing of query parameters with %3B (;) inside #34
 
 * core dumps #41
 
 * tmpbuf - compiling error #43
+
+* Added `URL.update_path()` method
+
+* Added `URL.update_query()` method #47
 
 
 0.8.1 (2016-12-03)

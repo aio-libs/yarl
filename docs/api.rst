@@ -423,6 +423,16 @@ section generates a new *URL* instance.
       >>> URL('http://example.com:8888').with_port(None)
       URL('http://example.com')
 
+.. method:: URL.with_path(path, encoded=False)
+
+   Return a new URL with *path* replaced, encode *path* if needed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/'.with_path('/path/to')
+      URL('http://example.com/path/to')
+
+
 .. method:: URL.with_query(query)
             URL.with_query(**kwargs)
 
