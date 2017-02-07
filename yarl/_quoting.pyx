@@ -35,17 +35,17 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-def _quote(val, *, str safe='', str protected='', bint qs=False):
+def _quote(val, *, str safe='', str protected='', bint qs=False, errors='strict'):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    return _do_quote(<str>val, safe, protected, qs)
+    return _do_quote(<str>val, safe, protected, qs, errors)
 
 
-cdef str _do_quote(str val, str safe, str protected, bint qs):
+cdef str _do_quote(str val, str safe, str protected, bint qs, errors):
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
@@ -111,7 +111,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
             ret_idx +=1
             continue
 
-        ch_bytes = ch.encode("utf-8")
+        ch_bytes = ch.encode("utf-8", errors=errors)
 
         for b in ch_bytes:
             PyUnicode_WriteChar(ret, ret_idx, '%')
@@ -157,9 +157,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
                 pass
             else:
                 if qs and unquoted in '+=&':
-                    ret.append(_do_quote(unquoted, '', '', True))
+                    ret.append(_do_quote(unquoted, '', '', True, 'strict'))
                 elif unquoted in unsafe:
-                    ret.append(_do_quote(unquoted, '', '', False))
+                    ret.append(_do_quote(unquoted, '', '', False, 'strict'))
                 else:
                     ret.append(unquoted)
                 del pcts[:]
@@ -195,9 +195,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             ret.append(last_pct)  # %F8
         else:
             if qs and unquoted in '+=&':
-                ret.append(_do_quote(unquoted, '', '', True))
+                ret.append(_do_quote(unquoted, '', '', True, 'strict'))
             elif unquoted in unsafe:
-                ret.append(_do_quote(unquoted, '', '', False))
+                ret.append(_do_quote(unquoted, '', '', False, 'strict'))
             else:
                 ret.append(unquoted)
     return ''.join(ret)

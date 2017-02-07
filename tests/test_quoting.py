@@ -37,10 +37,18 @@ def test_quote_from_bytes(quote):
     assert quote('') == ''
 
 
-def test_issue_41(quote):
+def test_quate_broken_unicode(quote):
     with pytest.raises(UnicodeEncodeError):
         quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
               '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16')
+
+
+def test_quate_ignore_broken_unicode(quote):
+    s = quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
+              '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16',
+              errors='ignore')
+
+    assert s == 'j%1Aq%2Fg%0Ch%18v%1Bcom%2Fypj%16'
 
 
 def test_unquote_to_bytes(unquote):
