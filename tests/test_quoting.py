@@ -27,9 +27,31 @@ def test_quote_not_allowed(quote):
         quote('%HH')
 
 
+def test_quote_not_allowed_non_strict(quote):
+    assert quote('%HH', strict=False) == '%25HH'
+
+
 def test_quote_unfinished(quote):
     with pytest.raises(ValueError):
         quote('%F%F')
+
+
+def test_quote_unfinished_tail_percent(quote):
+    with pytest.raises(ValueError):
+        quote('%')
+
+
+def test_quote_unfinished_tail_percent_non_strict(quote):
+    assert quote('%', strict=False) == '%25'
+
+
+def test_quote_unfinished_tail(quote):
+    with pytest.raises(ValueError):
+        quote('%2')
+
+
+def test_quote_unfinished_tail_non_strict(quote):
+    assert quote('%2', strict=False) == '%252'
 
 
 def test_quote_from_bytes(quote):

@@ -108,9 +108,39 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
                     ret_idx += 1
                     PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch & 0x0f))
                     ret_idx += 1
+
+            # special case, if we have only one char after "%"
+            elif has_pct == 2 and idx == len(val):
+                if strict:
+                    raise ValueError("Unallowed PCT %{}".format(pct[0]))
+                else:
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '2')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '5')
+                    ret_idx += 1
+
+                    idx -= 1
+                    has_pct = 0
+
             continue
+
         elif ch == '%':
             has_pct = 1
+
+            # special case if "%" is last char
+            if idx == len(val):
+                if strict:
+                    raise ValueError("Unallowed PCT %")
+                else:
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '2')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '5')
+                    ret_idx += 1
+
             continue
 
         if qs:

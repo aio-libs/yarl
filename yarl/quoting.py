@@ -40,7 +40,7 @@ def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
                     unquoted = chr(int(pct[1:].decode('ascii'), base=16))
                 except ValueError:
                     if strict:
-                        raise ValueError("Unallowed PCT {}".format(pct))
+                        raise ValueError("Unallowed PCT %{}".format(pct))
                     else:
                         ret.extend(b'%25')
                         pct = b''
@@ -54,10 +54,29 @@ def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
                 else:
                     ret.extend(pct)
                 pct = b''
+
+            # special case, if we have only one char after "%"
+            elif len(pct) == 2 and idx == len(val):
+                if strict:
+                    raise ValueError("Unallowed PCT %{}".format(pct))
+                else:
+                    ret.extend(b'%25')
+                    pct = b''
+                    idx -= 1
+
             continue
+
         elif ch == ord('%'):
             pct = bytearray()
             pct.append(ch)
+
+            # special case if "%" is last char
+            if idx == len(val):
+                if strict:
+                    raise ValueError("Unallowed PCT %")
+                else:
+                    ret.extend(b'%25')
+
             continue
 
         if qs:

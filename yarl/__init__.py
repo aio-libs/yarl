@@ -677,7 +677,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(_quote, safe='/?:@', qs=True, strict=self._strict)
+            quoter = partial(_quote, qs=True, strict=self._strict)
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -687,8 +687,9 @@ class URL:
                 else:
                     raise TypeError("Invalid variable type: mapping value "
                                     "should be str or int, got {!r}".format(v))
-                lst.append(quoter(k)+'='+quoter(v))
-            query = '&'.join(lst)
+                lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;'))
+                query = '&'.join(lst)
+                print(k, v, query)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
                            protected=PROTECT_CHARS,
@@ -697,8 +698,8 @@ class URL:
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(_quote, safe='/?:@', qs=True, strict=self._strict)
-            query = '&'.join(quoter(k)+'='+quoter(v)
+            quoter = partial(_quote, qs=True, strict=self._strict)
+            query = '&'.join(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;')
                              for k, v in query)
         else:
             raise TypeError("Invalid query type: only str, mapping or "
@@ -706,8 +707,7 @@ class URL:
         path = self._val.path
         if path == '':
             path = '/'
-        return URL(self._val._replace(path=path, query=query),
-                   encoded=True)
+        return URL(self._val._replace(path=path, query=query), encoded=True)
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
