@@ -689,7 +689,6 @@ class URL:
                                     "should be str or int, got {!r}".format(v))
                 lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;'))
                 query = '&'.join(lst)
-                print(k, v, query)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
                            protected=PROTECT_CHARS,
