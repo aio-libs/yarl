@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 
 __all__ = ['URL']
 
@@ -689,7 +689,6 @@ class URL:
                                     "should be str or int, got {!r}".format(v))
                 lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;'))
                 query = '&'.join(lst)
-                print(k, v, query)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
                            protected=PROTECT_CHARS,
