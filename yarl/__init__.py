@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.3'
+__version__ = '0.9.4'
 
 __all__ = ['URL', 'BaseURL']
 
@@ -243,8 +243,9 @@ class BaseURL:
             parts = path.rstrip('/').split('/')
             parts.append(name)
             new_path = '/'.join(parts)
-        return URL(self._val._replace(path=new_path, query='', fragment=''),
-                   encoded=True)
+        return BaseURL(
+            self._val._replace(path=new_path, query='', fragment=''),
+            encoded=True)
 
     def is_absolute(self):
         """A check for absolute URLs.
@@ -284,7 +285,7 @@ class BaseURL:
         v = self._val
         netloc = self._make_netloc(None, None, v.hostname, v.port)
         val = v._replace(netloc=netloc, path='', query='', fragment='')
-        return URL(val, encoded=True)
+        return BaseURL(val, encoded=True)
 
     def relative(self):
         """Return a relative part of the URL.
@@ -295,7 +296,7 @@ class BaseURL:
         if not self.is_absolute():
             raise ValueError("URL should be absolute")
         val = self._val._replace(scheme='', netloc='')
-        return URL(val, encoded=True)
+        return BaseURL(val, encoded=True)
 
     @property
     def scheme(self):
@@ -482,13 +483,13 @@ class BaseURL:
         path = self.raw_path
         if not path or path == '/':
             if self.raw_fragment or self.raw_query_string:
-                return URL(self._val._replace(query='', fragment=''),
-                           encoded=True)
+                return BaseURL(self._val._replace(query='', fragment=''),
+                               encoded=True)
             return self
         parts = path.split('/')
         val = self._val._replace(path='/'.join(parts[:-1]),
                                  query='', fragment='')
-        return URL(val, encoded=True)
+        return BaseURL(val, encoded=True)
 
     @cached_property
     def raw_name(self):
@@ -529,8 +530,8 @@ class BaseURL:
         if not self.is_absolute():
             raise ValueError("scheme replacement is not allowed "
                              "for relative URLs")
-        return URL(self._val._replace(scheme=scheme.lower()),
-                   encoded=True)
+        return BaseURL(self._val._replace(scheme=scheme.lower()),
+                       encoded=True)
 
     def with_user(self, user):
         """Return a new URL with user replaced.
@@ -552,7 +553,7 @@ class BaseURL:
         if not self.is_absolute():
             raise ValueError("user replacement is not allowed "
                              "for relative URLs")
-        return URL(
+        return BaseURL(
             self._val._replace(
                 netloc=self._make_netloc(user,
                                          password,
@@ -579,7 +580,7 @@ class BaseURL:
             raise ValueError("password replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(
+        return BaseURL(
             self._val._replace(
                 netloc=self._make_netloc(val.username,
                                          password,
@@ -612,11 +613,12 @@ class BaseURL:
             if ip.version == 6:
                 host = '['+host+']'
         val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(val.username,
-                                                               val.password,
-                                                               host,
-                                                               val.port)),
-                   encoded=True)
+        return BaseURL(
+            self._val._replace(netloc=self._make_netloc(val.username,
+                                                        val.password,
+                                                        host,
+                                                        val.port)),
+            encoded=True)
 
     def with_port(self, port):
         """Return a new URL with port replaced.
@@ -632,17 +634,18 @@ class BaseURL:
             raise ValueError("port replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(self._val._replace(netloc=self._make_netloc(val.username,
-                                                               val.password,
-                                                               val.hostname,
-                                                               port)),
+        return BaseURL(
+            self._val._replace(netloc=self._make_netloc(val.username,
+                                                        val.password,
+                                                        val.hostname,
+                                                        port)),
                    encoded=True)
 
     def with_path(self, path, encoded=False):
         """Return a new URL with path replaced."""
         if not encoded:
             path=_quote(path, safe='@:', protected='/', strict=self._strict)
-        return URL(self._val._replace(path=path), encoded=True)
+        return BaseURL(self._val._replace(path=path), encoded=True)
 
     def with_query(self, *args, **kwargs):
         """Return a new URL with query part replaced.
@@ -700,7 +703,8 @@ class BaseURL:
         path = self._val.path
         if path == '':
             path = '/'
-        return URL(self._val._replace(path=path, query=query), encoded=True)
+        return BaseURL(
+            self._val._replace(path=path, query=query), encoded=True)
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
@@ -743,8 +747,9 @@ class BaseURL:
             fragment = ''
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(self._val._replace(
-            fragment=_quote(fragment, safe='?/:@', strict=self._strict)),
+        return BaseURL(
+            self._val._replace(
+                fragment=_quote(fragment, safe='?/:@', strict=self._strict)),
             encoded=True)
 
     def with_name(self, name):
@@ -772,8 +777,9 @@ class BaseURL:
             parts[-1] = name
             if parts[0] == '/':
                 parts[0] = ''  # replace leading '/'
-        return URL(self._val._replace(path='/'.join(parts),
-                                      query='', fragment=''), encoded=True)
+        return BaseURL(
+            self._val._replace(path='/'.join(parts),
+                               query='', fragment=''), encoded=True)
 
     def join(self, url):
         """Join URLs
@@ -790,7 +796,7 @@ class BaseURL:
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)), encoded=True)
+        return BaseURL(urljoin(str(self), str(url)), encoded=True)
 
     def human_repr(self):
         """Return decoded human readable string for URL representation."""
@@ -808,7 +814,7 @@ class BaseURL:
 class URL(BaseURL):
 
     def __new__(cls, val='', *, encoded=False, strict=False):
-        if isinstance(val, URL):
+        if isinstance(val, BaseURL):
             return val
         else:
             return super(URL, cls).__new__(cls)
