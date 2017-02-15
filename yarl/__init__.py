@@ -249,6 +249,18 @@ class URL:
         return URL(self._val._replace(path=new_path, query='', fragment=''),
                    encoded=True)
 
+    def __getstate__(self):
+        return self._val, self._strict
+
+    def __setstate__(self, state):
+        if state[0] is None and isinstance(state[1], dict):
+            # default style pickle
+            self._val = state[1]['_val']
+            self._strict = state[1]['_strict']
+        else:
+            self._val, self._strict = state
+        self._cache = {}
+
     def is_absolute(self):
         """A check for absolute URLs.
 
