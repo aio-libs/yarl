@@ -1131,7 +1131,7 @@ def test_fragment_only_url():
 
 def test_url_from_url():
     url = URL('http://example.com')
-    assert URL(url) is url
+    assert URL(url) == url
     assert URL(url).raw_parts == ('/',)
 
 

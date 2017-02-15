@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.9.6 (2017-02-15)
+------------------
+
+* Revert backward incompatible change (BaseURL)
+
+
 0.9.5 (2017-02-14)
 ------------------
 
