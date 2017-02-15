@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.4'
+__version__ = '0.9.5'
 
 __all__ = ['URL', 'BaseURL']
 
@@ -138,7 +138,7 @@ class BaseURL:
     __slots__ = ('_cache', '_val', '_strict')
 
     def __init__(self, val='', *, encoded=False, strict=False):
-        if isinstance(val, URL):
+        if isinstance(val, BaseURL):
             return
         if isinstance(val, str):
             val = urlsplit(val)
@@ -199,7 +199,7 @@ class BaseURL:
         return "{}('{}')".format(self.__class__.__name__, str(self))
 
     def __eq__(self, other):
-        if not isinstance(other, URL):
+        if not isinstance(other, BaseURL):
             return NotImplemented
         return self._val == other._val
 
@@ -210,22 +210,22 @@ class BaseURL:
         return ret
 
     def __le__(self, other):
-        if not isinstance(other, URL):
+        if not isinstance(other, BaseURL):
             return NotImplemented
         return self._val <= other._val
 
     def __lt__(self, other):
-        if not isinstance(other, URL):
+        if not isinstance(other, BaseURL):
             return NotImplemented
         return self._val < other._val
 
     def __ge__(self, other):
-        if not isinstance(other, URL):
+        if not isinstance(other, BaseURL):
             return NotImplemented
         return self._val >= other._val
 
     def __gt__(self, other):
-        if not isinstance(other, URL):
+        if not isinstance(other, BaseURL):
             return NotImplemented
         return self._val > other._val
 
@@ -794,7 +794,7 @@ class BaseURL:
 
         """
         # See docs for urllib.parse.urljoin
-        if not isinstance(url, URL):
+        if not isinstance(url, BaseURL):
             raise TypeError("url should be URL")
         return BaseURL(urljoin(str(self), str(url)), encoded=True)
 
