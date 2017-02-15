@@ -10,9 +10,9 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.2'
+__version__ = '0.9.3'
 
-__all__ = ['URL']
+__all__ = ['URL', 'BaseURL']
 
 
 # is_leaf()
@@ -65,7 +65,7 @@ class cached_property:
         raise AttributeError("cached property is read-only")
 
 
-class URL:
+class BaseURL:
     # Don't derive from str
     # follow pathlib.Path design
     # probably URL will not suffer from pathlib problems:
@@ -136,12 +136,6 @@ class URL:
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ('_cache', '_val', '_strict')
-
-    def __new__(cls, val='', *, encoded=False, strict=False):
-        if isinstance(val, URL):
-            return val
-        else:
-            return super(URL, cls).__new__(cls)
 
     def __init__(self, val='', *, encoded=False, strict=False):
         if isinstance(val, URL):
@@ -809,3 +803,12 @@ class URL:
                                       self.path,
                                       self.query_string,
                                       self.fragment))
+
+
+class URL(BaseURL):
+
+    def __new__(cls, val='', *, encoded=False, strict=False):
+        if isinstance(val, URL):
+            return val
+        else:
+            return super(URL, cls).__new__(cls)
