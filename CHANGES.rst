@@ -1,10 +1,13 @@
 CHANGES
 =======
 
-0.9.7 (2017-xx-xx)
+0.9.7 (2017-02-1)
 ------------------
 
 * Load from pickle without _cache #56
+
+* Percent-encoded pluses in path variables become spaces #59
+
 
 0.9.6 (2017-02-15)
 ------------------

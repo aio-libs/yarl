@@ -335,6 +335,12 @@ def test_name_non_ascii():
     url = URL('http://example.com/путь')
     assert url.name == 'путь'
 
+
+def test_plus_in_path():
+    url = URL('http://example.com/test/x+y%2Bz')
+    assert '/test/x+y+z' == url.path
+
+
 # modifiers
 
 

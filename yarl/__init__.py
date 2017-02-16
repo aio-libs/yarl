@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.6'
+__version__ = '0.9.7'
 
 __all__ = ['URL']
 
@@ -184,7 +184,7 @@ class URL:
             val = SplitResult(
                 val[0],  # scheme
                 netloc,
-                _quote(val[2], safe='@:', protected='/', strict=strict),
+                _quote(val[2], safe='+@:', protected='/+', strict=strict),
                 query=_quote(val[3], safe='=+&?/:@',
                             protected=PROTECT_CHARS, qs=True, strict=strict),
                 fragment=_quote(val[4], safe='?/:@', strict=strict))
@@ -410,7 +410,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return _unquote(self.raw_path)
+        return _unquote(self.raw_path, unsafe='+:')
 
     @cached_property
     def query(self):
