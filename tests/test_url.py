@@ -337,8 +337,8 @@ def test_name_non_ascii():
 
 
 def test_plus_in_path():
-    url = URL('http://example.com/test/x+y%2Bz')
-    assert '/test/x+y+z' == url.path
+    url = URL('http://example.com/test/x+y%2Bz/:+%2B/')
+    assert '/test/x+y+z/:++/' == url.path
 
 
 # modifiers

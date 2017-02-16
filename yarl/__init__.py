@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 
 __all__ = ['URL']
 
@@ -410,7 +410,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return _unquote(self.raw_path, unsafe='+:')
+        return _unquote(self.raw_path, unsafe='+')
 
     @cached_property
     def query(self):
