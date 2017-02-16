@@ -29,6 +29,10 @@ class URL:
     @overload
     def __new__(cls, val: URL) -> URL: ...
 
+    @classmethod
+    def build(cls, scheme='', user='', password='', host='', port=None, path='',
+              query_string='', fragment='', *, strict=False, encoded=False) -> URL:
+
     def __str__(self) -> str: ...
     def __repr__(self) -> str: ...
 

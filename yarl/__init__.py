@@ -199,12 +199,9 @@ class URL:
         assert scheme and host, "You must specify scheme and host"
 
         return cls(
-            urlunsplit(
-                SplitResult(
-                    scheme, cls._make_netloc(user, password, host, port),
-                    path, query_string, fragment
-                )
-            ),
+            urlunsplit((
+                scheme, cls._make_netloc(user, password, host, port), path, query_string, fragment
+            )),
             strict=strict,
             encoded=encoded
         )
