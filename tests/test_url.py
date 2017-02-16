@@ -1389,34 +1389,34 @@ def test_default_style_state():
     assert u._strict is False
 
 
-# kwargs constructor
+# build classmethod
 
-def test_kwargs_constructor():
+def test_build_simple():
     u = URL.build(scheme='http', host='127.0.0.1')
     assert str(u) == 'http://127.0.0.1'
 
 
-def test_kwargs_requires_scheme_and_host():
+def test_build_requires_scheme_and_host():
     with pytest.raises(AssertionError):
         URL.build(host='127.0.0.1')
 
 
-def test_kwargs_with_port():
+def test_build_with_port():
     u = URL.build(scheme='http', host='127.0.0.1', port=8000)
     assert str(u) == 'http://127.0.0.1:8000'
 
 
-def test_kwargs_with_user():
+def test_build_with_user():
     u = URL.build(scheme='http', host='127.0.0.1', user='foo')
     assert str(u) == 'http://foo@127.0.0.1'
 
 
-def test_kwargs_with_user_password():
+def test_build_with_user_password():
     u = URL.build(scheme='http', host='127.0.0.1', user='foo', password='bar')
     assert str(u) == 'http://foo:bar@127.0.0.1'
 
 
-def test_kwargs_with_all():
+def test_build_with_all():
     u = URL.build(
         scheme='http',
         host='127.0.0.1',
