@@ -192,6 +192,23 @@ class URL:
         self._val = val
         self._cache = {}
 
+    @classmethod
+    def build(cls, scheme='', user='', password='', host='', port=None, path='',
+              query_string='', fragment='', *, strict=False, encoded=False):
+
+        assert scheme and host, "You must specify scheme and host"
+
+        return cls(
+            urlunsplit(
+                SplitResult(
+                    scheme, cls._make_netloc(user, password, host, port),
+                    path, query_string, fragment
+                )
+            ),
+            strict=strict,
+            encoded=encoded
+        )
+
     def __str__(self):
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
