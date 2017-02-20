@@ -31,7 +31,7 @@ class URL:
 
     @classmethod
     def build(cls, *, scheme: str='', user: str='', password: str='', host: str='',
-              port: int=None, path: str='', query: Mapping=None, query: str='',
+              port: int=None, path: str='', query: Mapping=None, query_string: str='',
               fragment: str='', strict: bool=False) -> URL: ...
 
     def __str__(self) -> str: ...
