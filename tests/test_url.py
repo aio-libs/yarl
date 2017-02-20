@@ -1391,14 +1391,22 @@ def test_default_style_state():
 
 # build classmethod
 
+def test_build_without_arguments():
+    u = URL.build()
+    assert str(u) == ''
+
+
 def test_build_simple():
     u = URL.build(scheme='http', host='127.0.0.1')
     assert str(u) == 'http://127.0.0.1'
 
 
-def test_build_requires_scheme_and_host():
+def test_build_scheme_and_host():
     with pytest.raises(AssertionError):
         URL.build(host='127.0.0.1')
+
+    with pytest.raises(AssertionError):
+        URL.build(scheme='http')
 
 
 def test_build_with_port():

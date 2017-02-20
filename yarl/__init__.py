@@ -193,8 +193,8 @@ class URL:
         self._cache = {}
 
     @classmethod
-    def build(cls, scheme: str='', user: str='', password: str='', host: str='', port: int=None,
-              path: str='', query_string: str='', fragment: str='', *, strict: bool=False):
+    def build(cls, scheme='', user='', password='', host='', port=None, path='',
+              query_string='', fragment='', *, strict=False):
 
         """ Creates and returns a new URL
 
