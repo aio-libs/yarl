@@ -194,16 +194,20 @@ class URL:
 
     @classmethod
     def build(cls, scheme='', user='', password='', host='', port=None, path='',
-              query_string='', fragment='', *, strict=False, encoded=False):
+              query_string='', fragment='', *, strict=False):
 
         assert scheme and host, "You must specify scheme and host"
 
         return cls(
-            urlunsplit((
-                scheme, cls._make_netloc(user, password, host, port), path, query_string, fragment
-            )),
+            SplitResult(
+                scheme,
+                cls._make_netloc(user, password, host, port),
+                path,
+                query_string,
+                fragment
+            ),
             strict=strict,
-            encoded=encoded
+            encoded=True
         )
 
     def __str__(self):
