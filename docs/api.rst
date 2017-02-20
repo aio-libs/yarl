@@ -429,7 +429,7 @@ section generates a new *URL* instance.
 
    .. doctest::
 
-      >>> URL('http://example.com/'.with_path('/path/to')
+      >>> URL('http://example.com/').with_path('/path/to')
       URL('http://example.com/path/to')
 
 

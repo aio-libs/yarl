@@ -19,5 +19,5 @@ doc: doctest
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
 
-doctest:
+doctest: .develop
 	make -C docs doctest
