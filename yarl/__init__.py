@@ -195,19 +195,8 @@ class URL:
     @classmethod
     def build(cls, *, scheme='', user='', password='', host='', port=None, path='',
               query=None, query_string='', fragment='', strict=False):
+        """Creates and returns a new URL"""
 
-        """ Creates and returns a new URL
-
-        :type scheme: str
-        :type user: str
-        :type password: str
-        :type host: str
-        :type port: int
-        :type path: str
-        :type query_string: str
-        :type fragment: str
-        :type strict: str
-        """
         if host or scheme:
             assert scheme, 'Can\'t build URL with "host" but without "scheme".'
             assert host, 'Can\'t build URL with "scheme" but without "host".'
