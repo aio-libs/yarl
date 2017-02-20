@@ -466,7 +466,9 @@ section generates a new *URL* instance.
 .. method:: URL.update_query(query)
             URL.update_query(**kwargs)
 
-   Returns a new URL with *query* part updated.
+   Returns a new URL with *query* part updated. Unlike ``with_query`` method does not replace query completely,
+   new ``URL`` object will contain query string which updated parts from passed query parts (or parts of parsed query
+   string).
 
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
