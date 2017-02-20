@@ -359,7 +359,7 @@ New URL generation
 URL is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
-.. method:: URL.build(scheme, user, password, host, port, path, query_string, fragment, strict=False)
+.. method:: URL.build(scheme, user, password, host, port, path, query, query_string, fragment, strict=False)
 
    Creates and returns a new URL:
 
@@ -368,8 +368,11 @@ section generates a new *URL* instance.
       >>> URL.build(scheme="http", host="example.com")
       URL('http://example.com')
 
-      >>> URL.build('https', 'guest', 'secret', 'example.com', 1443, '/admin/')
-      URL('https://guest:secret@example.com:1443/admin/')
+      >>> URL.build(scheme="http", host="example.com", query={"a": "b"})
+      URL('http://example.com/?a=b')
+
+      >>> URL.build(scheme="http", host="example.com", query_string="a=b")
+      URL('http://example.com/?a=b')
 
       >>> URL.build()
       URL('')

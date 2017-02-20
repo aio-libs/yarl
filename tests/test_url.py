@@ -1436,3 +1436,24 @@ def test_build_with_all():
         fragment="top"
     )
     assert str(u) == 'http://foo:bar@127.0.0.1:8000/index.html?arg=value1#top'
+
+
+def test_query_str():
+    u = URL.build(
+        scheme='http',
+        host='127.0.0.1',
+        path='/',
+        query_string="arg=value1"
+    )
+    assert str(u) == 'http://127.0.0.1/?arg=value1'
+
+
+def test_query_dict():
+    u = URL.build(
+        scheme='http',
+        host='127.0.0.1',
+        path='/',
+        query=dict(arg="value1")
+    )
+
+    assert str(u) == 'http://127.0.0.1/?arg=value1'

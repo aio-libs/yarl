@@ -193,8 +193,8 @@ class URL:
         self._cache = {}
 
     @classmethod
-    def build(cls, scheme='', user='', password='', host='', port=None, path='',
-              query_string='', fragment='', *, strict=False):
+    def build(cls, *, scheme='', user='', password='', host='', port=None, path='',
+              query=None, query_string='', fragment='', strict=False):
 
         """ Creates and returns a new URL
 
@@ -212,7 +212,9 @@ class URL:
             assert scheme, 'Can\'t build URL with "host" but without "scheme".'
             assert host, 'Can\'t build URL with "scheme" but without "host".'
 
-        return cls(
+        assert not (query and query_string), "Only one of \"query\" or \"query_string\" should be passed"
+
+        url = cls(
             SplitResult(
                 scheme,
                 cls._make_netloc(user, password, host, port),
@@ -223,6 +225,11 @@ class URL:
             strict=strict,
             encoded=True
         )
+
+        if query:
+            return url.with_query(query)
+        else:
+            return url
 
     def __str__(self):
         val = self._val
