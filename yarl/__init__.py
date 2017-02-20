@@ -193,10 +193,24 @@ class URL:
         self._cache = {}
 
     @classmethod
-    def build(cls, scheme='', user='', password='', host='', port=None, path='',
-              query_string='', fragment='', *, strict=False):
+    def build(cls, scheme: str='', user: str='', password: str='', host: str='', port: int=None,
+              path: str='', query_string: str='', fragment: str='', *, strict: bool=False):
 
-        assert scheme and host, "You must specify scheme and host"
+        """ Creates and returns a new URL
+
+        :type scheme: str
+        :type user: str
+        :type password: str
+        :type host: str
+        :type port: int
+        :type path: str
+        :type query_string: str
+        :type fragment: str
+        :type strict: str
+        """
+        if host or scheme:
+            assert scheme, 'Can\'t build URL with "host" but without "scheme".'
+            assert host, 'Can\'t build URL with "scheme" but without "host".'
 
         return cls(
             SplitResult(
