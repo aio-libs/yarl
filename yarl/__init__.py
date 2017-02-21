@@ -201,7 +201,8 @@ class URL:
             assert scheme, 'Can\'t build URL with "host" but without "scheme".'
             assert host, 'Can\'t build URL with "scheme" but without "host".'
 
-        assert not (query and query_string), "Only one of \"query\" or \"query_string\" should be passed"
+        if query and query_string:
+            raise ValueError("Only one of \"query\" or \"query_string\" should be passed")
 
         url = cls(
             SplitResult(
