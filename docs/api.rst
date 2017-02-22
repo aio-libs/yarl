@@ -438,6 +438,8 @@ section generates a new *URL* instance.
 
    Return a new URL with *query* part replaced.
 
+   Unlike :meth:`update_query` the method replaces all query parameters.
+
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
@@ -466,9 +468,14 @@ section generates a new *URL* instance.
 .. method:: URL.update_query(query)
             URL.update_query(**kwargs)
 
-   Returns a new URL with *query* part updated. Unlike ``with_query`` method does not replace query completely,
-   new ``URL`` object will contain query string which updated parts from passed query parts (or parts of parsed query
-   string).
+   Returns a new URL with *query* part updated.
+
+   Unlike :meth:`with_query` the method does not replace query
+   completely.
+
+
+   Returned ``URL`` object will contain query string which updated
+   parts from passed query parts (or parts of parsed query string).
 
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
