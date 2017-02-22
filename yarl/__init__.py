@@ -186,7 +186,7 @@ class URL:
                 netloc,
                 _quote(val[2], safe='+@:', protected='/+', strict=strict),
                 query=_quote(val[3], safe='=+&?/:@',
-                            protected=PROTECT_CHARS, qs=True, strict=strict),
+                             protected=PROTECT_CHARS, qs=True, strict=strict),
                 fragment=_quote(val[4], safe='?/:@', strict=strict))
 
         self._val = val
@@ -650,12 +650,12 @@ class URL:
                                                         val.password,
                                                         val.hostname,
                                                         port)),
-                   encoded=True)
+            encoded=True)
 
     def with_path(self, path, encoded=False):
         """Return a new URL with path replaced."""
         if not encoded:
-            path=_quote(path, safe='@:', protected='/', strict=self._strict)
+            path = _quote(path, safe='@:', protected='/', strict=self._strict)
         return URL(self._val._replace(path=path), encoded=True)
 
     def with_query(self, *args, **kwargs):
@@ -733,7 +733,8 @@ class URL:
                         lambda x: x.split('=', 1),
                         _quote(new_query,
                                safe='/?:@', protected=PROTECT_CHARS,
-                               qs=True, strict=self._strict).lstrip("?").split("&")
+                               qs=True,
+                               strict=self._strict).lstrip("?").split("&")
                         )
                 )
 
