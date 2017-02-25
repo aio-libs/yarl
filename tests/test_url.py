@@ -151,6 +151,14 @@ def test_path_non_ascii():
     assert '/путь/сюда' == url.path
 
 
+def test_path_with_spaces():
+    url = URL('http://example.com/a b/test')
+    assert '/a b/test' == url.path
+
+    url = URL('http://example.com/a b')
+    assert '/a b' == url.path
+
+
 def test_raw_path_for_empty_url():
     url = URL()
     assert '' == url.raw_path
