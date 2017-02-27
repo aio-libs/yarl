@@ -465,6 +465,8 @@ section generates a new *URL* instance.
 
    Return a new URL with *query* part replaced.
 
+   Unlike :meth:`update_query` the method replaces all query parameters.
+
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
    autoencode the argument if needed.
@@ -489,6 +491,57 @@ section generates a new *URL* instance.
       URL('http://example.com/path?b=2')
       >>> URL('http://example.com/path?a=b&b=1').with_query([('b', '2')])
       URL('http://example.com/path?b=2')
+
+.. method:: URL.update_query(query)
+            URL.update_query(**kwargs)
+
+   Returns a new URL with *query* part updated.
+
+   Unlike :meth:`with_query` the method does not replace query
+   completely.
+
+
+   Returned ``URL`` object will contain query string which updated
+   parts from passed query parts (or parts of parsed query string).
+
+   Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
+   :class:`~multidict.MultiDict` instances) or :class:`str`,
+   autoencode the argument if needed.
+
+   A sequence of ``(key, value)`` pairs is supported as well.
+
+   Also it can take an arbitrary number of keyword arguments.
+
+   Clear *query* if ``None`` is passed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?a=b').update_query('c=d')
+      URL('http://example.com/path?a=b&c=d')
+      >>> URL('http://example.com/path?a=b').update_query({'c': 'd'})
+      URL('http://example.com/path?a=b&c=d')
+      >>> URL('http://example.com/path?a=b').update_query({'кл': 'зн'})
+      URL('http://example.com/path?a=b&%D0%BA%D0%BB=%D0%B7%D0%BD')
+      >>> URL('http://example.com/path?a=b&b=1').update_query(b='2')
+      URL('http://example.com/path?a=b&b=2')
+      >>> URL('http://example.com/path?a=b&b=1').update_query([('b', '2')])
+      URL('http://example.com/path?a=b&b=2')
+
+   .. note::
+
+      Query string will be updated in a similar way to ``dict.update``. Multiple values will be dropped:
+
+      .. doctest::
+
+         >>> URL('http://example.com/path?a=b&c=e&c=f').update_query(c='d')
+         URL('http://example.com/path?a=b&c=d')
+
+      When passing multiple values as an argument, only last value will be applied.
+
+      .. doctest::
+
+         >>> URL('http://example.com/path?a=b').update_query('c=d&c=f')
+         URL('http://example.com/path?a=b&c=f')
 
 .. method:: URL.with_fragment(port)
 
