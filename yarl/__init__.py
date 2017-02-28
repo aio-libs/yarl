@@ -441,6 +441,14 @@ class URL:
         """
         return _unquote(self.raw_query_string, qs=True)
 
+    @cached_property
+    def path_qs(self):
+        """Decoded path of URL with query
+        """
+        if not self.query_string:
+            return self.path
+        return '{}?{}'.format(self.path, self.query_string)
+
     @property
     def raw_fragment(self):
         """Encoded fragment part of URL.
