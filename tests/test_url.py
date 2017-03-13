@@ -1465,3 +1465,16 @@ def test_query_dict():
     )
 
     assert str(u) == 'http://127.0.0.1/?arg=value1'
+
+
+def test_query_quoting():
+    u = URL.build(
+        scheme='http',
+        host='127.0.0.1',
+        path='/файл.jpg',
+        query=dict(arg="Привет")
+    )
+
+    assert u == URL('http://127.0.0.1/файл.jpg?arg=Привет')
+    assert str(u) == ('http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?'
+                      'arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82')

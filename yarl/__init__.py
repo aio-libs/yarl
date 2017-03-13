@@ -208,7 +208,7 @@ class URL:
             SplitResult(
                 scheme,
                 cls._make_netloc(user, password, host, port),
-                path,
+                _quote(path, safe='@:', protected='/'),
                 query_string,
                 fragment
             ),
