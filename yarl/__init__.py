@@ -209,7 +209,7 @@ class URL:
                 scheme,
                 cls._make_netloc(user, password, host, port),
                 _quote(path, safe='@:', protected='/'),
-                query_string,
+                _quote(query_string),
                 fragment
             ),
             strict=strict,
