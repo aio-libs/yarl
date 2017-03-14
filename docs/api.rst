@@ -207,7 +207,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    .. doctest::
 
-      >>> URL('http://example.com/path/to?a1=a&a2=b'.path_qs
+      >>> URL('http://example.com/path/to?a1=a&a2=b').path_qs
       '/path/to?a1=a&a2=b'
 
 
