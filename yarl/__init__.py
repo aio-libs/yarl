@@ -192,6 +192,35 @@ class URL:
         self._val = val
         self._cache = {}
 
+    @classmethod
+    def build(cls, *, scheme='', user='', password='', host='', port=None, path='',
+              query=None, query_string='', fragment='', strict=False):
+        """Creates and returns a new URL"""
+
+        if host or scheme:
+            assert scheme, 'Can\'t build URL with "host" but without "scheme".'
+            assert host, 'Can\'t build URL with "scheme" but without "host".'
+
+        if query and query_string:
+            raise ValueError("Only one of \"query\" or \"query_string\" should be passed")
+
+        url = cls(
+            SplitResult(
+                scheme,
+                cls._make_netloc(user, password, host, port),
+                _quote(path, safe='@:', protected='/'),
+                _quote(query_string),
+                fragment
+            ),
+            strict=strict,
+            encoded=True
+        )
+
+        if query:
+            return url.with_query(query)
+        else:
+            return url
+
     def __str__(self):
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
