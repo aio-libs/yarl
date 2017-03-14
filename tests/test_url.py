@@ -184,6 +184,13 @@ def test_query_string_non_ascii():
     assert url.query_string == 'б=в&ю=к'
 
 
+def test_path_qs():
+    url = URL('http://example.com/')
+    assert url.path_qs == '/'
+    url = URL('http://example.com/?б=в&ю=к')
+    assert url.path_qs == '/?б=в&ю=к'
+
+
 def test_query_string_spaces():
     url = URL('http://example.com?a+b=c+d&e=f+g')
     assert url.query_string == 'a b=c d&e=f g'
