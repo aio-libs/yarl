@@ -189,6 +189,8 @@ def test_path_qs():
     assert url.path_qs == '/'
     url = URL('http://example.com/?б=в&ю=к')
     assert url.path_qs == '/?б=в&ю=к'
+    url = URL('http://example.com/path?б=в&ю=к')
+    assert url.path_qs == '/path?б=в&ю=к'
 
 
 def test_query_string_spaces():

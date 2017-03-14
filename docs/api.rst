@@ -200,6 +200,17 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://example.com').path
       '/'
 
+
+.. attribute:: URL.path_qs
+
+   Decoded *path* part of URL and query string, ``'/'`` for absolute URLs without *path* part.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to?a1=a&a2=b'.path_qs
+      '/path/to?a1=a&a2=b'
+
+
 .. attribute:: URL.raw_path
 
    Encoded *path* part of URL, ``'/'`` for absolute URLs without *path* part.

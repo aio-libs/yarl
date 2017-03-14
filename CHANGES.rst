@@ -2,10 +2,12 @@ CHANGES
 =======
 
 
-0.10.0 (2017-03-xx)
+0.10.0 (2017-03-14)
 -------------------
 
-* Added `URL.build` class method.
+* Added `URL.build` class method #58
+
+* Added `path_qs` attribute #42
 
 
 0.9.8 (2017-02-16)

@@ -17,10 +17,9 @@ except ImportError:
 ext = '.pyx' if USE_CYTHON else '.c'
 
 extensions = [Extension('yarl._quoting',
-                        ['yarl/_quoting' + ext],
-                        # extra_compile_args=["-g"],
-                        # extra_link_args=["-g"],
-)]
+                        ['yarl/_quoting' + ext],)]
+# extra_compile_args=["-g"],
+# extra_link_args=["-g"],
 
 
 if USE_CYTHON:
