@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.9.8'
+__version__ = '0.10.0'
 
 __all__ = ['URL']
 
@@ -197,12 +197,15 @@ class URL:
               query=None, query_string='', fragment='', strict=False):
         """Creates and returns a new URL"""
 
-        if host or scheme:
-            assert scheme, 'Can\'t build URL with "host" but without "scheme".'
-            assert host, 'Can\'t build URL with "scheme" but without "host".'
-
+        if host and not scheme:
+            raise ValueError(
+                'Can\'t build URL with "host" but without "scheme".')
+        if not host and scheme:
+            raise ValueError(
+                'Can\'t build URL with "scheme" but without "host".')
         if query and query_string:
-            raise ValueError("Only one of \"query\" or \"query_string\" should be passed")
+            raise ValueError(
+                "Only one of \"query\" or \"query_string\" should be passed")
 
         url = cls(
             SplitResult(

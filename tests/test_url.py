@@ -1410,10 +1410,10 @@ def test_build_simple():
 
 
 def test_build_scheme_and_host():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         URL.build(host='127.0.0.1')
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         URL.build(scheme='http')
 
 
