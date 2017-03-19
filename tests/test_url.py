@@ -712,6 +712,13 @@ def test_with_path():
     assert str(url.with_path('/test')) == 'http://example.com/test'
 
 
+def test_with_path_encoded():
+    url = URL('http://example.com')
+    assert str(url.with_path('/test',
+                             encoded=True)
+               ) == 'http://example.com/test'
+
+
 def test_with_query():
     url = URL('http://example.com')
     assert str(url.with_query({'a': '1'})) == 'http://example.com/?a=1'
@@ -1439,6 +1446,21 @@ def test_build_with_user():
 def test_build_with_user_password():
     u = URL.build(scheme='http', host='127.0.0.1', user='foo', password='bar')
     assert str(u) == 'http://foo:bar@127.0.0.1'
+
+
+def test_build_with_query_and_query_string():
+    with pytest.raises(ValueError):
+        URL.build(
+            scheme='http',
+            host='127.0.0.1',
+            user='foo',
+            password='bar',
+            port=8000,
+            path='/index.html',
+            query=dict(arg="value1"),
+            query_string="arg=value1",
+            fragment="top"
+        )
 
 
 def test_build_with_all():
