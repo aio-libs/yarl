@@ -269,6 +269,17 @@ def test_quote_unquoted(quote):
     assert quote('%41') == 'A'
 
 
+def test_quote_space(quote):
+    assert quote(' ', strict=False) == '%20'  # NULL
+
+
+# test to see if this would work to fix
+# coverage on this file.
+def test_quote_percent_last_character(quote):
+    # % is last character in this case.
+    assert quote('%', strict=False) == '%25'
+
+
 def test_unquote_unsafe(unquote):
     assert unquote('%40', unsafe='@') == '%40'
 
