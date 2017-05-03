@@ -6,6 +6,8 @@ CHANGES
 
 * Unexpected compare behaviour #73
 
+* Do not quote or unquote + if not a query string. #74
+
 
 0.10.0 (2017-03-14)
 -------------------
