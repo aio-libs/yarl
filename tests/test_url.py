@@ -43,6 +43,14 @@ def test_origin_no_scheme():
     with pytest.raises(ValueError):
         url.origin()
 
+
+def test_abs_cmp():
+    assert URL('http://example.com:8888') == URL('http://example.com:8888')
+    assert URL('http://example.com:8888/') == URL('http://example.com:8888/')
+    assert URL('http://example.com:8888/') == URL('http://example.com:8888')
+    assert URL('http://example.com:8888') == URL('http://example.com:8888/')
+
+
 # properties
 
 

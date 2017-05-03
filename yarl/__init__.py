@@ -236,7 +236,16 @@ class URL:
     def __eq__(self, other):
         if not isinstance(other, URL):
             return NotImplemented
-        return self._val == other._val
+
+        val1 = self._val
+        if not val1.path and self.is_absolute():
+            val1 = val1._replace(path='/')
+
+        val2 = other._val
+        if not val2.path and other.is_absolute():
+            val2 = val2._replace(path='/')
+
+        return val1 == val2
 
     def __hash__(self):
         ret = self._cache.get('hash')
