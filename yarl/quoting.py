@@ -134,7 +134,7 @@ def _py_unquote(val, *, unsafe='', qs=False):
             last_pct = ''
 
         if ch == '+':
-            if ch in unsafe:
+            if not qs or ch in unsafe:
                 ret.append('+')
             else:
                 ret.append(' ')
