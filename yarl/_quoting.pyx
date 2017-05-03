@@ -219,7 +219,7 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             last_pct = ''
 
         if ch == '+':
-            if ch in unsafe:
+            if not qs or ch in unsafe:
                 ret.append('+')
             else:
                 ret.append(' ')

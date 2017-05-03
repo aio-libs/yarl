@@ -148,6 +148,7 @@ def test_quoting_space(quote):
 
 
 def test_quoting_plus(quote):
+    assert quote('alpha+beta gamma', qs=False) == 'alpha+beta%20gamma'
     assert quote('alpha+beta gamma', qs=True) == 'alpha%2Bbeta+gamma'
     assert quote('alpha+beta gamma', safe='+', qs=True) == 'alpha+beta+gamma'
 
@@ -330,6 +331,10 @@ def test_quote_sub_delims(quote):
 
 def test_requote_sub_delims(quote):
     assert quote("%21%24%26%27%28%29%2A%2B%2C%3B%3D") == "!$&'()*+,;="
+
+
+def test_unquoting_plus(unquote):
+    assert unquote('a+b', qs=False) == 'a+b'
 
 
 def test_unquote_plus_to_space(unquote):
