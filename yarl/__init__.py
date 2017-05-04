@@ -250,7 +250,10 @@ class URL:
     def __hash__(self):
         ret = self._cache.get('hash')
         if ret is None:
-            ret = self._cache['hash'] = hash(self._val)
+            val = self._val
+            if not val.path and self.is_absolute():
+                val = val._replace(path='/')
+            ret = self._cache['hash'] = hash(val)
         return ret
 
     def __le__(self, other):

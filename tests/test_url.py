@@ -51,6 +51,11 @@ def test_abs_cmp():
     assert URL('http://example.com:8888') == URL('http://example.com:8888/')
 
 
+def test_abs_hash():
+    url = URL('http://example.com:8888')
+    url_trailing = URL('http://example.com:8888/')
+    assert hash(url) == hash(url_trailing)
+
 # properties
 
 
