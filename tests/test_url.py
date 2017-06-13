@@ -246,6 +246,11 @@ def test_query_dont_unqoute_twice():
     assert url.query['url'] == sample_url
 
 
+def test_query_nonascii():
+    url = URL('http://example.com?ключ=знач')
+    assert url.query == MultiDict({'ключ': 'знач'})
+
+
 def test_raw_fragment_empty():
     url = URL('http://example.com')
     assert '' == url.raw_fragment
