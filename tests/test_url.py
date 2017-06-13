@@ -1,7 +1,7 @@
 import sys
 import pickle
 import pytest
-from urllib.parse import SplitResult
+from urllib.parse import SplitResult, urlencode
 from multidict import MultiDict, MultiDictProxy
 
 from yarl import URL
@@ -235,6 +235,15 @@ def test_query_repeated_args():
 def test_query_empty_arg():
     url = URL('http://example.com?a')
     assert url.query == MultiDict([('a', '')])
+
+
+def test_query_dont_unqoute_twice():
+    sample_url = 'http://base.place?' + urlencode({'a': '/////'})
+    query = urlencode({'url': sample_url})
+    full_url = 'http://test_url.aha?' + query
+
+    url = URL(full_url)
+    assert url.query['url'] == sample_url
 
 
 def test_raw_fragment_empty():
