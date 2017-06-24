@@ -763,6 +763,11 @@ def test_with_path_dots():
     assert str(url.with_path('/test/.')) == 'http://example.com/test/'
 
 
+def test_with_path_relative():
+    url = URL('/path')
+    assert str(url.with_path('/new')) == '/new'
+
+
 # with_query
 
 def test_with_query():
