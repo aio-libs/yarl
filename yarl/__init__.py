@@ -181,13 +181,14 @@ class URL:
                         user += ':' + _quote(val.password)
                     netloc = user + '@' + netloc
 
-            val = SplitResult(
-                val[0],  # scheme
-                netloc,
-                _quote(val[2], safe='+@:', protected='/+', strict=strict),
-                query=_quote(val[3], safe='=+&?/:@',
-                             protected=PROTECT_CHARS, qs=True, strict=strict),
-                fragment=_quote(val[4], safe='?/:@', strict=strict))
+            path = _quote(val[2], safe='+@:', protected='/+', strict=strict)
+            if netloc:
+                path = _normalize_path(path)
+
+            query = _quote(val[3], safe='=+&?/:@',
+                           protected=PROTECT_CHARS, qs=True, strict=strict)
+            fragment = _quote(val[4], safe='?/:@', strict=strict)
+            val = SplitResult(val[0], netloc, path, query, fragment)
 
         self._val = val
         self._cache = {}
@@ -207,11 +208,16 @@ class URL:
             raise ValueError(
                 "Only one of \"query\" or \"query_string\" should be passed")
 
+        netloc = cls._make_netloc(user, password, host, port)
+        path = _quote(path, safe='@:', protected='/')
+        if netloc:
+            path = _normalize_path(path)
+
         url = cls(
             SplitResult(
                 scheme,
-                cls._make_netloc(user, password, host, port),
-                _quote(path, safe='@:', protected='/'),
+                netloc,
+                path,
                 _quote(query_string),
                 fragment
             ),
@@ -290,6 +296,8 @@ class URL:
             parts = path.rstrip('/').split('/')
             parts.append(name)
             new_path = '/'.join(parts)
+        if self.is_absolute():
+            new_path = _normalize_path(new_path)
         return URL(self._val._replace(path=new_path, query='', fragment=''),
                    encoded=True)
 
@@ -464,7 +472,8 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
+        ret = MultiDict(parse_qsl(self.raw_query_string,
+                                  keep_blank_values=True))
         return MultiDictProxy(ret)
 
     @property
@@ -830,6 +839,8 @@ class URL:
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
         name = _quote(name, safe='@:', protected='/')
+        if name in ('.', '..'):
+            raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
         if self.is_absolute():
             if len(parts) == 1:
@@ -873,3 +884,31 @@ class URL:
                                       self.path,
                                       self.query_string,
                                       self.fragment))
+
+
+def _normalize_path(path):
+    # Drop '.' and '..' from path
+
+    segments = path.split('/')
+    resolved_path = []
+
+    for seg in segments:
+        if seg == '..':
+            try:
+                resolved_path.pop()
+            except IndexError:
+                # ignore any .. segments that would otherwise cause an
+                # IndexError when popped from resolved_path if
+                # resolving for rfc3986
+                pass
+        elif seg == '.':
+            continue
+        else:
+            resolved_path.append(seg)
+
+    if segments[-1] in ('.', '..'):
+        # do some post-processing here. if the last segment was a relative dir,
+        # then we need to append the trailing '/'
+        resolved_path.append('')
+
+    return '/'.join(resolved_path)
