@@ -44,6 +44,11 @@ def test_origin_no_scheme():
         url.origin()
 
 
+def test_drop_dots():
+    u = URL('http://example.com/path/../to')
+    assert str(u) == 'http://example.com/to'
+
+
 def test_abs_cmp():
     assert URL('http://example.com:8888') == URL('http://example.com:8888')
     assert URL('http://example.com:8888/') == URL('http://example.com:8888/')
@@ -244,6 +249,11 @@ def test_query_dont_unqoute_twice():
 
     url = URL(full_url)
     assert url.query['url'] == sample_url
+
+
+def test_query_nonascii():
+    url = URL('http://example.com?ключ=знач')
+    assert url.query == MultiDict({'ключ': 'знач'})
 
 
 def test_raw_fragment_empty():
@@ -490,6 +500,11 @@ def test_div_with_colon_and_at():
     assert url.raw_path == '/base/path:abc@123'
 
 
+def test_div_with_dots():
+    url = URL('http://example.com/base') / '../path/./to'
+    assert url.raw_path == '/path/to'
+
+
 # comparison and hashing
 
 def test_ne_str():
@@ -728,6 +743,8 @@ def test_with_port_invalid_type():
     with pytest.raises(TypeError):
         URL('http://example.com').with_port('123')
 
+# with_path
+
 
 def test_with_path():
     url = URL('http://example.com')
@@ -740,6 +757,18 @@ def test_with_path_encoded():
                              encoded=True)
                ) == 'http://example.com/test'
 
+
+def test_with_path_dots():
+    url = URL('http://example.com')
+    assert str(url.with_path('/test/.')) == 'http://example.com/test/'
+
+
+def test_with_path_relative():
+    url = URL('/path')
+    assert str(url.with_path('/new')) == '/new'
+
+
+# with_query
 
 def test_with_query():
     url = URL('http://example.com')
@@ -910,6 +939,8 @@ def test_with_fragment_bad_type():
     with pytest.raises(TypeError):
         url.with_fragment(123)
 
+# with_name
+
 
 def test_with_name():
     url = URL('http://example.com/a/b')
@@ -974,6 +1005,16 @@ def test_with_name_non_str():
 def test_with_name_within_colon_and_at():
     url = URL('http://example.com/oldpath').with_name('path:abc@123')
     assert url.raw_path == '/path:abc@123'
+
+
+def test_with_name_dot():
+    with pytest.raises(ValueError):
+        URL('http://example.com').with_name('.')
+
+
+def test_with_name_double_dot():
+    with pytest.raises(ValueError):
+        URL('http://example.com').with_name('..')
 
 # is_absolute
 
@@ -1544,3 +1585,12 @@ def test_build_query_quoting():
     assert u == URL('http://127.0.0.1/файл.jpg?arg=Привет')
     assert str(u) == ('http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?'
                       'arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82')
+
+
+def test_build_drop_dots():
+    u = URL.build(
+        scheme='http',
+        host='example.com',
+        path='/path/../to',
+    )
+    assert str(u) == 'http://example.com/to'
