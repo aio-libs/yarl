@@ -717,6 +717,8 @@ class URL:
         """Return a new URL with path replaced."""
         if not encoded:
             path = _quote(path, safe='@:', protected='/', strict=self._strict)
+            if self.is_absolute():
+                path = _normalize_path(path)
         return URL(self._val._replace(path=path), encoded=True)
 
     def with_query(self, *args, **kwargs):

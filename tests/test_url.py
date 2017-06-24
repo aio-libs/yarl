@@ -743,6 +743,8 @@ def test_with_port_invalid_type():
     with pytest.raises(TypeError):
         URL('http://example.com').with_port('123')
 
+# with_path
+
 
 def test_with_path():
     url = URL('http://example.com')
@@ -755,6 +757,13 @@ def test_with_path_encoded():
                              encoded=True)
                ) == 'http://example.com/test'
 
+
+def test_with_path_dots():
+    url = URL('http://example.com')
+    assert str(url.with_path('/test/.')) == 'http://example.com/test/'
+
+
+# with_query
 
 def test_with_query():
     url = URL('http://example.com')
