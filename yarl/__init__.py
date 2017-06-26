@@ -10,13 +10,12 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.10.3'
+__version__ = '0.11.0'
 
 __all__ = ['URL']
 
 
 # is_leaf()
-# path normalization
 
 
 DEFAULT_PORTS = {
