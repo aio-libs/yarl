@@ -713,13 +713,14 @@ class URL:
                                                         port)),
             encoded=True)
 
-    def with_path(self, path, encoded=False):
+    def with_path(self, path, *, encoded=False):
         """Return a new URL with path replaced."""
         if not encoded:
             path = _quote(path, safe='@:', protected='/', strict=self._strict)
             if self.is_absolute():
                 path = _normalize_path(path)
-        return URL(self._val._replace(path=path), encoded=True)
+        return URL(self._val._replace(path=path, query='', fragment=''),
+                   encoded=True)
 
     def with_query(self, *args, **kwargs):
         """Return a new URL with query part replaced.

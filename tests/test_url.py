@@ -768,6 +768,16 @@ def test_with_path_relative():
     assert str(url.with_path('/new')) == '/new'
 
 
+def test_with_path_query():
+    url = URL('http://example.com?a=b')
+    assert str(url.with_path('/test')) == 'http://example.com/test'
+
+
+def test_with_path_fragment():
+    url = URL('http://example.com#frag')
+    assert str(url.with_path('/test')) == 'http://example.com/test'
+
+
 # with_query
 
 def test_with_query():

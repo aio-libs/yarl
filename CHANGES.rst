@@ -6,6 +6,8 @@ CHANGES
 
 * Normalize path #86
 
+* Clear query and fragment parts in `.with_path()` #85
+
 0.10.3 (2017-06-13)
 -------------------
 
