@@ -461,7 +461,7 @@ section generates a new *URL* instance.
       >>> URL('http://example.com:8888').with_port(None)
       URL('http://example.com')
 
-.. method:: URL.with_path(path, encoded=False)
+.. method:: URL.with_path(path)
 
    Return a new URL with *path* replaced, encode *path* if needed.
 
