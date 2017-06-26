@@ -215,6 +215,8 @@ def test_query_string_spaces():
     url = URL('http://example.com?a+b=c+d&e=f+g')
     assert url.query_string == 'a b=c d&e=f g'
 
+# query
+
 
 def test_query_spaces():
     url = URL('http://example.com?a+b=c+d')
@@ -254,6 +256,9 @@ def test_query_dont_unqoute_twice():
 def test_query_nonascii():
     url = URL('http://example.com?ключ=знач')
     assert url.query == MultiDict({'ключ': 'знач'})
+
+
+# raw fragment
 
 
 def test_raw_fragment_empty():
@@ -919,6 +924,14 @@ def test_with_query_memoryview():
     with pytest.raises(TypeError):
         url.with_query(memoryview(b'123'))
 
+
+def test_with_query_params():
+    url = URL('http://example.com/get')
+    url2 = url.with_query([('key', '1;2;3')])
+    assert str(url2) == 'http://example.com/get?key=1;2;3'
+
+
+# with_fragment
 
 def test_with_fragment():
     url = URL('http://example.com')
