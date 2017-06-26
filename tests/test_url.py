@@ -1,5 +1,4 @@
 import sys
-import pickle
 import pytest
 from urllib.parse import SplitResult, urlencode
 from multidict import MultiDict, MultiDictProxy
@@ -1472,28 +1471,3 @@ def test_semicolon_as_value():
     u = URL('http://127.0.0.1/?a=1%3Bb=2')
     assert len(u.query) == 1
     assert u.query['a'] == '1;b=2'
-
-
-# serialize
-
-def test_pickle():
-    u1 = URL('test')
-    hash(u1)
-    v = pickle.dumps(u1)
-    u2 = pickle.loads(v)
-    assert u1._cache
-    assert not u2._cache
-    assert hash(u1) == hash(u2)
-
-
-def test_default_style_state():
-    u = URL('test')
-    hash(u)
-    u.__setstate__((None, {
-        '_val': 'test',
-        '_strict': False,
-        '_cache': {'hash': 1},
-    }))
-    assert not u._cache
-    assert u._val == 'test'
-    assert u._strict is False
