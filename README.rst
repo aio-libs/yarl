@@ -19,6 +19,9 @@ yarl
 .. image:: https://img.shields.io/pypi/pyversions/yarl.svg
     :target: https://pypi.python.org/pypi/yarl
 
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+    :target: https://gitter.im/aio-libs/Lobby
+    :alt: Chat on Gitter
 
 Introduction
 ------------
