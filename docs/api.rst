@@ -370,7 +370,8 @@ New URL generation
 URL is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
-.. method:: URL.build(scheme, user, password, host, port, path, query, query_string, fragment, strict=False)
+.. method:: URL.build(*, scheme, user, password, host, port, path, query, \
+                      query_string, fragment, strict=False)
 
    Creates and returns a new URL:
 
@@ -388,7 +389,8 @@ section generates a new *URL* instance.
       >>> URL.build()
       URL('')
 
-   Calling ``build`` method without arguments is equal to calling ``__init__`` without arguments.
+   Calling ``build`` method without arguments is equal to calling
+   ``__init__`` without arguments.
 
    .. note::
       When ``scheme`` and ``host`` are passed new URL will be “absolute”. If only one of ``scheme`` or ``host`` is
