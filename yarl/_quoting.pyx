@@ -50,9 +50,9 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
     cdef Py_ssize_t i
-    # UTF8 may take up to 5 bytes per symbol
+    # UTF8 may take up to 4 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
-    cdef Py_ssize_t ret_size = len(val)*3*5 + 1
+    cdef Py_ssize_t ret_size = len(val)*3*4 + 1
     cdef object ret = PyUnicode_New(ret_size, 1114111)
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
