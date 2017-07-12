@@ -506,11 +506,6 @@ def test_with_path_empty():
     assert str(url.with_path('')) == 'http://example.com'
 
 
-def test_with_path_slash():
-    url = URL('http://example.com/test')
-    assert str(url.with_path('/')) == 'http://example.com/'
-
-
 def test_with_path_leading_slash():
     url = URL('http://example.com')
     assert url.with_path('test').path == '/test'
