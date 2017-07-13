@@ -718,6 +718,8 @@ class URL:
             path = _quote(path, safe='@:', protected='/', strict=self._strict)
             if self.is_absolute():
                 path = _normalize_path(path)
+        if len(path) > 0 and path[0] != '/':
+            path = '/' + path
         return URL(self._val._replace(path=path, query='', fragment=''),
                    encoded=True)
 
