@@ -501,6 +501,16 @@ def test_with_path_fragment():
     assert str(url.with_path('/test')) == 'http://example.com/test'
 
 
+def test_with_path_empty():
+    url = URL('http://example.com/test')
+    assert str(url.with_path('')) == 'http://example.com'
+
+
+def test_with_path_leading_slash():
+    url = URL('http://example.com')
+    assert url.with_path('test').path == '/test'
+
+
 # with_query
 
 def test_with_query():
