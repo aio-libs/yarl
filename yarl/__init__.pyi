@@ -1,38 +1,39 @@
-from typing import overload, Tuple, Optional, Mapping, Union
+from typing import overload, Tuple, Optional, Mapping, Union, Sequence
 import multidict
 
 
 class URL:
-    scheme = ...  # type: str
-    raw_user = ...  # type: str
-    user = ...  # type: Optional[str]
-    raw_password = ...  # type: Optional[str]
-    password = ...  # type: Optional[str]
-    raw_host = ...  # type: Optional[str]
-    host = ...  # type: Optional[str]
-    port = ...  # type: Optional[int]
-    raw_path = ...  # type: str
-    path = ...  # type: str
-    raw_query_string = ...  # type: str
-    query_string = ...  # type: str
-    raw_fragment = ...  # type: str
-    fragment = ...  # type: str
-    query = ...  # type: multidict.MultiDict
-    raw_name = ...  # type: str
-    name = ...  # type: str
-    raw_parts = ...  # type: Tuple[str, ...]
-    parts = ...  # type: Tuple[str, ...]
-    parent = ...  # type: URL
+    scheme: str
+    raw_user: str
+    user: Optional[str]
+    raw_password: Optional[str]
+    password: Optional[str]
+    raw_host: Optional[str]
+    host: Optional[str]
+    port: Optional[int]
+    raw_path: str
+    path: str
+    raw_query_string: str
+    query_string: str
+    raw_fragment: str
+    fragment: str
+    query: multidict.MultiDict
+    raw_name: str
+    name: str
+    raw_parts: Tuple[str, ...]
+    parts: Tuple[str, ...]
+    parent: URL
 
     @overload
-    def __new__(cls, val: str='', *, encoded: bool=False) -> URL: ...
+    def __new__(cls, val: str='', *, strict: bool=...) -> URL: ...
     @overload
     def __new__(cls, val: URL) -> URL: ...
 
     @classmethod
-    def build(cls, *, scheme: str='', user: str='', password: str='', host: str='',
-              port: int=None, path: str='', query: Mapping=None, query_string: str='',
-              fragment: str='', strict: bool=False) -> URL: ...
+    def build(cls, *, scheme: str=..., user: str=..., password: str=...,
+              host: str=..., port: int=..., path: str=...,
+              query: Mapping=..., query_string: str=...,
+              fragment: str=..., strict: bool=...) -> URL: ...
 
     def __str__(self) -> str: ...
     def __repr__(self) -> str: ...
@@ -58,10 +59,25 @@ class URL:
     def with_host(self, host: str) -> URL: ...
     def with_port(self, port: Optional[int]) -> URL: ...
     def with_path(self, path: str) -> URL: ...
+
     @overload
-    def with_query(self, query: Optional[Union[Mapping[str, str], str]]) -> URL: ...
+    def with_query(self, query: str) -> URL: ...
     @overload
-    def with_query(self, **kwargs: Mapping[str, str]) -> URL: ...
+    def with_query(self, query: Mapping[str, str]) -> URL: ...
+    @overload
+    def with_query(self, query: Sequence[Tuple[str, str]]) -> URL: ...
+    @overload
+    def with_query(self, **kwargs) -> URL: ...
+
+    @overload
+    def update_query(self, query: str) -> URL: ...
+    @overload
+    def update_query(self, query: Mapping[str, str]) -> URL: ...
+    @overload
+    def update_query(self, query: Sequence[Tuple[str, str]]) -> URL: ...
+    @overload
+    def update_query(self, **kwargs) -> URL: ...
+
     def with_fragment(self, fragment: Optional[str]) -> URL: ...
     def with_name(self, name: str) -> URL: ...
 
