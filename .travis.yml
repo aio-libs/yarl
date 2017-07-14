@@ -16,11 +16,12 @@ install:
 
 
 script:
-  - make cov
+  - pytest --cov yarl ./tests/ --flake8
   - make doc
   - python setup.py check -rm
   - if python -c "import sys; sys.exit(sys.version_info < (3,6))"; then
         python setup.py check -s;
+        make mypy
     fi
 
 
