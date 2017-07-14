@@ -7,20 +7,20 @@ all: test
 	@pip install -e .
 	@touch .develop
 
-test: .develop
+test: .develop mypy
 	pytest ./tests --flake8
 
-vtest: .develop
+vtest: .develop mypy
 	pytest ./tests --flake8 -v
 
 
-cov: .develop
+cov: .develop mypy
 	pytest --cov yarl --cov-report html --cov-report term ./tests/ --flake8
 	@echo "open file://`pwd`/htmlcov/index.html"
 
 
 doc: doctest
-	make -C docs html
+	make -C docs html SPHINXOPTS="-W -E"
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
 
