@@ -1,10 +1,12 @@
 CHANGES
 =======
 
-0.12.0 (xxxx-xx-xx)
+0.12.0 (2017-06-26)
 -------------------
 
 * Properly support paths without leading slash in `URL.with_path()` #90
+
+* Enable type annotation checks
 
 0.11.0 (2017-06-26)
 -------------------
