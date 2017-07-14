@@ -1,7 +1,6 @@
 import sys
 import pytest
 from urllib.parse import SplitResult
-from multidict import MultiDict
 
 from yarl import URL
 
