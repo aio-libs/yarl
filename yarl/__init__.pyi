@@ -17,7 +17,7 @@ class URL:
     query_string = ...  # type: str
     raw_fragment = ...  # type: str
     fragment = ...  # type: str
-    query = ...  # type: multidict.Multidict
+    query = ...  # type: multidict.MultiDict
     raw_name = ...  # type: str
     name = ...  # type: str
     raw_parts = ...  # type: Tuple[str, ...]

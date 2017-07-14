@@ -98,3 +98,5 @@ yarl/_quoting.html
 
 # Idea
 .idea
+
+.mypy_cache

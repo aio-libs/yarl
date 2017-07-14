@@ -1,3 +1,8 @@
+MD = $(shell python -c "import multidict; print(multidict.__path__[0])")
+
+all: test
+
+
 .develop: $(shell find yarl -type f)
 	@pip install -e .
 	@touch .develop
@@ -21,3 +26,7 @@ doc: doctest
 
 doctest: .develop
 	make -C docs doctest
+
+
+mypy:
+	MYPYPATH=$(MD)/.. mypy yarl
