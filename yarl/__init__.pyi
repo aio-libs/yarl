@@ -3,26 +3,26 @@ import multidict
 
 
 class URL:
-    scheme: str
-    raw_user: str
-    user: Optional[str]
-    raw_password: Optional[str]
-    password: Optional[str]
-    raw_host: Optional[str]
-    host: Optional[str]
-    port: Optional[int]
-    raw_path: str
-    path: str
-    raw_query_string: str
-    query_string: str
-    raw_fragment: str
-    fragment: str
-    query: multidict.MultiDict
-    raw_name: str
-    name: str
-    raw_parts: Tuple[str, ...]
-    parts: Tuple[str, ...]
-    parent: URL
+    scheme = ...  # type: str
+    raw_user = ...  # type: str
+    user = ...  # type: Optional[str]
+    raw_password = ...  # type: Optional[str]
+    password = ...  # type: Optional[str]
+    raw_host = ...  # type: Optional[str]
+    host = ...  # type: Optional[str]
+    port = ...  # type: Optional[int]
+    raw_path = ...  # type: str
+    path = ...  # type: str
+    raw_query_string = ...  # type: str
+    query_string = ...  # type: str
+    raw_fragment = ...  # type: str
+    fragment = ...  # type: str
+    query = ...  # type: multidict.MultiDict
+    raw_name = ...  # type: str
+    name = ...  # type: str
+    raw_parts = ...  # type: Tuple[str, ...]
+    parts = ...  # type: Tuple[str, ...]
+    parent = ...  # type: URL
 
     @overload
     def __new__(cls, val: str='', *, strict: bool=...) -> URL: ...
