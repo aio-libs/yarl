@@ -152,3 +152,9 @@ def test_with_query_params():
     url = URL('http://example.com/get')
     url2 = url.with_query([('key', '1;2;3')])
     assert str(url2) == 'http://example.com/get?key=1;2;3'
+
+
+def test_with_query_only():
+    url = URL()
+    url2 = url.with_query(key='value')
+    assert str(url2) == '?key=value'

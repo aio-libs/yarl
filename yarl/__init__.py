@@ -776,11 +776,8 @@ class URL:
         else:
             raise TypeError("Invalid query type: only str, mapping or "
                             "sequence of (str, str) pairs is allowed")
-        path = self._val.path
-        if path == '':
-            path = '/'
         return URL(
-            self._val._replace(path=path, query=query), encoded=True)
+            self._val._replace(path=self._val.path, query=query), encoded=True)
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
