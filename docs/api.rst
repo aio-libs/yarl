@@ -14,7 +14,7 @@ The only public *yarl* class is ``URL``:
    >>> from yarl import URL
 
 
-.. class:: URL(arg)
+.. class:: URL(arg, *, encoded=False)
 
 Represents URL as ::
 
@@ -67,6 +67,21 @@ Use :meth:`URL.human_repr` for getting human readable representation:
    'http://xn--jxagkqfkduily1i.eu/%D0%BF%D1%83%D1%82%D1%8C/%E9%80%99%E8%A3%A1'
    >>> url.human_repr()
    'http://εμπορικόσήμα.eu/путь/這裡'
+
+
+.. note::
+
+   Sometimes encoding performed by *yarl* is not acceptable for
+   certain WEB server.
+
+   Passing ``encoded=True`` parameter prevents URL autoencoding, user is
+   responsible about URL correctness.
+
+   Don't use this option unless there is no other way for keeping URL
+   attributes not touched.
+
+   Any URL manipulations don't guarantee correct encoding, URL parts
+   could be requoted even if *encoded* parameter was explicitly set.
 
 URL properties
 --------------
