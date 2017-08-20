@@ -15,6 +15,7 @@ class URL:
     path = ...  # type: str
     raw_query_string = ...  # type: str
     query_string = ...  # type: str
+    path_qs = ...  # type: str
     raw_fragment = ...  # type: str
     fragment = ...  # type: str
     query = ...  # type: multidict.MultiDict
@@ -24,7 +25,7 @@ class URL:
     parts = ...  # type: Tuple[str, ...]
     parent = ...  # type: URL
 
-    def __init__(self, val: Union[str, 'URL'], *, encoded: bool=...,
+    def __init__(self, val: Union[str, 'URL']=..., *, encoded: bool=...,
                 strict: bool=...) -> None: ...
 
     @classmethod
@@ -56,7 +57,7 @@ class URL:
     def with_password(self, password: Optional[str]) -> URL: ...
     def with_host(self, host: str) -> URL: ...
     def with_port(self, port: Optional[int]) -> URL: ...
-    def with_path(self, path: str) -> URL: ...
+    def with_path(self, path: str, *, encoded: bool=...) -> URL: ...
 
     @overload
     def with_query(self, query: str) -> URL: ...
