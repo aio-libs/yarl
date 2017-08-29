@@ -1,2 +1,2 @@
-cython==0.26
+cython==0.26.1
 pytest==3.2.1
