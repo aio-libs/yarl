@@ -24,10 +24,8 @@ class URL:
     parts = ...  # type: Tuple[str, ...]
     parent = ...  # type: URL
 
-    @overload
-    def __new__(cls, val: str='', *, strict: bool=...) -> URL: ...
-    @overload
-    def __new__(cls, val: URL) -> URL: ...
+    def __init__(self, val: Union[str, 'URL'], *, encoded: bool=...,
+                strict: bool=...) -> None: ...
 
     @classmethod
     def build(cls, *, scheme: str=..., user: str=..., password: str=...,
