@@ -760,7 +760,7 @@ class URL:
                 else:
                     raise TypeError("Invalid variable type: mapping value "
                                     "should be str or int, got {!r}".format(v))
-                lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;'))
+                lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@'))
                 query = '&'.join(lst)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
