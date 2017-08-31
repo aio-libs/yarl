@@ -151,7 +151,13 @@ def test_with_query_memoryview():
 def test_with_query_params():
     url = URL('http://example.com/get')
     url2 = url.with_query([('key', '1;2;3')])
-    assert str(url2) == 'http://example.com/get?key=1;2;3'
+    assert str(url2) == 'http://example.com/get?key=1%3B2%3B3'
+
+
+def test_with_query_params2():
+    url = URL('http://example.com/get')
+    url2 = url.with_query({'key': '1;2;3'})
+    assert str(url2) == 'http://example.com/get?key=1%3B2%3B3'
 
 
 def test_with_query_only():

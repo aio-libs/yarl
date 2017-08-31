@@ -771,7 +771,7 @@ class URL:
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
             quoter = partial(_quote, qs=True, strict=self._strict)
-            query = '&'.join(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;')
+            query = '&'.join(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@')
                              for k, v in query)
         else:
             raise TypeError("Invalid query type: only str, mapping or "
