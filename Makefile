@@ -30,3 +30,4 @@ doctest: .develop
 
 mypy:
 	MYPYPATH=$(MD)/.. mypy yarl
+	MYPYPATH=$(MD)/.. mypy --disallow-untyped-defs yarl/*.pyi
