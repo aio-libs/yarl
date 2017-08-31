@@ -6,6 +6,9 @@ CHANGES
 
 * Document `encoded` parameter (#102)
 
+* Support relative urls like `'?key=value'` (#100)
+
+
 0.12.0 (2017-06-26)
 -------------------
 
