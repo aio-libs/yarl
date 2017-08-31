@@ -760,7 +760,7 @@ class URL:
                 else:
                     raise TypeError("Invalid variable type: mapping value "
                                     "should be str or int, got {!r}".format(v))
-                lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;'))
+                lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@'))
                 query = '&'.join(lst)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
@@ -771,16 +771,13 @@ class URL:
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
             quoter = partial(_quote, qs=True, strict=self._strict)
-            query = '&'.join(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@;')
+            query = '&'.join(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@')
                              for k, v in query)
         else:
             raise TypeError("Invalid query type: only str, mapping or "
                             "sequence of (str, str) pairs is allowed")
-        path = self._val.path
-        if path == '':
-            path = '/'
         return URL(
-            self._val._replace(path=path, query=query), encoded=True)
+            self._val._replace(path=self._val.path, query=query), encoded=True)
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""

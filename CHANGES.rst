@@ -6,6 +6,10 @@ CHANGES
 
 * Document `encoded` parameter (#102)
 
+* Support relative urls like `'?key=value'` (#100)
+
+* Unsafe encoding for QS fixed. Encode `;` char in value param (#104)
+
 0.12.0 (2017-06-26)
 -------------------
 

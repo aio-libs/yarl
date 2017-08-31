@@ -115,6 +115,14 @@ def test_build_query_quoting():
                       'arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82')
 
 
+def test_build_query_only():
+    u = URL.build(
+        query={'key': 'value'},
+    )
+
+    assert str(u) == '?key=value'
+
+
 def test_build_drop_dots():
     u = URL.build(
         scheme='http',

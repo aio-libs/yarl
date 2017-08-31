@@ -113,10 +113,10 @@ def test_with_multidict_with_spaces_and_non_ascii():
 
 def test_with_query_multidict_with_unsafe():
     url = URL('http://example.com/path')
-    url2 = url.with_query({'a+b': '?=+&'})
-    assert url2.raw_query_string == 'a%2Bb=?%3D%2B%26'
-    assert url2.query_string == 'a%2Bb=?%3D%2B%26'
-    assert url2.query == {'a+b': '?=+&'}
+    url2 = url.with_query({'a+b': '?=+&;'})
+    assert url2.raw_query_string == 'a%2Bb=?%3D%2B%26%3B'
+    assert url2.query_string == 'a%2Bb=?%3D%2B%26%3B'
+    assert url2.query == {'a+b': '?=+&;'}
 
 
 def test_with_query_None():
@@ -151,4 +151,16 @@ def test_with_query_memoryview():
 def test_with_query_params():
     url = URL('http://example.com/get')
     url2 = url.with_query([('key', '1;2;3')])
-    assert str(url2) == 'http://example.com/get?key=1;2;3'
+    assert str(url2) == 'http://example.com/get?key=1%3B2%3B3'
+
+
+def test_with_query_params2():
+    url = URL('http://example.com/get')
+    url2 = url.with_query({'key': '1;2;3'})
+    assert str(url2) == 'http://example.com/get?key=1%3B2%3B3'
+
+
+def test_with_query_only():
+    url = URL()
+    url2 = url.with_query(key='value')
+    assert str(url2) == '?key=value'
