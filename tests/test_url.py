@@ -77,6 +77,11 @@ def test_raw_user_non_ascii():
     assert '%D0%B2%D0%B0%D1%81%D1%8F' == url.raw_user
 
 
+def test_no_user():
+    url = URL('http://example.com')
+    assert url.user is None
+
+
 def test_user_non_ascii():
     url = URL('http://вася@example.com')
     assert 'вася' == url.user
@@ -95,6 +100,11 @@ def test_raw_password_non_ascii():
 def test_password_non_ascii():
     url = URL('http://user:пароль@example.com')
     assert 'пароль' == url.password
+
+
+def test_password_without_user():
+    url = URL('http://:password@example.com')
+    assert 'password' == url.password
 
 
 def test_raw_host():

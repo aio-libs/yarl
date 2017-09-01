@@ -90,8 +90,10 @@ def test_with_password_invalid_type():
 
 def test_with_password_and_empty_user():
     url = URL('http://example.com')
-    with pytest.raises(ValueError):
-        assert str(url.with_password('pass'))
+    url2 = url.with_password('pass')
+    assert url2.password == 'pass'
+    assert url2.user is None
+    assert str(url2) == 'http://:pass@example.com'
 
 
 def test_from_str_with_host_ipv4():

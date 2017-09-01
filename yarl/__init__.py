@@ -176,8 +176,11 @@ class URL:
                     netloc += ':{}'.format(val.port)
                 if val.username:
                     user = _quote(val.username)
-                    if val.password:
-                        user += ':' + _quote(val.password)
+                else:
+                    user = ''
+                if val.password:
+                    user += ':' + _quote(val.password)
+                if user:
                     netloc = user + '@' + netloc
 
             path = _quote(val[2], safe='+@:', protected='/+', strict=strict)
@@ -380,7 +383,10 @@ class URL:
 
         """
         # not .username
-        return self._val.username
+        ret = self._val.username
+        if not ret:
+            return None
+        return ret
 
     @cached_property
     def user(self):
@@ -590,7 +596,7 @@ class URL:
             ret = ret + ':' + str(port)
         if password:
             if not user:
-                raise ValueError("Non-empty password requires non-empty user")
+                user = ''
             user = user + ':' + password
         if user:
             ret = user + '@' + ret
