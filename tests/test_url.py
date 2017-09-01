@@ -77,6 +77,11 @@ def test_raw_user_non_ascii():
     assert '%D0%B2%D0%B0%D1%81%D1%8F' == url.raw_user
 
 
+def test_no_user():
+    url = URL('http://example.com')
+    assert url.user is None
+
+
 def test_user_non_ascii():
     url = URL('http://вася@example.com')
     assert 'вася' == url.user

@@ -383,7 +383,10 @@ class URL:
 
         """
         # not .username
-        return self._val.username
+        ret = self._val.username
+        if not ret:
+            return None
+        return ret
 
     @cached_property
     def user(self):
