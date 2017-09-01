@@ -97,6 +97,11 @@ def test_password_non_ascii():
     assert 'пароль' == url.password
 
 
+def test_password_without_user():
+    url = URL('http://:password@example.com')
+    assert 'password' == url.password
+
+
 def test_raw_host():
     url = URL('http://example.com')
     assert "example.com" == url.raw_host

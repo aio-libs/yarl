@@ -10,6 +10,8 @@ CHANGES
 
 * Unsafe encoding for QS fixed. Encode `;` char in value param (#104)
 
+* Process passwords without user names (#95)
+
 0.12.0 (2017-06-26)
 -------------------
 
