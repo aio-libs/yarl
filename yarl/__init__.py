@@ -729,19 +729,7 @@ class URL:
         return URL(self._val._replace(path=path, query='', fragment=''),
                    encoded=True)
 
-    def with_query(self, *args, **kwargs):
-        """Return a new URL with query part replaced.
-
-        Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
-        or str, autoencode the argument if needed.
-
-        It also can take an arbitrary number of keyword arguments.
-
-        Clear query if None is passed.
-
-        """
-        # N.B. doesn't cleanup query/fragment
-
+    def _get_str_query(self, *args, **kwargs):
         if kwargs:
             if len(args) > 0:
                 raise ValueError("Either kwargs or single query parameter "
@@ -782,37 +770,42 @@ class URL:
         else:
             raise TypeError("Invalid query type: only str, mapping or "
                             "sequence of (str, str) pairs is allowed")
+
+        return query
+
+    def with_query(self, *args, **kwargs):
+        """Return a new URL with query part replaced.
+
+        Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
+        or str, autoencode the argument if needed.
+
+        It also can take an arbitrary number of keyword arguments.
+
+        Clear query if None is passed.
+
+        """
+        # N.B. doesn't cleanup query/fragment
+
+        new_query = self._get_str_query(*args, **kwargs)
         return URL(
-            self._val._replace(path=self._val.path, query=query), encoded=True)
+            self._val._replace(path=self._val.path, query=new_query), encoded=True)
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
-        if kwargs:
-            if len(args) > 0:
-                raise ValueError("Either kwargs or single query parameter "
-                                 "must be present")
-            new_query = kwargs
-        elif len(args) == 1:
-            new_query = args[0]
-
-            if isinstance(new_query, str):
-                new_query = OrderedDict(
-                    map(
-                        lambda x: x.split('=', 1),
-                        _quote(new_query,
-                               safe='/?:@', protected=PROTECT_CHARS,
-                               qs=True,
-                               strict=self._strict).lstrip("?").split("&")
-                        )
+        new_query = OrderedDict(
+            map(
+                lambda x: x.split('=', 1),
+                _quote(self._get_str_query(*args, **kwargs),
+                        safe='/?:@', protected=PROTECT_CHARS,
+                        qs=True,
+                        strict=self._strict).lstrip("?").split("&")
                 )
-
-        else:
-            raise ValueError("Either kwargs or single query parameter "
-                             "must be present")
-
+        )
         query = OrderedDict(self.query)
         query.update(new_query)
-        return self.with_query(tuple(query.items()))
+        query = self._get_str_query(query)
+        return URL(
+            self._val._replace(path=self._val.path, query=query), encoded=True)
 
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.
