@@ -3,8 +3,8 @@ MD = $(shell python -c "import multidict; print(multidict.__path__[0])")
 all: test
 
 
-.develop: requirements-dev.txt
-	pip install -U -r requirements-dev.txt
+.develop: requirements/dev.txt
+	pip install -U -r requirements/dev.txt
 	@touch .develop
 
 

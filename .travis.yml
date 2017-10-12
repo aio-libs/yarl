@@ -11,7 +11,7 @@ python:
 install:
   - pip install cython
   - pip install twine
-  - pip install -r requirements-ci.txt
+  - pip install -r requirements/ci.txt
   - pip install codecov
   - pip install mypy-lang
 
