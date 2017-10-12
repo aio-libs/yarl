@@ -171,7 +171,7 @@ class URL:
                         pass
                     else:
                         if ip.version == 6:
-                            netloc = '['+netloc+']'
+                            netloc = '[' + netloc + ']'
                 if val.port:
                     netloc += ':{}'.format(val.port)
                 if val.username:
@@ -688,7 +688,7 @@ class URL:
             host = host.encode('idna').decode('ascii')
         else:
             if ip.version == 6:
-                host = '['+host+']'
+                host = '[' + host + ']'
         val = self._val
         return URL(
             self._val._replace(netloc=self._make_netloc(val.username,
@@ -754,7 +754,8 @@ class URL:
                 else:
                     raise TypeError("Invalid variable type: mapping value "
                                     "should be str or int, got {!r}".format(v))
-                lst.append(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@'))
+                lst.append(
+                    quoter(k, safe='/?:@') + '=' + quoter(v, safe='/?:@'))
                 query = '&'.join(lst)
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
@@ -764,8 +765,8 @@ class URL:
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(_quote, qs=True, strict=self._strict)
-            query = '&'.join(quoter(k, safe='/?:@')+'='+quoter(v, safe='/?:@')
+            quoter = partial(_quote, qs=True, strict=self._strict, safe='/?:@')
+            query = '&'.join(quoter(k) + '=' + quoter(v)
                              for k, v in query)
         else:
             raise TypeError("Invalid query type: only str, mapping or "
@@ -788,7 +789,8 @@ class URL:
 
         new_query = self._get_str_query(*args, **kwargs)
         return URL(
-            self._val._replace(path=self._val.path, query=new_query), encoded=True)
+            self._val._replace(path=self._val.path, query=new_query),
+            encoded=True)
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
@@ -796,10 +798,10 @@ class URL:
             map(
                 lambda x: x.split('=', 1),
                 _quote(self._get_str_query(*args, **kwargs),
-                        safe='/?:@', protected=PROTECT_CHARS,
-                        qs=True,
-                        strict=self._strict).lstrip("?").split("&")
-                )
+                       safe='/?:@', protected=PROTECT_CHARS,
+                       qs=True,
+                       strict=self._strict).lstrip("?").split("&")
+            )
         )
         query = OrderedDict(self.query)
         query.update(new_query)
