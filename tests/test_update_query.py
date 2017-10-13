@@ -16,6 +16,7 @@ def test_with_query():
 def test_update_query():
     url = URL('http://example.com/')
     assert str(url.update_query({'a': '1'})) == 'http://example.com/?a=1'
+    assert str(URL('test').update_query(a=1)) == 'test?a=1'
 
     url = URL('http://example.com/?foo=bar')
     expected_url = URL('http://example.com/?foo=bar&baz=foo')
