@@ -300,8 +300,9 @@ class URL:
             new_path = '/'.join(parts)
         if self.is_absolute():
             new_path = _normalize_path(new_path)
-        return URL(self._val._replace(path=new_path, query='', fragment=''),
-                   encoded=True)
+        return self.__class__(
+            self._val._replace(path=new_path, query='', fragment=''),
+            encoded=True)
 
     def __getstate__(self):
         return self._val, self._strict
@@ -353,7 +354,7 @@ class URL:
         v = self._val
         netloc = self._make_netloc(None, None, v.hostname, v.port)
         val = v._replace(netloc=netloc, path='', query='', fragment='')
-        return URL(val, encoded=True)
+        return self.__class__(val, encoded=True)
 
     def relative(self):
         """Return a relative part of the URL.
@@ -364,7 +365,7 @@ class URL:
         if not self.is_absolute():
             raise ValueError("URL should be absolute")
         val = self._val._replace(scheme='', netloc='')
-        return URL(val, encoded=True)
+        return self.__class__(val, encoded=True)
 
     @property
     def scheme(self):
@@ -563,13 +564,14 @@ class URL:
         path = self.raw_path
         if not path or path == '/':
             if self.raw_fragment or self.raw_query_string:
-                return URL(self._val._replace(query='', fragment=''),
-                           encoded=True)
+                return self.__class__(
+                    self._val._replace(query='', fragment=''),
+                    encoded=True)
             return self
         parts = path.split('/')
         val = self._val._replace(path='/'.join(parts[:-1]),
                                  query='', fragment='')
-        return URL(val, encoded=True)
+        return self.__class__(val, encoded=True)
 
     @cached_property
     def raw_name(self):
@@ -610,7 +612,9 @@ class URL:
         if not self.is_absolute():
             raise ValueError("scheme replacement is not allowed "
                              "for relative URLs")
-        return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
+        return self.__class__(
+            self._val._replace(scheme=scheme.lower()),
+            encoded=True)
 
     def with_user(self, user):
         """Return a new URL with user replaced.
@@ -632,11 +636,12 @@ class URL:
         if not self.is_absolute():
             raise ValueError("user replacement is not allowed "
                              "for relative URLs")
-        return URL(self._val._replace(netloc=self._make_netloc(user,
-                                                               password,
-                                                               val.hostname,
-                                                               val.port)),
-                   encoded=True)
+        return self.__class__(
+            self._val._replace(netloc=self._make_netloc(user,
+                                                        password,
+                                                        val.hostname,
+                                                        val.port)),
+            encoded=True)
 
     def with_password(self, password):
         """Return a new URL with password replaced.
@@ -657,7 +662,7 @@ class URL:
             raise ValueError("password replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(
+        return self.__class__(
             self._val._replace(
                 netloc=self._make_netloc(val.username,
                                          password,
@@ -690,7 +695,7 @@ class URL:
             if ip.version == 6:
                 host = '[' + host + ']'
         val = self._val
-        return URL(
+        return self.__class__(
             self._val._replace(netloc=self._make_netloc(val.username,
                                                         val.password,
                                                         host,
@@ -711,7 +716,7 @@ class URL:
             raise ValueError("port replacement is not allowed "
                              "for relative URLs")
         val = self._val
-        return URL(
+        return self.__class__(
             self._val._replace(netloc=self._make_netloc(val.username,
                                                         val.password,
                                                         val.hostname,
@@ -726,8 +731,9 @@ class URL:
                 path = _normalize_path(path)
         if len(path) > 0 and path[0] != '/':
             path = '/' + path
-        return URL(self._val._replace(path=path, query='', fragment=''),
-                   encoded=True)
+        return self.__class__(
+            self._val._replace(path=path, query='', fragment=''),
+            encoded=True)
 
     def _get_str_query(self, *args, **kwargs):
         if kwargs:
@@ -788,7 +794,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
 
         new_query = self._get_str_query(*args, **kwargs)
-        return URL(
+        return self.__class__(
             self._val._replace(path=self._val.path, query=new_query),
             encoded=True)
 
@@ -806,7 +812,7 @@ class URL:
         query = OrderedDict(self.query)
         query.update(new_query)
         query = self._get_str_query(query)
-        return URL(
+        return self.__class__(
             self._val._replace(path=self._val.path, query=query), encoded=True)
 
     def with_fragment(self, fragment):
@@ -822,7 +828,7 @@ class URL:
             fragment = ''
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(
+        return self.__class__(
             self._val._replace(
                 fragment=_quote(fragment, safe='?/:@', strict=self._strict)),
             encoded=True)
@@ -854,7 +860,7 @@ class URL:
             parts[-1] = name
             if parts[0] == '/':
                 parts[0] = ''  # replace leading '/'
-        return URL(
+        return self.__class__(
             self._val._replace(path='/'.join(parts),
                                query='', fragment=''), encoded=True)
 
@@ -873,7 +879,7 @@ class URL:
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)), encoded=True)
+        return self.__class__(urljoin(str(self), str(url)), encoded=True)
 
     def human_repr(self):
         """Return decoded human readable string for URL representation."""
