@@ -46,7 +46,7 @@ class cached_property:
         self.wrapped = wrapped
         try:
             self.__doc__ = wrapped.__doc__
-        except Exception:  # pragma: no cover
+        except AttributeError:  # pragma: no cover
             self.__doc__ = ""
         self.name = wrapped.__name__
 
