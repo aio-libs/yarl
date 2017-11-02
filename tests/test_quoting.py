@@ -1,14 +1,14 @@
 import pytest
 
-from yarl.quoting import _py_quote, _py_unquote, _quote, _unquote
+from yarl.quoting import _py_quote, _py_unquote, quote, unquote
 
 
-@pytest.fixture(params=[_py_quote, _quote], ids=['py_quote', 'c_quote'])
+@pytest.fixture(params=[_py_quote, quote], ids=['py_quote', 'c_quote'])
 def quote(request):
     return request.param
 
 
-@pytest.fixture(params=[_py_unquote, _unquote],
+@pytest.fixture(params=[_py_unquote, unquote],
                 ids=['py_unquote', 'c_unquote'])
 def unquote(request):
     return request.param
