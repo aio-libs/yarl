@@ -747,9 +747,7 @@ class URL:
             quoter = partial(_quote, qs=True, strict=self._strict)
             lst = []
             for k, v in query.items():
-                if isinstance(v, str):
-                    pass
-                elif type(v) == int:  # no subclasses like bool
+                if isinstance(v, (str, int)):  # no subclasses like bool
                     v = str(v)
                 else:
                     raise TypeError("Invalid variable type: mapping value "
