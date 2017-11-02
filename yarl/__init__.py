@@ -46,7 +46,7 @@ class cached_property:
         self.wrapped = wrapped
         try:
             self.__doc__ = wrapped.__doc__
-        except:  # pragma: no cover
+        except Exception:  # pragma: no cover
             self.__doc__ = ""
         self.name = wrapped.__name__
 
@@ -167,7 +167,7 @@ class URL:
                 else:
                     try:
                         ip = ip_address(netloc)
-                    except:
+                    except ValueError:
                         pass
                     else:
                         if ip.version == 6:
@@ -684,7 +684,7 @@ class URL:
             raise ValueError("host removing is not allowed")
         try:
             ip = ip_address(host)
-        except:
+        except ValueError:
             host = host.encode('idna').decode('ascii')
         else:
             if ip.version == 6:
