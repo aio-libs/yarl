@@ -35,17 +35,17 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-def _quote(val, *, str safe='', str protected='', bint qs=False, bint strict=True):
+def _quote(val, *, str safe='', str protected='', bint qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    return _do_quote(<str>val, safe, protected, qs, strict)
+    return _do_quote(<str>val, safe, protected, qs)
 
 
-cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
+cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef uint8_t b
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
@@ -74,19 +74,15 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
                 digit1 = _from_hex(pct[0])
                 digit2 = _from_hex(pct[1])
                 if digit1 == -1 or digit2 == -1:
-                    if strict:
-                        raise ValueError("Unallowed PCT %{}{}".format(pct[0],
-                                                                      pct[1]))
-                    else:
-                        PyUnicode_WriteChar(ret, ret_idx, '%')
-                        ret_idx += 1
-                        PyUnicode_WriteChar(ret, ret_idx, '2')
-                        ret_idx += 1
-                        PyUnicode_WriteChar(ret, ret_idx, '5')
-                        ret_idx += 1
-                        idx -= 2
-                        has_pct = 0
-                        continue
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '2')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '5')
+                    ret_idx += 1
+                    idx -= 2
+                    has_pct = 0
+                    continue
 
                 ch = <Py_UCS4>(digit1 << 4 | digit2)
                 has_pct = 0
@@ -111,18 +107,15 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
 
             # special case, if we have only one char after "%"
             elif has_pct == 2 and idx == len(val):
-                if strict:
-                    raise ValueError("Unallowed PCT %{}".format(pct[0]))
-                else:
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '2')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '5')
-                    ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, '%')
+                ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, '2')
+                ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, '5')
+                ret_idx += 1
 
-                    idx -= 1
-                    has_pct = 0
+                idx -= 1
+                has_pct = 0
 
             continue
 
@@ -131,15 +124,12 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
 
             # special case if "%" is last char
             if idx == len(val):
-                if strict:
-                    raise ValueError("Unallowed PCT %")
-                else:
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '2')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '5')
-                    ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, '%')
+                ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, '2')
+                ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, '5')
+                ret_idx += 1
 
             continue
 
@@ -157,7 +147,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs, bint strict):
             ret_idx +=1
             continue
 
-        ch_bytes = ch.encode("utf-8", errors= 'strict' if strict else 'ignore')
+        ch_bytes = ch.encode("utf-8", errors='ignore')
 
         for b in ch_bytes:
             PyUnicode_WriteChar(ret, ret_idx, '%')
@@ -203,9 +193,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
                 pass
             else:
                 if qs and unquoted in '+=&;':
-                    ret.append(_do_quote(unquoted, '', '', True, True))
+                    ret.append(_do_quote(unquoted, '', '', True))
                 elif unquoted in unsafe:
-                    ret.append(_do_quote(unquoted, '', '', False, True))
+                    ret.append(_do_quote(unquoted, '', '', False))
                 else:
                     ret.append(unquoted)
                 del pcts[:]
@@ -241,9 +231,9 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             ret.append(last_pct)  # %F8
         else:
             if qs and unquoted in '+=&;':
-                ret.append(_do_quote(unquoted, '', '', True, True))
+                ret.append(_do_quote(unquoted, '', '', True))
             elif unquoted in unsafe:
-                ret.append(_do_quote(unquoted, '', '', False, True))
+                ret.append(_do_quote(unquoted, '', '', False))
             else:
                 ret.append(unquoted)
     return ''.join(ret)

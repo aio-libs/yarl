@@ -26,4 +26,3 @@ def test_default_style_state():
     }))
     assert not u._cache
     assert u._val == 'test'
-    assert u._strict is False
