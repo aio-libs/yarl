@@ -72,6 +72,13 @@ def test_with_password_non_ascii():
     assert url2.password == 'пароль'
 
 
+def test_with_password_non_ascii_with_colon():
+    url = URL('http://john@example.com')
+    url2 = url.with_password('п:а')
+    assert url2.raw_password == '%D0%BF%3A%D0%B0'
+    assert url2.password == 'п:а'
+
+
 def test_with_password_for_relative_url():
     with pytest.raises(ValueError):
         URL('path/to').with_password('pass')
