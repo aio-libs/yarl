@@ -592,6 +592,8 @@ class URL:
         if password:
             if not user:
                 user = ''
+            user = _quote(user, safe=':', qs=True)
+            password = _quote(user, qs=True)
             user = user + ':' + password
         if user:
             ret = user + '@' + ret
