@@ -10,14 +10,14 @@ UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
+def _py_quote(val, *, safe='', protected='', qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
         raise TypeError("Argument should be str")
     if not val:
         return ''
-    val = val.encode('utf8', errors='strict' if strict else 'ignore')
+    val = val.encode('utf8', errors='ignore')
     ret = bytearray()
     pct = b''
     safe += ALLOWED
@@ -39,13 +39,10 @@ def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
                 try:
                     unquoted = chr(int(pct[1:].decode('ascii'), base=16))
                 except ValueError:
-                    if strict:
-                        raise ValueError("Unallowed PCT %{}".format(pct))
-                    else:
-                        ret.extend(b'%25')
-                        pct = b''
-                        idx -= 2
-                        continue
+                    ret.extend(b'%25')
+                    pct = b''
+                    idx -= 2
+                    continue
 
                 if unquoted in protected:
                     ret.extend(pct)
@@ -57,12 +54,9 @@ def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
 
             # special case, if we have only one char after "%"
             elif len(pct) == 2 and idx == len(val):
-                if strict:
-                    raise ValueError("Unallowed PCT %{}".format(pct))
-                else:
-                    ret.extend(b'%25')
-                    pct = b''
-                    idx -= 1
+                ret.extend(b'%25')
+                pct = b''
+                idx -= 1
 
             continue
 
@@ -72,10 +66,7 @@ def _py_quote(val, *, safe='', protected='', qs=False, strict=True):
 
             # special case if "%" is last char
             if idx == len(val):
-                if strict:
-                    raise ValueError("Unallowed PCT %")
-                else:
-                    ret.extend(b'%25')
+                ret.extend(b'%25')
 
             continue
 

@@ -10,7 +10,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.13.0'
+__version__ = '0.14.0'
 
 __all__ = ['URL']
 
@@ -134,13 +134,12 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ('_cache', '_val', '_strict')
+    __slots__ = ('_cache', '_val')
 
-    def __init__(self, val='', *, encoded=False, strict=False):
+    def __init__(self, val='', *, encoded=False):
         if isinstance(val, URL):
             self._val = val._val
             self._cache = val._cache
-            self._strict = val._strict
             return
         if isinstance(val, str):
             val = urlsplit(val)
@@ -149,8 +148,6 @@ class URL:
                 raise ValueError("Cannot apply decoding to SplitResult")
         else:
             raise TypeError("Constructor parameter should be str")
-
-        self._strict = strict
 
         if not encoded:
             if not val[1]:  # netloc
@@ -183,13 +180,13 @@ class URL:
                 if user:
                     netloc = user + '@' + netloc
 
-            path = _quote(val[2], safe='+@:', protected='/+', strict=strict)
+            path = _quote(val[2], safe='+@:', protected='/+')
             if netloc:
                 path = _normalize_path(path)
 
             query = _quote(val[3], safe='=+&?/:@',
-                           protected=PROTECT_CHARS, qs=True, strict=strict)
-            fragment = _quote(val[4], safe='?/:@', strict=strict)
+                           protected=PROTECT_CHARS, qs=True)
+            fragment = _quote(val[4], safe='?/:@')
             val = SplitResult(val[0], netloc, path, query, fragment)
 
         self._val = val
@@ -197,7 +194,7 @@ class URL:
 
     @classmethod
     def build(cls, *, scheme='', user='', password='', host='', port=None,
-              path='', query=None, query_string='', fragment='', strict=False):
+              path='', query=None, query_string='', fragment=''):
         """Creates and returns a new URL"""
 
         if host and not scheme:
@@ -223,7 +220,6 @@ class URL:
                 _quote(query_string),
                 fragment
             ),
-            strict=strict,
             encoded=True
         )
 
@@ -285,7 +281,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = _quote(name, safe=':@', protected='/', strict=self._strict)
+        name = _quote(name, safe=':@', protected='/')
         if name.startswith('/'):
             raise ValueError("Appending path "
                              "starting from slash is forbidden")
@@ -304,15 +300,14 @@ class URL:
                    encoded=True)
 
     def __getstate__(self):
-        return self._val, self._strict
+        return self._val,
 
     def __setstate__(self, state):
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
             self._val = state[1]['_val']
-            self._strict = state[1]['_strict']
         else:
-            self._val, self._strict = state
+            self._val, *unused = state
         self._cache = {}
 
     def is_absolute(self):
@@ -721,7 +716,7 @@ class URL:
     def with_path(self, path, *, encoded=False):
         """Return a new URL with path replaced."""
         if not encoded:
-            path = _quote(path, safe='@:', protected='/', strict=self._strict)
+            path = _quote(path, safe='@:', protected='/')
             if self.is_absolute():
                 path = _normalize_path(path)
         if len(path) > 0 and path[0] != '/':
@@ -744,7 +739,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(_quote, qs=True, strict=self._strict)
+            quoter = partial(_quote, qs=True)
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -760,12 +755,12 @@ class URL:
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
                            protected=PROTECT_CHARS,
-                           qs=True, strict=self._strict)
+                           qs=True)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(_quote, qs=True, strict=self._strict, safe='/?:@')
+            quoter = partial(_quote, qs=True, safe='/?:@')
             query = '&'.join(quoter(k) + '=' + quoter(v)
                              for k, v in query)
         else:
@@ -799,8 +794,7 @@ class URL:
                 lambda x: x.split('=', 1),
                 _quote(self._get_str_query(*args, **kwargs),
                        safe='/?:@', protected=PROTECT_CHARS,
-                       qs=True,
-                       strict=self._strict).lstrip("?").split("&")
+                       qs=True).lstrip("?").split("&")
             )
         )
         query = OrderedDict(self.query)
@@ -824,7 +818,7 @@ class URL:
             raise TypeError("Invalid fragment type")
         return URL(
             self._val._replace(
-                fragment=_quote(fragment, safe='?/:@', strict=self._strict)),
+                fragment=_quote(fragment, safe='?/:@')),
             encoded=True)
 
     def with_name(self, name):

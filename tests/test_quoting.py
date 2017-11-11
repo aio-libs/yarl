@@ -22,36 +22,16 @@ def hexescape(char):
     return "%" + hex_repr
 
 
-def test_quote_not_allowed(quote):
-    with pytest.raises(ValueError):
-        quote('%HH')
-
-
 def test_quote_not_allowed_non_strict(quote):
-    assert quote('%HH', strict=False) == '%25HH'
-
-
-def test_quote_unfinished(quote):
-    with pytest.raises(ValueError):
-        quote('%F%F')
-
-
-def test_quote_unfinished_tail_percent(quote):
-    with pytest.raises(ValueError):
-        quote('%')
+    assert quote('%HH') == '%25HH'
 
 
 def test_quote_unfinished_tail_percent_non_strict(quote):
-    assert quote('%', strict=False) == '%25'
-
-
-def test_quote_unfinished_tail(quote):
-    with pytest.raises(ValueError):
-        quote('%2')
+    assert quote('%') == '%25'
 
 
 def test_quote_unfinished_tail_non_strict(quote):
-    assert quote('%2', strict=False) == '%252'
+    assert quote('%2') == '%252'
 
 
 def test_quote_from_bytes(quote):
@@ -59,16 +39,9 @@ def test_quote_from_bytes(quote):
     assert quote('') == ''
 
 
-def test_quate_broken_unicode(quote):
-    with pytest.raises(UnicodeEncodeError):
-        quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
-              '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16')
-
-
 def test_quate_ignore_broken_unicode(quote):
     s = quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
-              '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16',
-              strict=False)
+              '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16')
 
     assert s == 'j%1Aq%2Fg%0Ch%18v%1Bcom%2Fypj%16'
 
@@ -271,14 +244,14 @@ def test_quote_unquoted(quote):
 
 
 def test_quote_space(quote):
-    assert quote(' ', strict=False) == '%20'  # NULL
+    assert quote(' ') == '%20'  # NULL
 
 
 # test to see if this would work to fix
 # coverage on this file.
 def test_quote_percent_last_character(quote):
     # % is last character in this case.
-    assert quote('%', strict=False) == '%25'
+    assert quote('%') == '%25'
 
 
 def test_unquote_unsafe(unquote):

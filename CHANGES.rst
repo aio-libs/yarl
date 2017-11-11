@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+0.14.0 (2017-11-11)
+-------------------
+
+* Drop strict mode (#123)
+
+* Fix `"ValueError: Unallowed PCT %"` when there's a `"%"` in the url (#124)
+
 0.13.0 (2017-10-01)
 -------------------
 
