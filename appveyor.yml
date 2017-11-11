@@ -13,8 +13,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
-  - "build.cmd %PYTHON%\\python.exe -m pip install wheel"
-  - "build.cmd %PYTHON%\\python.exe -m pip install twine"
+  - "build.cmd %PYTHON%\\python.exe -m pip install -U setuptools wheel twine codecov"
   - "build.cmd %PYTHON%\\python.exe -m pip install -r requirements/ci.txt"
 
 build: false
@@ -23,7 +22,7 @@ test_script:
   - "build.cmd %PYTHON%\\python.exe setup.py test"
 
 after_test:
-  - "build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
+  - "build.cmd %PYTHON%\\python.exe setup.py sdist bdist_wheel"
 
 artifacts:
   - path: dist\*
