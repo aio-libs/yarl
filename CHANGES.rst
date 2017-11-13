@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.14.1 (2017-11-13)
+-------------------
+
+* Restore `strict` parameter as no-op for sake of compatibility with
+  aiohttp 2.2
+
 0.14.0 (2017-11-11)
 -------------------
 

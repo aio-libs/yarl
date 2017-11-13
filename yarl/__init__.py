@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from functools import partial
@@ -10,7 +11,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.14.0'
+__version__ = '0.14.1'
 
 __all__ = ['URL']
 
@@ -136,7 +137,9 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ('_cache', '_val')
 
-    def __init__(self, val='', *, encoded=False):
+    def __init__(self, val='', *, encoded=False, strict=None):
+        if strict is not None:  # pragma: no cover
+            warnings.warn("strict parameter is ignored")
         if isinstance(val, URL):
             self._val = val._val
             self._cache = val._cache
