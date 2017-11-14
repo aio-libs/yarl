@@ -1,3 +1,4 @@
+import warnings
 from string import ascii_letters, ascii_lowercase, digits
 
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
@@ -10,7 +11,9 @@ UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-def _py_quote(val, *, safe='', protected='', qs=False):
+def _py_quote(val, *, safe='', protected='', qs=False, strict=None):
+    if strict is not None:  # pragma: no cover
+        warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if not isinstance(val, str):
@@ -83,7 +86,9 @@ def _py_quote(val, *, safe='', protected='', qs=False):
     return ret.decode('ascii')
 
 
-def _py_unquote(val, *, unsafe='', qs=False):
+def _py_unquote(val, *, unsafe='', qs=False, strict=None):
+    if strict is not None:  # pragma: no cover
+        warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if not isinstance(val, str):

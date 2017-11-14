@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.14.2 (2017-11-14)
+-------------------
+
+* Restore `strict` parameter as no-op in `quote`/`unquote`
+
 0.14.1 (2017-11-13)
 -------------------
 

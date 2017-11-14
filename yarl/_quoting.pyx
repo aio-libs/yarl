@@ -1,5 +1,7 @@
 # cython: language_level=3
 
+import warnings
+
 cdef extern from "Python.h":
     object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
@@ -35,7 +37,9 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-def _quote(val, *, str safe='', str protected='', bint qs=False):
+def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
+    if strict is not None:  # pragma: no cover
+        warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if not isinstance(val, str):
@@ -162,7 +166,9 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     return PyUnicode_Substring(ret, 0, ret_idx)
 
 
-def _unquote(val, *, unsafe='', qs=False):
+def _unquote(val, *, unsafe='', qs=False, strict=None):
+    if strict is not None:  # pragma: no cover
+        warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if not isinstance(val, str):
