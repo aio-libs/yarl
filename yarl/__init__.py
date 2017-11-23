@@ -13,7 +13,7 @@ from .quoting import quote, unquote
 
 __version__ = '0.15.0'
 
-__all__ = ['URL']
+__all__ = ('URL',)
 
 
 # is_leaf()
