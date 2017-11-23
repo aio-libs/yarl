@@ -235,6 +235,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://example.com/путь/сюда?ключ=знач').raw_path_qs
       '/%D0%BF%D1%83%D1%82%D1%8C/%D1%81%D1%8E%D0%B4%D0%B0?%D0%BA%D0%BB%D1%8E%D1%87=%D0%B7%D0%BD%D0%B0%D1%87'
 
+   .. versionadded:: 0.15
 
 .. attribute:: URL.raw_path
 
