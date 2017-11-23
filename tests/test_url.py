@@ -219,6 +219,17 @@ def test_path_qs():
     assert url.path_qs == '/path?б=в&ю=к'
 
 
+def test_raw_path_qs():
+    url = URL('http://example.com/')
+    assert url.raw_path_qs == '/'
+    url = URL('http://example.com/?б=в&ю=к')
+    assert url.raw_path_qs == '/?%D0%B1=%D0%B2&%D1%8E=%D0%BA'
+    url = URL('http://example.com/path?б=в&ю=к')
+    assert url.raw_path_qs == '/path?%D0%B1=%D0%B2&%D1%8E=%D0%BA'
+    url = URL('http://example.com/путь?a=1&b=2')
+    assert url.raw_path_qs == '/%D0%BF%D1%83%D1%82%D1%8C?a=1&b=2'
+
+
 def test_query_string_spaces():
     url = URL('http://example.com?a+b=c+d&e=f+g')
     assert url.query_string == 'a b=c d&e=f g'
