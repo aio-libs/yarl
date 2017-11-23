@@ -16,6 +16,7 @@ class URL:
     raw_query_string = ...  # type: str
     query_string = ...  # type: str
     path_qs = ...  # type: str
+    raw_path_qs = ...  # type: str
     raw_fragment = ...  # type: str
     fragment = ...  # type: str
     query = ...  # type: multidict.MultiDict
