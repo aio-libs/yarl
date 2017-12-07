@@ -745,7 +745,7 @@ class URL:
             raise ValueError("Either kwargs or single query parameter "
                              "must be present")
 
-        if query is None:
+        if not query:
             query = ''
         elif isinstance(query, Mapping):
             quoter = partial(_quote, qs=True)
