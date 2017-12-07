@@ -745,7 +745,7 @@ class URL:
             raise ValueError("Either kwargs or single query parameter "
                              "must be present")
 
-        if not query:
+        if query is None:
             query = ''
         elif isinstance(query, Mapping):
             quoter = partial(_quote, qs=True)
@@ -761,6 +761,9 @@ class URL:
                 lst.append(
                     quoter(k, safe='/?:@') + '=' + quoter(v, safe='/?:@'))
                 query = '&'.join(lst)
+
+            if not query:  # the mapping might have been empty
+                query = ''
         elif isinstance(query, str):
             query = _quote(query, safe='/?:@',
                            protected=PROTECT_CHARS,
