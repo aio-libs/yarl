@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.16.0 (2017-12-07)
+-------------------
+
+* Fix raising `TypeError` by `url.query_string()` after
+  `url.with_query({})` (empty mapping) #141
+
 0.15.0 (2017-11-23)
 -------------------
 

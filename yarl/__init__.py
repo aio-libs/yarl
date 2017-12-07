@@ -11,7 +11,7 @@ from multidict import MultiDict, MultiDictProxy
 
 from .quoting import quote, unquote
 
-__version__ = '0.15.0'
+__version__ = '0.16.0'
 
 __all__ = ('URL',)
 
