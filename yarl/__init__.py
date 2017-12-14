@@ -160,16 +160,16 @@ class URL:
                 if netloc is None:
                     raise ValueError(
                         "Invalid URL: host is required for abolute urls.")
-                try:
-                    netloc.encode('ascii')
-                except UnicodeEncodeError:
-                    netloc = netloc.encode('idna').decode('ascii')
                 else:
+                    (ip, *zone) = netloc.split('%', 1)
                     try:
-                        ip = ip_address(netloc)
+                        ip = ip_address(ip)
                     except ValueError:
-                        pass
+                        netloc = netloc.encode('idna').decode('ascii')
                     else:
+                        netloc = ip.compressed
+                        if zone:
+                            netloc += '%' + zone[0]
                         if ip.version == 6:
                             netloc = '[' + netloc + ']'
                 if val.port:
@@ -434,6 +434,11 @@ class URL:
         raw = self.raw_host
         if raw is None:
             return None
+        if '%' in raw:
+            # Hack for scoped IPv6 addresses like
+            # fe80::2%Проверка
+            # presence of '%' sign means only IPv6 address, so idna is useless.
+            return raw
         return raw.encode('ascii').decode('idna')
 
     @property

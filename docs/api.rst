@@ -160,7 +160,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Encoded *host* part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
 
-   Brackets are stripped for IPv6.
+   Brackets are stripped for IPv6. Host is converted to lowercase,
+   address is validated and converted to compressed form.
 
    .. doctest::
 
