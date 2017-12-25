@@ -137,6 +137,37 @@ def test_raw_host_from_str_with_ipv6():
     assert url.raw_host == '::1'
 
 
+def test_lowercase():
+    url = URL('http://gitHUB.com')
+    assert url.raw_host == 'github.com'
+    assert url.host == url.raw_host
+
+
+def test_lowercase_nonascii():
+    url = URL('http://Айдеко.Рф')
+    assert url.raw_host == 'xn--80aidohy.xn--p1ai'
+    assert url.host == 'айдеко.рф'
+
+
+def test_compressed_ipv6():
+    url = URL('http://[1DEC:0:0:0::1]')
+    assert url.raw_host == '1dec::1'
+    assert url.host == url.raw_host
+
+
+def test_ipv6_zone():
+    url = URL('http://[fe80::822a:a8ff:fe49:470c%тест%42]:123')
+    assert url.raw_host == 'fe80::822a:a8ff:fe49:470c%тест%42'
+    assert url.host == url.raw_host
+
+
+def test_ipv4_zone():
+    # I'm unsure if it is correct.
+    url = URL('http://1.2.3.4%тест%42:123')
+    assert url.raw_host == '1.2.3.4%тест%42'
+    assert url.host == url.raw_host
+
+
 def test_explicit_port():
     url = URL('http://example.com:8888')
     assert 8888 == url.port
