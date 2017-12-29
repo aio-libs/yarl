@@ -719,11 +719,15 @@ def test_from_non_allowed():
 def test_from_idna():
     url = URL('http://xn--jxagkqfkduily1i.eu')
     assert "http://xn--jxagkqfkduily1i.eu" == str(url)
+    url = URL('http://xn--einla-pqa.de/')  # needs idna 2008
+    assert "http://xn--einla-pqa.de/" == str(url)
 
 
 def test_to_idna():
     url = URL('http://εμπορικόσήμα.eu')
     assert "http://xn--jxagkqfkduily1i.eu" == str(url)
+    url = URL('http://einlaß.de/')
+    assert "http://xn--einla-pqa.de/" == str(url)
 
 
 def test_from_ascii_login():
