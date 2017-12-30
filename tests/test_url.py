@@ -122,6 +122,11 @@ def test_host_non_ascii():
     assert "историк.рф" == url.host
 
 
+def test_localhost():
+    url = URL('http://[::1]')
+    assert "::1" == url.host
+
+
 def test_raw_host_when_port_is_specified():
     url = URL('http://example.com:8888')
     assert "example.com" == url.raw_host
