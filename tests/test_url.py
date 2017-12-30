@@ -122,6 +122,11 @@ def test_host_non_ascii():
     assert "историк.рф" == url.host
 
 
+def test_localhost():
+    url = URL('http://[::1]')
+    assert "::1" == url.host
+
+
 def test_raw_host_when_port_is_specified():
     url = URL('http://example.com:8888')
     assert "example.com" == url.raw_host
@@ -719,11 +724,15 @@ def test_from_non_allowed():
 def test_from_idna():
     url = URL('http://xn--jxagkqfkduily1i.eu')
     assert "http://xn--jxagkqfkduily1i.eu" == str(url)
+    url = URL('http://xn--einla-pqa.de/')  # needs idna 2008
+    assert "http://xn--einla-pqa.de/" == str(url)
 
 
 def test_to_idna():
     url = URL('http://εμπορικόσήμα.eu')
     assert "http://xn--jxagkqfkduily1i.eu" == str(url)
+    url = URL('http://einlaß.de/')
+    assert "http://xn--einla-pqa.de/" == str(url)
 
 
 def test_from_ascii_login():

@@ -7,6 +7,7 @@ from urllib.parse import (SplitResult, parse_qsl,
                           urljoin, urlsplit, urlunsplit)
 
 from multidict import MultiDict, MultiDictProxy
+import idna
 
 
 from .quoting import quote, unquote
@@ -163,7 +164,7 @@ class URL:
                 try:
                     netloc.encode('ascii')
                 except UnicodeEncodeError:
-                    netloc = netloc.encode('idna').decode('ascii')
+                    netloc = idna.encode(netloc, uts46=True).decode('ascii')
                 else:
                     try:
                         ip = ip_address(netloc)
@@ -434,7 +435,10 @@ class URL:
         raw = self.raw_host
         if raw is None:
             return None
-        return raw.encode('ascii').decode('idna')
+        try:
+            return idna.decode(raw.encode('ascii'))
+        except idna.core.InvalidCodepoint:  # e.g. '::1'
+            return raw
 
     @property
     def port(self):
@@ -689,7 +693,7 @@ class URL:
         try:
             ip = ip_address(host)
         except ValueError:
-            host = host.encode('idna').decode('ascii')
+            host = idna.encode(host, uts46=True).decode('ascii')
         else:
             if ip.version == 6:
                 host = '[' + host + ']'
