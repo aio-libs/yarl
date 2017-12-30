@@ -56,7 +56,7 @@ with fname.open(encoding='utf8') as fp:
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
-install_requires = ['multidict>=2.0']
+install_requires = ['multidict>=2.0', 'idna>=2.0']
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 if needs_pytest:
