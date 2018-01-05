@@ -80,8 +80,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'yarl'
-copyright = '2016-2017, Andrew Svetlov'
-author = 'Andrew Svetlov'
+copyright = '2016-2018, Andrew Svetlov and aio-libs team'
+author = 'Andrew Svetlov and aio-libs team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
