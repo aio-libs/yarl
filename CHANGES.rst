@@ -1,11 +1,16 @@
 CHANGES
 =======
 
+0.17.0 (2017-12-30)
+-------------------
+
+* Use IDNA 2008 for domain name processing (#149)
+
 0.16.0 (2017-12-07)
 -------------------
 
 * Fix raising `TypeError` by `url.query_string()` after
-  `url.with_query({})` (empty mapping) #141
+  `url.with_query({})` (empty mapping) (#141)
 
 0.15.0 (2017-11-23)
 -------------------
