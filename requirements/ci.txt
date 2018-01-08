@@ -2,6 +2,6 @@
 wheel==0.30.0
 pytest-cov>=2.3.1
 pytest-flake8>=0.6
-sphinx==1.6.5
+sphinx==1.6.6
 idna==2.6
 -e .
