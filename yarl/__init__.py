@@ -12,7 +12,7 @@ import idna
 
 from .quoting import quote, unquote
 
-__version__ = '0.17.0'
+__version__ = '0.18.0'
 
 __all__ = ('URL',)
 
@@ -157,36 +157,18 @@ class URL:
             if not val[1]:  # netloc
                 netloc = ''
             else:
-                netloc = val.hostname
-                if netloc is None:
+                host = val.hostname
+                if host is None:
                     raise ValueError(
                         "Invalid URL: host is required for abolute urls.")
-                try:
-                    netloc.encode('ascii')
-                except UnicodeEncodeError:
-                    netloc = idna.encode(netloc, uts46=True).decode('ascii')
-                else:
-                    try:
-                        ip = ip_address(netloc)
-                    except ValueError:
-                        pass
-                    else:
-                        if ip.version == 6:
-                            netloc = '[' + netloc + ']'
-                if val.port:
-                    netloc += ':{}'.format(val.port)
-                if val.username:
-                    user = _quote(val.username)
-                else:
-                    user = ''
-                if val.password:
-                    user += ':' + _quote(val.password)
-                if user:
-                    netloc = user + '@' + netloc
-
+                netloc = self._make_netloc(val.username,
+                                           val.password,
+                                           host,
+                                           val.port,
+                                           encode=True)
             path = _quote(val[2], safe='+@:', protected='/+')
             if netloc:
-                path = _normalize_path(path)
+                path = self._normalize_path(path)
 
             query = _quote(val[3], safe='=+&?/:@',
                            protected=PROTECT_CHARS, qs=True)
@@ -211,10 +193,10 @@ class URL:
             raise ValueError(
                 "Only one of \"query\" or \"query_string\" should be passed")
 
-        netloc = cls._make_netloc(user, password, host, port)
+        netloc = cls._make_netloc(user, password, host, port, encode=True)
         path = _quote(path, safe='@:', protected='/')
         if netloc:
-            path = _normalize_path(path)
+            path = cls._normalize_path(path)
 
         url = cls(
             SplitResult(
@@ -299,7 +281,7 @@ class URL:
             parts.append(name)
             new_path = '/'.join(parts)
         if self.is_absolute():
-            new_path = _normalize_path(new_path)
+            new_path = self._normalize_path(new_path)
         return URL(self._val._replace(path=new_path, query='', fragment=''),
                    encoded=True)
 
@@ -350,7 +332,8 @@ class URL:
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
         v = self._val
-        netloc = self._make_netloc(None, None, v.hostname, v.port)
+        netloc = self._make_netloc(None, None, v.hostname, v.port,
+                                   encode=False)
         val = v._replace(netloc=netloc, path='', query='', fragment='')
         return URL(val, encoded=True)
 
@@ -437,8 +420,8 @@ class URL:
             return None
         try:
             return idna.decode(raw.encode('ascii'))
-        except idna.core.InvalidCodepoint:  # e.g. '::1'
-            return raw
+        except UnicodeError:  # e.g. '::1'
+            return raw.encode('ascii').decode('idna')
 
     @property
     def port(self):
@@ -598,14 +581,68 @@ class URL:
         return _unquote(self.raw_name)
 
     @classmethod
-    def _make_netloc(cls, user, password, host, port):
-        ret = host
+    def _normalize_path(cls, path):
+        # Drop '.' and '..' from path
+
+        segments = path.split('/')
+        resolved_path = []
+
+        for seg in segments:
+            if seg == '..':
+                try:
+                    resolved_path.pop()
+                except IndexError:
+                    # ignore any .. segments that would otherwise cause an
+                    # IndexError when popped from resolved_path if
+                    # resolving for rfc3986
+                    pass
+            elif seg == '.':
+                continue
+            else:
+                resolved_path.append(seg)
+
+        if segments[-1] in ('.', '..'):
+            # do some post-processing here.
+            # if the last segment was a relative dir,
+            # then we need to append the trailing '/'
+            resolved_path.append('')
+
+        return '/'.join(resolved_path)
+
+    @classmethod
+    def _encode_host(cls, host):
+        try:
+            host = idna.encode(host, uts46=True).decode('ascii')
+        except UnicodeError:
+            host = host.encode('idna').decode('ascii')
+        try:
+            ip = ip_address(host)
+        except ValueError:
+            pass
+        else:
+            if ip.version == 6:
+                host = '[' + host + ']'
+        return host
+
+    @classmethod
+    def _make_netloc(cls, user, password, host, port, encode):
+        if encode:
+            ret = cls._encode_host(host)
+        else:
+            ret = host
         if port:
             ret = ret + ':' + str(port)
         if password:
             if not user:
                 user = ''
+            else:
+                if encode:
+                    user = _quote(user)
+            if encode:
+                password = _quote(password)
             user = user + ':' + password
+        elif user and encode:
+            user = _quote(user)
         if user:
             ret = user + '@' + ret
         return ret
@@ -643,7 +680,8 @@ class URL:
         return URL(self._val._replace(netloc=self._make_netloc(user,
                                                                password,
                                                                val.hostname,
-                                                               val.port)),
+                                                               val.port,
+                                                               encode=False)),
                    encoded=True)
 
     def with_password(self, password):
@@ -670,7 +708,8 @@ class URL:
                 netloc=self._make_netloc(val.username,
                                          password,
                                          val.hostname,
-                                         val.port)),
+                                         val.port,
+                                         encode=False)),
             encoded=True)
 
     def with_host(self, host):
@@ -690,19 +729,14 @@ class URL:
                              "for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        try:
-            ip = ip_address(host)
-        except ValueError:
-            host = idna.encode(host, uts46=True).decode('ascii')
-        else:
-            if ip.version == 6:
-                host = '[' + host + ']'
+        host = self._encode_host(host)
         val = self._val
         return URL(
             self._val._replace(netloc=self._make_netloc(val.username,
                                                         val.password,
                                                         host,
-                                                        val.port)),
+                                                        val.port,
+                                                        encode=False)),
             encoded=True)
 
     def with_port(self, port):
@@ -723,7 +757,8 @@ class URL:
             self._val._replace(netloc=self._make_netloc(val.username,
                                                         val.password,
                                                         val.hostname,
-                                                        port)),
+                                                        port,
+                                                        encode=False)),
             encoded=True)
 
     def with_path(self, path, *, encoded=False):
@@ -731,7 +766,7 @@ class URL:
         if not encoded:
             path = _quote(path, safe='@:', protected='/')
             if self.is_absolute():
-                path = _normalize_path(path)
+                path = self._normalize_path(path)
         if len(path) > 0 and path[0] != '/':
             path = '/' + path
         return URL(self._val._replace(path=path, query='', fragment=''),
@@ -889,35 +924,8 @@ class URL:
                                       self._make_netloc(self.user,
                                                         self.password,
                                                         self.host,
-                                                        self._val.port),
+                                                        self._val.port,
+                                                        encode=False),
                                       self.path,
                                       self.query_string,
                                       self.fragment))
-
-
-def _normalize_path(path):
-    # Drop '.' and '..' from path
-
-    segments = path.split('/')
-    resolved_path = []
-
-    for seg in segments:
-        if seg == '..':
-            try:
-                resolved_path.pop()
-            except IndexError:
-                # ignore any .. segments that would otherwise cause an
-                # IndexError when popped from resolved_path if
-                # resolving for rfc3986
-                pass
-        elif seg == '.':
-            continue
-        else:
-            resolved_path.append(seg)
-
-    if segments[-1] in ('.', '..'):
-        # do some post-processing here. if the last segment was a relative dir,
-        # then we need to append the trailing '/'
-        resolved_path.append('')
-
-    return '/'.join(resolved_path)

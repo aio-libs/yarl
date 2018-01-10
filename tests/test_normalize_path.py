@@ -1,4 +1,6 @@
-from yarl import _normalize_path as np
+from yarl import URL
+
+np = URL._normalize_path
 
 
 def test_no_dots():

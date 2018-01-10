@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+0.18.0 (2018-01-10)
+-------------------
+
+* Fallback to IDNA 2003 if domain name is not IDNA 2008 compatible (#152)
+
 0.17.0 (2017-12-30)
 -------------------
 
