@@ -127,6 +127,11 @@ def test_localhost():
     assert "::1" == url.host
 
 
+def test_host_with_underscore():
+    url = URL('http://abc_def.com')
+    assert "abc_def.com" == url.host
+
+
 def test_raw_host_when_port_is_specified():
     url = URL('http://example.com:8888')
     assert "example.com" == url.raw_host
