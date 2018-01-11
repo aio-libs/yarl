@@ -65,9 +65,7 @@ def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
 
 cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef uint8_t b
-    cdef Py_UCS4 ch, unquoted
-    cdef str tmp
-    cdef Py_ssize_t i
+    cdef Py_UCS4 ch
     cdef Py_ssize_t val_len = len(val)
     if val_len == 0:
         return val
