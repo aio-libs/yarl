@@ -1,7 +1,5 @@
 # cython: language_level=3
 
-import warnings
-
 cdef extern from "Python.h":
     str PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     Py_ssize_t PyUnicode_CopyCharacters(object to, Py_ssize_t to_start,
@@ -81,8 +79,6 @@ cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[]):
 
 
 def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
-    if strict is not None:  # pragma: no cover
-        warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if type(val) is not str:
@@ -278,9 +274,24 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         return PyUnicode_Substring(ret, 0, ret_idx)
 
 
+cdef class _Quoter:
+    cdef str _safe
+    cdef str _protected
+    cdef bint _qs
+
+    def __init__(self, *, safe='', protected='', qs=False):
+        self._safe = safe
+        self._protected = protected
+        self._qs = qs
+
+    def __call__(self, val):
+        return _quote(val,
+                      safe=self._safe,
+                      protected=self._protected,
+                      qs=self._qs)
+
+
 def _unquote(val, *, unsafe='', qs=False, strict=None):
-    if strict is not None:  # pragma: no cover
-        warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if type(val) is not str:
@@ -359,3 +370,15 @@ cdef str _do_unquote(str val, str unsafe='', bint qs=False):
             else:
                 ret.append(unquoted)
     return ''.join(ret)
+
+
+cdef class _Unquoter:
+    cdef str _unsafe
+    cdef bint _qs
+
+    def __init__(self, *, unsafe='', qs=False):
+        self._unsafe = unsafe
+        self._qs = qs
+
+    def __call__(self, val):
+        return _unquote(val, unsafe=self._unsafe, qs=self._qs)

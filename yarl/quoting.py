@@ -11,9 +11,7 @@ UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-def _py_quote(val, *, safe='', protected='', qs=False, strict=None):
-    if strict is not None:  # pragma: no cover
-        warnings.warn("strict parameter is ignored")
+def _py_quote(val, *, safe='', protected='', qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -86,9 +84,20 @@ def _py_quote(val, *, safe='', protected='', qs=False, strict=None):
     return ret.decode('ascii')
 
 
-def _py_unquote(val, *, unsafe='', qs=False, strict=None):
-    if strict is not None:  # pragma: no cover
-        warnings.warn("strict parameter is ignored")
+class _PyQuoter:
+    def __init__(self, *, safe='', protected='', qs=False):
+        self._safe = safe
+        self._protected = protected
+        self._qs = qs
+
+    def __call__(self, val):
+        return _py_quote(val,
+                         safe=self._safe,
+                         protected=self._protected,
+                         qs=self._qs)
+
+
+def _py_unquote(val, *, unsafe='', qs=False):
     if val is None:
         return None
     if not isinstance(val, str):
@@ -160,10 +169,33 @@ def _py_unquote(val, *, unsafe='', qs=False, strict=None):
     return ''.join(ret)
 
 
+class _PyUnquoter:
+    def __init__(self, *, unsafe='', qs=False):
+        self._unsafe = unsafe
+        self._qs = qs
+
+    def __call__(self, val):
+        return _py_unquote(val, unsafe=self._unsafe, qs=self._qs)
+
+
 try:
-    from ._quoting import _quote, _unquote
+    from ._quoting import _quote, _unquote, _Quoter, _Unquoter
     quote = _quote
     unquote = _unquote
 except ImportError:  # pragma: no cover
     quote = _py_quote
     unquote = _py_unquote
+    _Quoter = _PyQuoter
+    _Unquoter = _PyUnquoter
+
+
+def quote(val, *, safe='', protected='', qs=False, strict=None):
+    if strict is not None:  # pragma: no cover
+        warnings.warn("strict parameter is ignored")
+    return _Quoter(safe=safe, protected=protected, qs=qs)(val)
+
+
+def unquote(val, *, unsafe='', qs=False, strict=None):
+    if strict is not None:  # pragma: no cover
+        warnings.warn("strict parameter is ignored")
+    return _Unquoter(unsafe=unsafe, qs=qs)(val)
