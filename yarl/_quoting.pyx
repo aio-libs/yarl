@@ -4,6 +4,7 @@ import warnings
 
 cdef extern from "Python.h":
     object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
+    Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index)
     void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
     object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
@@ -56,8 +57,8 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_ssize_t i
     # UTF8 may take up to 4 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
-    cdef Py_ssize_t ret_size = len(val)*3*4 + 1
-    cdef object ret = PyUnicode_New(ret_size, 1114111)
+    cdef Py_ssize_t val_len = len(val)
+    cdef object ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
     cdef Py_UCS4 pct[2]
@@ -67,8 +68,8 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         safe += '+&=;'
     safe += protected
     cdef int idx = 0
-    while idx < len(val):
-        ch = val[idx]
+    while idx < val_len:
+        ch = PyUnicode_ReadChar(val, idx)
         idx += 1
 
         if has_pct:
@@ -110,7 +111,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                     ret_idx += 1
 
             # special case, if we have only one char after "%"
-            elif has_pct == 2 and idx == len(val):
+            elif has_pct == 2 and idx == val_len:
                 PyUnicode_WriteChar(ret, ret_idx, '%')
                 ret_idx += 1
                 PyUnicode_WriteChar(ret, ret_idx, '2')
@@ -127,7 +128,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
             has_pct = 1
 
             # special case if "%" is last char
-            if idx == len(val):
+            if idx == val_len:
                 PyUnicode_WriteChar(ret, ret_idx, '%')
                 ret_idx += 1
                 PyUnicode_WriteChar(ret, ret_idx, '2')
