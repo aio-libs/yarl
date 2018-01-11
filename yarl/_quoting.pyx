@@ -13,7 +13,7 @@ cdef extern from "Python.h":
     str PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
 from libc.stdint cimport uint8_t, uint64_t
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memset
 
 from string import ascii_letters, digits
 
@@ -123,6 +123,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_UCS4 pct2[2]
     cdef int digit1, digit2
     cdef int safe_table[128]
+    cdef int protected_table[128]
     if not qs:
         memcpy(safe_table, ALLOWED_NOTQS_TABLE, sizeof(safe_table))
     else:
@@ -131,10 +132,14 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         if ord(ch) > 127:
             raise ValueError("Only safe symbols with ORD < 128 are allowed")
         safe_table[ch] = 1
+
+    memset(protected_table, 0, sizeof(protected_table))
     for ch in protected:
         if ord(ch) > 127:
             raise ValueError("Only safe symbols with ORD < 128 are allowed")
         safe_table[ch] = 1
+        protected_table[ch] = 1
+
     cdef int idx = 0
     while idx < val_len:
         ch = PyUnicode_ReadChar(val, idx)
@@ -162,37 +167,41 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 ch = <Py_UCS4>(digit1 << 4 | digit2)
                 has_pct = 0
 
-                if ch in protected:
-                    if ret is None:
-                        ret = _make_str(val, val_len, idx)
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx,
-                                        _to_hex(<uint8_t>ch >> 4))
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx,
-                                        _to_hex(<uint8_t>ch & 0x0f))
-                    ret_idx += 1
-                elif ch < 128 and safe_table[ch]:
-                    if ret is None:
-                        ret = _make_str(val, val_len, idx)
-                    PyUnicode_WriteChar(ret, ret_idx, ch)
-                    ret_idx += 1
-                else:
-                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
-                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
-                    if ret is None:
-                        if pct[0] == pct2[0] and pct[1] == pct2[1]:
-                            # fast path
-                            continue
-                        else:
+                if ch < 128:
+                    if protected_table[ch]:
+                        if ret is None:
                             ret = _make_str(val, val_len, idx)
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, pct2[0])
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, pct2[1])
-                    ret_idx += 1
+                        PyUnicode_WriteChar(ret, ret_idx, '%')
+                        ret_idx += 1
+                        PyUnicode_WriteChar(ret, ret_idx,
+                                            _to_hex(<uint8_t>ch >> 4))
+                        ret_idx += 1
+                        PyUnicode_WriteChar(ret, ret_idx,
+                                            _to_hex(<uint8_t>ch & 0x0f))
+                        ret_idx += 1
+                        continue
+
+                    if safe_table[ch]:
+                        if ret is None:
+                            ret = _make_str(val, val_len, idx)
+                        PyUnicode_WriteChar(ret, ret_idx, ch)
+                        ret_idx += 1
+                        continue
+
+                pct2[0] = _to_hex(<uint8_t>ch >> 4)
+                pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
+                if ret is None:
+                    if pct[0] == pct2[0] and pct[1] == pct2[1]:
+                        # fast path
+                        continue
+                    else:
+                        ret = _make_str(val, val_len, idx)
+                PyUnicode_WriteChar(ret, ret_idx, '%')
+                ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, pct2[0])
+                ret_idx += 1
+                PyUnicode_WriteChar(ret, ret_idx, pct2[1])
+                ret_idx += 1
 
             # special case, if we have only one char after "%"
             elif has_pct == 2 and idx == val_len:
