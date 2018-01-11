@@ -43,10 +43,8 @@ def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
         warnings.warn("strict parameter is ignored")
     if val is None:
         return None
-    if not isinstance(val, str):
+    if type(val) is not str:
         raise TypeError("Argument should be str")
-    if not val:
-        return ''
     return _do_quote(<str>val, safe, protected, qs)
 
 
@@ -55,9 +53,11 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_UCS4 ch, unquoted
     cdef str tmp
     cdef Py_ssize_t i
+    cdef Py_ssize_t val_len = len(val)
+    if val_len == 0:
+        return val
     # UTF8 may take up to 4 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
-    cdef Py_ssize_t val_len = len(val)
     cdef object ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
@@ -176,14 +176,14 @@ def _unquote(val, *, unsafe='', qs=False, strict=None):
         warnings.warn("strict parameter is ignored")
     if val is None:
         return None
-    if not isinstance(val, str):
+    if type(val) is not str:
         raise TypeError("Argument should be str")
-    if not val:
-        return ''
     return _do_unquote(<str>val, unsafe, qs)
 
 
 cdef str _do_unquote(str val, str unsafe='', bint qs=False):
+    if len(val) == 0:
+        return val
     cdef str pct = ''
     cdef str last_pct = ''
     cdef bytearray pcts = bytearray()
