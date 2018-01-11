@@ -6,6 +6,10 @@ CHANGES
 
 * Use fast path if quoted string does not need requoting (#154)
 
+* Speed up quoting/unquoting by `_Quoter` and `_Unquoter` classes (#155)
+
+* Drop `yarl.quote` and `yarl.unquote` public functions (#155)
+
 0.18.0 (2018-01-10)
 -------------------
 
