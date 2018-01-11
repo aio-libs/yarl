@@ -42,6 +42,16 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
+cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+    cdef int digit1 = _from_hex(d1)
+    if digit1 < 0:
+        return <Py_UCS4>-1
+    cdef int digit2 = _from_hex(d2)
+    if digit2 < 0:
+        return <Py_UCS4>-1
+    return <Py_UCS4>(digit1 << 4 | digit2)
+
+
 cdef inline str _make_str(str val, Py_ssize_t val_len, int idx):
     # UTF8 may take up to 4 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
@@ -159,7 +169,6 @@ cdef class _Quoter:
         cdef int has_pct = 0
         cdef Py_UCS4 pct[2]
         cdef Py_UCS4 pct2[2]
-        cdef int digit1, digit2
         cdef int idx = 0
 
         while idx < val_len:
@@ -170,9 +179,8 @@ cdef class _Quoter:
                 pct[has_pct-1] = ch
                 has_pct += 1
                 if has_pct == 3:
-                    digit1 = _from_hex(pct[0])
-                    digit2 = _from_hex(pct[1])
-                    if digit1 == -1 or digit2 == -1:
+                    ch = _restore_ch(pct[0], pct[1])
+                    if ch == <Py_UCS4>-1:
                         if ret is None:
                             ret = _make_str(val, val_len, idx)
                         PyUnicode_WriteChar(ret, ret_idx, '%')
@@ -185,7 +193,6 @@ cdef class _Quoter:
                         has_pct = 0
                         continue
 
-                    ch = <Py_UCS4>(digit1 << 4 | digit2)
                     has_pct = 0
 
                     if ch < 128:
