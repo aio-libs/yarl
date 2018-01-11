@@ -166,11 +166,11 @@ class URL:
                                            host,
                                            val.port,
                                            encode=True)
-            path = _quote(val[2], safe='+@:', protected='/+')
+            path = _quote(val[2], safe='@:', protected='/+')
             if netloc:
                 path = self._normalize_path(path)
 
-            query = _quote(val[3], safe='=+&?/:@',
+            query = _quote(val[3], safe='?/:@',
                            protected=PROTECT_CHARS, qs=True)
             fragment = _quote(val[4], safe='?/:@')
             val = SplitResult(val[0], netloc, path, query, fragment)
