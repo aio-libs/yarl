@@ -39,11 +39,12 @@ def test_quote_from_bytes(quote):
     assert quote('') == ''
 
 
-def test_quate_ignore_broken_unicode(quote):
+def test_quote_ignore_broken_unicode(quote):
     s = quote('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
               '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16')
 
     assert s == 'j%1Aq%2Fg%0Ch%18v%1Bcom%2Fypj%16'
+    assert quote(s) == s
 
 
 def test_unquote_to_bytes(unquote):
@@ -326,3 +327,15 @@ def test_qoute_qs_with_colon(quote):
 def test_quote_protected(quote):
     s = quote('/path%2fto/three', protected='/')
     assert s == '/path%2Fto/three'
+
+
+def test_quote_fastpath_safe():
+    s1 = '/path/to'
+    s2 = _quote(s1, safe='/')
+    assert s1 is s2
+
+
+def test_quote_fastpath_pct():
+    s1 = 'abc%A0'
+    s2 = _quote(s1)
+    assert s1 is s2
