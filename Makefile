@@ -3,8 +3,13 @@ MD = $(shell python -c "import multidict; print(multidict.__path__[0])")
 all: test
 
 
-.develop: requirements/dev.txt
-	pip install -U -r requirements/dev.txt
+.install-deps: $(shell find requirements -type f)
+	@pip install -U -r requirements/dev.txt
+	@touch .install-deps
+
+
+.develop: .install-deps $(shell find yarl -type f)
+	@pip install -e .
 	@touch .develop
 
 
