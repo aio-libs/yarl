@@ -20,7 +20,7 @@ cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-cdef inline Py_UCS4 _hex(uint8_t v):
+cdef inline Py_UCS4 _to_hex(uint8_t v):
     if v < 10:
         return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
     else:
@@ -95,9 +95,11 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 if ch in protected:
                     PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch >> 4))
+                    PyUnicode_WriteChar(ret, ret_idx,
+                                        _to_hex(<uint8_t>ch >> 4))
                     ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch & 0x0f))
+                    PyUnicode_WriteChar(ret, ret_idx,
+                                        _to_hex(<uint8_t>ch & 0x0f))
                     ret_idx += 1
                 elif ch in safe:
                     PyUnicode_WriteChar(ret, ret_idx, ch)
@@ -105,9 +107,11 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 else:
                     PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch >> 4))
+                    PyUnicode_WriteChar(ret, ret_idx,
+                                        _to_hex(<uint8_t>ch >> 4))
                     ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, _hex(<uint8_t>ch & 0x0f))
+                    PyUnicode_WriteChar(ret, ret_idx,
+                                        _to_hex(<uint8_t>ch & 0x0f))
                     ret_idx += 1
 
             # special case, if we have only one char after "%"
@@ -157,10 +161,10 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         for b in ch_bytes:
             PyUnicode_WriteChar(ret, ret_idx, '%')
             ret_idx += 1
-            ch = _hex(<uint8_t>b >> 4)
+            ch = _to_hex(<uint8_t>b >> 4)
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
-            ch = _hex(<uint8_t>b & 0x0f)
+            ch = _to_hex(<uint8_t>b & 0x0f)
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
 
