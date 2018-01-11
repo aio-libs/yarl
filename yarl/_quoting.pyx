@@ -144,9 +144,9 @@ cdef class _Quoter:
                 val = str(val)
             else:
                 raise TypeError("Argument should be str")
-        return self._do_quote(<str>val, self._safe, self._protected, self._qs)
+        return self._do_quote(<str>val)
 
-    cdef str _do_quote(self, str val, str safe, str protected, bint qs):
+    cdef str _do_quote(self, str val):
         cdef Py_UCS4 ch
         cdef uint8_t[4] buf
         cdef uint8_t b
