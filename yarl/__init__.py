@@ -797,7 +797,7 @@ class URL:
         if query is None:
             query = ''
         elif isinstance(query, Mapping):
-            quoter = partial(_quote, qs=True)
+            quoter = self._QUERY_PART_QUOTER
             lst = []
             for k, v in query.items():
                 if isinstance(v, str):
@@ -808,7 +808,7 @@ class URL:
                     raise TypeError("Invalid variable type: mapping value "
                                     "should be str or int, got {!r}".format(v))
                 lst.append(
-                    quoter(k, safe='/?:@') + '=' + quoter(v, safe='/?:@'))
+                    quoter(k) + '=' + quoter(v))
             query = '&'.join(lst)
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
