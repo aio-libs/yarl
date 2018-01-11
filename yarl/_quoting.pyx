@@ -112,8 +112,6 @@ for i in range(128):
 
 
 cdef class _Quoter:
-    cdef str _safe
-    cdef str _protected
     cdef bint _qs
 
     cdef uint8_t _safe_table[16]
@@ -122,7 +120,6 @@ cdef class _Quoter:
     def __init__(self, *, str safe='', str protected='', bint qs=False):
         cdef Py_UCS4 ch
 
-        self._protected = protected
         self._qs = qs
 
         if not self._qs:
