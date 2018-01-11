@@ -129,7 +129,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                     pct2[0] = _to_hex(<uint8_t>ch >> 4)
                     pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
                     if ret is None:
-                        if digit1 == pct[0] and digit2 == pct[1]:
+                        if pct[0] == pct2[0] and pct[1] == pct2[1]:
                             # fast path
                             continue
                         else:
