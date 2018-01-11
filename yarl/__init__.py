@@ -28,8 +28,6 @@ DEFAULT_PORTS = {
     'wss': 443,
 }
 
-PROTECT_CHARS = '=+&;'
-
 sentinel = object()
 
 _quote = quote
@@ -141,7 +139,7 @@ class URL:
 
     _QUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe='@:', protected='/+')
-    _QUERY_QUOTER = _Quoter(safe='?/:@', protected=PROTECT_CHARS, qs=True)
+    _QUERY_QUOTER = _Quoter(safe='?/:@', protected='=+&;', qs=True)
     _QUERY_PART_QUOTER = _Quoter(safe='?/:@', qs=True)
     _FRAGMENT_QUOTER = _Quoter(safe='?/:@')
 
