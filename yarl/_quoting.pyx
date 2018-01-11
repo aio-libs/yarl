@@ -53,7 +53,7 @@ cdef inline str _make_str(str val, Py_ssize_t val_len, int idx):
     return ret
 
 
-cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[4]):
+cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[]):
     if ch < 0x80:
         buf[0] = <uint8_t>ch
         return 1
@@ -94,18 +94,27 @@ def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
     return _do_quote(<str>val, safe, protected, qs)
 
 
-cdef int ALLOWED_TABLE[128]
-cdef int ALLOWED_NOTQS_TABLE[128]
+cdef uint8_t ALLOWED_TABLE[16]
+cdef uint8_t ALLOWED_NOTQS_TABLE[16]
+
+
+cdef inline bint bit_at(uint8_t array[], uint64_t ch):
+    return array[ch >> 3] & (1 << (ch & 7))
+
+
+cdef inline void set_bit(uint8_t array[], uint64_t ch):
+    array[ch >> 3] |= (1 << (ch & 7))
+
+
+memset(ALLOWED_TABLE, 0, sizeof(ALLOWED_TABLE))
+memset(ALLOWED_NOTQS_TABLE, 0, sizeof(ALLOWED_NOTQS_TABLE))
 
 for i in range(128):
     if chr(i) in ALLOWED:
-        ALLOWED_TABLE[i] = 1
-        ALLOWED_NOTQS_TABLE[i] = 1
-    else:
-        ALLOWED_TABLE[i] = 0
-        ALLOWED_NOTQS_TABLE[i] = 0
+        set_bit(ALLOWED_TABLE, i)
+        set_bit(ALLOWED_NOTQS_TABLE, i)
     if chr(i) in QS:
-        ALLOWED_NOTQS_TABLE[i] = 1
+        set_bit(ALLOWED_NOTQS_TABLE, i)
 
 
 cdef str _do_quote(str val, str safe, str protected, bint qs):
@@ -122,8 +131,8 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_UCS4 pct[2]
     cdef Py_UCS4 pct2[2]
     cdef int digit1, digit2
-    cdef int safe_table[128]
-    cdef int protected_table[128]
+    cdef uint8_t safe_table[16]
+    cdef uint8_t protected_table[16]
     if not qs:
         memcpy(safe_table, ALLOWED_NOTQS_TABLE, sizeof(safe_table))
     else:
@@ -131,14 +140,14 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     for ch in safe:
         if ord(ch) > 127:
             raise ValueError("Only safe symbols with ORD < 128 are allowed")
-        safe_table[ch] = 1
+        set_bit(safe_table, ch)
 
     memset(protected_table, 0, sizeof(protected_table))
     for ch in protected:
         if ord(ch) > 127:
             raise ValueError("Only safe symbols with ORD < 128 are allowed")
-        safe_table[ch] = 1
-        protected_table[ch] = 1
+        set_bit(safe_table, ch)
+        set_bit(protected_table, ch)
 
     cdef int idx = 0
     while idx < val_len:
@@ -168,7 +177,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 has_pct = 0
 
                 if ch < 128:
-                    if protected_table[ch]:
+                    if bit_at(protected_table, ch):
                         if ret is None:
                             ret = _make_str(val, val_len, idx)
                         PyUnicode_WriteChar(ret, ret_idx, '%')
@@ -181,7 +190,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                         ret_idx += 1
                         continue
 
-                    if safe_table[ch]:
+                    if bit_at(safe_table, ch):
                         if ret is None:
                             ret = _make_str(val, val_len, idx)
                         PyUnicode_WriteChar(ret, ret_idx, ch)
@@ -243,7 +252,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 PyUnicode_WriteChar(ret, ret_idx, '+')
                 ret_idx += 1
                 continue
-        if ch < 128 and safe_table[ch]:
+        if ch < 128 and bit_at(safe_table, ch):
             if ret is not None:
                 PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
