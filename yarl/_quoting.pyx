@@ -76,6 +76,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
     cdef Py_UCS4 pct[2]
+    cdef Py_UCS4 pct2[2]
     cdef int digit1, digit2
     safe += ALLOWED
     if not qs:
@@ -125,15 +126,19 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                     PyUnicode_WriteChar(ret, ret_idx, ch)
                     ret_idx += 1
                 else:
+                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
+                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
                     if ret is None:
-                        ret = _make_str(val, val_len, idx)
+                        if digit1 == pct[0] and digit2 == pct[1]:
+                            # fast path
+                            continue
+                        else:
+                            ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx,
-                                        _to_hex(<uint8_t>ch >> 4))
+                    PyUnicode_WriteChar(ret, ret_idx, pct2[0])
                     ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx,
-                                        _to_hex(<uint8_t>ch & 0x0f))
+                    PyUnicode_WriteChar(ret, ret_idx, pct2[1])
                     ret_idx += 1
 
             # special case, if we have only one char after "%"
