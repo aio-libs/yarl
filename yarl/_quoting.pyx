@@ -13,6 +13,7 @@ cdef extern from "Python.h":
     str PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
 from libc.stdint cimport uint8_t, uint64_t
+from libc.string cimport memcpy
 
 from string import ascii_letters, digits
 
@@ -22,6 +23,7 @@ cdef str SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+?=;'
 cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
 cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
+cdef str QS = '+&=;'
 
 
 cdef inline Py_UCS4 _to_hex(uint8_t v):
@@ -92,6 +94,20 @@ def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
     return _do_quote(<str>val, safe, protected, qs)
 
 
+cdef int ALLOWED_TABLE[128]
+cdef int ALLOWED_NOTQS_TABLE[128]
+
+for i in range(128):
+    if chr(i) in ALLOWED:
+        ALLOWED_TABLE[i] = 1
+        ALLOWED_NOTQS_TABLE[i] = 1
+    else:
+        ALLOWED_TABLE[i] = 0
+        ALLOWED_NOTQS_TABLE[i] = 0
+    if chr(i) in QS:
+        ALLOWED_NOTQS_TABLE[i] = 1
+
+
 cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_UCS4 ch
     cdef uint8_t[4] buf
@@ -106,10 +122,19 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
     cdef Py_UCS4 pct[2]
     cdef Py_UCS4 pct2[2]
     cdef int digit1, digit2
-    safe += ALLOWED
+    cdef int safe_table[128]
     if not qs:
-        safe += '+&=;'
-    safe += protected
+        memcpy(safe_table, ALLOWED_NOTQS_TABLE, sizeof(safe_table))
+    else:
+        memcpy(safe_table, ALLOWED_TABLE, sizeof(safe_table))
+    for ch in safe:
+        if ord(ch) > 127:
+            raise ValueError("Only safe symbols with ORD < 128 are allowed")
+        safe_table[ch] = 1
+    for ch in protected:
+        if ord(ch) > 127:
+            raise ValueError("Only safe symbols with ORD < 128 are allowed")
+        safe_table[ch] = 1
     cdef int idx = 0
     while idx < val_len:
         ch = PyUnicode_ReadChar(val, idx)
@@ -148,7 +173,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                     PyUnicode_WriteChar(ret, ret_idx,
                                         _to_hex(<uint8_t>ch & 0x0f))
                     ret_idx += 1
-                elif ch in safe:
+                elif ch < 128 and safe_table[ch]:
                     if ret is None:
                         ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, ch)
@@ -209,7 +234,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 PyUnicode_WriteChar(ret, ret_idx, '+')
                 ret_idx += 1
                 continue
-        if ch in safe:
+        if ch < 128 and safe_table[ch]:
             if ret is not None:
                 PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
