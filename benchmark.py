@@ -20,6 +20,14 @@ print("Python quote ascii: {:.3f} sec".format(
     timeit.timeit("quote(s, safe='/')", python_setup+"s='/path/to'")))
 
 
+print("Cython quote PCT: {:.3f} sec".format(
+    timeit.timeit("quote(s)", cython_setup+"s='abc%0a'")))
+
+
+print("Python quote PCT: {:.3f} sec".format(
+    timeit.timeit("quote(s)", python_setup+"s='abc%0a'")))
+
+
 print("Cython quote: {:.3f} sec".format(
     timeit.timeit("quote(s)", cython_setup+"s='/путь/файл'")))
 
