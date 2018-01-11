@@ -78,18 +78,6 @@ cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[]):
         return 4
 
 
-def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
-    if val is None:
-        return None
-    if type(val) is not str:
-        if isinstance(val, str):
-            # derived from str
-            val = str(val)
-        else:
-            raise TypeError("Argument should be str")
-    return _do_quote(<str>val, safe, protected, qs)
-
-
 cdef uint8_t ALLOWED_TABLE[16]
 cdef uint8_t ALLOWED_NOTQS_TABLE[16]
 
@@ -113,50 +101,131 @@ for i in range(128):
         set_bit(ALLOWED_NOTQS_TABLE, i)
 
 
-cdef str _do_quote(str val, str safe, str protected, bint qs):
-    cdef Py_UCS4 ch
-    cdef uint8_t[4] buf
-    cdef uint8_t b
-    cdef Py_ssize_t i
-    cdef Py_ssize_t val_len = len(val)
-    if val_len == 0:
-        return val
-    cdef object ret = None
-    cdef Py_ssize_t ret_idx = 0
-    cdef int has_pct = 0
-    cdef Py_UCS4 pct[2]
-    cdef Py_UCS4 pct2[2]
-    cdef int digit1, digit2
-    cdef uint8_t safe_table[16]
-    cdef uint8_t protected_table[16]
-    if not qs:
-        memcpy(safe_table, ALLOWED_NOTQS_TABLE, sizeof(safe_table))
-    else:
-        memcpy(safe_table, ALLOWED_TABLE, sizeof(safe_table))
-    for ch in safe:
-        if ord(ch) > 127:
-            raise ValueError("Only safe symbols with ORD < 128 are allowed")
-        set_bit(safe_table, ch)
+cdef class _Quoter:
+    cdef str _safe
+    cdef str _protected
+    cdef bint _qs
 
-    memset(protected_table, 0, sizeof(protected_table))
-    for ch in protected:
-        if ord(ch) > 127:
-            raise ValueError("Only safe symbols with ORD < 128 are allowed")
-        set_bit(safe_table, ch)
-        set_bit(protected_table, ch)
+    cdef uint8_t _safe_table[16]
+    cdef uint8_t _protected_table[16]
 
-    cdef int idx = 0
-    while idx < val_len:
-        ch = PyUnicode_ReadChar(val, idx)
-        idx += 1
+    def __init__(self, *, str safe='', str protected='', bint qs=False):
+        cdef Py_UCS4 ch
 
-        if has_pct:
-            pct[has_pct-1] = ch
-            has_pct += 1
-            if has_pct == 3:
-                digit1 = _from_hex(pct[0])
-                digit2 = _from_hex(pct[1])
-                if digit1 == -1 or digit2 == -1:
+        self._protected = protected
+        self._qs = qs
+
+        if not self._qs:
+            memcpy(self._safe_table,
+                   ALLOWED_NOTQS_TABLE,
+                   sizeof(self._safe_table))
+        else:
+            memcpy(self._safe_table,
+                   ALLOWED_TABLE,
+                   sizeof(self._safe_table))
+        for ch in safe:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+            set_bit(self._safe_table, ch)
+
+        memset(self._protected_table, 0, sizeof(self._protected_table))
+        for ch in protected:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+            set_bit(self._safe_table, ch)
+            set_bit(self._protected_table, ch)
+
+    def __call__(self, val):
+        if val is None:
+            return None
+        if type(val) is not str:
+            if isinstance(val, str):
+                # derived from str
+                val = str(val)
+            else:
+                raise TypeError("Argument should be str")
+        return self._do_quote(<str>val, self._safe, self._protected, self._qs)
+
+    cdef str _do_quote(self, str val, str safe, str protected, bint qs):
+        cdef Py_UCS4 ch
+        cdef uint8_t[4] buf
+        cdef uint8_t b
+        cdef Py_ssize_t i
+        cdef Py_ssize_t val_len = len(val)
+        if val_len == 0:
+            return val
+        cdef object ret = None
+        cdef Py_ssize_t ret_idx = 0
+        cdef int has_pct = 0
+        cdef Py_UCS4 pct[2]
+        cdef Py_UCS4 pct2[2]
+        cdef int digit1, digit2
+        cdef int idx = 0
+
+        while idx < val_len:
+            ch = PyUnicode_ReadChar(val, idx)
+            idx += 1
+
+            if has_pct:
+                pct[has_pct-1] = ch
+                has_pct += 1
+                if has_pct == 3:
+                    digit1 = _from_hex(pct[0])
+                    digit2 = _from_hex(pct[1])
+                    if digit1 == -1 or digit2 == -1:
+                        if ret is None:
+                            ret = _make_str(val, val_len, idx)
+                        PyUnicode_WriteChar(ret, ret_idx, '%')
+                        ret_idx += 1
+                        PyUnicode_WriteChar(ret, ret_idx, '2')
+                        ret_idx += 1
+                        PyUnicode_WriteChar(ret, ret_idx, '5')
+                        ret_idx += 1
+                        idx -= 2
+                        has_pct = 0
+                        continue
+
+                    ch = <Py_UCS4>(digit1 << 4 | digit2)
+                    has_pct = 0
+
+                    if ch < 128:
+                        if bit_at(self._protected_table, ch):
+                            if ret is None:
+                                ret = _make_str(val, val_len, idx)
+                            PyUnicode_WriteChar(ret, ret_idx, '%')
+                            ret_idx += 1
+                            PyUnicode_WriteChar(ret, ret_idx,
+                                                _to_hex(<uint8_t>ch >> 4))
+                            ret_idx += 1
+                            PyUnicode_WriteChar(ret, ret_idx,
+                                                _to_hex(<uint8_t>ch & 0x0f))
+                            ret_idx += 1
+                            continue
+
+                        if bit_at(self._safe_table, ch):
+                            if ret is None:
+                                ret = _make_str(val, val_len, idx)
+                            PyUnicode_WriteChar(ret, ret_idx, ch)
+                            ret_idx += 1
+                            continue
+
+                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
+                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
+                    if ret is None:
+                        if pct[0] == pct2[0] and pct[1] == pct2[1]:
+                            # fast path
+                            continue
+                        else:
+                            ret = _make_str(val, val_len, idx)
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, pct2[0])
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, pct2[1])
+                    ret_idx += 1
+
+                # special case, if we have only one char after "%"
+                elif has_pct == 2 and idx == val_len:
                     if ret is None:
                         ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, '%')
@@ -165,220 +234,149 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                     ret_idx += 1
                     PyUnicode_WriteChar(ret, ret_idx, '5')
                     ret_idx += 1
-                    idx -= 2
+
+                    idx -= 1
                     has_pct = 0
-                    continue
 
-                ch = <Py_UCS4>(digit1 << 4 | digit2)
-                has_pct = 0
-
-                if ch < 128:
-                    if bit_at(protected_table, ch):
-                        if ret is None:
-                            ret = _make_str(val, val_len, idx)
-                        PyUnicode_WriteChar(ret, ret_idx, '%')
-                        ret_idx += 1
-                        PyUnicode_WriteChar(ret, ret_idx,
-                                            _to_hex(<uint8_t>ch >> 4))
-                        ret_idx += 1
-                        PyUnicode_WriteChar(ret, ret_idx,
-                                            _to_hex(<uint8_t>ch & 0x0f))
-                        ret_idx += 1
-                        continue
-
-                    if bit_at(safe_table, ch):
-                        if ret is None:
-                            ret = _make_str(val, val_len, idx)
-                        PyUnicode_WriteChar(ret, ret_idx, ch)
-                        ret_idx += 1
-                        continue
-
-                pct2[0] = _to_hex(<uint8_t>ch >> 4)
-                pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
-                if ret is None:
-                    if pct[0] == pct2[0] and pct[1] == pct2[1]:
-                        # fast path
-                        continue
-                    else:
-                        ret = _make_str(val, val_len, idx)
-                PyUnicode_WriteChar(ret, ret_idx, '%')
-                ret_idx += 1
-                PyUnicode_WriteChar(ret, ret_idx, pct2[0])
-                ret_idx += 1
-                PyUnicode_WriteChar(ret, ret_idx, pct2[1])
-                ret_idx += 1
-
-            # special case, if we have only one char after "%"
-            elif has_pct == 2 and idx == val_len:
-                if ret is None:
-                    ret = _make_str(val, val_len, idx)
-                PyUnicode_WriteChar(ret, ret_idx, '%')
-                ret_idx += 1
-                PyUnicode_WriteChar(ret, ret_idx, '2')
-                ret_idx += 1
-                PyUnicode_WriteChar(ret, ret_idx, '5')
-                ret_idx += 1
-
-                idx -= 1
-                has_pct = 0
-
-            continue
-
-        elif ch == '%':
-            has_pct = 1
-
-            # special case if "%" is last char
-            if idx == val_len:
-                if ret is None:
-                    ret = _make_str(val, val_len, idx)
-
-                PyUnicode_WriteChar(ret, ret_idx, '%')
-                ret_idx += 1
-                PyUnicode_WriteChar(ret, ret_idx, '2')
-                ret_idx += 1
-                PyUnicode_WriteChar(ret, ret_idx, '5')
-                ret_idx += 1
-
-            continue
-
-        if qs:
-            if ch == ' ':
-                if ret is None:
-                    ret = _make_str(val, val_len, idx)
-                PyUnicode_WriteChar(ret, ret_idx, '+')
-                ret_idx += 1
                 continue
-        if ch < 128 and bit_at(safe_table, ch):
-            if ret is not None:
+
+            elif ch == '%':
+                has_pct = 1
+
+                # special case if "%" is last char
+                if idx == val_len:
+                    if ret is None:
+                        ret = _make_str(val, val_len, idx)
+
+                    PyUnicode_WriteChar(ret, ret_idx, '%')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '2')
+                    ret_idx += 1
+                    PyUnicode_WriteChar(ret, ret_idx, '5')
+                    ret_idx += 1
+
+                continue
+
+            if self._qs:
+                if ch == ' ':
+                    if ret is None:
+                        ret = _make_str(val, val_len, idx)
+                    PyUnicode_WriteChar(ret, ret_idx, '+')
+                    ret_idx += 1
+                    continue
+            if ch < 128 and bit_at(self._safe_table, ch):
+                if ret is not None:
+                    PyUnicode_WriteChar(ret, ret_idx, ch)
+                ret_idx +=1
+                continue
+
+            if ret is None:
+                ret = _make_str(val, val_len, idx)
+
+            for i in range(_char_as_utf8(ch, buf)):
+                b = buf[i]
+                PyUnicode_WriteChar(ret, ret_idx, '%')
+                ret_idx += 1
+                ch = _to_hex(b >> 4)
                 PyUnicode_WriteChar(ret, ret_idx, ch)
-            ret_idx +=1
-            continue
+                ret_idx += 1
+                ch = _to_hex(b & 0x0f)
+                PyUnicode_WriteChar(ret, ret_idx, ch)
+                ret_idx += 1
 
         if ret is None:
-            ret = _make_str(val, val_len, idx)
-
-        for i in range(_char_as_utf8(ch, buf)):
-            b = buf[i]
-            PyUnicode_WriteChar(ret, ret_idx, '%')
-            ret_idx += 1
-            ch = _to_hex(b >> 4)
-            PyUnicode_WriteChar(ret, ret_idx, ch)
-            ret_idx += 1
-            ch = _to_hex(b & 0x0f)
-            PyUnicode_WriteChar(ret, ret_idx, ch)
-            ret_idx += 1
-
-    if ret is None:
-        return val
-    else:
-        return PyUnicode_Substring(ret, 0, ret_idx)
-
-
-cdef class _Quoter:
-    cdef str _safe
-    cdef str _protected
-    cdef bint _qs
-
-    def __init__(self, *, safe='', protected='', qs=False):
-        self._safe = safe
-        self._protected = protected
-        self._qs = qs
-
-    def __call__(self, val):
-        return _quote(val,
-                      safe=self._safe,
-                      protected=self._protected,
-                      qs=self._qs)
-
-
-def _unquote(val, *, unsafe='', qs=False, strict=None):
-    if val is None:
-        return None
-    if type(val) is not str:
-        if isinstance(val, str):
-            # derived from str
-            val = str(val)
+            return val
         else:
-            raise TypeError("Argument should be str")
-    return _do_unquote(<str>val, unsafe, qs)
-
-
-cdef str _do_unquote(str val, str unsafe='', bint qs=False):
-    if len(val) == 0:
-        return val
-    cdef str pct = ''
-    cdef str last_pct = ''
-    cdef bytearray pcts = bytearray()
-    cdef list ret = []
-    cdef str unquoted
-    for ch in val:
-        if pct:
-            pct += ch
-            if len(pct) == 3:  # pragma: no branch   # peephole optimizer
-                pcts.append(int(pct[1:], base=16))
-                last_pct = pct
-                pct = ''
-            continue
-        if pcts:
-            try:
-                unquoted = pcts.decode('utf8')
-            except UnicodeDecodeError:
-                pass
-            else:
-                if qs and unquoted in '+=&;':
-                    ret.append(_do_quote(unquoted, '', '', True))
-                elif unquoted in unsafe:
-                    ret.append(_do_quote(unquoted, '', '', False))
-                else:
-                    ret.append(unquoted)
-                del pcts[:]
-
-        if ch == '%':
-            pct = ch
-            continue
-
-        if pcts:
-            ret.append(last_pct)  # %F8ab
-            last_pct = ''
-
-        if ch == '+':
-            if not qs or ch in unsafe:
-                ret.append('+')
-            else:
-                ret.append(' ')
-            continue
-
-        if ch in unsafe:
-            ret.append('%')
-            h = hex(ord(ch)).upper()[2:]
-            for ch in h:
-                ret.append(ch)
-            continue
-
-        ret.append(ch)
-
-    if pcts:
-        try:
-            unquoted = pcts.decode('utf8')
-        except UnicodeDecodeError:
-            ret.append(last_pct)  # %F8
-        else:
-            if qs and unquoted in '+=&;':
-                ret.append(_do_quote(unquoted, '', '', True))
-            elif unquoted in unsafe:
-                ret.append(_do_quote(unquoted, '', '', False))
-            else:
-                ret.append(unquoted)
-    return ''.join(ret)
+            return PyUnicode_Substring(ret, 0, ret_idx)
 
 
 cdef class _Unquoter:
     cdef str _unsafe
     cdef bint _qs
+    cdef _Quoter _quoter
+    cdef _Quoter _qs_quoter
 
     def __init__(self, *, unsafe='', qs=False):
         self._unsafe = unsafe
         self._qs = qs
+        self._quoter = _Quoter()
+        self._qs_quoter = _Quoter(qs=True)
 
     def __call__(self, val):
-        return _unquote(val, unsafe=self._unsafe, qs=self._qs)
+        if val is None:
+            return None
+        if type(val) is not str:
+            if isinstance(val, str):
+                # derived from str
+                val = str(val)
+            else:
+                raise TypeError("Argument should be str")
+        return self._do_unquote(<str>val)
+
+    cdef str _do_unquote(self, str val):
+        if len(val) == 0:
+            return val
+        cdef str pct = ''
+        cdef str last_pct = ''
+        cdef bytearray pcts = bytearray()
+        cdef list ret = []
+        cdef str unquoted
+        for ch in val:
+            if pct:
+                pct += ch
+                if len(pct) == 3:  # pragma: no branch   # peephole optimizer
+                    pcts.append(int(pct[1:], base=16))
+                    last_pct = pct
+                    pct = ''
+                continue
+            if pcts:
+                try:
+                    unquoted = pcts.decode('utf8')
+                except UnicodeDecodeError:
+                    pass
+                else:
+                    if self._qs and unquoted in '+=&;':
+                        ret.append(self._qs_quoter(unquoted))
+                    elif unquoted in self._unsafe:
+                        ret.append(self._quoter(unquoted))
+                    else:
+                        ret.append(unquoted)
+                    del pcts[:]
+
+            if ch == '%':
+                pct = ch
+                continue
+
+            if pcts:
+                ret.append(last_pct)  # %F8ab
+                last_pct = ''
+
+            if ch == '+':
+                if not self._qs or ch in self._unsafe:
+                    ret.append('+')
+                else:
+                    ret.append(' ')
+                continue
+
+            if ch in self._unsafe:
+                ret.append('%')
+                h = hex(ord(ch)).upper()[2:]
+                for ch in h:
+                    ret.append(ch)
+                continue
+
+            ret.append(ch)
+
+        if pcts:
+            try:
+                unquoted = pcts.decode('utf8')
+            except UnicodeDecodeError:
+                ret.append(last_pct)  # %F8
+            else:
+                if self._qs and unquoted in '+=&;':
+                    ret.append(self._qs_quoter(unquoted))
+                elif unquoted in self._unsafe:
+                    ret.append(self._quoter(unquoted))
+                else:
+                    ret.append(unquoted)
+        return ''.join(ret)
