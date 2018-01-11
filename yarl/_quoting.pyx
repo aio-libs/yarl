@@ -93,6 +93,8 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 digit1 = _from_hex(pct[0])
                 digit2 = _from_hex(pct[1])
                 if digit1 == -1 or digit2 == -1:
+                    if ret is None:
+                        ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
                     PyUnicode_WriteChar(ret, ret_idx, '2')
@@ -107,6 +109,8 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 has_pct = 0
 
                 if ch in protected:
+                    if ret is None:
+                        ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
                     PyUnicode_WriteChar(ret, ret_idx,
@@ -116,9 +120,13 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                                         _to_hex(<uint8_t>ch & 0x0f))
                     ret_idx += 1
                 elif ch in safe:
+                    if ret is None:
+                        ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, ch)
                     ret_idx += 1
                 else:
+                    if ret is None:
+                        ret = _make_str(val, val_len, idx)
                     PyUnicode_WriteChar(ret, ret_idx, '%')
                     ret_idx += 1
                     PyUnicode_WriteChar(ret, ret_idx,
@@ -130,6 +138,8 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
 
             # special case, if we have only one char after "%"
             elif has_pct == 2 and idx == val_len:
+                if ret is None:
+                    ret = _make_str(val, val_len, idx)
                 PyUnicode_WriteChar(ret, ret_idx, '%')
                 ret_idx += 1
                 PyUnicode_WriteChar(ret, ret_idx, '2')
@@ -145,11 +155,11 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         elif ch == '%':
             has_pct = 1
 
-            if ret is None:
-                ret = _make_str(val, val_len, idx)
-
             # special case if "%" is last char
             if idx == val_len:
+                if ret is None:
+                    ret = _make_str(val, val_len, idx)
+
                 PyUnicode_WriteChar(ret, ret_idx, '%')
                 ret_idx += 1
                 PyUnicode_WriteChar(ret, ret_idx, '2')
