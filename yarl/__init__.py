@@ -10,7 +10,8 @@ from multidict import MultiDict, MultiDictProxy
 import idna
 
 
-from .quoting import quote, unquote
+from .quoting import quote, unquote  # deprecated
+from .quoting import _Quoter, _Unquoter
 
 __version__ = '0.18.0'
 
@@ -138,6 +139,16 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ('_cache', '_val')
 
+    _QUOTER = _Quoter()
+    _PATH_QUOTER = _Quoter(safe='@:', protected='/+')
+    _QUERY_QUOTER = _Quoter(safe='?/:@', protected=PROTECT_CHARS, qs=True)
+    _QUERY_PART_QUOTER = _Quoter(safe='?/:@', qs=True)
+    _FRAGMENT_QUOTER = _Quoter(safe='?/:@')
+
+    _UNQUOTER = _Unquoter()
+    _PATH_UNQUOTER = _Unquoter(unsafe='+')
+    _QS_UNQUOTER = _Unquoter(qs=True)
+
     def __init__(self, val='', *, encoded=False, strict=None):
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -166,13 +177,12 @@ class URL:
                                            host,
                                            val.port,
                                            encode=True)
-            path = _quote(val[2], safe='@:', protected='/+')
+            path = self._PATH_QUOTER(val[2])
             if netloc:
                 path = self._normalize_path(path)
 
-            query = _quote(val[3], safe='?/:@',
-                           protected=PROTECT_CHARS, qs=True)
-            fragment = _quote(val[4], safe='?/:@')
+            query = self._QUERY_QUOTER(val[3])
+            fragment = self._FRAGMENT_QUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
 
         self._val = val
@@ -194,7 +204,7 @@ class URL:
                 "Only one of \"query\" or \"query_string\" should be passed")
 
         netloc = cls._make_netloc(user, password, host, port, encode=True)
-        path = _quote(path, safe='@:', protected='/')
+        path = cls._PATH_QUOTER(path)
         if netloc:
             path = cls._normalize_path(path)
 
@@ -203,7 +213,7 @@ class URL:
                 scheme,
                 netloc,
                 path,
-                _quote(query_string),
+                cls._QUERY_QUOTER(query_string),
                 fragment
             ),
             encoded=True
@@ -267,7 +277,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = _quote(name, safe=':@', protected='/')
+        name = self._PATH_QUOTER(name)
         if name.startswith('/'):
             raise ValueError("Appending path "
                              "starting from slash is forbidden")
@@ -377,7 +387,7 @@ class URL:
         None if user is missing.
 
         """
-        return _unquote(self.raw_user)
+        return self._UNQUOTER(self.raw_user)
 
     @property
     def raw_password(self):
@@ -395,7 +405,7 @@ class URL:
         None if password is missing.
 
         """
-        return _unquote(self.raw_password)
+        return self._UNQUOTER(self.raw_password)
 
     @property
     def raw_host(self):
@@ -452,7 +462,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return _unquote(self.raw_path, unsafe='+')
+        return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
     def query(self):
@@ -482,7 +492,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        return _unquote(self.raw_query_string, qs=True)
+        return self._QS_UNQUOTER(self.raw_query_string)
 
     @cached_property
     def path_qs(self):
@@ -514,7 +524,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        return _unquote(self.raw_fragment)
+        return self._UNQUOTER(self.raw_fragment)
 
     @cached_property
     def raw_parts(self):
@@ -543,7 +553,7 @@ class URL:
         ('/',) for absolute URLs if *path* is missing.
 
         """
-        return tuple(_unquote(part) for part in self.raw_parts)
+        return tuple(self._UNQUOTER(part) for part in self.raw_parts)
 
     @cached_property
     def parent(self):
@@ -578,7 +588,7 @@ class URL:
     @cached_property
     def name(self):
         """The last part of parts."""
-        return _unquote(self.raw_name)
+        return self._UNQUOTER(self.raw_name)
 
     @classmethod
     def _normalize_path(cls, path):
@@ -637,12 +647,12 @@ class URL:
                 user = ''
             else:
                 if encode:
-                    user = _quote(user)
+                    user = cls._QUOTER(user)
             if encode:
-                password = _quote(password)
+                password = cls._QUOTER(password)
             user = user + ':' + password
         elif user and encode:
-            user = _quote(user)
+            user = cls._QUOTER(user)
         if user:
             ret = user + '@' + ret
         return ret
@@ -670,7 +680,7 @@ class URL:
         if user is None:
             password = None
         elif isinstance(user, str):
-            user = _quote(user)
+            user = self._QUOTER(user)
             password = val.password
         else:
             raise TypeError("Invalid user type")
@@ -696,7 +706,7 @@ class URL:
         if password is None:
             pass
         elif isinstance(password, str):
-            password = _quote(password)
+            password = self._QUOTER(password)
         else:
             raise TypeError("Invalid password type")
         if not self.is_absolute():
@@ -764,7 +774,7 @@ class URL:
     def with_path(self, path, *, encoded=False):
         """Return a new URL with path replaced."""
         if not encoded:
-            path = _quote(path, safe='@:', protected='/')
+            path = self._PATH_QUOTER(path)
             if self.is_absolute():
                 path = self._normalize_path(path)
         if len(path) > 0 and path[0] != '/':
@@ -801,14 +811,12 @@ class URL:
                     quoter(k, safe='/?:@') + '=' + quoter(v, safe='/?:@'))
             query = '&'.join(lst)
         elif isinstance(query, str):
-            query = _quote(query, safe='/?:@',
-                           protected=PROTECT_CHARS,
-                           qs=True)
+            query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError("Invalid query type: bytes, bytearray and "
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
-            quoter = partial(_quote, qs=True, safe='/?:@')
+            quoter = self._QUERY_PART_QUOTER
             query = '&'.join(quoter(k) + '=' + quoter(v)
                              for k, v in query)
         else:
@@ -840,9 +848,9 @@ class URL:
         new_query = OrderedDict(
             map(
                 lambda x: x.split('=', 1),
-                _quote(self._get_str_query(*args, **kwargs),
-                       safe='/?:@', protected=PROTECT_CHARS,
-                       qs=True).lstrip("?").split("&")
+                self._QUERY_QUOTER(
+                    self._get_str_query(*args, **kwargs)
+                ).lstrip("?").split("&")
             )
         )
         query = OrderedDict(self.query)
@@ -866,7 +874,7 @@ class URL:
             raise TypeError("Invalid fragment type")
         return URL(
             self._val._replace(
-                fragment=_quote(fragment, safe='?/:@')),
+                fragment=self._FRAGMENT_QUOTER(fragment)),
             encoded=True)
 
     def with_name(self, name):
@@ -882,7 +890,7 @@ class URL:
             raise TypeError("Invalid name type")
         if '/' in name:
             raise ValueError("Slash in name is not allowed")
-        name = _quote(name, safe='@:', protected='/')
+        name = self._PATH_QUOTER(name)
         if name in ('.', '..'):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
