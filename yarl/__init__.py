@@ -1,7 +1,6 @@
 import warnings
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
-from functools import partial
 from ipaddress import ip_address
 from urllib.parse import (SplitResult, parse_qsl,
                           urljoin, urlsplit, urlunsplit)
@@ -10,7 +9,6 @@ from multidict import MultiDict, MultiDictProxy
 import idna
 
 
-from .quoting import quote, unquote  # deprecated
 from .quoting import _Quoter, _Unquoter
 
 __version__ = '0.18.0'
@@ -29,9 +27,6 @@ DEFAULT_PORTS = {
 }
 
 sentinel = object()
-
-_quote = quote
-_unquote = unquote
 
 
 class cached_property:

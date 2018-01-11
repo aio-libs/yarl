@@ -1,4 +1,3 @@
-import warnings
 from string import ascii_letters, ascii_lowercase, digits
 
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
@@ -175,15 +174,3 @@ try:
 except ImportError:  # pragma: no cover
     _Quoter = _PyQuoter
     _Unquoter = _PyUnquoter
-
-
-def quote(val, *, safe='', protected='', qs=False, strict=None):
-    if strict is not None:  # pragma: no cover
-        warnings.warn("strict parameter is ignored")
-    return _Quoter(safe=safe, protected=protected, qs=qs)(val)
-
-
-def unquote(val, *, unsafe='', qs=False, strict=None):
-    if strict is not None:  # pragma: no cover
-        warnings.warn("strict parameter is ignored")
-    return _Unquoter(unsafe=unsafe, qs=qs)(val)
