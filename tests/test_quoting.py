@@ -326,3 +326,9 @@ def test_qoute_qs_with_colon(quote):
 def test_quote_protected(quote):
     s = quote('/path%2fto/three', protected='/')
     assert s == '/path%2Fto/three'
+
+
+def test_quote_fastpath():
+    s1 = '/path/to'
+    s2 = _quote(s1, safe='/')
+    assert s1 is s2

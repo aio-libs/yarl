@@ -4,6 +4,9 @@ import warnings
 
 cdef extern from "Python.h":
     object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
+    Py_ssize_t PyUnicode_CopyCharacters(object to, Py_ssize_t to_start,
+                                        object from_, Py_ssize_t from_start,
+                                        Py_ssize_t how_many)
     Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index)
     void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
     object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
@@ -38,13 +41,24 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
+cdef inline str _make_str(str val, Py_ssize_t val_len, int idx):
+    cdef str ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
+    if idx != 0:
+        PyUnicode_CopyCharacters(ret, 0, val, 0, idx)
+    return ret
+
+
 def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
     if strict is not None:  # pragma: no cover
         warnings.warn("strict parameter is ignored")
     if val is None:
         return None
     if type(val) is not str:
-        raise TypeError("Argument should be str")
+        if isinstance(val, str):
+            # derived from str
+            val = str(val)
+        else:
+            raise TypeError("Argument should be str")
     return _do_quote(<str>val, safe, protected, qs)
 
 
@@ -58,7 +72,7 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         return val
     # UTF8 may take up to 4 bytes per symbol
     # every byte is encoded as %XX -- 3 bytes
-    cdef object ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
+    cdef object ret = None
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
     cdef Py_UCS4 pct[2]
@@ -131,6 +145,9 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         elif ch == '%':
             has_pct = 1
 
+            if ret is None:
+                ret = _make_str(val, val_len, idx)
+
             # special case if "%" is last char
             if idx == val_len:
                 PyUnicode_WriteChar(ret, ret_idx, '%')
@@ -144,17 +161,24 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
 
         if qs:
             if ch == ' ':
+                if ret is None:
+                    ret = _make_str(val, val_len, idx)
                 PyUnicode_WriteChar(ret, ret_idx, '+')
                 ret_idx += 1
                 continue
         if ch in safe:
-            PyUnicode_WriteChar(ret, ret_idx, ch)
+            if ret is not None:
+                PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
             continue
         if ch in ALLOWED:
-            PyUnicode_WriteChar(ret, ret_idx, ch)
+            if ret is not None:
+                PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
             continue
+
+        if ret is None:
+            ret = _make_str(val, val_len, idx)
 
         ch_bytes = ch.encode("utf-8", errors='ignore')
 
@@ -168,7 +192,10 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
 
-    return PyUnicode_Substring(ret, 0, ret_idx)
+    if ret is None:
+        return val
+    else:
+        return PyUnicode_Substring(ret, 0, ret_idx)
 
 
 def _unquote(val, *, unsafe='', qs=False, strict=None):
@@ -177,7 +204,11 @@ def _unquote(val, *, unsafe='', qs=False, strict=None):
     if val is None:
         return None
     if type(val) is not str:
-        raise TypeError("Argument should be str")
+        if isinstance(val, str):
+            # derived from str
+            val = str(val)
+        else:
+            raise TypeError("Argument should be str")
     return _do_unquote(<str>val, unsafe, qs)
 
 

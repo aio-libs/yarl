@@ -12,12 +12,20 @@ from yarl.quoting import _py_unquote as unquote
 """
 
 
+print("Cython quote ascii: {:.3f} sec".format(
+    timeit.timeit("quote(s, safe='/')", cython_setup+"s='/path/to'")))
+
+
+print("Python quote ascii: {:.3f} sec".format(
+    timeit.timeit("quote(s, safe='/')", python_setup+"s='/path/to'")))
+
+
 print("Cython quote: {:.3f} sec".format(
-    timeit.timeit("quote(s)", cython_setup+"s='/path/to'")))
+    timeit.timeit("quote(s)", cython_setup+"s='/путь/файл'")))
 
 
 print("Python quote: {:.3f} sec".format(
-    timeit.timeit("quote(s)", python_setup+"s='/path/to'")))
+    timeit.timeit("quote(s)", python_setup+"s='/путь/файл'")))
 
 
 print("Cython unquote: {:.3f} sec".format(
