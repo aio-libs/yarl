@@ -3,14 +3,14 @@
 import warnings
 
 cdef extern from "Python.h":
-    object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
+    str PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     Py_ssize_t PyUnicode_CopyCharacters(object to, Py_ssize_t to_start,
                                         object from_, Py_ssize_t from_start,
                                         Py_ssize_t how_many) except -1
     Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index) except -1
     int PyUnicode_WriteChar(object u, Py_ssize_t index,
                             Py_UCS4 value) except -1
-    object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
+    str PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
 from libc.stdint cimport uint8_t, uint64_t
 
@@ -43,10 +43,39 @@ cdef inline int _from_hex(Py_UCS4 v):
 
 
 cdef inline str _make_str(str val, Py_ssize_t val_len, int idx):
+    # UTF8 may take up to 4 bytes per symbol
+    # every byte is encoded as %XX -- 3 bytes
     cdef str ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
     if idx != 0:
         PyUnicode_CopyCharacters(ret, 0, val, 0, idx)
     return ret
+
+
+cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[4]):
+    if ch < 0x80:
+        buf[0] = <uint8_t>ch
+        return 1
+    elif ch < 0x800:
+        buf[0] = <uint8_t>(0xc0 | (ch >> 6))
+        buf[1] = <uint8_t>(0x80 | (ch & 0x3f))
+        return 2
+    elif 0xD800 <= ch <= 0xDFFF:
+        # surogate pair, ignored
+        return 0
+    elif ch < 0x10000:
+        buf[0] = <uint8_t>(0xe0 | (ch >> 12))
+        buf[1] = <uint8_t>(0x80 | ((ch >> 6) & 0x3f))
+        buf[2] = <uint8_t>(0x80 | (ch & 0x3f))
+        return 3
+    elif ch > 0x10FFFF:
+        # symbol is too large
+        return 0
+    else:
+        buf[0] = <uint8_t>(0xf0 | (ch >> 18))
+        buf[1] = <uint8_t>(0x80 | ((ch >> 12) & 0x3f))
+        buf[2] = <uint8_t>(0x80 | ((ch >> 6) & 0x3f))
+        buf[3] = <uint8_t>(0x80 | (ch & 0x3f))
+        return 4
 
 
 def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
@@ -64,13 +93,13 @@ def _quote(val, *, str safe='', str protected='', bint qs=False, strict=None):
 
 
 cdef str _do_quote(str val, str safe, str protected, bint qs):
-    cdef uint8_t b
     cdef Py_UCS4 ch
+    cdef uint8_t[4] buf
+    cdef uint8_t b
+    cdef Py_ssize_t i
     cdef Py_ssize_t val_len = len(val)
     if val_len == 0:
         return val
-    # UTF8 may take up to 4 bytes per symbol
-    # every byte is encoded as %XX -- 3 bytes
     cdef object ret = None
     cdef Py_ssize_t ret_idx = 0
     cdef int has_pct = 0
@@ -189,15 +218,14 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
         if ret is None:
             ret = _make_str(val, val_len, idx)
 
-        ch_bytes = ch.encode("utf-8", errors='ignore')
-
-        for b in ch_bytes:
+        for i in range(_char_as_utf8(ch, buf)):
+            b = buf[i]
             PyUnicode_WriteChar(ret, ret_idx, '%')
             ret_idx += 1
-            ch = _to_hex(<uint8_t>b >> 4)
+            ch = _to_hex(b >> 4)
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
-            ch = _to_hex(<uint8_t>b & 0x0f)
+            ch = _to_hex(b & 0x0f)
             PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx += 1
 
