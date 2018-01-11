@@ -6,9 +6,10 @@ cdef extern from "Python.h":
     object PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
     Py_ssize_t PyUnicode_CopyCharacters(object to, Py_ssize_t to_start,
                                         object from_, Py_ssize_t from_start,
-                                        Py_ssize_t how_many)
-    Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index)
-    void PyUnicode_WriteChar(object u, Py_ssize_t index, Py_UCS4 value)
+                                        Py_ssize_t how_many) except -1
+    Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index) except -1
+    int PyUnicode_WriteChar(object u, Py_ssize_t index,
+                            Py_UCS4 value) except -1
     object PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
 from libc.stdint cimport uint8_t, uint64_t
