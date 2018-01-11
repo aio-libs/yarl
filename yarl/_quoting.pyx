@@ -194,6 +194,8 @@ cdef class _Quoter:
                         continue
 
                     has_pct = 0
+                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
+                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
 
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
@@ -201,11 +203,9 @@ cdef class _Quoter:
                                 ret = _make_str(val, val_len, idx)
                             PyUnicode_WriteChar(ret, ret_idx, '%')
                             ret_idx += 1
-                            PyUnicode_WriteChar(ret, ret_idx,
-                                                _to_hex(<uint8_t>ch >> 4))
+                            PyUnicode_WriteChar(ret, ret_idx, pct2[0])
                             ret_idx += 1
-                            PyUnicode_WriteChar(ret, ret_idx,
-                                                _to_hex(<uint8_t>ch & 0x0f))
+                            PyUnicode_WriteChar(ret, ret_idx, pct2[1])
                             ret_idx += 1
                             continue
 
@@ -216,8 +216,6 @@ cdef class _Quoter:
                             ret_idx += 1
                             continue
 
-                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
-                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
                     if ret is None:
                         if pct[0] == pct2[0] and pct[1] == pct2[1]:
                             # fast path
