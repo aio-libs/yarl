@@ -186,11 +186,6 @@ cdef str _do_quote(str val, str safe, str protected, bint qs):
                 PyUnicode_WriteChar(ret, ret_idx, ch)
             ret_idx +=1
             continue
-        if ch in ALLOWED:
-            if ret is not None:
-                PyUnicode_WriteChar(ret, ret_idx, ch)
-            ret_idx +=1
-            continue
 
         if ret is None:
             ret = _make_str(val, val_len, idx)
