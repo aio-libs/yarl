@@ -328,7 +328,13 @@ def test_quote_protected(quote):
     assert s == '/path%2Fto/three'
 
 
-def test_quote_fastpath():
+def test_quote_fastpath_safe():
     s1 = '/path/to'
     s2 = _quote(s1, safe='/')
+    assert s1 is s2
+
+
+def test_quote_fastpath_pct():
+    s1 = 'abc%A0'
+    s2 = _quote(s1)
     assert s1 is s2
