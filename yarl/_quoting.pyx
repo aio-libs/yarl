@@ -52,33 +52,6 @@ cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
     return <Py_UCS4>(digit1 << 4 | digit2)
 
 
-cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[]):
-    if ch < 0x80:
-        buf[0] = <uint8_t>ch
-        return 1
-    elif ch < 0x800:
-        buf[0] = <uint8_t>(0xc0 | (ch >> 6))
-        buf[1] = <uint8_t>(0x80 | (ch & 0x3f))
-        return 2
-    elif 0xD800 <= ch <= 0xDFFF:
-        # surogate pair, ignored
-        return 0
-    elif ch < 0x10000:
-        buf[0] = <uint8_t>(0xe0 | (ch >> 12))
-        buf[1] = <uint8_t>(0x80 | ((ch >> 6) & 0x3f))
-        buf[2] = <uint8_t>(0x80 | (ch & 0x3f))
-        return 3
-    elif ch > 0x10FFFF:
-        # symbol is too large
-        return 0
-    else:
-        buf[0] = <uint8_t>(0xf0 | (ch >> 18))
-        buf[1] = <uint8_t>(0x80 | ((ch >> 12) & 0x3f))
-        buf[2] = <uint8_t>(0x80 | ((ch >> 6) & 0x3f))
-        buf[3] = <uint8_t>(0x80 | (ch & 0x3f))
-        return 4
-
-
 cdef uint8_t ALLOWED_TABLE[16]
 cdef uint8_t ALLOWED_NOTQS_TABLE[16]
 
@@ -148,6 +121,69 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed) except -1:
     return 0
 
 
+cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed) except -1:
+    if _write_char(writer, '%', changed) < 0:
+        return -1
+    if _write_char(writer, _to_hex(<uint8_t>ch >> 4), changed) < 0:
+        return -1
+    return _write_char(writer, _to_hex(<uint8_t>ch & 0x0f), changed)
+
+
+cdef inline int _write_percent(Writer* writer) except -1:
+    if _write_char(writer, '%', True) < 0:
+        return -1
+    if _write_char(writer, '2', True) < 0:
+        return -1
+    return _write_char(writer, '5', True)
+
+
+cdef inline int _write_pct_check(Writer* writer, Py_UCS4 ch,
+                                 Py_UCS4 pct[]) except -1:
+    cdef Py_UCS4 pct1 = _to_hex(<uint8_t>ch >> 4)
+    cdef Py_UCS4 pct2 = _to_hex(<uint8_t>ch & 0x0f)
+    cdef bint changed = pct[0] != pct1 or pct[1] != pct2
+
+    if _write_char(writer, '%', changed) < 0:
+        return -1
+    if _write_char(writer, pct1, changed) < 0:
+        return -1
+    return _write_char(writer, pct2, changed)
+
+
+cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol) except -1:
+    cdef uint64_t utf = <uint64_t> symbol
+
+    if utf < 0x80:
+        return _write_pct(writer, <uint8_t>utf, True)
+    elif utf < 0x800:
+        if _write_pct(writer, <uint8_t>(0xc0 | (utf >> 6)), True) < 0:
+            return -1
+        return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
+    elif 0xD800 <= utf <= 0xDFFF:
+        # surogate pair, ignored
+        return 0
+    elif utf < 0x10000:
+        if _write_pct(writer, <uint8_t>(0xe0 | (utf >> 12)), True) < 0:
+            return -1
+        if _write_pct(writer, <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
+                       True) < 0:
+            return -1
+        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+    elif utf > 0x10FFFF:
+        # symbol is too large
+        return 0
+    else:
+        if _write_pct(writer,  <uint8_t>(0xf0 | (utf >> 18)), True) < 0:
+            return -1
+        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 12) & 0x3f)),
+                       True) < 0:
+           return -1
+        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
+                       True) < 0:
+            return -1
+        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+
+
 # --------------------- end writer --------------------------
 
 
@@ -200,18 +236,12 @@ cdef class _Quoter:
 
     cdef str _do_quote(self, str val, Writer *writer):
         cdef Py_UCS4 ch
-        cdef uint8_t[4] buf
-        cdef uint8_t b
-        cdef Py_ssize_t i
         cdef Py_ssize_t val_len = len(val)
         if val_len == 0:
             return val
-        cdef object ret = None
         cdef int has_pct = 0
         cdef Py_UCS4 pct[2]
-        cdef Py_UCS4 pct2[2]
         cdef int idx = 0
-        cdef bint changed
 
         while idx < val_len:
             ch = PyUnicode_ReadChar(val, idx)
@@ -223,38 +253,27 @@ cdef class _Quoter:
                 if has_pct == 3:
                     ch = _restore_ch(pct[0], pct[1])
                     if ch == <Py_UCS4>-1:
-                        _write_char(writer, '%', True)
-                        _write_char(writer, '2', True)
-                        _write_char(writer, '5', True)
+                        _write_percent(writer)
                         idx -= 2
                         has_pct = 0
                         continue
 
                     has_pct = 0
-                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
-                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
 
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
-                            _write_char(writer, '%', True)
-                            _write_char(writer, pct2[0], True)
-                            _write_char(writer, pct2[1], True)
+                            _write_pct(writer, ch, True)
                             continue
 
                         if bit_at(self._safe_table, ch):
                             _write_char(writer, ch, True)
                             continue
 
-                    changed = pct[0] != pct2[0] or pct[1] != pct2[1]
-                    _write_char(writer, '%', changed)
-                    _write_char(writer, pct2[0], changed)
-                    _write_char(writer, pct2[1], changed)
+                    _write_pct_check(writer, ch, pct)
 
                 # special case, if we have only one char after "%"
                 elif has_pct == 2 and idx == val_len:
-                    _write_char(writer, '%', True)
-                    _write_char(writer, '2', True)
-                    _write_char(writer, '5', True)
+                    _write_percent(writer)
                     idx -= 1
                     has_pct = 0
 
@@ -265,9 +284,7 @@ cdef class _Quoter:
 
                 # special case if "%" is last char
                 if idx == val_len:
-                    _write_char(writer, '%', True)
-                    _write_char(writer, '2', True)
-                    _write_char(writer, '5', True)
+                    _write_percent(writer)
 
                 continue
 
@@ -279,13 +296,7 @@ cdef class _Quoter:
                 _write_char(writer, ch, False)
                 continue
 
-            for i in range(_char_as_utf8(ch, buf)):
-                b = buf[i]
-                _write_char(writer, '%', True)
-                ch = _to_hex(b >> 4)
-                _write_char(writer, ch, True)
-                ch = _to_hex(b & 0x0f)
-                _write_char(writer, ch, True)
+            _write_utf8(writer, ch)
 
         if not writer.changed:
             return val
