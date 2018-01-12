@@ -251,14 +251,16 @@ cdef class _Quoter:
                 has_pct += 1
                 if has_pct == 3:
                     ch = _restore_ch(pct[0], pct[1])
+                    has_pct = 0
+
                     if ch == <Py_UCS4>-1:
                         if _write_percent(writer) < 0:
                             raise
-                        idx -= 2
-                        has_pct = 0
+                        if self._write(writer, pct[0]) < 0:
+                            raise
+                        if self._write(writer, pct[1]) < 0:
+                            raise
                         continue
-
-                    has_pct = 0
 
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
@@ -273,28 +275,21 @@ cdef class _Quoter:
 
                     if _write_pct_check(writer, ch, pct) < 0:
                         raise
-
-                # special case, if we have only one char after "%"
-                elif has_pct == 2 and idx == val_len:
-                    if _write_percent(writer) < 0:
-                        raise
-                    idx -= 1
-                    has_pct = 0
-
                 continue
 
             elif ch == '%':
                 has_pct = 1
-
-                # special case if "%" is last char
-                if idx == val_len:
-                    if _write_percent(writer) < 0:
-                        raise
-
                 continue
 
             if self._write(writer, ch) < 0:
                 raise
+
+        if has_pct:
+            if _write_percent(writer) < 0:
+                raise
+            if has_pct > 1:  # the value is 2
+                if self._write(writer, ch) < 0:
+                    raise
 
         if not writer.changed:
             return val
