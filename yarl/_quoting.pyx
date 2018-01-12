@@ -98,7 +98,7 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
 
     if writer.pos == writer.size:
         # reallocate
-        size = writer.size * 2
+        size = writer.size + BUF_SIZE
         if writer.buf == BUFFER:
             buf = <char*>PyMem_Malloc(size)
             if buf == NULL:
