@@ -6,6 +6,7 @@ cdef extern from "Python.h":
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
+from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
@@ -131,11 +132,13 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed) except -1:
         if writer.buf == BUFFER:
             buf = <char*>PyMem_Malloc(size)
             if buf == NULL:
+                PyErr_NoMemory()
                 return -1
             memcpy(buf, writer.buf, writer.size)
         else:
             buf = <char*>PyMem_Realloc(writer.buf, size)
             if buf == NULL:
+                PyErr_NoMemory()
                 return -1
         writer.buf = buf
         writer.size = size
