@@ -339,3 +339,9 @@ def test_quote_fastpath_pct():
     s1 = 'abc%A0'
     s2 = _Quoter()(s1)
     assert s1 is s2
+
+
+def test_quote_very_large_string(quoter):
+    # more than 8 KiB
+    s = 'abcфух%30%0a' * 1024
+    assert quoter()(s) == 'abc%D1%84%D1%83%D1%850%0A' * 1024
