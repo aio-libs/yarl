@@ -130,3 +130,29 @@ def test_build_drop_dots():
         path='/path/../to',
     )
     assert str(u) == 'http://example.com/to'
+
+
+def test_build_encode():
+    u = URL.build(
+        scheme='http',
+        host='историк.рф',
+        path='/путь/файл',
+        query_string='ключ=знач',
+        fragment='фраг')
+    expected = ('http://xn--h1aagokeh.xn--p1ai'
+                '/%D0%BF%D1%83%D1%82%D1%8C/%D1%84%D0%B0%D0%B9%D0%BB'
+                '?%D0%BA%D0%BB%D1%8E%D1%87=%D0%B7%D0%BD%D0%B0%D1%87'
+                '#%D1%84%D1%80%D0%B0%D0%B3')
+    assert str(u) == expected
+
+
+def test_build_already_encoded():
+    # resulting URL is invalid but not encoded
+    u = URL.build(
+        scheme='http',
+        host='историк.рф',
+        path='/путь/файл',
+        query_string='ключ=знач',
+        fragment='фраг',
+        encoded=True)
+    assert str(u) == 'http://историк.рф/путь/файл?ключ=знач#фраг'

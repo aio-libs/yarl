@@ -15,6 +15,8 @@ CHANGES
 
 * Don't recode IP zone (#144)
 
+* Support `encoded=True` in `yarl.URL.build()` (#158)
+
 0.18.0 (2018-01-10)
 -------------------
 
