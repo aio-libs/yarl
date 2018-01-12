@@ -1,17 +1,11 @@
 # cython: language_level=3
 
-cdef extern from "Python.h":
-    str PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
-    Py_ssize_t PyUnicode_CopyCharacters(object to, Py_ssize_t to_start,
-                                        object from_, Py_ssize_t from_start,
-                                        Py_ssize_t how_many) except -1
-    Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index) except -1
-    int PyUnicode_WriteChar(object u, Py_ssize_t index,
-                            Py_UCS4 value) except -1
-    str PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
-
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
+
+from cpython.exc cimport PyErr_NoMemory
+from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+from cpython.unicode cimport PyUnicode_DecodeASCII
 
 from string import ascii_letters, digits
 
@@ -22,6 +16,9 @@ cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
 cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
+
+DEF BUF_SIZE = 8 * 1024  # 8KiB
+cdef char BUFFER[BUF_SIZE]
 
 
 cdef inline Py_UCS4 _to_hex(uint8_t v):
@@ -52,42 +49,6 @@ cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
     return <Py_UCS4>(digit1 << 4 | digit2)
 
 
-cdef inline str _make_str(str val, Py_ssize_t val_len, int idx):
-    # UTF8 may take up to 4 bytes per symbol
-    # every byte is encoded as %XX -- 3 bytes
-    cdef str ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
-    if idx != 0:
-        PyUnicode_CopyCharacters(ret, 0, val, 0, idx)
-    return ret
-
-
-cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[]):
-    if ch < 0x80:
-        buf[0] = <uint8_t>ch
-        return 1
-    elif ch < 0x800:
-        buf[0] = <uint8_t>(0xc0 | (ch >> 6))
-        buf[1] = <uint8_t>(0x80 | (ch & 0x3f))
-        return 2
-    elif 0xD800 <= ch <= 0xDFFF:
-        # surogate pair, ignored
-        return 0
-    elif ch < 0x10000:
-        buf[0] = <uint8_t>(0xe0 | (ch >> 12))
-        buf[1] = <uint8_t>(0x80 | ((ch >> 6) & 0x3f))
-        buf[2] = <uint8_t>(0x80 | (ch & 0x3f))
-        return 3
-    elif ch > 0x10FFFF:
-        # symbol is too large
-        return 0
-    else:
-        buf[0] = <uint8_t>(0xf0 | (ch >> 18))
-        buf[1] = <uint8_t>(0x80 | ((ch >> 12) & 0x3f))
-        buf[2] = <uint8_t>(0x80 | ((ch >> 6) & 0x3f))
-        buf[3] = <uint8_t>(0x80 | (ch & 0x3f))
-        return 4
-
-
 cdef uint8_t ALLOWED_TABLE[16]
 cdef uint8_t ALLOWED_NOTQS_TABLE[16]
 
@@ -109,6 +70,117 @@ for i in range(128):
         set_bit(ALLOWED_NOTQS_TABLE, i)
     if chr(i) in QS:
         set_bit(ALLOWED_NOTQS_TABLE, i)
+
+# ----------------- writer ---------------------------
+
+cdef struct Writer:
+    char *buf
+    Py_ssize_t size
+    Py_ssize_t pos
+    bint changed
+
+
+cdef inline void _init_writer(Writer* writer):
+    writer.buf = &BUFFER[0]
+    writer.size = BUF_SIZE
+    writer.pos = 0
+    writer.changed = 0
+
+
+cdef inline void _release_writer(Writer* writer):
+    if writer.buf != BUFFER:
+        PyMem_Free(writer.buf)
+
+
+cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
+    cdef char * buf
+    cdef Py_ssize_t size
+
+    if writer.pos == writer.size:
+        # reallocate
+        size = writer.size * 2
+        if writer.buf == BUFFER:
+            buf = <char*>PyMem_Malloc(size)
+            if buf == NULL:
+                PyErr_NoMemory()
+                return -1
+            memcpy(buf, writer.buf, writer.size)
+        else:
+            buf = <char*>PyMem_Realloc(writer.buf, size)
+            if buf == NULL:
+                PyErr_NoMemory()
+                return -1
+        writer.buf = buf
+        writer.size = size
+    writer.buf[writer.pos] = <char>ch
+    writer.pos += 1
+    writer.changed |= changed
+    return 0
+
+
+cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed):
+    if _write_char(writer, '%', changed) < 0:
+        return -1
+    if _write_char(writer, _to_hex(<uint8_t>ch >> 4), changed) < 0:
+        return -1
+    return _write_char(writer, _to_hex(<uint8_t>ch & 0x0f), changed)
+
+
+cdef inline int _write_percent(Writer* writer):
+    if _write_char(writer, '%', True) < 0:
+        return -1
+    if _write_char(writer, '2', True) < 0:
+        return -1
+    return _write_char(writer, '5', True)
+
+
+cdef inline int _write_pct_check(Writer* writer, Py_UCS4 ch, Py_UCS4 pct[]):
+    cdef Py_UCS4 pct1 = _to_hex(<uint8_t>ch >> 4)
+    cdef Py_UCS4 pct2 = _to_hex(<uint8_t>ch & 0x0f)
+    cdef bint changed = pct[0] != pct1 or pct[1] != pct2
+
+    if _write_char(writer, '%', changed) < 0:
+        return -1
+    if _write_char(writer, pct1, changed) < 0:
+        return -1
+    return _write_char(writer, pct2, changed)
+
+
+cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
+    cdef uint64_t utf = <uint64_t> symbol
+
+    if utf < 0x80:
+        return _write_pct(writer, <uint8_t>utf, True)
+    elif utf < 0x800:
+        if _write_pct(writer, <uint8_t>(0xc0 | (utf >> 6)), True) < 0:
+            return -1
+        return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
+    elif 0xD800 <= utf <= 0xDFFF:
+        # surogate pair, ignored
+        return 0
+    elif utf < 0x10000:
+        if _write_pct(writer, <uint8_t>(0xe0 | (utf >> 12)), True) < 0:
+            return -1
+        if _write_pct(writer, <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
+                       True) < 0:
+            return -1
+        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+    elif utf > 0x10FFFF:
+        # symbol is too large
+        return 0
+    else:
+        if _write_pct(writer,  <uint8_t>(0xf0 | (utf >> 18)), True) < 0:
+            return -1
+        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 12) & 0x3f)),
+                       True) < 0:
+           return -1
+        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
+                       True) < 0:
+            return -1
+        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+
+
+# --------------------- end writer --------------------------
 
 
 cdef class _Quoter:
@@ -143,6 +215,7 @@ cdef class _Quoter:
             set_bit(self._protected_table, ch)
 
     def __call__(self, val):
+        cdef Writer writer
         if val is None:
             return None
         if type(val) is not str:
@@ -151,145 +224,78 @@ cdef class _Quoter:
                 val = str(val)
             else:
                 raise TypeError("Argument should be str")
-        return self._do_quote(<str>val)
+        _init_writer(&writer)
+        try:
+            return self._do_quote(<str>val, &writer)
+        finally:
+            _release_writer(&writer)
 
-    cdef str _do_quote(self, str val):
+    cdef str _do_quote(self, str val, Writer *writer):
         cdef Py_UCS4 ch
-        cdef uint8_t[4] buf
-        cdef uint8_t b
-        cdef Py_ssize_t i
-        cdef Py_ssize_t val_len = len(val)
-        if val_len == 0:
-            return val
-        cdef object ret = None
-        cdef Py_ssize_t ret_idx = 0
         cdef int has_pct = 0
         cdef Py_UCS4 pct[2]
-        cdef Py_UCS4 pct2[2]
         cdef int idx = 0
 
-        while idx < val_len:
-            ch = PyUnicode_ReadChar(val, idx)
-            idx += 1
-
+        for ch in val:
             if has_pct:
                 pct[has_pct-1] = ch
                 has_pct += 1
                 if has_pct == 3:
                     ch = _restore_ch(pct[0], pct[1])
-                    if ch == <Py_UCS4>-1:
-                        if ret is None:
-                            ret = _make_str(val, val_len, idx)
-                        PyUnicode_WriteChar(ret, ret_idx, '%')
-                        ret_idx += 1
-                        PyUnicode_WriteChar(ret, ret_idx, '2')
-                        ret_idx += 1
-                        PyUnicode_WriteChar(ret, ret_idx, '5')
-                        ret_idx += 1
-                        idx -= 2
-                        has_pct = 0
-                        continue
-
                     has_pct = 0
-                    pct2[0] = _to_hex(<uint8_t>ch >> 4)
-                    pct2[1] = _to_hex(<uint8_t>ch & 0x0f)
+
+                    if ch == <Py_UCS4>-1:
+                        if _write_percent(writer) < 0:
+                            raise
+                        if self._write(writer, pct[0]) < 0:
+                            raise
+                        if self._write(writer, pct[1]) < 0:
+                            raise
+                        continue
 
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
-                            if ret is None:
-                                ret = _make_str(val, val_len, idx)
-                            PyUnicode_WriteChar(ret, ret_idx, '%')
-                            ret_idx += 1
-                            PyUnicode_WriteChar(ret, ret_idx, pct2[0])
-                            ret_idx += 1
-                            PyUnicode_WriteChar(ret, ret_idx, pct2[1])
-                            ret_idx += 1
+                            if _write_pct(writer, ch, True) < 0:
+                                raise
                             continue
 
                         if bit_at(self._safe_table, ch):
-                            if ret is None:
-                                ret = _make_str(val, val_len, idx)
-                            PyUnicode_WriteChar(ret, ret_idx, ch)
-                            ret_idx += 1
+                            if _write_char(writer, ch, True) < 0:
+                                raise
                             continue
 
-                    if ret is None:
-                        if pct[0] == pct2[0] and pct[1] == pct2[1]:
-                            # fast path
-                            continue
-                        else:
-                            ret = _make_str(val, val_len, idx)
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, pct2[0])
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, pct2[1])
-                    ret_idx += 1
-
-                # special case, if we have only one char after "%"
-                elif has_pct == 2 and idx == val_len:
-                    if ret is None:
-                        ret = _make_str(val, val_len, idx)
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '2')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '5')
-                    ret_idx += 1
-
-                    idx -= 1
-                    has_pct = 0
-
+                    if _write_pct_check(writer, ch, pct) < 0:
+                        raise
                 continue
 
             elif ch == '%':
                 has_pct = 1
-
-                # special case if "%" is last char
-                if idx == val_len:
-                    if ret is None:
-                        ret = _make_str(val, val_len, idx)
-
-                    PyUnicode_WriteChar(ret, ret_idx, '%')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '2')
-                    ret_idx += 1
-                    PyUnicode_WriteChar(ret, ret_idx, '5')
-                    ret_idx += 1
-
                 continue
 
-            if self._qs:
-                if ch == ' ':
-                    if ret is None:
-                        ret = _make_str(val, val_len, idx)
-                    PyUnicode_WriteChar(ret, ret_idx, '+')
-                    ret_idx += 1
-                    continue
-            if ch < 128 and bit_at(self._safe_table, ch):
-                if ret is not None:
-                    PyUnicode_WriteChar(ret, ret_idx, ch)
-                ret_idx +=1
-                continue
+            if self._write(writer, ch) < 0:
+                raise
 
-            if ret is None:
-                ret = _make_str(val, val_len, idx)
+        if has_pct:
+            if _write_percent(writer) < 0:
+                raise
+            if has_pct > 1:  # the value is 2
+                if self._write(writer, ch) < 0:
+                    raise
 
-            for i in range(_char_as_utf8(ch, buf)):
-                b = buf[i]
-                PyUnicode_WriteChar(ret, ret_idx, '%')
-                ret_idx += 1
-                ch = _to_hex(b >> 4)
-                PyUnicode_WriteChar(ret, ret_idx, ch)
-                ret_idx += 1
-                ch = _to_hex(b & 0x0f)
-                PyUnicode_WriteChar(ret, ret_idx, ch)
-                ret_idx += 1
-
-        if ret is None:
+        if not writer.changed:
             return val
         else:
-            return PyUnicode_Substring(ret, 0, ret_idx)
+            return PyUnicode_DecodeASCII(writer.buf, writer.pos, "strict")
+
+    cdef inline int _write(self, Writer *writer, Py_UCS4 ch):
+        if self._qs:
+            if ch == ' ':
+                return _write_char(writer, '+', True)
+
+        if ch < 128 and bit_at(self._safe_table, ch):
+            return _write_char(writer, ch, False)
+
+        return _write_utf8(writer, ch)
 
 
 cdef class _Unquoter:

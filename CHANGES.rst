@@ -10,6 +10,9 @@ CHANGES
 
 * Drop `yarl.quote` and `yarl.unquote` public functions (#155)
 
+* Add custom string writer, reuse static buffer if available (#157)
+  Code is 50-80 times faster than Pure Python version (was 4-5 times faster)
+
 0.18.0 (2018-01-10)
 -------------------
 
