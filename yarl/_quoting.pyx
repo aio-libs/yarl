@@ -1,8 +1,5 @@
 # cython: language_level=3
 
-cdef extern from "Python.h":
-    Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index) except -1
-
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
@@ -235,17 +232,11 @@ cdef class _Quoter:
 
     cdef str _do_quote(self, str val, Writer *writer):
         cdef Py_UCS4 ch
-        cdef Py_ssize_t val_len = len(val)
-        if val_len == 0:
-            return val
         cdef int has_pct = 0
         cdef Py_UCS4 pct[2]
         cdef int idx = 0
 
-        while idx < val_len:
-            ch = PyUnicode_ReadChar(val, idx)
-            idx += 1
-
+        for ch in val:
             if has_pct:
                 pct[has_pct-1] = ch
                 has_pct += 1
