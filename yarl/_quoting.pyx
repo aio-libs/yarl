@@ -1,14 +1,7 @@
 # cython: language_level=3
 
 cdef extern from "Python.h":
-    str PyUnicode_New(Py_ssize_t size, Py_UCS4 maxchar)
-    Py_ssize_t PyUnicode_CopyCharacters(object to, Py_ssize_t to_start,
-                                        object from_, Py_ssize_t from_start,
-                                        Py_ssize_t how_many) except -1
     Py_UCS4 PyUnicode_ReadChar(object u, Py_ssize_t index) except -1
-    int PyUnicode_WriteChar(object u, Py_ssize_t index,
-                            Py_UCS4 value) except -1
-    str PyUnicode_Substring(object u, Py_ssize_t start, Py_ssize_t end)
 
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
@@ -56,15 +49,6 @@ cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
     if digit2 < 0:
         return <Py_UCS4>-1
     return <Py_UCS4>(digit1 << 4 | digit2)
-
-
-cdef inline str _make_str(str val, Py_ssize_t val_len, int idx):
-    # UTF8 may take up to 4 bytes per symbol
-    # every byte is encoded as %XX -- 3 bytes
-    cdef str ret = PyUnicode_New(val_len*3*4 + 1, 1114111)
-    if idx != 0:
-        PyUnicode_CopyCharacters(ret, 0, val, 0, idx)
-    return ret
 
 
 cdef inline Py_ssize_t _char_as_utf8(uint64_t ch, uint8_t buf[]):
