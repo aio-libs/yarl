@@ -421,6 +421,12 @@ class URL:
         raw = self.raw_host
         if raw is None:
             return None
+        if '%' in raw:
+            # Hack for scoped IPv6 addresses like
+            # fe80::2%Проверка
+            # presence of '%' sign means only IPv6 address, so idna is useless.
+            return raw
+
         try:
             return idna.decode(raw.encode('ascii'))
         except UnicodeError:  # e.g. '::1'
@@ -615,14 +621,17 @@ class URL:
     @classmethod
     def _encode_host(cls, host):
         try:
-            host = idna.encode(host, uts46=True).decode('ascii')
-        except UnicodeError:
-            host = host.encode('idna').decode('ascii')
-        try:
-            ip = ip_address(host)
+            ip, sep, zone = host.partition('%')
+            ip = ip_address(ip)
         except ValueError:
-            pass
+            try:
+                host = idna.encode(host, uts46=True).decode('ascii')
+            except UnicodeError:
+                host = host.encode('idna').decode('ascii')
         else:
+            host = ip.compressed
+            if sep:
+                host += '%' + zone
             if ip.version == 6:
                 host = '[' + host + ']'
         return host
