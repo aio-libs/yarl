@@ -183,7 +183,8 @@ class URL:
 
     @classmethod
     def build(cls, *, scheme='', user='', password='', host='', port=None,
-              path='', query=None, query_string='', fragment=''):
+              path='', query=None, query_string='', fragment='',
+              encoded=False):
         """Creates and returns a new URL"""
 
         if host and not scheme:
@@ -196,17 +197,22 @@ class URL:
             raise ValueError(
                 "Only one of \"query\" or \"query_string\" should be passed")
 
-        netloc = cls._make_netloc(user, password, host, port, encode=True)
-        path = cls._PATH_QUOTER(path)
-        if netloc:
-            path = cls._normalize_path(path)
+        netloc = cls._make_netloc(user, password, host, port,
+                                  encode=not encoded)
+        if not encoded:
+            path = cls._PATH_QUOTER(path)
+            if netloc:
+                path = cls._normalize_path(path)
+
+            query_string = cls._QUERY_QUOTER(query_string)
+            fragment = cls._FRAGMENT_QUOTER(fragment)
 
         url = cls(
             SplitResult(
                 scheme,
                 netloc,
                 path,
-                cls._QUERY_QUOTER(query_string),
+                query_string,
                 fragment
             ),
             encoded=True
