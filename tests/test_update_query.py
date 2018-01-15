@@ -23,7 +23,7 @@ def test_update_query():
 
     assert url.update_query({'baz': 'foo'}) == expected_url
     assert url.update_query(baz='foo') == expected_url
-    assert url.update_query("?baz=foo") == expected_url
+    assert url.update_query("baz=foo") == expected_url
 
 
 def test_update_query_with_args_and_kwargs():
@@ -167,3 +167,10 @@ def test_with_query_only():
     url = URL()
     url2 = url.with_query(key='value')
     assert str(url2) == '?key=value'
+
+
+def test_update_query_multiple_keys():
+    url = URL('http://example.com/path?a=1&a=2')
+    u2 = url.update_query([('a', '3'), ('a', '4')])
+
+    assert str(u2) == 'http://example.com/path?a=3&a=4'

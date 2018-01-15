@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-0.19.0 (xxxx-xx-xx)
+1.0.0 (xxxx-xx-xx)
 -------------------
 
 * Use fast path if quoted string does not need requoting (#154)
@@ -16,6 +16,8 @@ CHANGES
 * Don't recode IP zone (#144)
 
 * Support `encoded=True` in `yarl.URL.build()` (#158)
+
+* Fix updating query with multiple keys (#160)
 
 0.18.0 (2018-01-10)
 -------------------
