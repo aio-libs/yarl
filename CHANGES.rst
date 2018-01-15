@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-1.0.0 (xxxx-xx-xx)
--------------------
+1.0.0 (2018-01-15)
+------------------
 
 * Use fast path if quoted string does not need requoting (#154)
 
