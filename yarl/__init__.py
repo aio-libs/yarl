@@ -1,5 +1,4 @@
 import warnings
-from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
 from urllib.parse import (SplitResult, parse_qsl,

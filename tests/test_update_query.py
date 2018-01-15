@@ -23,7 +23,7 @@ def test_update_query():
 
     assert url.update_query({'baz': 'foo'}) == expected_url
     assert url.update_query(baz='foo') == expected_url
-    assert url.update_query("?baz=foo") == expected_url
+    assert url.update_query("baz=foo") == expected_url
 
 
 def test_update_query_with_args_and_kwargs():
