@@ -1,5 +1,4 @@
 import warnings
-from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
 from urllib.parse import (SplitResult, parse_qsl,
@@ -853,19 +852,13 @@ class URL:
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
-        new_query = OrderedDict(
-            map(
-                lambda x: x.split('=', 1),
-                self._QUERY_QUOTER(
-                    self._get_str_query(*args, **kwargs)
-                ).lstrip("?").split("&")
-            )
-        )
-        query = OrderedDict(self.query)
+        s = self._get_str_query(*args, **kwargs)
+        new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
+        query = MultiDict(self.query)
         query.update(new_query)
-        query = self._get_str_query(query)
-        return URL(
-            self._val._replace(path=self._val.path, query=query), encoded=True)
+
+        return URL(self._val._replace(query=self._get_str_query(query)),
+                   encoded=True)
 
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.

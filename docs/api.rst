@@ -566,22 +566,14 @@ section generates a new *URL* instance.
       URL('http://example.com/path?a=b&b=2')
       >>> URL('http://example.com/path?a=b&b=1').update_query([('b', '2')])
       URL('http://example.com/path?a=b&b=2')
+      >>> URL('http://example.com/path?a=b&c=e&c=f').update_query(c='d')
+      URL('http://example.com/path?a=b&c=d')
+      >>> URL('http://example.com/path?a=b').update_query('c=d&c=f')
+      URL('http://example.com/path?a=b&c=d&c=f')
 
-   .. note::
+   .. versionchanged:: 1.0
 
-      Query string will be updated in a similar way to ``dict.update``. Multiple values will be dropped:
-
-      .. doctest::
-
-         >>> URL('http://example.com/path?a=b&c=e&c=f').update_query(c='d')
-         URL('http://example.com/path?a=b&c=d')
-
-      When passing multiple values as an argument, only last value will be applied.
-
-      .. doctest::
-
-         >>> URL('http://example.com/path?a=b').update_query('c=d&c=f')
-         URL('http://example.com/path?a=b&c=f')
+      All multiple key/value pairs are applied to the multi-dictionary.
 
 .. method:: URL.with_fragment(port)
 
