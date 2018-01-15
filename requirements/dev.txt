@@ -1,0 +1,3 @@
+-r ci.txt
+pytest-sugar==0.9.0
+mypy==0.560

@@ -122,6 +122,16 @@ def test_host_non_ascii():
     assert "историк.рф" == url.host
 
 
+def test_localhost():
+    url = URL('http://[::1]')
+    assert "::1" == url.host
+
+
+def test_host_with_underscore():
+    url = URL('http://abc_def.com')
+    assert "abc_def.com" == url.host
+
+
 def test_raw_host_when_port_is_specified():
     url = URL('http://example.com:8888')
     assert "example.com" == url.raw_host
@@ -135,6 +145,37 @@ def test_raw_host_from_str_with_ipv4():
 def test_raw_host_from_str_with_ipv6():
     url = URL('http://[::1]:80')
     assert url.raw_host == '::1'
+
+
+def test_lowercase():
+    url = URL('http://gitHUB.com')
+    assert url.raw_host == 'github.com'
+    assert url.host == url.raw_host
+
+
+def test_lowercase_nonascii():
+    url = URL('http://Айдеко.Рф')
+    assert url.raw_host == 'xn--80aidohy.xn--p1ai'
+    assert url.host == 'айдеко.рф'
+
+
+def test_compressed_ipv6():
+    url = URL('http://[1DEC:0:0:0::1]')
+    assert url.raw_host == '1dec::1'
+    assert url.host == url.raw_host
+
+
+def test_ipv6_zone():
+    url = URL('http://[fe80::822a:a8ff:fe49:470c%тест%42]:123')
+    assert url.raw_host == 'fe80::822a:a8ff:fe49:470c%тест%42'
+    assert url.host == url.raw_host
+
+
+def test_ipv4_zone():
+    # I'm unsure if it is correct.
+    url = URL('http://1.2.3.4%тест%42:123')
+    assert url.raw_host == '1.2.3.4%тест%42'
+    assert url.host == url.raw_host
 
 
 def test_explicit_port():
@@ -217,6 +258,17 @@ def test_path_qs():
     assert url.path_qs == '/?б=в&ю=к'
     url = URL('http://example.com/path?б=в&ю=к')
     assert url.path_qs == '/path?б=в&ю=к'
+
+
+def test_raw_path_qs():
+    url = URL('http://example.com/')
+    assert url.raw_path_qs == '/'
+    url = URL('http://example.com/?б=в&ю=к')
+    assert url.raw_path_qs == '/?%D0%B1=%D0%B2&%D1%8E=%D0%BA'
+    url = URL('http://example.com/path?б=в&ю=к')
+    assert url.raw_path_qs == '/path?%D0%B1=%D0%B2&%D1%8E=%D0%BA'
+    url = URL('http://example.com/путь?a=1&b=2')
+    assert url.raw_path_qs == '/%D0%BF%D1%83%D1%82%D1%8C?a=1&b=2'
 
 
 def test_query_string_spaces():
@@ -708,11 +760,15 @@ def test_from_non_allowed():
 def test_from_idna():
     url = URL('http://xn--jxagkqfkduily1i.eu')
     assert "http://xn--jxagkqfkduily1i.eu" == str(url)
+    url = URL('http://xn--einla-pqa.de/')  # needs idna 2008
+    assert "http://xn--einla-pqa.de/" == str(url)
 
 
 def test_to_idna():
     url = URL('http://εμπορικόσήμα.eu')
     assert "http://xn--jxagkqfkduily1i.eu" == str(url)
+    url = URL('http://einlaß.de/')
+    assert "http://xn--einla-pqa.de/" == str(url)
 
 
 def test_from_ascii_login():

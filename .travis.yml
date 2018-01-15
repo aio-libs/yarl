@@ -11,13 +11,13 @@ python:
 install:
   - pip install cython
   - pip install twine
-  - pip install -r requirements-ci.txt
+  - pip install -r requirements/ci.txt
   - pip install codecov
   - pip install mypy-lang
 
 
 script:
-  - pytest --cov yarl ./tests/ --flake8
+  - pytest --cov yarl ./tests/ ./yarl/ --flake8
   - make doc
   - python setup.py check -rm
   - if python -c "import sys; sys.exit(sys.version_info < (3,6))"; then

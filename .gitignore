@@ -79,6 +79,7 @@ celerybeat-schedule
 .env
 
 # virtualenv
+.venv/
 venv/
 ENV/
 
@@ -100,3 +101,4 @@ yarl/_quoting.html
 .idea
 
 .mypy_cache
+.install-deps

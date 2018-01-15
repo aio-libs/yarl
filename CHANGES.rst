@@ -1,6 +1,61 @@
 CHANGES
 =======
 
+0.19.0 (xxxx-xx-xx)
+-------------------
+
+* Use fast path if quoted string does not need requoting (#154)
+
+* Speed up quoting/unquoting by `_Quoter` and `_Unquoter` classes (#155)
+
+* Drop `yarl.quote` and `yarl.unquote` public functions (#155)
+
+* Add custom string writer, reuse static buffer if available (#157)
+  Code is 50-80 times faster than Pure Python version (was 4-5 times faster)
+
+* Don't recode IP zone (#144)
+
+* Support `encoded=True` in `yarl.URL.build()` (#158)
+
+0.18.0 (2018-01-10)
+-------------------
+
+* Fallback to IDNA 2003 if domain name is not IDNA 2008 compatible (#152)
+
+0.17.0 (2017-12-30)
+-------------------
+
+* Use IDNA 2008 for domain name processing (#149)
+
+0.16.0 (2017-12-07)
+-------------------
+
+* Fix raising `TypeError` by `url.query_string()` after
+  `url.with_query({})` (empty mapping) (#141)
+
+0.15.0 (2017-11-23)
+-------------------
+
+* Add `raw_path_qs` attribute (#137)
+
+0.14.2 (2017-11-14)
+-------------------
+
+* Restore `strict` parameter as no-op in `quote`/`unquote`
+
+0.14.1 (2017-11-13)
+-------------------
+
+* Restore `strict` parameter as no-op for sake of compatibility with
+  aiohttp 2.2
+
+0.14.0 (2017-11-11)
+-------------------
+
+* Drop strict mode (#123)
+
+* Fix `"ValueError: Unallowed PCT %"` when there's a `"%"` in the url (#124)
+
 0.13.0 (2017-10-01)
 -------------------
 

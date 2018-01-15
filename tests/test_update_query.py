@@ -69,7 +69,9 @@ def test_with_query_only_single_arg_is_supported():
 
 def test_with_query_empty_dict():
     url = URL('http://example.com/?a=b')
-    assert str(url.with_query({})) == 'http://example.com/'
+    new_url = url.with_query({})
+    assert new_url.query_string == ''
+    assert str(new_url) == 'http://example.com/'
 
 
 def test_with_query_empty_str():
