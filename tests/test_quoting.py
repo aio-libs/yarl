@@ -345,3 +345,8 @@ def test_quote_very_large_string(quoter):
     # more than 8 KiB
     s = 'abcфух%30%0a' * 1024
     assert quoter()(s) == 'abc%D1%84%D1%83%D1%850%0A' * 1024
+
+
+def test_space(quoter):
+    s = '% A'
+    assert quoter()(s) == '%25%20A'

@@ -1,3 +1,4 @@
+import re
 from string import ascii_letters, ascii_lowercase, digits
 
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
@@ -8,6 +9,9 @@ SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+&=;'
 RESERVED = GEN_DELIMS + SUB_DELIMS
 UNRESERVED = ascii_letters + digits + '-._~'
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
+
+
+_IS_HEX = re.compile(b'[A-Z0-9][A-Z0-9]')
 
 
 class _PyQuoter:
@@ -39,10 +43,16 @@ class _PyQuoter:
 
             if pct:
                 if ch in BASCII_LOWERCASE:
-                    ch = ch - 32
+                    ch = ch - 32  # convert to uppercase
                 pct.append(ch)
                 if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                     pct = bytes(pct)
+                    buf = pct[1:]
+                    if not _IS_HEX.match(buf):
+                        ret.extend(b'%25')
+                        pct = b''
+                        idx -= 2
+                        continue
                     try:
                         unquoted = chr(int(pct[1:].decode('ascii'), base=16))
                     except ValueError:
