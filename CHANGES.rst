@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+1.1.0 (2018-01-21)
+------------------
+
+* Make pure Python quoter consistent with Cython version (#162)
+
 1.0.0 (2018-01-15)
 ------------------
 
