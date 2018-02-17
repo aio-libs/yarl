@@ -102,3 +102,4 @@ yarl/_quoting.html
 
 .mypy_cache
 .install-deps
+.pytest_cache
