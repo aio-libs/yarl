@@ -196,8 +196,11 @@ class URL:
             raise ValueError(
                 "Only one of \"query\" or \"query_string\" should be passed")
 
-        netloc = cls._make_netloc(user, password, host, port,
-                                  encode=not encoded)
+        if not user and not password and not host and not port:
+            netloc = ''
+        else:
+            netloc = cls._make_netloc(user, password, host, port,
+                                      encode=not encoded)
         if not encoded:
             path = cls._PATH_QUOTER(path)
             if netloc:

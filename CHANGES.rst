@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+1.1.1 (2018-02-17)
+------------------
+
+* Fix performance regression: don't encode enmpty netloc (#170)
+
 1.1.0 (2018-01-21)
 ------------------
 
