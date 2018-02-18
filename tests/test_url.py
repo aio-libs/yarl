@@ -5,8 +5,8 @@ from urllib.parse import SplitResult
 from yarl import URL
 
 
-@pytest.skipif(sys.version < (3, 6),
-               reason="The feature requires Python 3.6+")
+@pytest.mark.skipif(sys.version_info < (3, 6),
+                    reason="The feature requires Python 3.6+")
 def test_inheritance():
     with pytest.raises(TypeError):
         class MyURL(URL):
