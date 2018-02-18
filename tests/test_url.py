@@ -8,9 +8,13 @@ from yarl import URL
 @pytest.mark.skipif(sys.version_info < (3, 6),
                     reason="The feature requires Python 3.6+")
 def test_inheritance():
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError) as ctx:
         class MyURL(URL):
             pass
+
+    assert ("Inheritance a class "
+            "<class 'test_url.test_inheritance.<locals>.MyURL'> "
+            "from URL is forbidden" == str(ctx.value))
 
 
 def test_is():

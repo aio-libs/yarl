@@ -226,8 +226,8 @@ class URL:
             return url
 
     def __init_subclass__(cls):
-        raise TypeError("Inheritance a class {} from URL "
-                        "is forbidden")
+        raise TypeError("Inheritance a class {!r} from URL "
+                        "is forbidden".format(cls))
 
     def __str__(self):
         val = self._val
