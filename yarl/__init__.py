@@ -141,16 +141,14 @@ class URL:
     _PATH_UNQUOTER = _Unquoter(unsafe='+')
     _QS_UNQUOTER = _Unquoter(qs=True)
 
-    def __init__(self, val='', *, encoded=False, strict=None):
+    def __new__(cls, val='', *, encoded=False, strict=None):
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
-        if isinstance(val, URL):
-            self._val = val._val
-            self._cache = val._cache
-            return
-        if isinstance(val, str):
+        if type(val) is cls:
+            return val
+        if type(val) is str:
             val = urlsplit(val)
-        elif isinstance(val, SplitResult):
+        elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
         else:
@@ -164,21 +162,23 @@ class URL:
                 if host is None:
                     raise ValueError(
                         "Invalid URL: host is required for abolute urls.")
-                netloc = self._make_netloc(val.username,
-                                           val.password,
-                                           host,
-                                           val.port,
-                                           encode=True)
-            path = self._PATH_QUOTER(val[2])
+                netloc = cls._make_netloc(val.username,
+                                          val.password,
+                                          host,
+                                          val.port,
+                                          encode=True)
+            path = cls._PATH_QUOTER(val[2])
             if netloc:
-                path = self._normalize_path(path)
+                path = cls._normalize_path(path)
 
-            query = self._QUERY_QUOTER(val[3])
-            fragment = self._FRAGMENT_QUOTER(val[4])
+            query = cls._QUERY_QUOTER(val[3])
+            fragment = cls._FRAGMENT_QUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
 
+        self = object.__new__(cls)
         self._val = val
         self._cache = {}
+        return self
 
     @classmethod
     def build(cls, *, scheme='', user='', password='', host='', port=None,
@@ -225,6 +225,10 @@ class URL:
         else:
             return url
 
+    def __init_subclass__(cls):
+        raise TypeError("Inheritance a class {} from URL "
+                        "is forbidden")
+
     def __str__(self):
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
@@ -235,7 +239,7 @@ class URL:
         return "{}('{}')".format(self.__class__.__name__, str(self))
 
     def __eq__(self, other):
-        if not isinstance(other, URL):
+        if not type(other) is URL:
             return NotImplemented
 
         val1 = self._val
@@ -258,22 +262,22 @@ class URL:
         return ret
 
     def __le__(self, other):
-        if not isinstance(other, URL):
+        if not type(other) is URL:
             return NotImplemented
         return self._val <= other._val
 
     def __lt__(self, other):
-        if not isinstance(other, URL):
+        if not type(other) is URL:
             return NotImplemented
         return self._val < other._val
 
     def __ge__(self, other):
-        if not isinstance(other, URL):
+        if not type(other) is URL:
             return NotImplemented
         return self._val >= other._val
 
     def __gt__(self, other):
-        if not isinstance(other, URL):
+        if not type(other) is URL:
             return NotImplemented
         return self._val > other._val
 

@@ -5,6 +5,18 @@ from urllib.parse import SplitResult
 from yarl import URL
 
 
+def test_inheritance():
+    with pytest.raises(TypeError):
+        class MyURL(URL):
+            pass
+
+
+def test_is():
+    u1 = URL('http://example.com')
+    u2 = URL(u1)
+    assert u1 is u2
+
+
 def test_absolute_url_without_host():
     with pytest.raises(ValueError):
         URL('http://:8080/')
