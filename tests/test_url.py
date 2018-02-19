@@ -5,6 +5,24 @@ from urllib.parse import SplitResult
 from yarl import URL
 
 
+@pytest.mark.skipif(sys.version_info < (3, 6),
+                    reason="The feature requires Python 3.6+")
+def test_inheritance():
+    with pytest.raises(TypeError) as ctx:
+        class MyURL(URL):
+            pass
+
+    assert ("Inheritance a class "
+            "<class 'test_url.test_inheritance.<locals>.MyURL'> "
+            "from URL is forbidden" == str(ctx.value))
+
+
+def test_is():
+    u1 = URL('http://example.com')
+    u2 = URL(u1)
+    assert u1 is u2
+
+
 def test_absolute_url_without_host():
     with pytest.raises(ValueError):
         URL('http://:8080/')
