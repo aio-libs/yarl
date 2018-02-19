@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+1.2.0 (XXXX-XX-XX)
+------------------
+
+* Forbid inheritance, replace __init__ with __new__ (#171)
+
 1.1.1 (2018-02-17)
 ------------------
 
