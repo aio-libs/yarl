@@ -27,6 +27,14 @@ for absolute URLs and ::
 for relative
 ones (:ref:`yarl-api-relative-urls`).
 
+The URL structure is::
+
+    http://user:pass@example.com:8042/over/there?name=ferret#nose
+    \__/   \__/ \__/ \_________/ \__/\_________/ \_________/ \__/
+     |      |    |        |       |      |           |        |
+   scheme  user password host    port   path       query   fragment
+
+
 Internally all data are stored as *percent-encoded* strings for
 *user*, *path*, *query* and *fragment* URL parts and
 *IDNA-encoded* (:rfc:`5891`) for *host*.
