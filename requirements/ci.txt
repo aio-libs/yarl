@@ -1,5 +1,5 @@
 -r wheel.txt
-wheel==0.30.0
+wheel==0.31.0
 pytest-cov>=2.3.1
 pytest-flake8>=0.6
 sphinx==1.7.2
