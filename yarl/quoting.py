@@ -1,5 +1,6 @@
 import re
 from string import ascii_letters, ascii_lowercase, digits
+from typing import Optional, TYPE_CHECKING, cast
 
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
 BPCT_ALLOWED = {'%{:02X}'.format(i).encode('ascii') for i in range(256)}
@@ -14,22 +15,23 @@ ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 _IS_HEX = re.compile(b'[A-Z0-9][A-Z0-9]')
 
 
-class _PyQuoter:
-    def __init__(self, *, safe='', protected='', qs=False):
+class _Quoter:
+    def __init__(self, *,
+                 safe: str='', protected: str='', qs: bool=False) -> None:
         self._safe = safe
         self._protected = protected
         self._qs = qs
 
-    def __call__(self, val):
+    def __call__(self, val: Optional[str]) -> Optional[str]:
         if val is None:
             return None
         if not isinstance(val, str):
             raise TypeError("Argument should be str")
         if not val:
             return ''
-        val = val.encode('utf8', errors='ignore')
+        bval = cast(str, val).encode('utf8', errors='ignore')
         ret = bytearray()
-        pct = b''
+        pct = bytearray()
         safe = self._safe
         safe += ALLOWED
         if not self._qs:
@@ -37,8 +39,8 @@ class _PyQuoter:
         safe += self._protected
         bsafe = safe.encode('ascii')
         idx = 0
-        while idx < len(val):
-            ch = val[idx]
+        while idx < len(bval):
+            ch = bval[idx]
             idx += 1
 
             if pct:
@@ -46,18 +48,17 @@ class _PyQuoter:
                     ch = ch - 32  # convert to uppercase
                 pct.append(ch)
                 if len(pct) == 3:  # pragma: no branch   # peephole optimizer
-                    pct = bytes(pct)
                     buf = pct[1:]
                     if not _IS_HEX.match(buf):
                         ret.extend(b'%25')
-                        pct = b''
+                        pct.clear()
                         idx -= 2
                         continue
                     try:
                         unquoted = chr(int(pct[1:].decode('ascii'), base=16))
                     except ValueError:
                         ret.extend(b'%25')
-                        pct = b''
+                        pct.clear()
                         idx -= 2
                         continue
 
@@ -67,22 +68,22 @@ class _PyQuoter:
                         ret.append(ord(unquoted))
                     else:
                         ret.extend(pct)
-                    pct = b''
+                    pct.clear()
 
                 # special case, if we have only one char after "%"
-                elif len(pct) == 2 and idx == len(val):
+                elif len(pct) == 2 and idx == len(bval):
                     ret.extend(b'%25')
-                    pct = b''
+                    pct.clear()
                     idx -= 1
 
                 continue
 
             elif ch == ord('%'):
-                pct = bytearray()
+                pct.clear()
                 pct.append(ch)
 
                 # special case if "%" is last char
-                if idx == len(val):
+                if idx == len(bval):
                     ret.extend(b'%25')
 
                 continue
@@ -100,14 +101,14 @@ class _PyQuoter:
         return ret.decode('ascii')
 
 
-class _PyUnquoter:
-    def __init__(self, *, unsafe='', qs=False):
+class _Unquoter:
+    def __init__(self, *, unsafe: str='', qs: bool=False) -> None:
         self._unsafe = unsafe
         self._qs = qs
         self._quoter = _Quoter()
         self._qs_quoter = _Quoter(qs=True)
 
-    def __call__(self, val):
+    def __call__(self, val: Optional[str]) -> Optional[str]:
         if val is None:
             return None
         if not isinstance(val, str):
@@ -179,8 +180,12 @@ class _PyUnquoter:
         return ''.join(ret)
 
 
-try:
-    from ._quoting import _Quoter, _Unquoter
-except ImportError:  # pragma: no cover
-    _Quoter = _PyQuoter
-    _Unquoter = _PyUnquoter
+_PyQuoter = _Quoter
+_PyUnquoter = _Unquoter
+
+if not TYPE_CHECKING:
+    try:
+        from ._quoting import _Quoter, _Unquoter
+    except ImportError:  # pragma: no cover
+        _Quoter = _PyQuoter
+        _Unquoter = _PyUnquoter

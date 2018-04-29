@@ -1,5 +1,3 @@
-MD = $(shell python -c "import multidict; print(multidict.__path__[0])")
-
 all: test
 
 
@@ -36,5 +34,4 @@ doctest: .develop
 
 
 mypy:
-	MYPYPATH=$(MD)/.. mypy yarl
-	MYPYPATH=$(MD)/.. mypy --disallow-untyped-defs yarl/*.pyi
+	mypy yarl tests
