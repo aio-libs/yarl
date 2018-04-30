@@ -1,10 +1,12 @@
 CHANGES
 =======
 
-1.2.0 (XXXX-XX-XX)
+1.2.0 (2018-04-30)
 ------------------
 
-* Forbid inheritance, replace __init__ with __new__ (#171)
+* Forbid inheritance, replace `__init__` with `__new__` (#171)
+
+* Support PEP-561 (provide type hinting marker) (#182)
 
 1.1.1 (2018-02-17)
 ------------------
