@@ -194,3 +194,61 @@ class TestPort:
     def test_bad_port_again(self):
         with pytest.raises(ValueError):
             URL('//h:-80/path')
+
+
+class TestUserInfo:
+
+    def test_canonical(self):
+        u = URL('sch://user@host/')
+        assert u.scheme == 'sch'
+        assert u.user == 'user'
+        assert u.host == 'host'
+        assert u.path == '/'
+
+    def test_user_pass(self):
+        u = URL('//user:pass@host')
+        assert u.scheme == ''
+        assert u.user == 'user'
+        assert u.password == 'pass'
+        assert u.host == 'host'
+        assert u.path == '/'
+
+    def test_complex_userinfo(self):
+        u = URL('//user:pas:and:more@host')
+        assert u.scheme == ''
+        assert u.user == 'user'
+        assert u.password == 'pas:and:more'
+        assert u.host == 'host'
+        assert u.path == '/'
+
+    def test_no_user(self):
+        u = URL('//:pas:@host')
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password == 'pas:'
+        assert u.host == 'host'
+        assert u.path == '/'
+
+    def test_weird_user(self):
+        u = URL("//!($&')*+,;=@host")
+        assert u.scheme == ''
+        assert u.user == "!($&')*+,;="
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+
+    def test_weird_user2(self):
+        u = URL("//user@info@ya.ru")
+        assert u.scheme == ''
+        assert u.user == "user@info"
+        assert u.password is None
+        assert u.host == 'ya.ru'
+        assert u.path == '/'
+
+    def test_weird_user3(self):
+        u = URL("//[some]@host")
+        assert u.scheme == ''
+        assert u.user == "[some]"
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
