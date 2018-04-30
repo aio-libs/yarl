@@ -92,6 +92,7 @@ args = dict(
     license='Apache 2',
     packages=['yarl'],
     install_requires=install_requires,
+    python_requires='>=3.5.3',
     include_package_data=True,
     setup_requires=setup_requires,
     tests_require=['pytest'],
