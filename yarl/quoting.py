@@ -183,7 +183,7 @@ class _Unquoter:
 _PyQuoter = _Quoter
 _PyUnquoter = _Unquoter
 
-if not TYPE_CHECKING:
+if not TYPE_CHECKING:  # pragma: no branch
     try:
         from ._quoting import _Quoter, _Unquoter
     except ImportError:  # pragma: no cover
