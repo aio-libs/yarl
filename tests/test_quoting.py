@@ -71,10 +71,10 @@ def test_safe(quoter):
     assert ret == quote_by_default
 
 
-SHOULD_QUOTE = [chr(num) for num in range(32)]
-SHOULD_QUOTE.append('<>#"{}|\^[]`')
-SHOULD_QUOTE.append(chr(127))  # For 0x7F
-SHOULD_QUOTE = ''.join(SHOULD_QUOTE)
+_SHOULD_QUOTE = [chr(num) for num in range(32)]
+_SHOULD_QUOTE.append('<>#"{}|\^[]`')
+_SHOULD_QUOTE.append(chr(127))  # For 0x7F
+SHOULD_QUOTE = ''.join(_SHOULD_QUOTE)
 
 
 @pytest.mark.parametrize('char', SHOULD_QUOTE)
