@@ -1,3 +1,5 @@
+import pytest
+
 from yarl import URL
 
 
@@ -155,3 +157,40 @@ class TestHost:
         assert u.scheme == ''
         assert u.host == '::1'
         assert u.path == '/'
+
+
+class TestPort:
+
+    def test_canonical(self):
+        u = URL('//host:80/path')
+        assert u.scheme == ''
+        assert u.host == 'host'
+        assert u.port == 80
+        assert u.path == '/path'
+
+    def test_no_path(self):
+        u = URL('//host:80')
+        assert u.scheme == ''
+        assert u.host == 'host'
+        assert u.port == 80
+        assert u.path == '/'
+
+    def test_no_host(self):
+        with pytest.raises(ValueError):
+            URL('//:80')
+
+    def test_double_port(self):
+        with pytest.raises(ValueError):
+            URL('//h:22:80/')
+
+    def test_bad_port(self):
+        with pytest.raises(ValueError):
+            URL('//h:no/path')
+
+    def test_another_bad_port(self):
+        with pytest.raises(ValueError):
+            URL('//h:22:no/path')
+
+    def test_bad_port_again(self):
+        with pytest.raises(ValueError):
+            URL('//h:-80/path')
