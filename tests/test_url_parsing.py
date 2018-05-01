@@ -421,7 +421,7 @@ class TestFragment:
         assert u.query_string == ''
         assert u.fragment == 'frag'
 
-    def test_scheme_frag(self):
+    def test_host_frag(self):
         u = URL("//host#frag")
         assert u.scheme == ''
         assert u.user is None
@@ -451,7 +451,7 @@ class TestFragment:
         assert u.query_string == 'query'
         assert u.fragment == 'frag'
 
-    def test_host_frag(self):
+    def test_host_frag_query(self):
         u = URL("//ho#st/path?query")
         assert u.scheme == ''
         assert u.user is None
@@ -528,7 +528,7 @@ class TestStripEmptyParts:
         assert u.query_string == ''
         assert u.fragment == ''
 
-    def test_path_only(self):
+    def test_relative_path_only(self):
         u = URL("path")
         assert u.scheme == ''
         assert u.user is None
