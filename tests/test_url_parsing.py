@@ -470,3 +470,130 @@ class TestFragment:
         assert u.path == ''
         assert u.query_string == ''
         assert u.fragment == 'a://b:c@d.e/f?g#h'
+
+
+class TestStripEmptyParts:
+
+    def test_all_empty(self):
+        with pytest.raises(ValueError):
+            URL("//@:?#")
+
+    def test_path_only(self):
+        u = URL("///path")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == '/path'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_user(self):
+        u = URL("//@host")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_port(self):
+        u = URL("//host:")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_port_and_path(self):
+        u = URL("//host:/")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_path_only(self):
+        u = URL("/")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == '/'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_path_only(self):
+        u = URL("path")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == 'path'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_path(self):
+        u = URL("/path")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == '/path'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_query_with_path(self):
+        u = URL("/path?")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == '/path'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_query(self):
+        u = URL("?")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_query_with_frag(self):
+        u = URL("?#frag")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == 'frag'
+
+    def test_path_empty_frag(self):
+        u = URL("/path#")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == '/path'
+        assert u.query_string == ''
+        assert u.fragment == ''
+
+    def test_empty_path(self):
+        u = URL("#")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == ''
