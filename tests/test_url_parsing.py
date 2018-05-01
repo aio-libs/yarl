@@ -397,3 +397,36 @@ class TestQuery_String:
         assert u.path == ''
         assert u.query_string == ''
         assert u.fragment == '?query'
+
+
+class TestFragment:
+
+    def test_simple(self):
+        u = URL("#frag")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == 'frag'
+
+    def test_scheme_frag(self):
+        u = URL("http:#frag")
+        assert u.scheme == 'http'
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == 'frag'
+
+    def test_scheme_frag(self):
+        u = URL("//host#frag")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+        assert u.query_string == ''
+        assert u.fragment == 'frag'
