@@ -337,3 +337,63 @@ class TestQuery_String:
         assert u.path == ''
         assert u.query_string == 'query'
         assert u.fragment == ''
+
+    def test_scheme_query(self):
+        u = URL("http:?query")
+        assert u.scheme == 'http'
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == 'query'
+        assert u.fragment == ''
+
+    def test_abs_url_query(self):
+        u = URL("//host?query")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+        assert u.query_string == 'query'
+        assert u.fragment == ''
+
+    def test_abs_url_path_query(self):
+        u = URL("//host/path?query")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/path'
+        assert u.query_string == 'query'
+        assert u.fragment == ''
+
+    def test_double_question_mark(self):
+        u = URL("//ho?st/path?query")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'ho'
+        assert u.path == '/'
+        assert u.query_string == 'st/path?query'
+        assert u.fragment == ''
+
+    def test_complex_query(self):
+        u = URL("?a://b:c@d.e/f?g#h")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == 'a://b:c@d.e/f?g'
+        assert u.fragment == ''
+
+    def test_query_in_fragment(self):
+        u = URL("#?query")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == '?query'
