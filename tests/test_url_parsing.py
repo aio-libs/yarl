@@ -386,7 +386,7 @@ class TestQuery_String:
         assert u.host is None
         assert u.path == ''
         assert u.query_string == 'a://b:c@d.e/f?g'
-        assert u.fragment == ''
+        assert u.fragment == 'h'
 
     def test_query_in_fragment(self):
         u = URL("#?query")
@@ -430,3 +430,43 @@ class TestFragment:
         assert u.path == '/'
         assert u.query_string == ''
         assert u.fragment == 'frag'
+
+    def test_scheme_path_frag(self):
+        u = URL("//host/path#frag")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/path'
+        assert u.query_string == ''
+        assert u.fragment == 'frag'
+
+    def test_scheme_query_frag(self):
+        u = URL("//host?query#frag")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'host'
+        assert u.path == '/'
+        assert u.query_string == 'query'
+        assert u.fragment == 'frag'
+
+    def test_host_frag(self):
+        u = URL("//ho#st/path?query")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host == 'ho'
+        assert u.path == '/'
+        assert u.query_string == ''
+        assert u.fragment == 'st/path?query'
+
+    def test_complex_frag(self):
+        u = URL("#a://b:c@d.e/f?g#h")
+        assert u.scheme == ''
+        assert u.user is None
+        assert u.password is None
+        assert u.host is None
+        assert u.path == ''
+        assert u.query_string == ''
+        assert u.fragment == 'a://b:c@d.e/f?g#h'
