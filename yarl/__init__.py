@@ -151,6 +151,8 @@ class URL:
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
+        elif isinstance(val, str):
+            val = urlsplit(str(val))
         else:
             raise TypeError("Constructor parameter should be str")
 
