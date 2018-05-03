@@ -17,6 +17,13 @@ def test_inheritance():
             "from URL is forbidden" == str(ctx.value))
 
 
+def test_str_subclass():
+    class S(str):
+        pass
+
+    assert str(URL(S('http://example.com'))) == 'http://example.com'
+
+
 def test_is():
     u1 = URL('http://example.com')
     u2 = URL(u1)
