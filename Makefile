@@ -11,16 +11,20 @@ all: test
 	@touch .develop
 
 
-test: .develop
-	pytest ./tests ./yarl --flake8
+flake: .develop
+	flake8 yarl tests setup.py
 
 
-vtest: .develop
-	pytest ./tests ./yarl -v --flake8
+test: flake
+	pytest ./tests ./yarl
 
 
-cov: .develop
-	pytest --cov yarl --cov-report html --cov-report term ./tests/ ./yarl/ --flake8
+vtest: flake
+	pytest ./tests ./yarl -v
+
+
+cov: flake
+	pytest --cov yarl --cov-report html --cov-report term ./tests/ ./yarl/
 	@echo "open file://`pwd`/htmlcov/index.html"
 
 
