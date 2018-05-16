@@ -1,6 +1,6 @@
 import re
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Optional, TYPE_CHECKING, cast
+from typing import List, Optional, TYPE_CHECKING, cast
 
 BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
 BPCT_ALLOWED = {'%{:02X}'.format(i).encode('ascii') for i in range(256)}
@@ -134,9 +134,15 @@ class _Unquoter:
                     pass
                 else:
                     if self._qs and unquoted in '+=&;':
-                        ret.append(self._qs_quoter(unquoted))
+                        to_add = self._qs_quoter(unquoted)
+                        if to_add is None:  # pragma: no cover
+                            raise RuntimeError("Cannot quote None")
+                        ret.append(to_add)
                     elif unquoted in self._unsafe:
-                        ret.append(self._quoter(unquoted))
+                        to_add = self._qs_quoter(unquoted)
+                        if to_add is None:  # pragma: no cover
+                            raise RuntimeError("Cannot quote None")
+                        ret.append(to_add)
                     else:
                         ret.append(unquoted)
                     del pcts[:]
@@ -172,9 +178,15 @@ class _Unquoter:
                 ret.append(last_pct)  # %F8
             else:
                 if self._qs and unquoted in '+=&;':
-                    ret.append(self._qs_quoter(unquoted))
+                    to_add = self._qs_quoter(unquoted)
+                    if to_add is None:  # pragma: no cover
+                        raise RuntimeError("Cannot quote None")
+                    ret.append(to_add)
                 elif unquoted in self._unsafe:
-                    ret.append(self._quoter(unquoted))
+                    to_add = self._qs_quoter(unquoted)
+                    if to_add is None:  # pragma: no cover
+                        raise RuntimeError("Cannot quote None")
+                    ret.append(to_add)
                 else:
                     ret.append(unquoted)
         return ''.join(ret)
