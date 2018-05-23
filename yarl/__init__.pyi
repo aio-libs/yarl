@@ -32,7 +32,7 @@ class URL:
 
     @classmethod
     def build(cls, *, scheme: str=..., user: str=..., password: str=...,
-              host: str=..., port: int=..., path: str=...,
+              host: str=..., port: Optional[int]=..., path: str=...,
               query: Mapping[str, str]=..., query_string: str=...,
               fragment: str=..., strict: bool=...) -> URL: ...
 
