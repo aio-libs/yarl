@@ -1,5 +1,5 @@
 #!/bin/bash
-PYTHON_VERSIONS="cp34-cp34m cp35-cp35m cp36-cp36m"
+PYTHON_VERSIONS="cp35-cp35m cp36-cp36m"
 
 echo "Compile wheels"
 for PYTHON in ${PYTHON_VERSIONS}; do
@@ -16,6 +16,6 @@ echo "Install packages and test"
 for PYTHON in ${PYTHON_VERSIONS}; do
     /opt/python/${PYTHON}/bin/pip install yarl --no-index -f file:///io/dist
     rm -rf /io/tests/__pycache__
-    /opt/python/${PYTHON}/bin/py.test /io/tests
+    /opt/python/${PYTHON}/bin/pytest /io/tests
     rm -rf /io/tests/__pycache__
 done
