@@ -6,7 +6,7 @@ if [ ! -z $TRAVIS_TAG ]; then
     for f in dist/yarl*manylinux1_x86_64.whl
     do
         echo "Upload $f"
-        python -m twine upload $f --username andrew.svetlov --password $PYPI_PASSWD --skip-existing
+        python -m twine upload $f --username aio-libs-bot --password $PYPI_PASSWD --skip-existing
     done
     echo "Cleanup"
     docker run --rm -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 rm -rf /io/dist
@@ -18,7 +18,7 @@ if [ ! -z $TRAVIS_TAG ]; then
     for f in dist/yarl*manylinux1_i686.whl
     do
         echo "Upload $f"
-        python -m twine upload $f --username andrew.svetlov --password $PYPI_PASSWD --skip-existing
+        python -m twine upload $f --username aio-libs-bot --password $PYPI_PASSWD --skip-existing
     done
     echo "Cleanup"
     docker run --rm -v `pwd`:/io quay.io/pypa/manylinux1_i686 rm -rf /io/dist
