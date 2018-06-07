@@ -8,7 +8,7 @@ for PYTHON in ${PYTHON_VERSIONS}; do
 done
 
 echo "Bundle external shared libraries into the wheels"
-for whl in /io/dist/*.whl; do
+for whl in /io/dist/yarl*.whl; do
     auditwheel repair $whl -w /io/dist/
 done
 
