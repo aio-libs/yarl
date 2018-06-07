@@ -798,6 +798,15 @@ class URL:
         return URL(self._val._replace(path=path, query='', fragment=''),
                    encoded=True)
 
+    @staticmethod
+    def _query_var(v):
+        if isinstance(v, str):
+            return v
+        if type(v) == int:  # no subclasses like bool
+            return str(v)
+        raise TypeError("Invalid variable type: value "
+                        "should be str or int, got {!r}".format(v))
+
     def _get_str_query(self, *args, **kwargs):
         if kwargs:
             if len(args) > 0:
@@ -814,18 +823,8 @@ class URL:
             query = ''
         elif isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
-            lst = []
-            for k, v in query.items():
-                if isinstance(v, str):
-                    pass
-                elif type(v) == int:  # no subclasses like bool
-                    v = str(v)
-                else:
-                    raise TypeError("Invalid variable type: mapping value "
-                                    "should be str or int, got {!r}".format(v))
-                lst.append(
-                    quoter(k) + '=' + quoter(v))
-            query = '&'.join(lst)
+            query = '&'.join(quoter(k) + '=' + quoter(self._query_var(v))
+                             for k, v in query.items())
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
@@ -833,7 +832,7 @@ class URL:
                             "memoryview are forbidden")
         elif isinstance(query, Sequence):
             quoter = self._QUERY_PART_QUOTER
-            query = '&'.join(quoter(k) + '=' + quoter(v)
+            query = '&'.join(quoter(k) + '=' + quoter(self._query_var(v))
                              for k, v in query)
         else:
             raise TypeError("Invalid query type: only str, mapping or "
@@ -846,6 +845,8 @@ class URL:
 
         Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
         or str, autoencode the argument if needed.
+
+        A sequence of (key, value) pairs is supported as well.
 
         It also can take an arbitrary number of keyword arguments.
 
