@@ -802,7 +802,7 @@ class URL:
     def _query_var(v):
         if isinstance(v, str):
             return v
-        if type(v) == int:  # no subclasses like bool
+        if type(v) is int:  # no subclasses like bool
             return str(v)
         raise TypeError("Invalid variable type: value "
                         "should be str or int, got {!r}".format(v))
