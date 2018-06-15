@@ -45,6 +45,12 @@ def test_with_query_list_of_pairs():
     assert str(url.with_query([('a', '1')])) == 'http://example.com/?a=1'
 
 
+def test_with_query_list_non_pairs():
+    url = URL('http://example.com')
+    with pytest.raises(ValueError):
+        url.with_query(['a=1', 'b=2' 'c=3'])
+
+
 def test_with_query_kwargs():
     url = URL('http://example.com')
     q = url.with_query(query='1', query2='1').query
@@ -79,6 +85,11 @@ def test_with_query_empty_str():
     assert str(url.with_query('')) == 'http://example.com/'
 
 
+def test_with_query_empty_value():
+    url = URL('http://example.com/')
+    assert str(url.with_query({'a': ''})) == 'http://example.com/?a='
+
+
 def test_with_query_str():
     url = URL('http://example.com')
     assert str(url.with_query('a=1&b=2')) == 'http://example.com/?a=1&b=2'
@@ -96,10 +107,44 @@ def test_with_query_int():
     assert url.with_query({'a': 1}) == URL('http://example.com/?a=1')
 
 
+def test_with_query_kwargs_int():
+    url = URL('http://example.com')
+    assert url.with_query(b=2) == URL('http://example.com/?b=2')
+
+
+def test_with_query_list_int():
+    url = URL('http://example.com')
+    assert str(url.with_query([('a', 1)])) == 'http://example.com/?a=1'
+
+
 def test_with_query_non_str():
     url = URL('http://example.com')
     with pytest.raises(TypeError):
         url.with_query({'a': 1.1})
+
+
+def test_with_query_bool():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query({'a': True})
+
+
+def test_with_query_none():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query({'a': None})
+
+
+def test_with_query_list_non_str():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query([('a', 1.0)])
+
+
+def test_with_query_list_bool():
+    url = URL('http://example.com')
+    with pytest.raises(TypeError):
+        url.with_query([('a', False)])
 
 
 def test_with_query_multidict():
