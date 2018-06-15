@@ -2,6 +2,13 @@ from typing import (overload, Any, Tuple, Optional, Mapping, Union,
                     Sequence, Type)
 import multidict
 
+QueryVariable = Union[str, int]
+Query = Union[
+    None,
+    str,
+    Mapping[str, QueryVariable],
+    Sequence[Tuple[str, QueryVariable]]]
+
 
 class URL:
     scheme: str
@@ -33,7 +40,7 @@ class URL:
     @classmethod
     def build(cls, *, scheme: str=..., user: str=..., password: str=...,
               host: str=..., port: Optional[int]=..., path: str=...,
-              query: Optional[Mapping[str, str]]=..., query_string: str=...,
+              query: Query=..., query_string: str=...,
               fragment: str=..., encoded: bool=...) -> URL: ...
 
     def __str__(self) -> str: ...
@@ -75,30 +82,16 @@ class URL:
     def with_path(self, path: str, *, encoded: bool=...) -> URL: ...
 
     @overload
-    def with_query(self, query: str) -> URL: ...
+    def with_query(self, query: Query) -> URL: ...
 
     @overload  # noqa: F811
-    def with_query(self, query: Mapping[str, Union[str, int]]) -> URL: ...
-
-    @overload  # noqa: F811
-    def with_query(self,
-                   query: Sequence[Tuple[str, Union[str, int]]]) -> URL: ...
-
-    @overload  # noqa: F811
-    def with_query(self, **kwargs: Union[str, int]) -> URL: ...
+    def with_query(self, **kwargs: QueryVariable) -> URL: ...
 
     @overload
-    def update_query(self, query: str) -> URL: ...
+    def update_query(self, query: Query) -> URL: ...
 
     @overload  # noqa: F811
-    def update_query(self, query: Mapping[str, Union[str, int]]) -> URL: ...
-
-    @overload  # noqa: F811
-    def update_query(self,
-                     query: Sequence[Tuple[str, Union[str, int]]]) -> URL: ...
-
-    @overload  # noqa: F811
-    def update_query(self, **kwargs: Union[str, int]) -> URL: ...
+    def update_query(self, **kwargs: QueryVariable) -> URL: ...
 
     def with_fragment(self, fragment: Optional[str]) -> URL: ...
 
