@@ -6,6 +6,9 @@ CHANGES
 
 * Fix annotations for `query` parameter (#207)
 
+* An incoming query sequence can have int variables (the same as for
+  Mapping type) (#208)
+
 1.2.6 (2018-06-14)
 ------------------
 
