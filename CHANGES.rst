@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+1.3.0 (XXXX-XX-XX)
+------------------
+
+* Fix annotations for `query` parameter (#207)
+
 1.2.6 (2018-06-14)
 ------------------
 
