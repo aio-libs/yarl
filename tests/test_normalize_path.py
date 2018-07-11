@@ -1,23 +1,34 @@
+import pytest
+
 from yarl import URL
 
-np = URL._normalize_path
+
+PATHS = [
+    # No dots
+    ('', ''),
+    ('/', '/'),
+    ('//', '//'),
+    ('///', '///'),
+
+    # Single-dot
+    ('path/to', 'path/to'),
+    ('././path/to', 'path/to'),
+    ('path/./to', 'path/to'),
+    ('path/././to', 'path/to'),
+    ('path/to/.', 'path/to/'),
+    ('path/to/./.', 'path/to/'),
+
+    # Double-dots
+    ('../path/to', 'path/to'),
+    ('path/../to', 'to'),
+    ('path/../../to', 'to'),
+
+    # Non-ASCII characters
+    ('μονοπάτι/../../να/ᴜɴɪ/ᴄᴏᴅᴇ', 'να/ᴜɴɪ/ᴄᴏᴅᴇ'),
+    ('μονοπάτι/../../να/𝕦𝕟𝕚/𝕔𝕠𝕕𝕖/.', 'να/𝕦𝕟𝕚/𝕔𝕠𝕕𝕖/'),
+]
 
 
-def test_no_dots():
-    assert np('path/to') == 'path/to'
-
-
-def test_skip_dots():
-    assert np('path/./to') == 'path/to'
-
-
-def test_dot_at_end():
-    assert np('path/to/.') == 'path/to/'
-
-
-def test_double_dots():
-    assert np('path/../to') == 'to'
-
-
-def test_extra_double_dots():
-    assert np('path/../../to') == 'to'
+@pytest.mark.parametrize('original,expected', PATHS)
+def test__normalize_path(original, expected):
+    assert URL._normalize_path(original) == expected
