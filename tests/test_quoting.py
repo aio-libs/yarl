@@ -40,8 +40,8 @@ def test_quote_from_bytes(quoter):
 
 
 def test_quote_ignore_broken_unicode(quoter):
-    s = quoter()('j\x1a\udcf4q\udcda/\udc97g\udcee\udccb\x0ch\udccb'
-                 '\x18\udce4v\x1b\udce2\udcce\udccecom/y\udccepj\x16')
+    s = quoter()('j\u001a\udcf4q\udcda/\udc97g\udcee\udccb\u000ch\udccb'
+                 '\u0018\udce4v\u001b\udce2\udcce\udccecom/y\udccepj\u0016')
 
     assert s == 'j%1Aq%2Fg%0Ch%18v%1Bcom%2Fypj%16'
     assert quoter()(s) == s
@@ -129,7 +129,7 @@ def test_quoting_plus(quoter):
 
 def test_quote_with_unicode(quoter):
     # Characters in Latin-1 range, encoded by default in UTF-8
-    given = "\xa2\xd8ab\xff"
+    given = "\u00a2\u00d8ab\u00ff"
     expect = "%C2%A2%C3%98ab%C3%BF"
     result = quoter()(given)
     assert expect == result
@@ -142,7 +142,7 @@ def test_quote_with_unicode(quoter):
 
 def test_quote_plus_with_unicode(quoter):
     # Characters in Latin-1 range, encoded by default in UTF-8
-    given = "\xa2\xd8ab\xff"
+    given = "\u00a2\u00d8ab\u00ff"
     expect = "%C2%A2%C3%98ab%C3%BF"
     result = quoter(qs=True)(given)
     assert expect == result
@@ -194,7 +194,7 @@ def test_unquoting_badpercent3(unquoter):
 def test_unquoting_mixed_case(unquoter):
     # Test unquoting on mixed-case hex digits in the percent-escapes
     given = '%Ab%eA'
-    expect = '\xab\xea'
+    expect = '\u00ab\u00ea'
     result = unquoter()(given)
     assert expect == result
 
