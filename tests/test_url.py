@@ -942,10 +942,9 @@ def test_empty_value_for_query():
     assert str(url) == 'http://example.com/path?a='
 
 
-@pytest.mark.xfail
 def test_none_value_for_query():
-    url = URL('http://example.com/path').with_query({'a': None})
-    assert str(url) == 'http://example.com/path?a'
+    with pytest.raises(TypeError):
+        URL('http://example.com/path').with_query({'a': None})
 
 
 def test_decode_pct_in_path():
