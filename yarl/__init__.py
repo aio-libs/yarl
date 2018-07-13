@@ -188,12 +188,12 @@ class URL:
               encoded=False):
         """Creates and returns a new URL"""
 
-        if host and not scheme:
-            raise ValueError(
-                'Can\'t build URL with "host" but without "scheme".')
         if not host and scheme:
             raise ValueError(
                 'Can\'t build URL with "scheme" but without "host".')
+        if port and not host:
+            raise ValueError(
+                'Can\'t build URL with "port" but without "host".')
         if query and query_string:
             raise ValueError(
                 "Only one of \"query\" or \"query_string\" should be passed")
