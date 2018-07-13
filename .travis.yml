@@ -5,7 +5,20 @@ language: python
 python:
   - 3.5
   - 3.6
-  - 3.7-dev
+
+.mixins:
+- &_xenial
+  dist: xenial
+  sudo: required
+jobs:
+  fast_finish: true
+  include:
+  - python: 3.7
+    <<: *_xenial
+  - python: 3.8-dev
+    <<: *_xenial
+  - python: nightly
+    <<: *_xenial
 
 
 env:
