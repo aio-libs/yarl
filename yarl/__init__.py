@@ -448,13 +448,22 @@ class URL:
 
     @property
     def port(self):
-        """Port part of URL.
+        """Port part of URL, with scheme-based fallback.
 
         None for relative URLs or URLs without explicit port and
         scheme without default port substitution.
 
         """
         return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
+
+    @property
+    def explicit_port(self):
+        """Port part of URL, without scheme-based fallback.
+
+        None for relative URLs or URLs without explicit port.
+
+        """
+        return self._val.port
 
     @property
     def raw_path(self):
