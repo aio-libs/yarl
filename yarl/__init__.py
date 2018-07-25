@@ -805,7 +805,8 @@ class URL:
         if type(v) is int:  # no subclasses like bool
             return str(v)
         raise TypeError("Invalid variable type: value "
-                        "should be str or int, got {!r}".format(v))
+                        "should be str or int, got {!r} "
+                        "of type {}".format(v, type(v)))
 
     def _get_str_query(self, *args, **kwargs):
         if kwargs:
