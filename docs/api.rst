@@ -406,7 +406,7 @@ URL is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
 .. method:: URL.build(*, scheme, user, password, host, port, path, query, \
-                      query_string, fragment, strict=False)
+                      query_string, fragment, encoded=False)
 
    Creates and returns a new URL:
 
