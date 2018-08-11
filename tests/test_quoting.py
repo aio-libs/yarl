@@ -166,43 +166,48 @@ def test_unquoting(num, unquoter):
 
 
 @pytest.mark.xfail
-def test_unquoting_badpercent(unquoter):
-    # Test unquoting on bad percent-escapes
-    given = '%xab'
-    expect = given
-    result = unquoter()(given)
-    assert expect == result
+# FIXME: Expected value should be the same as given.
+# See https://url.spec.whatwg.org/#percent-encoded-bytes
+def test_unquoting_bad_percent_escapes_1(unquoter):
+    assert '%' == unquoter()('%')
 
 
 @pytest.mark.xfail
-def test_unquoting_badpercent2(unquoter):
-    given = '%x'
-    expect = given
-    result = unquoter()(given)
-    assert expect == result
+# FIXME: Expected value should be the same as given.
+# See https://url.spec.whatwg.org/#percent-encoded-bytes
+def test_unquoting_bad_percent_escapes_2(unquoter):
+    assert '%x' == unquoter()('%x')
 
 
 @pytest.mark.xfail
-def test_unquoting_badpercent3(unquoter):
-    given = '%'
-    expect = given
-    result = unquoter(given)
-    assert expect == result
+# FIXME: Expected value should be the same as given.
+# See https://url.spec.whatwg.org/#percent-encoded-bytes
+def test_unquoting_bad_percent_escapes_3(unquoter):
+    assert '%xa' == unquoter()('%xa')
 
 
 @pytest.mark.xfail
-def test_unquoting_mixed_case(unquoter):
-    # Test unquoting on mixed-case hex digits in the percent-escapes
-    given = '%Ab%eA'
-    expect = '\u00ab\u00ea'
-    result = unquoter()(given)
-    assert expect == result
+# FIXME: After conversion to bytes, should not cause UTF-8 decode fail.
+# See https://url.spec.whatwg.org/#percent-encoded-bytes
+def test_unquoting_invalid_utf8_sequence(unquoter):
+    with pytest.raises(ValueError):
+        unquoter()('%AB')
+    with pytest.raises(ValueError):
+        unquoter()('%AB%AB')
+
+
+def test_unquoting_mixed_case_percent_escapes(unquoter):
+    expected = '𝕦'
+    assert expected == unquoter()('%F0%9D%95%A6')
+    assert expected == unquoter()('%F0%9d%95%a6')
+    assert expected == unquoter()('%f0%9D%95%a6')
+    assert expected == unquoter()('%f0%9d%95%a6')
 
 
 def test_unquoting_parts(unquoter):
     # Make sure unquoting works when have non-quoted characters
     # interspersed
-    given = 'ab%sd' % hexescape('c')
+    given = 'ab' + hexescape('c') + 'd'
     expect = "abcd"
     result = unquoter()(given)
     assert expect == result
