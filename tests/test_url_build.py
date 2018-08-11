@@ -16,15 +16,27 @@ def test_build_simple():
     assert str(u) == 'http://127.0.0.1'
 
 
-def test_build_scheme_and_host():
-    with pytest.raises(ValueError):
-        URL.build(host='127.0.0.1')
-
+def test_build_with_scheme():
     with pytest.raises(ValueError):
         URL.build(scheme='http')
 
 
+def test_build_with_host():
+    u = URL.build(host='127.0.0.1')
+    assert str(u) == '//127.0.0.1'
+    assert u == URL('//127.0.0.1')
+
+
+def test_build_with_scheme_and_host():
+    u = URL.build(scheme='http', host='127.0.0.1')
+    assert str(u) == 'http://127.0.0.1'
+    assert u == URL('http://127.0.0.1')
+
+
 def test_build_with_port():
+    with pytest.raises(ValueError):
+        URL.build(port=8000)
+
     u = URL.build(scheme='http', host='127.0.0.1', port=8000)
     assert str(u) == 'http://127.0.0.1:8000'
 
