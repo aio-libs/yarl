@@ -2,7 +2,7 @@ from typing import List, Tuple  # noqa: F401
 from urllib.parse import urlencode
 
 import pytest
-from multidict import MultiDict
+from multidict import MultiDict, MultiDictProxy
 
 from yarl import URL
 
@@ -60,6 +60,7 @@ URLS_WITH_BASIC_QUERY_VALUES = [
     URLS_WITH_BASIC_QUERY_VALUES,
 )
 def test_query_basic_parsing(original_url, expected_query):
+    assert isinstance(original_url.query, MultiDictProxy)
     assert original_url.query == expected_query
 
 
