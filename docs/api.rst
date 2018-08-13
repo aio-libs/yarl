@@ -227,6 +227,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('page.html').explicit_port is None
       True
 
+   .. versionadded:: 1.3
 
 .. attribute:: URL.path
 
