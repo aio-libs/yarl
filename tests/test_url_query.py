@@ -1,5 +1,5 @@
 import pytest
-from multidict import MultiDict, MultiDictProxy
+from multidict import MultiDict
 from urllib.parse import urlencode
 
 from yarl import URL
@@ -69,6 +69,7 @@ def test_query_basic_update_query(original_url, expected_query):
     new_url = original_url.update_query({})
     # FIXME: `?a` becomes `?a=` right now. Maybe support `None` values?
     # assert new_url == original_url
+    assert new_url is not None
 
 
 def test_query_dont_unqoute_twice():
@@ -148,7 +149,7 @@ def test_query_separators_from_with_query(
     "original_url, expected_query_len, expected_value_a",
     URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
 )
-def test_query_separators_from_with_query(
+def test_query_from_empty_update_query(
     original_url,
     expected_query_len,
     expected_value_a,
