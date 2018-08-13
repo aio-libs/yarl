@@ -1,4 +1,4 @@
-all: test
+all: test doc check mypy
 
 
 .install-deps: $(shell find requirements -type f)
@@ -13,6 +13,10 @@ all: test
 
 flake: .develop
 	flake8 yarl tests setup.py
+
+
+check: flake
+	python setup.py check -rms
 
 
 test: flake
