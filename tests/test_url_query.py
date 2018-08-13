@@ -1,6 +1,8 @@
+from typing import List, Tuple  # noqa: F401
+from urllib.parse import urlencode
+
 import pytest
 from multidict import MultiDict
-from urllib.parse import urlencode
 
 from yarl import URL
 
@@ -50,7 +52,7 @@ URLS_WITH_BASIC_QUERY_VALUES = [
         URL("http://example.com?bar=𝕦𝕟𝕚𝕔𝕠𝕕𝕖"),
         MultiDict({"bar": "𝕦𝕟𝕚𝕔𝕠𝕕𝕖"}),
     ),
-]
+]  # type: List[Tuple[URL, MultiDict]]
 
 
 @pytest.mark.parametrize(
