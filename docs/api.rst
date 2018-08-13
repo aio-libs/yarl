@@ -195,7 +195,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
 .. attribute:: URL.port
 
-   *port* part of URL.
+   *port* part of URL, with scheme-based fallback.
 
    ``None`` for relative URLs (:ref:`yarl-api-relative-urls`) or for
    URLs without explicit port and :attr:`URL.scheme` without
@@ -210,6 +210,24 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('page.html').port is None
       True
 
+
+.. attribute:: URL.explicit_port
+
+   *explicit_port* part of URL, without scheme-based fallback.
+
+   ``None`` for relative URLs (:ref:`yarl-api-relative-urls`) or for
+   URLs without explicit port.
+
+   .. doctest::
+
+      >>> URL('http://example.com:8080').explicit_port
+      8080
+      >>> URL('http://example.com').explicit_port is None
+      True
+      >>> URL('page.html').explicit_port is None
+      True
+
+   .. versionadded:: 1.3
 
 .. attribute:: URL.path
 

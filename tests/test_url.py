@@ -203,12 +203,12 @@ def test_ipv4_zone():
     assert url.host == url.raw_host
 
 
-def test_explicit_port():
+def test_port_for_explicit_port():
     url = URL('http://example.com:8888')
     assert 8888 == url.port
 
 
-def test_implicit_port():
+def test_port_for_implicit_port():
     url = URL('http://example.com')
     assert 80 == url.port
 
@@ -221,6 +221,26 @@ def test_port_for_relative_url():
 def test_port_for_unknown_scheme():
     url = URL('unknown://example.com')
     assert url.port is None
+
+
+def test_explicit_port_for_explicit_port():
+    url = URL('http://example.com:8888')
+    assert 8888 == url.explicit_port
+
+
+def test_explicit_port_for_implicit_port():
+    url = URL('http://example.com')
+    assert url.explicit_port is None
+
+
+def test_explicit_port_for_relative_url():
+    url = URL('/path/to')
+    assert url.explicit_port is None
+
+
+def test_explicit_port_for_unknown_scheme():
+    url = URL('unknown://example.com')
+    assert url.explicit_port is None
 
 
 def test_raw_path_string_empty():
