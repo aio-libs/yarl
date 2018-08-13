@@ -211,7 +211,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
       True
 
 
-.. attribute:: URL.port
+.. attribute:: URL.explicit_port
 
    *explicit_port* part of URL, without scheme-based fallback.
 
