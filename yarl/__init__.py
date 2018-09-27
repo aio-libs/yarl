@@ -159,6 +159,7 @@ class URL:
         if not encoded:
             if not val[1]:  # netloc
                 netloc = ''
+                host = ''
             else:
                 host = val.hostname
                 if host is None:
@@ -173,6 +174,7 @@ class URL:
             if netloc:
                 path = cls._normalize_path(path)
 
+            cls.validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_QUOTER(val[3])
             fragment = cls._FRAGMENT_QUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
@@ -208,6 +210,7 @@ class URL:
             if netloc:
                 path = cls._normalize_path(path)
 
+            cls.validate_authority_uri_abs_path(host=host, path=path)
             query_string = cls._QUERY_QUOTER(query_string)
             fragment = cls._FRAGMENT_QUOTER(fragment)
 
@@ -611,6 +614,12 @@ class URL:
     def name(self):
         """The last part of parts."""
         return self._UNQUOTER(self.raw_name)
+
+    @staticmethod
+    def validate_authority_uri_abs_path(host, path):
+        """Raise ValueError for URL with authority with path without leading slash"""
+        if len(host) > 0 and len(path) > 0 and not path.startswith('/'):
+            raise ValueError("URL with authority has the path without leading '/'")
 
     @classmethod
     def _normalize_path(cls, path):
