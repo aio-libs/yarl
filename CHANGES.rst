@@ -11,6 +11,8 @@ CHANGES
 
 * Add ``URL.explicit_port`` property (#218)
 
+* Give a friendlier error when port cant be converted to int (#168)
+
 1.2.6 (2018-06-14)
 ------------------
 
