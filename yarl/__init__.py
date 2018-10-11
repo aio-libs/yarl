@@ -164,10 +164,17 @@ class URL:
                 if host is None:
                     raise ValueError(
                         "Invalid URL: host is required for abolute urls.")
+
+                try:
+                    port = val.port
+                except ValueError:
+                    raise ValueError(
+                        "Invalid URL: port can't be converted to integer")
+
                 netloc = cls._make_netloc(val.username,
                                           val.password,
                                           host,
-                                          val.port,
+                                          port,
                                           encode=True)
             path = cls._PATH_QUOTER(val[2])
             if netloc:
