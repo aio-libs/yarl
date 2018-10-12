@@ -57,9 +57,9 @@ def test_never_quote(quoter):
     do_not_quote = '' .join(["ABCDEFGHIJKLMNOPQRSTUVWXYZ",
                              "abcdefghijklmnopqrstuvwxyz",
                              "0123456789",
-                             "_.-"])
+                             "_.-~"])
     assert quoter()(do_not_quote) == do_not_quote
-    quoter(qs=True)(do_not_quote) == do_not_quote
+    assert quoter(qs=True)(do_not_quote) == do_not_quote
 
 
 def test_safe(quoter):
@@ -72,7 +72,7 @@ def test_safe(quoter):
 
 
 _SHOULD_QUOTE = [chr(num) for num in range(32)]
-_SHOULD_QUOTE.append('<>#"{}|\^[]`')
+_SHOULD_QUOTE.append(r'<>#"{}|\^[]`')
 _SHOULD_QUOTE.append(chr(127))  # For 0x7F
 SHOULD_QUOTE = ''.join(_SHOULD_QUOTE)
 
