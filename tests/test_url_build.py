@@ -168,3 +168,30 @@ def test_build_already_encoded():
         fragment='фраг',
         encoded=True)
     assert str(u) == 'http://историк.рф/путь/файл?ключ=знач#фраг'
+
+
+def test_build_with_authority_with_path_with_leading_slash():
+    u = URL.build(
+        scheme='http',
+        host='example.com',
+        path='/path_with_leading_slash'
+    )
+    assert str(u) == 'http://example.com/path_with_leading_slash'
+
+
+def test_build_with_authority_with_empty_path():
+    u = URL.build(
+        scheme='http',
+        host='example.com',
+        path=''
+    )
+    assert str(u) == 'http://example.com'
+
+
+def test_build_with_authority_with_path_without_leading_slash():
+    with pytest.raises(ValueError):
+        URL.build(
+            scheme='http',
+            host='example.com',
+            path='path_without_leading_slash'
+        )
