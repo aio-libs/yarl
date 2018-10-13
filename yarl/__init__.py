@@ -622,7 +622,7 @@ class URL:
         Raise ValueError if not.
         """
         if len(host) > 0 and len(path) > 0 and not path.startswith('/'):
-            raise ValueError("URL with authority has the path without leading '/'")
+            raise ValueError("Path in a URL with authority should start with a slash ('/') if set")
 
     @classmethod
     def _normalize_path(cls, path):
