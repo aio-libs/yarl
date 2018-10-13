@@ -14,13 +14,10 @@ jobs:
   fast_finish: true
   allow_failures:
   - python: 3.8-dev
-  - python: nightly
   include:
   - python: 3.7
     <<: *_xenial
   - python: 3.8-dev
-    <<: *_xenial
-  - python: nightly
     <<: *_xenial
   - stage: Deploy
     name: Publishing a source dist to PyPI
