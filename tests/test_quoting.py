@@ -53,11 +53,13 @@ def test_unquote_to_bytes(unquoter):
 
 
 def test_never_quote(quoter):
-    # Make sure quote() does not quote letters, digits, and "_,.-"
-    do_not_quote = '' .join(["ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-                             "abcdefghijklmnopqrstuvwxyz",
-                             "0123456789",
-                             "_.-~"])
+    # Make sure quote() does not quote letters, digits, and "_,.-~"
+    do_not_quote = (
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789"
+        "_.-~"
+    )
     assert quoter()(do_not_quote) == do_not_quote
     assert quoter(qs=True)(do_not_quote) == do_not_quote
 
