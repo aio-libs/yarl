@@ -12,7 +12,7 @@ python:
   sudo: required
 jobs:
   fast_finish: true
-  allow_failures
+  allow_failures:
   - python: 3.8-dev
   - python: nightly
   include:
