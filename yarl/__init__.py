@@ -617,7 +617,10 @@ class URL:
 
     @staticmethod
     def validate_authority_uri_abs_path(host, path):
-        """Raise ValueError for URL with authority with path without leading slash"""
+        """Ensure that path in URL with authority starts with a leading slash.
+
+        Raise ValueError if not.
+        """
         if len(host) > 0 and len(path) > 0 and not path.startswith('/'):
             raise ValueError("URL with authority has the path without leading '/'")
 
