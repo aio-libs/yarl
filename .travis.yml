@@ -18,7 +18,7 @@ jobs:
   include:
   - python: 3.7
     <<: *_xenial
-  - python: nightly
+  - python: 3.8-dev
     <<: *_xenial
   - stage: Deploy
     name: Publishing a source dist to PyPI
