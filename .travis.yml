@@ -22,7 +22,23 @@ jobs:
     <<: *_xenial
   - python: nightly
     <<: *_xenial
-
+  - stage: Deploy
+    name: Publishing a source dist to PyPI
+    python: 3.6
+    if: tag IS present
+    script: skip
+    deploy:
+      provider: pypi
+      user: aio-libs-bot
+      password:
+        secure: >
+          Pqj1Cu8j45svt4yOyooYJp08doVDNDjIocoi4+oRCF6T3NcXHsEj4pWWC92Oa62r7cgfafy0bJgEfSXqRE5/R53oT6IP/19G6teI5J3NjpcqPU1q2Reha0p5nsrztLETOiONQVimocZlRlLrPgC+dS6HjClZwlWfeYFMoWajXn64n3pHda6H2rtPkmc2bPvyz18m0QbEFVwhUy7q+2eBsM/56NE5dT6jJp7yWmBsyEJMOGRuOF171du+ZNO2LHQaj9Cf2GhnmtMvuZVpuP+77TmNaGzhj8++T3V37P4RsIbMu/3ew+O+Pf7FZnFYbeg+2LNbXzTI6o42uB51Y4gqyM9cilb3r66JY9QaCPVL1+j8XOF3VeQATz4dtaEnvlI0UvnkCYKDA+yBe5CQmdSkXLtjgGY9FstyinpntWDzw+BhSRW4pGwOI7nmAH3Ncn+1OkqgYtKNBuHpLfBHVi0568lXPFy5JCpFNu6YM6/GM6Tp38KzOmdSzG1O2TBRP4DDE05lAtVW/7M8a/OQ6uR7nphLRp3OdwjmU1G1nT8jjHZEZg+DtgB0XWCbIxq2zr/MskbO7Q3JmUy2mruEOreSNa2PlEoR7a/sjoja2x2vMy/gLLg5F71ASzZWNE15SUMYzcgf1yIy6+WHc+b81LoWCWXhRujY5PzFMMEvPGXbsKU=
+      distributions: sdist
+      skip_existing: true
+      on:
+        tags: true
+        all_branches: true
+        python: 3.5
 
 env:
   global:
@@ -46,16 +62,3 @@ script:
 after_success:
   - codecov
   - ./run_docker.sh
-
-
-deploy:
-  provider: pypi
-  user: aio-libs-bot
-  password:
-    secure: "Pqj1Cu8j45svt4yOyooYJp08doVDNDjIocoi4+oRCF6T3NcXHsEj4pWWC92Oa62r7cgfafy0bJgEfSXqRE5/R53oT6IP/19G6teI5J3NjpcqPU1q2Reha0p5nsrztLETOiONQVimocZlRlLrPgC+dS6HjClZwlWfeYFMoWajXn64n3pHda6H2rtPkmc2bPvyz18m0QbEFVwhUy7q+2eBsM/56NE5dT6jJp7yWmBsyEJMOGRuOF171du+ZNO2LHQaj9Cf2GhnmtMvuZVpuP+77TmNaGzhj8++T3V37P4RsIbMu/3ew+O+Pf7FZnFYbeg+2LNbXzTI6o42uB51Y4gqyM9cilb3r66JY9QaCPVL1+j8XOF3VeQATz4dtaEnvlI0UvnkCYKDA+yBe5CQmdSkXLtjgGY9FstyinpntWDzw+BhSRW4pGwOI7nmAH3Ncn+1OkqgYtKNBuHpLfBHVi0568lXPFy5JCpFNu6YM6/GM6Tp38KzOmdSzG1O2TBRP4DDE05lAtVW/7M8a/OQ6uR7nphLRp3OdwjmU1G1nT8jjHZEZg+DtgB0XWCbIxq2zr/MskbO7Q3JmUy2mruEOreSNa2PlEoR7a/sjoja2x2vMy/gLLg5F71ASzZWNE15SUMYzcgf1yIy6+WHc+b81LoWCWXhRujY5PzFMMEvPGXbsKU="
-  distributions: "sdist"
-  skip_existing: true
-  on:
-    tags: true
-    all_branches: true
-    python: 3.5
