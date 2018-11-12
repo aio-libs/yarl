@@ -5,5 +5,5 @@ sphinx==1.8.2
 idna==2.7
 -e .
 
-flake8==3.5.0
+flake8==3.6.0
 flake8-pyi==18.3.1; python_version >= "3.6"
