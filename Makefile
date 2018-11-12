@@ -13,6 +13,10 @@ all: test
 
 flake: .develop
 	flake8 yarl tests setup.py
+	black --check yarl tests setup.py
+
+fmt:
+	black yarl tests setup.py
 
 
 test: flake

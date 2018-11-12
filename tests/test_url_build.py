@@ -8,190 +8,162 @@ from yarl import URL
 
 def test_build_without_arguments():
     u = URL.build()
-    assert str(u) == ''
+    assert str(u) == ""
 
 
 def test_build_simple():
-    u = URL.build(scheme='http', host='127.0.0.1')
-    assert str(u) == 'http://127.0.0.1'
+    u = URL.build(scheme="http", host="127.0.0.1")
+    assert str(u) == "http://127.0.0.1"
 
 
 def test_build_with_scheme():
     with pytest.raises(ValueError):
-        URL.build(scheme='http')
+        URL.build(scheme="http")
 
 
 def test_build_with_host():
-    u = URL.build(host='127.0.0.1')
-    assert str(u) == '//127.0.0.1'
-    assert u == URL('//127.0.0.1')
+    u = URL.build(host="127.0.0.1")
+    assert str(u) == "//127.0.0.1"
+    assert u == URL("//127.0.0.1")
 
 
 def test_build_with_scheme_and_host():
-    u = URL.build(scheme='http', host='127.0.0.1')
-    assert str(u) == 'http://127.0.0.1'
-    assert u == URL('http://127.0.0.1')
+    u = URL.build(scheme="http", host="127.0.0.1")
+    assert str(u) == "http://127.0.0.1"
+    assert u == URL("http://127.0.0.1")
 
 
 def test_build_with_port():
     with pytest.raises(ValueError):
         URL.build(port=8000)
 
-    u = URL.build(scheme='http', host='127.0.0.1', port=8000)
-    assert str(u) == 'http://127.0.0.1:8000'
+    u = URL.build(scheme="http", host="127.0.0.1", port=8000)
+    assert str(u) == "http://127.0.0.1:8000"
 
 
 def test_build_with_user():
-    u = URL.build(scheme='http', host='127.0.0.1', user='foo')
-    assert str(u) == 'http://foo@127.0.0.1'
+    u = URL.build(scheme="http", host="127.0.0.1", user="foo")
+    assert str(u) == "http://foo@127.0.0.1"
 
 
 def test_build_with_user_password():
-    u = URL.build(scheme='http', host='127.0.0.1', user='foo', password='bar')
-    assert str(u) == 'http://foo:bar@127.0.0.1'
+    u = URL.build(scheme="http", host="127.0.0.1", user="foo", password="bar")
+    assert str(u) == "http://foo:bar@127.0.0.1"
 
 
 def test_build_with_query_and_query_string():
     with pytest.raises(ValueError):
         URL.build(
-            scheme='http',
-            host='127.0.0.1',
-            user='foo',
-            password='bar',
+            scheme="http",
+            host="127.0.0.1",
+            user="foo",
+            password="bar",
             port=8000,
-            path='/index.html',
+            path="/index.html",
             query=dict(arg="value1"),
             query_string="arg=value1",
-            fragment="top"
+            fragment="top",
         )
 
 
 def test_build_with_all():
     u = URL.build(
-        scheme='http',
-        host='127.0.0.1',
-        user='foo',
-        password='bar',
+        scheme="http",
+        host="127.0.0.1",
+        user="foo",
+        password="bar",
         port=8000,
-        path='/index.html',
+        path="/index.html",
         query_string="arg=value1",
-        fragment="top"
+        fragment="top",
     )
-    assert str(u) == 'http://foo:bar@127.0.0.1:8000/index.html?arg=value1#top'
+    assert str(u) == "http://foo:bar@127.0.0.1:8000/index.html?arg=value1#top"
 
 
 def test_query_str():
-    u = URL.build(
-        scheme='http',
-        host='127.0.0.1',
-        path='/',
-        query_string="arg=value1"
-    )
-    assert str(u) == 'http://127.0.0.1/?arg=value1'
+    u = URL.build(scheme="http", host="127.0.0.1", path="/", query_string="arg=value1")
+    assert str(u) == "http://127.0.0.1/?arg=value1"
 
 
 def test_query_dict():
-    u = URL.build(
-        scheme='http',
-        host='127.0.0.1',
-        path='/',
-        query=dict(arg="value1")
-    )
+    u = URL.build(scheme="http", host="127.0.0.1", path="/", query=dict(arg="value1"))
 
-    assert str(u) == 'http://127.0.0.1/?arg=value1'
+    assert str(u) == "http://127.0.0.1/?arg=value1"
 
 
 def test_build_path_quoting():
     u = URL.build(
-        scheme='http',
-        host='127.0.0.1',
-        path='/файл.jpg',
-        query=dict(arg="Привет")
+        scheme="http", host="127.0.0.1", path="/файл.jpg", query=dict(arg="Привет")
     )
 
-    assert u == URL('http://127.0.0.1/файл.jpg?arg=Привет')
-    assert str(u) == ('http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?'
-                      'arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82')
+    assert u == URL("http://127.0.0.1/файл.jpg?arg=Привет")
+    assert str(u) == (
+        "http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?"
+        "arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
+    )
 
 
 def test_build_query_quoting():
-    u = URL.build(
-        scheme='http',
-        host='127.0.0.1',
-        path='/файл.jpg',
-        query="arg=Привет"
-    )
+    u = URL.build(scheme="http", host="127.0.0.1", path="/файл.jpg", query="arg=Привет")
 
-    assert u == URL('http://127.0.0.1/файл.jpg?arg=Привет')
-    assert str(u) == ('http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?'
-                      'arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82')
+    assert u == URL("http://127.0.0.1/файл.jpg?arg=Привет")
+    assert str(u) == (
+        "http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?"
+        "arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
+    )
 
 
 def test_build_query_only():
-    u = URL.build(
-        query={'key': 'value'},
-    )
+    u = URL.build(query={"key": "value"})
 
-    assert str(u) == '?key=value'
+    assert str(u) == "?key=value"
 
 
 def test_build_drop_dots():
-    u = URL.build(
-        scheme='http',
-        host='example.com',
-        path='/path/../to',
-    )
-    assert str(u) == 'http://example.com/to'
+    u = URL.build(scheme="http", host="example.com", path="/path/../to")
+    assert str(u) == "http://example.com/to"
 
 
 def test_build_encode():
     u = URL.build(
-        scheme='http',
-        host='историк.рф',
-        path='/путь/файл',
-        query_string='ключ=знач',
-        fragment='фраг')
-    expected = ('http://xn--h1aagokeh.xn--p1ai'
-                '/%D0%BF%D1%83%D1%82%D1%8C/%D1%84%D0%B0%D0%B9%D0%BB'
-                '?%D0%BA%D0%BB%D1%8E%D1%87=%D0%B7%D0%BD%D0%B0%D1%87'
-                '#%D1%84%D1%80%D0%B0%D0%B3')
+        scheme="http",
+        host="историк.рф",
+        path="/путь/файл",
+        query_string="ключ=знач",
+        fragment="фраг",
+    )
+    expected = (
+        "http://xn--h1aagokeh.xn--p1ai"
+        "/%D0%BF%D1%83%D1%82%D1%8C/%D1%84%D0%B0%D0%B9%D0%BB"
+        "?%D0%BA%D0%BB%D1%8E%D1%87=%D0%B7%D0%BD%D0%B0%D1%87"
+        "#%D1%84%D1%80%D0%B0%D0%B3"
+    )
     assert str(u) == expected
 
 
 def test_build_already_encoded():
     # resulting URL is invalid but not encoded
     u = URL.build(
-        scheme='http',
-        host='историк.рф',
-        path='/путь/файл',
-        query_string='ключ=знач',
-        fragment='фраг',
-        encoded=True)
-    assert str(u) == 'http://историк.рф/путь/файл?ключ=знач#фраг'
+        scheme="http",
+        host="историк.рф",
+        path="/путь/файл",
+        query_string="ключ=знач",
+        fragment="фраг",
+        encoded=True,
+    )
+    assert str(u) == "http://историк.рф/путь/файл?ключ=знач#фраг"
 
 
 def test_build_with_authority_with_path_with_leading_slash():
-    u = URL.build(
-        scheme='http',
-        host='example.com',
-        path='/path_with_leading_slash'
-    )
-    assert str(u) == 'http://example.com/path_with_leading_slash'
+    u = URL.build(scheme="http", host="example.com", path="/path_with_leading_slash")
+    assert str(u) == "http://example.com/path_with_leading_slash"
 
 
 def test_build_with_authority_with_empty_path():
-    u = URL.build(
-        scheme='http',
-        host='example.com',
-        path=''
-    )
-    assert str(u) == 'http://example.com'
+    u = URL.build(scheme="http", host="example.com", path="")
+    assert str(u) == "http://example.com"
 
 
 def test_build_with_authority_with_path_without_leading_slash():
     with pytest.raises(ValueError):
-        URL.build(
-            scheme='http',
-            host='example.com',
-            path='path_without_leading_slash'
-        )
+        URL.build(scheme="http", host="example.com", path="path_without_leading_slash")

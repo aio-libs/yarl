@@ -1,8 +1,7 @@
 import warnings
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
-from urllib.parse import (SplitResult, parse_qsl,
-                          urljoin, urlsplit, urlunsplit)
+from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit
 
 from multidict import MultiDict, MultiDictProxy
 import idna
@@ -10,20 +9,15 @@ import idna
 
 from .quoting import _Quoter, _Unquoter
 
-__version__ = '1.3.0a0'
+__version__ = "1.3.0a0"
 
-__all__ = ('URL',)
+__all__ = ("URL",)
 
 
 # is_leaf()
 
 
-DEFAULT_PORTS = {
-    'http': 80,
-    'https': 443,
-    'ws': 80,
-    'wss': 443,
-}
+DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
 sentinel = object()
 
@@ -129,19 +123,19 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ('_cache', '_val')
+    __slots__ = ("_cache", "_val")
 
     _QUOTER = _Quoter()
-    _PATH_QUOTER = _Quoter(safe='@:', protected='/+')
-    _QUERY_QUOTER = _Quoter(safe='?/:@', protected='=+&;', qs=True)
-    _QUERY_PART_QUOTER = _Quoter(safe='?/:@', qs=True)
-    _FRAGMENT_QUOTER = _Quoter(safe='?/:@')
+    _PATH_QUOTER = _Quoter(safe="@:", protected="/+")
+    _QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
+    _QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True)
+    _FRAGMENT_QUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
-    _PATH_UNQUOTER = _Unquoter(unsafe='+')
+    _PATH_UNQUOTER = _Unquoter(unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
-    def __new__(cls, val='', *, encoded=False, strict=None):
+    def __new__(cls, val="", *, encoded=False, strict=None):
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is cls:
@@ -158,25 +152,21 @@ class URL:
 
         if not encoded:
             if not val[1]:  # netloc
-                netloc = ''
-                host = ''
+                netloc = ""
+                host = ""
             else:
                 host = val.hostname
                 if host is None:
-                    raise ValueError(
-                        "Invalid URL: host is required for abolute urls.")
+                    raise ValueError("Invalid URL: host is required for abolute urls.")
 
                 try:
                     port = val.port
                 except ValueError:
-                    raise ValueError(
-                        "Invalid URL: port can't be converted to integer")
+                    raise ValueError("Invalid URL: port can't be converted to integer")
 
-                netloc = cls._make_netloc(val.username,
-                                          val.password,
-                                          host,
-                                          port,
-                                          encode=True)
+                netloc = cls._make_netloc(
+                    val.username, val.password, host, port, encode=True
+                )
             path = cls._PATH_QUOTER(val[2])
             if netloc:
                 path = cls._normalize_path(path)
@@ -192,26 +182,33 @@ class URL:
         return self
 
     @classmethod
-    def build(cls, *, scheme='', user='', password='', host='', port=None,
-              path='', query=None, query_string='', fragment='',
-              encoded=False):
+    def build(
+        cls,
+        *,
+        scheme="",
+        user="",
+        password="",
+        host="",
+        port=None,
+        path="",
+        query=None,
+        query_string="",
+        fragment="",
+        encoded=False
+    ):
         """Creates and returns a new URL"""
 
         if not host and scheme:
-            raise ValueError(
-                'Can\'t build URL with "scheme" but without "host".')
+            raise ValueError('Can\'t build URL with "scheme" but without "host".')
         if port and not host:
-            raise ValueError(
-                'Can\'t build URL with "port" but without "host".')
+            raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
-            raise ValueError(
-                "Only one of \"query\" or \"query_string\" should be passed")
+            raise ValueError('Only one of "query" or "query_string" should be passed')
 
         if not user and not password and not host and not port:
-            netloc = ''
+            netloc = ""
         else:
-            netloc = cls._make_netloc(user, password, host, port,
-                                      encode=not encoded)
+            netloc = cls._make_netloc(user, password, host, port, encode=not encoded)
         if not encoded:
             path = cls._PATH_QUOTER(path)
             if netloc:
@@ -222,14 +219,7 @@ class URL:
             fragment = cls._FRAGMENT_QUOTER(fragment)
 
         url = cls(
-            SplitResult(
-                scheme,
-                netloc,
-                path,
-                query_string,
-                fragment
-            ),
-            encoded=True
+            SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
         )
 
         if query:
@@ -238,13 +228,12 @@ class URL:
             return url
 
     def __init_subclass__(cls):
-        raise TypeError("Inheritance a class {!r} from URL "
-                        "is forbidden".format(cls))
+        raise TypeError("Inheritance a class {!r} from URL " "is forbidden".format(cls))
 
     def __str__(self):
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
-            val = val._replace(path='/')
+            val = val._replace(path="/")
         return urlunsplit(val)
 
     def __repr__(self):
@@ -256,21 +245,21 @@ class URL:
 
         val1 = self._val
         if not val1.path and self.is_absolute():
-            val1 = val1._replace(path='/')
+            val1 = val1._replace(path="/")
 
         val2 = other._val
         if not val2.path and other.is_absolute():
-            val2 = val2._replace(path='/')
+            val2 = val2._replace(path="/")
 
         return val1 == val2
 
     def __hash__(self):
-        ret = self._cache.get('hash')
+        ret = self._cache.get("hash")
         if ret is None:
             val = self._val
             if not val.path and self.is_absolute():
-                val = val._replace(path='/')
-            ret = self._cache['hash'] = hash(val)
+                val = val._replace(path="/")
+            ret = self._cache["hash"] = hash(val)
         return ret
 
     def __le__(self, other):
@@ -295,30 +284,30 @@ class URL:
 
     def __truediv__(self, name):
         name = self._PATH_QUOTER(name)
-        if name.startswith('/'):
-            raise ValueError("Appending path "
-                             "starting from slash is forbidden")
+        if name.startswith("/"):
+            raise ValueError("Appending path " "starting from slash is forbidden")
         path = self._val.path
-        if path == '/':
-            new_path = '/' + name
+        if path == "/":
+            new_path = "/" + name
         elif not path and not self.is_absolute():
             new_path = name
         else:
-            parts = path.rstrip('/').split('/')
+            parts = path.rstrip("/").split("/")
             parts.append(name)
-            new_path = '/'.join(parts)
+            new_path = "/".join(parts)
         if self.is_absolute():
             new_path = self._normalize_path(new_path)
-        return URL(self._val._replace(path=new_path, query='', fragment=''),
-                   encoded=True)
+        return URL(
+            self._val._replace(path=new_path, query="", fragment=""), encoded=True
+        )
 
     def __getstate__(self):
-        return self._val,
+        return (self._val,)
 
     def __setstate__(self, state):
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
-            self._val = state[1]['_val']
+            self._val = state[1]["_val"]
         else:
             self._val, *unused = state
         self._cache = {}
@@ -359,9 +348,8 @@ class URL:
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
         v = self._val
-        netloc = self._make_netloc(None, None, v.hostname, v.port,
-                                   encode=False)
-        val = v._replace(netloc=netloc, path='', query='', fragment='')
+        netloc = self._make_netloc(None, None, v.hostname, v.port, encode=False)
+        val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
 
     def relative(self):
@@ -372,7 +360,7 @@ class URL:
         """
         if not self.is_absolute():
             raise ValueError("URL should be absolute")
-        val = self._val._replace(scheme='', netloc='')
+        val = self._val._replace(scheme="", netloc="")
         return URL(val, encoded=True)
 
     @property
@@ -445,16 +433,16 @@ class URL:
         raw = self.raw_host
         if raw is None:
             return None
-        if '%' in raw:
+        if "%" in raw:
             # Hack for scoped IPv6 addresses like
             # fe80::2%Проверка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
 
         try:
-            return idna.decode(raw.encode('ascii'))
+            return idna.decode(raw.encode("ascii"))
         except UnicodeError:  # e.g. '::1'
-            return raw.encode('ascii').decode('idna')
+            return raw.encode("ascii").decode("idna")
 
     @property
     def port(self):
@@ -484,7 +472,7 @@ class URL:
         """
         ret = self._val.path
         if not ret and self.is_absolute():
-            ret = '/'
+            ret = "/"
         return ret
 
     @cached_property
@@ -504,8 +492,7 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        ret = MultiDict(parse_qsl(self.raw_query_string,
-                                  keep_blank_values=True))
+        ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
 
     @property
@@ -531,14 +518,14 @@ class URL:
         """Decoded path of URL with query."""
         if not self.query_string:
             return self.path
-        return '{}?{}'.format(self.path, self.query_string)
+        return "{}?{}".format(self.path, self.query_string)
 
     @cached_property
     def raw_path_qs(self):
         """Encoded path of URL with query."""
         if not self.raw_query_string:
             return self.raw_path
-        return '{}?{}'.format(self.raw_path, self.raw_query_string)
+        return "{}?{}".format(self.raw_path, self.raw_query_string)
 
     @property
     def raw_fragment(self):
@@ -568,14 +555,14 @@ class URL:
         path = self._val.path
         if self.is_absolute():
             if not path:
-                parts = ['/']
+                parts = ["/"]
             else:
-                parts = ['/'] + path[1:].split('/')
+                parts = ["/"] + path[1:].split("/")
         else:
-            if path.startswith('/'):
-                parts = ['/'] + path[1:].split('/')
+            if path.startswith("/"):
+                parts = ["/"] + path[1:].split("/")
             else:
-                parts = path.split('/')
+                parts = path.split("/")
         return tuple(parts)
 
     @cached_property
@@ -594,14 +581,12 @@ class URL:
 
         """
         path = self.raw_path
-        if not path or path == '/':
+        if not path or path == "/":
             if self.raw_fragment or self.raw_query_string:
-                return URL(self._val._replace(query='', fragment=''),
-                           encoded=True)
+                return URL(self._val._replace(query="", fragment=""), encoded=True)
             return self
-        parts = path.split('/')
-        val = self._val._replace(path='/'.join(parts[:-1]),
-                                 query='', fragment='')
+        parts = path.split("/")
+        val = self._val._replace(path="/".join(parts[:-1]), query="", fragment="")
         return URL(val, encoded=True)
 
     @cached_property
@@ -611,7 +596,7 @@ class URL:
         if self.is_absolute():
             parts = parts[1:]
             if not parts:
-                return ''
+                return ""
             else:
                 return parts[-1]
         else:
@@ -628,21 +613,20 @@ class URL:
 
         Raise ValueError if not.
         """
-        if len(host) > 0 and len(path) > 0 and not path.startswith('/'):
+        if len(host) > 0 and len(path) > 0 and not path.startswith("/"):
             raise ValueError(
-                "Path in a URL with authority "
-                "should start with a slash ('/') if set"
+                "Path in a URL with authority " "should start with a slash ('/') if set"
             )
 
     @classmethod
     def _normalize_path(cls, path):
         # Drop '.' and '..' from path
 
-        segments = path.split('/')
+        segments = path.split("/")
         resolved_path = []
 
         for seg in segments:
-            if seg == '..':
+            if seg == "..":
                 try:
                     resolved_path.pop()
                 except IndexError:
@@ -650,35 +634,35 @@ class URL:
                     # IndexError when popped from resolved_path if
                     # resolving for rfc3986
                     pass
-            elif seg == '.':
+            elif seg == ".":
                 continue
             else:
                 resolved_path.append(seg)
 
-        if segments[-1] in ('.', '..'):
+        if segments[-1] in (".", ".."):
             # do some post-processing here.
             # if the last segment was a relative dir,
             # then we need to append the trailing '/'
-            resolved_path.append('')
+            resolved_path.append("")
 
-        return '/'.join(resolved_path)
+        return "/".join(resolved_path)
 
     @classmethod
     def _encode_host(cls, host):
         try:
-            ip, sep, zone = host.partition('%')
+            ip, sep, zone = host.partition("%")
             ip = ip_address(ip)
         except ValueError:
             try:
-                host = idna.encode(host, uts46=True).decode('ascii')
+                host = idna.encode(host, uts46=True).decode("ascii")
             except UnicodeError:
-                host = host.encode('idna').decode('ascii')
+                host = host.encode("idna").decode("ascii")
         else:
             host = ip.compressed
             if sep:
-                host += '%' + zone
+                host += "%" + zone
             if ip.version == 6:
-                host = '[' + host + ']'
+                host = "[" + host + "]"
         return host
 
     @classmethod
@@ -688,20 +672,20 @@ class URL:
         else:
             ret = host
         if port:
-            ret = ret + ':' + str(port)
+            ret = ret + ":" + str(port)
         if password:
             if not user:
-                user = ''
+                user = ""
             else:
                 if encode:
                     user = cls._QUOTER(user)
             if encode:
                 password = cls._QUOTER(password)
-            user = user + ':' + password
+            user = user + ":" + password
         elif user and encode:
             user = cls._QUOTER(user)
         if user:
-            ret = user + '@' + ret
+            ret = user + "@" + ret
         return ret
 
     def with_scheme(self, scheme):
@@ -710,8 +694,7 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         if not self.is_absolute():
-            raise ValueError("scheme replacement is not allowed "
-                             "for relative URLs")
+            raise ValueError("scheme replacement is not allowed " "for relative URLs")
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
     def with_user(self, user):
@@ -732,14 +715,15 @@ class URL:
         else:
             raise TypeError("Invalid user type")
         if not self.is_absolute():
-            raise ValueError("user replacement is not allowed "
-                             "for relative URLs")
-        return URL(self._val._replace(netloc=self._make_netloc(user,
-                                                               password,
-                                                               val.hostname,
-                                                               val.port,
-                                                               encode=False)),
-                   encoded=True)
+            raise ValueError("user replacement is not allowed " "for relative URLs")
+        return URL(
+            self._val._replace(
+                netloc=self._make_netloc(
+                    user, password, val.hostname, val.port, encode=False
+                )
+            ),
+            encoded=True,
+        )
 
     def with_password(self, password):
         """Return a new URL with password replaced.
@@ -757,17 +741,16 @@ class URL:
         else:
             raise TypeError("Invalid password type")
         if not self.is_absolute():
-            raise ValueError("password replacement is not allowed "
-                             "for relative URLs")
+            raise ValueError("password replacement is not allowed " "for relative URLs")
         val = self._val
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(val.username,
-                                         password,
-                                         val.hostname,
-                                         val.port,
-                                         encode=False)),
-            encoded=True)
+                netloc=self._make_netloc(
+                    val.username, password, val.hostname, val.port, encode=False
+                )
+            ),
+            encoded=True,
+        )
 
     def with_host(self, host):
         """Return a new URL with host replaced.
@@ -782,19 +765,19 @@ class URL:
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
         if not self.is_absolute():
-            raise ValueError("host replacement is not allowed "
-                             "for relative URLs")
+            raise ValueError("host replacement is not allowed " "for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
         host = self._encode_host(host)
         val = self._val
         return URL(
-            self._val._replace(netloc=self._make_netloc(val.username,
-                                                        val.password,
-                                                        host,
-                                                        val.port,
-                                                        encode=False)),
-            encoded=True)
+            self._val._replace(
+                netloc=self._make_netloc(
+                    val.username, val.password, host, val.port, encode=False
+                )
+            ),
+            encoded=True,
+        )
 
     def with_port(self, port):
         """Return a new URL with port replaced.
@@ -804,19 +787,18 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         if port is not None and not isinstance(port, int):
-            raise TypeError(
-                "port should be int or None, got {}".format(type(port)))
+            raise TypeError("port should be int or None, got {}".format(type(port)))
         if not self.is_absolute():
-            raise ValueError("port replacement is not allowed "
-                             "for relative URLs")
+            raise ValueError("port replacement is not allowed " "for relative URLs")
         val = self._val
         return URL(
-            self._val._replace(netloc=self._make_netloc(val.username,
-                                                        val.password,
-                                                        val.hostname,
-                                                        port,
-                                                        encode=False)),
-            encoded=True)
+            self._val._replace(
+                netloc=self._make_netloc(
+                    val.username, val.password, val.hostname, port, encode=False
+                )
+            ),
+            encoded=True,
+        )
 
     def with_path(self, path, *, encoded=False):
         """Return a new URL with path replaced."""
@@ -824,10 +806,9 @@ class URL:
             path = self._PATH_QUOTER(path)
             if self.is_absolute():
                 path = self._normalize_path(path)
-        if len(path) > 0 and path[0] != '/':
-            path = '/' + path
-        return URL(self._val._replace(path=path, query='', fragment=''),
-                   encoded=True)
+        if len(path) > 0 and path[0] != "/":
+            path = "/" + path
+        return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
     @staticmethod
     def _query_var(v):
@@ -835,40 +816,49 @@ class URL:
             return v
         if type(v) is int:  # no subclasses like bool
             return str(v)
-        raise TypeError("Invalid variable type: value "
-                        "should be str or int, got {!r} "
-                        "of type {}".format(v, type(v)))
+        raise TypeError(
+            "Invalid variable type: value "
+            "should be str or int, got {!r} "
+            "of type {}".format(v, type(v))
+        )
 
     def _get_str_query(self, *args, **kwargs):
         if kwargs:
             if len(args) > 0:
-                raise ValueError("Either kwargs or single query parameter "
-                                 "must be present")
+                raise ValueError(
+                    "Either kwargs or single query parameter " "must be present"
+                )
             query = kwargs
         elif len(args) == 1:
             query = args[0]
         else:
-            raise ValueError("Either kwargs or single query parameter "
-                             "must be present")
+            raise ValueError(
+                "Either kwargs or single query parameter " "must be present"
+            )
 
         if query is None:
-            query = ''
+            query = ""
         elif isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
-            query = '&'.join(quoter(k) + '=' + quoter(self._query_var(v))
-                             for k, v in query.items())
+            query = "&".join(
+                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query.items()
+            )
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
-            raise TypeError("Invalid query type: bytes, bytearray and "
-                            "memoryview are forbidden")
+            raise TypeError(
+                "Invalid query type: bytes, bytearray and " "memoryview are forbidden"
+            )
         elif isinstance(query, Sequence):
             quoter = self._QUERY_PART_QUOTER
-            query = '&'.join(quoter(k) + '=' + quoter(self._query_var(v))
-                             for k, v in query)
+            query = "&".join(
+                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
+            )
         else:
-            raise TypeError("Invalid query type: only str, mapping or "
-                            "sequence of (str, str) pairs is allowed")
+            raise TypeError(
+                "Invalid query type: only str, mapping or "
+                "sequence of (str, str) pairs is allowed"
+            )
 
         return query
 
@@ -889,8 +879,8 @@ class URL:
 
         new_query = self._get_str_query(*args, **kwargs)
         return URL(
-            self._val._replace(path=self._val.path, query=new_query),
-            encoded=True)
+            self._val._replace(path=self._val.path, query=new_query), encoded=True
+        )
 
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
@@ -899,8 +889,7 @@ class URL:
         query = MultiDict(self.query)
         query.update(new_query)
 
-        return URL(self._val._replace(query=self._get_str_query(query)),
-                   encoded=True)
+        return URL(self._val._replace(query=self._get_str_query(query)), encoded=True)
 
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.
@@ -912,13 +901,12 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         if fragment is None:
-            fragment = ''
+            fragment = ""
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
         return URL(
-            self._val._replace(
-                fragment=self._FRAGMENT_QUOTER(fragment)),
-            encoded=True)
+            self._val._replace(fragment=self._FRAGMENT_QUOTER(fragment)), encoded=True
+        )
 
     def with_name(self, name):
         """Return a new URL with name (last part of path) replaced.
@@ -931,10 +919,10 @@ class URL:
         # N.B. DOES cleanup query/fragment
         if not isinstance(name, str):
             raise TypeError("Invalid name type")
-        if '/' in name:
+        if "/" in name:
             raise ValueError("Slash in name is not allowed")
         name = self._PATH_QUOTER(name)
-        if name in ('.', '..'):
+        if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
         if self.is_absolute():
@@ -942,14 +930,15 @@ class URL:
                 parts.append(name)
             else:
                 parts[-1] = name
-            parts[0] = ''  # replace leading '/'
+            parts[0] = ""  # replace leading '/'
         else:
             parts[-1] = name
-            if parts[0] == '/':
-                parts[0] = ''  # replace leading '/'
+            if parts[0] == "/":
+                parts[0] = ""  # replace leading '/'
         return URL(
-            self._val._replace(path='/'.join(parts),
-                               query='', fragment=''), encoded=True)
+            self._val._replace(path="/".join(parts), query="", fragment=""),
+            encoded=True,
+        )
 
     def join(self, url):
         """Join URLs
@@ -971,12 +960,14 @@ class URL:
     def human_repr(self):
         """Return decoded human readable string for URL representation."""
 
-        return urlunsplit(SplitResult(self.scheme,
-                                      self._make_netloc(self.user,
-                                                        self.password,
-                                                        self.host,
-                                                        self._val.port,
-                                                        encode=False),
-                                      self.path,
-                                      self.query_string,
-                                      self.fragment))
+        return urlunsplit(
+            SplitResult(
+                self.scheme,
+                self._make_netloc(
+                    self.user, self.password, self.host, self._val.port, encode=False
+                ),
+                self.path,
+                self.query_string,
+                self.fragment,
+            )
+        )

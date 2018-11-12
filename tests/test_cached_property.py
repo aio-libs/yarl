@@ -27,7 +27,7 @@ def test_reify_class():
             return 1
 
     assert isinstance(A.prop, cached_property)
-    assert 'Docstring.' == A.prop.__doc__
+    assert "Docstring." == A.prop.__doc__
 
 
 def test_reify_assignment():

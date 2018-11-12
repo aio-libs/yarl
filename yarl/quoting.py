@@ -2,22 +2,23 @@ import re
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Optional, TYPE_CHECKING, cast
 
-BASCII_LOWERCASE = ascii_lowercase.encode('ascii')
-BPCT_ALLOWED = {'%{:02X}'.format(i).encode('ascii') for i in range(256)}
+BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
+BPCT_ALLOWED = {"%{:02X}".format(i).encode("ascii") for i in range(256)}
 GEN_DELIMS = ":/?#[]@"
 SUB_DELIMS_WITHOUT_QS = "!$'()*,"
-SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+&=;'
+SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + "+&=;"
 RESERVED = GEN_DELIMS + SUB_DELIMS
-UNRESERVED = ascii_letters + digits + '-._~'
+UNRESERVED = ascii_letters + digits + "-._~"
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
-_IS_HEX = re.compile(b'[A-Z0-9][A-Z0-9]')
+_IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
 
 
 class _Quoter:
-    def __init__(self, *,
-                 safe: str='', protected: str='', qs: bool=False) -> None:
+    def __init__(
+        self, *, safe: str = "", protected: str = "", qs: bool = False
+    ) -> None:
         self._safe = safe
         self._protected = protected
         self._qs = qs
@@ -28,16 +29,16 @@ class _Quoter:
         if not isinstance(val, str):
             raise TypeError("Argument should be str")
         if not val:
-            return ''
-        bval = cast(str, val).encode('utf8', errors='ignore')
+            return ""
+        bval = cast(str, val).encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
         safe = self._safe
         safe += ALLOWED
         if not self._qs:
-            safe += '+&=;'
+            safe += "+&=;"
         safe += self._protected
-        bsafe = safe.encode('ascii')
+        bsafe = safe.encode("ascii")
         idx = 0
         while idx < len(bval):
             ch = bval[idx]
@@ -50,14 +51,14 @@ class _Quoter:
                 if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                     buf = pct[1:]
                     if not _IS_HEX.match(buf):
-                        ret.extend(b'%25')
+                        ret.extend(b"%25")
                         pct.clear()
                         idx -= 2
                         continue
                     try:
-                        unquoted = chr(int(pct[1:].decode('ascii'), base=16))
+                        unquoted = chr(int(pct[1:].decode("ascii"), base=16))
                     except ValueError:
-                        ret.extend(b'%25')
+                        ret.extend(b"%25")
                         pct.clear()
                         idx -= 2
                         continue
@@ -72,37 +73,37 @@ class _Quoter:
 
                 # special case, if we have only one char after "%"
                 elif len(pct) == 2 and idx == len(bval):
-                    ret.extend(b'%25')
+                    ret.extend(b"%25")
                     pct.clear()
                     idx -= 1
 
                 continue
 
-            elif ch == ord('%'):
+            elif ch == ord("%"):
                 pct.clear()
                 pct.append(ch)
 
                 # special case if "%" is last char
                 if idx == len(bval):
-                    ret.extend(b'%25')
+                    ret.extend(b"%25")
 
                 continue
 
             if self._qs:
-                if ch == ord(' '):
-                    ret.append(ord('+'))
+                if ch == ord(" "):
+                    ret.append(ord("+"))
                     continue
             if ch in bsafe:
                 ret.append(ch)
                 continue
 
-            ret.extend(('%{:02X}'.format(ch)).encode('ascii'))
+            ret.extend(("%{:02X}".format(ch)).encode("ascii"))
 
-        return ret.decode('ascii')
+        return ret.decode("ascii")
 
 
 class _Unquoter:
-    def __init__(self, *, unsafe: str='', qs: bool=False) -> None:
+    def __init__(self, *, unsafe: str = "", qs: bool = False) -> None:
         self._unsafe = unsafe
         self._qs = qs
         self._quoter = _Quoter()
@@ -114,9 +115,9 @@ class _Unquoter:
         if not isinstance(val, str):
             raise TypeError("Argument should be str")
         if not val:
-            return ''
-        pct = ''
-        last_pct = ''
+            return ""
+        pct = ""
+        last_pct = ""
         pcts = bytearray()
         ret = []
         for ch in val:
@@ -125,15 +126,15 @@ class _Unquoter:
                 if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                     pcts.append(int(pct[1:], base=16))
                     last_pct = pct
-                    pct = ''
+                    pct = ""
                 continue
             if pcts:
                 try:
-                    unquoted = pcts.decode('utf8')
+                    unquoted = pcts.decode("utf8")
                 except UnicodeDecodeError:
                     pass
                 else:
-                    if self._qs and unquoted in '+=&;':
+                    if self._qs and unquoted in "+=&;":
                         to_add = self._qs_quoter(unquoted)
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
@@ -147,23 +148,23 @@ class _Unquoter:
                         ret.append(unquoted)
                     del pcts[:]
 
-            if ch == '%':
+            if ch == "%":
                 pct = ch
                 continue
 
             if pcts:
                 ret.append(last_pct)  # %F8ab
-                last_pct = ''
+                last_pct = ""
 
-            if ch == '+':
+            if ch == "+":
                 if not self._qs or ch in self._unsafe:
-                    ret.append('+')
+                    ret.append("+")
                 else:
-                    ret.append(' ')
+                    ret.append(" ")
                 continue
 
             if ch in self._unsafe:
-                ret.append('%')
+                ret.append("%")
                 h = hex(ord(ch)).upper()[2:]
                 for ch in h:
                     ret.append(ch)
@@ -173,11 +174,11 @@ class _Unquoter:
 
         if pcts:
             try:
-                unquoted = pcts.decode('utf8')
+                unquoted = pcts.decode("utf8")
             except UnicodeDecodeError:
                 ret.append(last_pct)  # %F8
             else:
-                if self._qs and unquoted in '+=&;':
+                if self._qs and unquoted in "+=&;":
                     to_add = self._qs_quoter(unquoted)
                     if to_add is None:  # pragma: no cover
                         raise RuntimeError("Cannot quote None")
@@ -189,7 +190,7 @@ class _Unquoter:
                     ret.append(to_add)
                 else:
                     ret.append(unquoted)
-        return ''.join(ret)
+        return "".join(ret)
 
 
 _PyQuoter = _Quoter

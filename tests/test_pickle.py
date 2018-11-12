@@ -7,7 +7,7 @@ from yarl import URL
 
 
 def test_pickle():
-    u1 = URL('test')
+    u1 = URL("test")
     hash(u1)
     v = pickle.dumps(u1)
     u2 = pickle.loads(v)
@@ -17,12 +17,8 @@ def test_pickle():
 
 
 def test_default_style_state():
-    u = URL('test')
+    u = URL("test")
     hash(u)
-    u.__setstate__((None, {
-        '_val': 'test',
-        '_strict': False,
-        '_cache': {'hash': 1},
-    }))
+    u.__setstate__((None, {"_val": "test", "_strict": False, "_cache": {"hash": 1}}))
     assert not u._cache
-    assert u._val == 'test'
+    assert u._val == "test"
