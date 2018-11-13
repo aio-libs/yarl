@@ -13,7 +13,10 @@ all: test
 
 flake: .develop
 	flake8 yarl tests setup.py
-	black --check yarl tests setup.py
+	if python -c "import sys; sys.exit(sys.version_info<(3,6))"; then \
+		black --check yarl tests setup.py; \
+		mypy yarl tests; \
+	fi
 
 fmt:
 	black yarl tests setup.py

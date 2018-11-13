@@ -49,7 +49,6 @@ script:
   - make cov
   - make doc
   - python setup.py check -rms
-  - make mypy
 
 
 after_success:

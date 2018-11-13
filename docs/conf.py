@@ -36,11 +36,11 @@ _version_path = _docs_path / '../yarl/__init__.py'
 
 with _version_path.open() as fp:
     try:
-        _version_info = re.search(r"^__version__ = '"
+        _version_info = re.search(r"^__version__ = \""
                                   r"(?P<major>\d+)"
                                   r"\.(?P<minor>\d+)"
                                   r"\.(?P<patch>\d+)"
-                                  r"(?P<tag>.*)?'$",
+                                  r"(?P<tag>.*)?\"$",
                                   fp.read(), re.M).groupdict()
     except IndexError:
         raise RuntimeError('Unable to determine version.')
