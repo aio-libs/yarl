@@ -1,8 +1,8 @@
 yarl
 ====
 
-.. image:: https://travis-ci.org/aio-libs/yarl.svg?branch=master
-  :target:  https://travis-ci.org/aio-libs/yarl
+.. image:: https://travis-ci.com/aio-libs/yarl.svg?branch=master
+  :target:  https://travis-ci.com/aio-libs/yarl
   :align: right
 
 .. image:: https://codecov.io/gh/aio-libs/yarl/branch/master/graph/badge.svg
