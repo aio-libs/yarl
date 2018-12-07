@@ -134,7 +134,14 @@ def test_password_non_ascii():
 
 def test_password_without_user():
     url = URL("http://:password@example.com")
+    assert url.user is None
     assert "password" == url.password
+
+
+def test_user_empty_password():
+    url = URL("http://user:@example.com")
+    assert "user" == url.user
+    assert "" == url.password
 
 
 def test_raw_host():
