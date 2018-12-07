@@ -187,7 +187,7 @@ class URL:
         *,
         scheme="",
         user="",
-        password="",
+        password=None,
         host="",
         port=None,
         path="",
@@ -673,7 +673,7 @@ class URL:
             ret = host
         if port:
             ret = ret + ":" + str(port)
-        if password:
+        if password is not None:
             if not user:
                 user = ""
             else:
