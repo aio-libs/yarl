@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-1.3.0 (XXXX-XX-XX)
+1.3.0 (2018-12-11)
 ------------------
 
 * Fix annotations for ``query`` parameter (#207)
@@ -12,6 +12,8 @@ CHANGES
 * Add ``URL.explicit_port`` property (#218)
 
 * Give a friendlier error when port cant be converted to int (#168)
+
+* ``bool(URL())`` now returns ``False`` (#272)
 
 1.2.6 (2018-06-14)
 ------------------

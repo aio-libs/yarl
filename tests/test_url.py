@@ -34,6 +34,12 @@ def test_is():
     assert u1 is u2
 
 
+def test_bool():
+    assert URL("http://example.com")
+    assert not URL()
+    assert not URL("")
+
+
 def test_absolute_url_without_host():
     with pytest.raises(ValueError):
         URL("http://:8080/")

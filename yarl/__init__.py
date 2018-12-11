@@ -9,7 +9,7 @@ import idna
 
 from .quoting import _Quoter, _Unquoter
 
-__version__ = "1.3.0a0"
+__version__ = "1.3.0"
 
 __all__ = ("URL",)
 
@@ -299,6 +299,11 @@ class URL:
             new_path = self._normalize_path(new_path)
         return URL(
             self._val._replace(path=new_path, query="", fragment=""), encoded=True
+        )
+
+    def __bool__(self) -> bool:
+        return bool(
+            self._val.netloc or self._val.path or self._val.query or self._val.fragment
         )
 
     def __getstate__(self):
