@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+1.4.0 (XXXX-XX-XX)
+------------------
+
+* Distinguish an empty password in URL from a password not provided at all (#262)
+
 1.3.0 (2018-12-11)
 ------------------
 
