@@ -204,6 +204,8 @@ class URL:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
             raise ValueError('Only one of "query" or "query_string" should be passed')
+        if path is None or query_string is None or fragment is None:
+            raise TypeError('NoneType not accepted. Use "".')
 
         if not user and not password and not host and not port:
             netloc = ""
