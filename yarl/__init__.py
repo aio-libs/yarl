@@ -205,7 +205,8 @@ class URL:
         if query and query_string:
             raise ValueError('Only one of "query" or "query_string" should be passed')
         if path is None or query_string is None or fragment is None:
-            raise TypeError('NoneType is illegal for "path", "query_string" and "fragment args, use string values instead.')
+            raise TypeError('NoneType is illegal for "path", "query_string" and '
+                            '"fragment" args, use string values instead.')
 
         if not user and not password and not host and not port:
             netloc = ""
