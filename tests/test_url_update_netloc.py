@@ -17,8 +17,7 @@ def test_with_scheme_uppercased():
 
 
 def test_with_scheme_for_relative_url():
-    with pytest.raises(ValueError):
-        URL("path/to").with_scheme("http")
+    assert str(URL("/path/to").with_scheme("http")) == "http:///path/to"
 
 
 def test_with_scheme_invalid_type():
