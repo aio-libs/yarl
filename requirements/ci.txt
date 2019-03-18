@@ -7,4 +7,4 @@ idna==2.8
 
 flake8==3.7.7
 flake8-pyi==19.3.0; python_version >= "3.6"
-black==18.9b0; python_version >= "3.6"
+black==19.3b0; python_version >= "3.6"
