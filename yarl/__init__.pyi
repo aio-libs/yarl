@@ -37,7 +37,7 @@ class URL:
         cls,
         *,
         scheme: str = ...,
-        user: str = ...,
+        user: Optional[str] = ...,
         password: Optional[str] = ...,
         host: str = ...,
         port: Optional[int] = ...,
