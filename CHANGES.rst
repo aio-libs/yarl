@@ -5,6 +5,7 @@ CHANGES
 ------------------
 
 * Distinguish an empty password in URL from a password not provided at all (#262)
+* Fixed annotations for optional parameters of ``URL.build`` (#309)
 
 1.3.0 (2018-12-11)
 ------------------

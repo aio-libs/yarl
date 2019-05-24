@@ -38,11 +38,11 @@ class URL:
         *,
         scheme: str = ...,
         user: str = ...,
-        password: str = ...,
+        password: Optional[str] = ...,
         host: str = ...,
         port: Optional[int] = ...,
         path: str = ...,
-        query: Query = ...,
+        query: Optional[Query] = ...,
         query_string: str = ...,
         fragment: str = ...,
         encoded: bool = ...
