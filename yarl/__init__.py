@@ -1,4 +1,5 @@
 import warnings
+from functools import lru_cache
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
 from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit
@@ -446,7 +447,10 @@ class URL:
             # fe80::2%Проверка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
+        return self._get_host_decoded(raw)
 
+    @lru_cache()
+    def _get_host_decoded(self, raw):
         try:
             return idna.decode(raw.encode("ascii"))
         except UnicodeError:  # e.g. '::1'
