@@ -1170,3 +1170,10 @@ def test_requoting():
     u = URL("http://127.0.0.1/?next=http%3A//example.com/")
     assert u.raw_query_string == "next=http://example.com/"
     assert str(u) == "http://127.0.0.1/?next=http://example.com/"
+
+def test_idna_cache():
+    u = URL("http://127.0.0.1/")
+    host = u.raw_host
+    assert u._get_host_decoded(host) == '127.0.0.1'
+    assert u._get_host_decoded(host) == '127.0.0.1'
+    assert u._get_host_decoded.cache_info().hits == 1
