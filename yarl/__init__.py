@@ -19,6 +19,7 @@ __all__ = ("URL",)
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+_CACHE_SIZE = 512
 
 sentinel = object()
 
@@ -52,6 +53,24 @@ class cached_property:
 
     def __set__(self, inst, value):
         raise AttributeError("cached property is read-only")
+
+
+@lru_cache(_CACHE_SIZE)
+def _decode_host(raw):
+    """Cache for idna decoding host """
+    try:
+        return idna.decode(raw.encode("ascii"))
+    except UnicodeError:  # e.g. '::1'
+        return raw.encode("ascii").decode("idna")
+
+
+@lru_cache(_CACHE_SIZE)
+def _encode_host(host):
+    """Cache for idna encoding host """
+    try:
+        return idna.encode(host, uts46=True).decode("ascii")
+    except UnicodeError:
+        return host.encode("idna").decode("ascii")
 
 
 class URL:
@@ -447,14 +466,7 @@ class URL:
             # fe80::2%Проверка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
-        return self._get_host_decoded(raw)
-
-    @lru_cache()
-    def _get_host_decoded(self, raw):
-        try:
-            return idna.decode(raw.encode("ascii"))
-        except UnicodeError:  # e.g. '::1'
-            return raw.encode("ascii").decode("idna")
+        return _decode_host(raw)
 
     @property
     def port(self):
@@ -665,10 +677,7 @@ class URL:
             ip, sep, zone = host.partition("%")
             ip = ip_address(ip)
         except ValueError:
-            try:
-                host = idna.encode(host, uts46=True).decode("ascii")
-            except UnicodeError:
-                host = host.encode("idna").decode("ascii")
+            host = _encode_host(host)
         else:
             host = ip.compressed
             if sep:

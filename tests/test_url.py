@@ -2,6 +2,7 @@ import sys
 import pytest
 from urllib.parse import SplitResult
 
+import yarl
 from yarl import URL
 
 
@@ -1171,9 +1172,19 @@ def test_requoting():
     assert u.raw_query_string == "next=http://example.com/"
     assert str(u) == "http://127.0.0.1/?next=http://example.com/"
 
-def test_idna_cache():
+def test_idna_decode_cache():
     u = URL("http://127.0.0.1/")
     host = u.raw_host
-    assert u._get_host_decoded(host) == '127.0.0.1'
-    assert u._get_host_decoded(host) == '127.0.0.1'
-    assert u._get_host_decoded.cache_info().hits == 1
+    yarl._decode_host.cache_clear()
+    assert yarl._decode_host(host) == '127.0.0.1'
+    assert yarl._decode_host(host) == '127.0.0.1'
+    assert yarl._decode_host.cache_info().hits == 1
+
+
+def test_idna_encode_cache():
+    u = URL("http://127.0.0.1/")
+    host = u.raw_host
+    yarl._encode_host.cache_clear()
+    assert yarl._encode_host(host) == '127.0.0.1'
+    assert yarl._encode_host(host) == '127.0.0.1'
+    assert yarl._encode_host.cache_info().hits == 1
