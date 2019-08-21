@@ -162,8 +162,9 @@ class URL:
                 try:
                     port = val.port
                 except ValueError as e:
-                    msg = "Invalid URL: port can't be converted to integer"
-                    raise ValueError(msg) from e
+                    raise ValueError(
+                        "Invalid URL: port can't be converted to integer"
+                    ) from e
 
                 netloc = cls._make_netloc(
                     val.username, val.password, host, port, encode=True
