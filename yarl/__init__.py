@@ -157,12 +157,14 @@ class URL:
             else:
                 host = val.hostname
                 if host is None:
-                    raise ValueError("Invalid URL: host is required for abolute urls.")
+                    raise ValueError("Invalid URL: host is required for absolute urls")
 
                 try:
                     port = val.port
-                except ValueError:
-                    raise ValueError("Invalid URL: port can't be converted to integer")
+                except ValueError as e:
+                    raise ValueError(
+                        "Invalid URL: port can't be converted to integer"
+                    ) from e
 
                 netloc = cls._make_netloc(
                     val.username, val.password, host, port, encode=True
