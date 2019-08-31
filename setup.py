@@ -1,4 +1,5 @@
 import pathlib
+import os
 import sys
 import re
 
@@ -7,22 +8,15 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 from distutils.command.build_ext import build_ext
 
 
-try:
-    from Cython.Build import cythonize
+NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
 
-    USE_CYTHON = True
-except ImportError:
-    USE_CYTHON = False
+if sys.implementation.name != "cpython":
+    NO_EXTENSIONS = True
 
-ext = ".pyx" if USE_CYTHON else ".c"
 
-extensions = [Extension("yarl._quoting", ["yarl/_quoting" + ext])]
+extensions = [Extension("yarl._quoting", ["yarl/_quoting.c"])]
 # extra_compile_args=["-g"],
 # extra_link_args=["-g"],
-
-
-if USE_CYTHON:
-    extensions = cythonize(extensions)
 
 
 class BuildFailed(Exception):
@@ -93,17 +87,16 @@ args = dict(
     include_package_data=True,
     setup_requires=setup_requires,
     tests_require=["pytest"],
-    ext_modules=extensions,
-    cmdclass=dict(build_ext=ve_build_ext),
 )
 
 
-try:
-    setup(**args)
-except BuildFailed:
-    print("************************************************************")
-    print("Cannot compile C accelerator module, use pure python version")
-    print("************************************************************")
-    del args["ext_modules"]
-    del args["cmdclass"]
+if not NO_EXTENSIONS:
+    print("**********************")
+    print("* Accellerated build *")
+    print("**********************")
+    setup(ext_modules=extensions, cmdclass=dict(build_ext=ve_build_ext), **args)
+else:
+    print("*********************")
+    print("* Pure Python build *")
+    print("*********************")
     setup(**args)
