@@ -188,7 +188,7 @@ class URL:
         cls,
         *,
         scheme="",
-        user="",
+        user=None,
         password=None,
         host="",
         port=None,
