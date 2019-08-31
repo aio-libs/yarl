@@ -19,7 +19,7 @@ jobs:
     name: Publishing a source dist to PyPI
     python: 3.7
     if: tag IS present
-    before_install: skip
+    before_install: []
     install:
       - pip install -r requirements/cython.txt
       - make .cythonize
