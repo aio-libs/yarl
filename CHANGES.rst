@@ -5,8 +5,14 @@ CHANGES
 ------------------
 
 * Distinguish an empty password in URL from a password not provided at all (#262)
+
 * Fixed annotations for optional parameters of ``URL.build`` (#309)
+
 * Use None as default value of ``user`` parameter of ``URL.build`` (#309)
+
+* Enforce building C Accelerated modules when installing from source tarball, use
+  ``YARL_NO_EXTENSIONS`` environment variable for falling back to (slower) Pure Python
+  implementation (#329)
 
 1.3.0 (2018-12-11)
 ------------------
