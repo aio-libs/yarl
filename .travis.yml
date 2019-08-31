@@ -5,25 +5,26 @@ language: python
 python:
   - 3.5
   - 3.6
+  - 3.7
+  - 3.8-dev
 
-.mixins:
-- &_xenial
-  dist: xenial
-  sudo: required
+dist: xenial
+sudo: required
+
 jobs:
   fast_finish: true
   allow_failures:
   - python: 3.8-dev
   include:
-  - python: 3.7
-    <<: *_xenial
-  - python: 3.8-dev
-    <<: *_xenial
   - stage: Deploy
     name: Publishing a source dist to PyPI
     python: 3.6
     if: tag IS present
-    script: skip
+    before_install: skip
+    install: skip
+    script: 
+        - ./run_docker.sh
+    after_success: []
     deploy:
       provider: pypi
       user: aio-libs-bot
@@ -38,7 +39,8 @@ env:
     - secure: "EvZbFFwD/XggLEy7H6yY/6OQrFbFbsRjRPrT1Hb8/TDGE8VlwC7us7xFSVIkLhj9K//VvEQucviP/bGg2EIziRng8oSz4x+X6CM0hra3PdmogZzMtBUFoY7olY5c/opo967WO8QZ+2yIArmvB1RbiQ6eh82l13qaI+R8wfIjxT+JpAjMHUGnRmqx1sUuM7ZQYQKlpt0Q9sFaPh8U2FEgspi9auvHp7WOCaJR8uGrHImfvf/c7lzxWjcImqaT357XJnxwPbV418J3p/cOpgHvjJD2jTA8yY0qo62rsemqYyhzCwaTU+Q0Sz5ykUW80a49tW3iGRVo1K0grzL9TcV3HAVNb419YBgKm2mko4hG/JpDyphydVRLvJLv+jv6kb8Iyx5N3h5m/n782EJIoitNxObnuqM9L+RqO5XcqCNBqfD38NSShvp6WKPUa8JVMU+d+yJ5rfFLcJxIWRxSGvoSi7uVuQ9ceOJRHhuV3O6p67KhDfd7/79xtxERxXU/9gwIliSURXU4r/uU7agr/jlKAP7P/6btQrfuxiEhFNr6Yc1YmxnF3ul/uzQyOZIa6nN1mzGrCtO5bLXMo9b66mPOaW4OXjIGELWD99Q1xIolj92w7cKRp5iKm5fnBuvbSnsQ1xq3GSNfQWp6FzxHhvxVL4C42tfth61kpHuxwbY7U9o="
 
 install:
-  - pip install cython
+  - pip install requirements/cython.txt
+  - make cythonize
   - pip install twine
   - pip install -r requirements/ci.txt
   - pip install codecov
@@ -48,9 +50,9 @@ install:
 script:
   - make cov
   - make doc
+  - make test
   - python setup.py check -rms
 
 
 after_success:
   - codecov
-  - ./run_docker.sh
