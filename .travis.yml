@@ -9,7 +9,6 @@ python:
   - 3.8-dev
 
 dist: xenial
-sudo: required
 
 jobs:
   fast_finish: true
