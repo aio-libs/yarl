@@ -1,2 +1,2 @@
-pytest==5.1.1
+pytest==5.1.2
 multidict==4.5.2
