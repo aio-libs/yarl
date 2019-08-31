@@ -18,7 +18,7 @@ jobs:
   include:
   - stage: Deploy
     name: Publishing a source dist to PyPI
-    python: 3.6
+     python: 3.7
     if: tag IS present
     before_install: skip
     install:
