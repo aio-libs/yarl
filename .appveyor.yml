@@ -1,0 +1,41 @@
+version: 1.0.0a0.dev{build}
+
+environment:
+  PYPI_PASSWD:
+    secure: TQOze1gXXOwWoKv3MxIx4Q==
+  matrix:
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python37"
+    - PYTHON: "C:\\Python37-x64"
+  MAKE: C:\MinGW\bin\mingw32-make.exe
+
+install:
+  - "%MAKE% .cythonize"
+  - "build.cmd %PYTHON%\\python.exe -m pip install -U setuptools wheel twine codecov"
+  - "build.cmd %PYTHON%\\python.exe -m pip install -r requirements/ci.txt"
+
+build: false
+
+test_script:
+  - "build.cmd %PYTHON%\\python.exe setup.py test"
+
+after_test:
+  - "build.cmd %PYTHON%\\python.exe setup.py sdist bdist_wheel"
+
+artifacts:
+  - path: dist\*
+
+deploy_script:
+  - ps: >-
+      if($env:appveyor_repo_tag -eq 'True') {
+          Invoke-Expression "$env:PYTHON\\python.exe -m twine upload dist/* --username aio-libs-bot --password $env:PYPI_PASSWD --skip-existing"
+      }
+
+#notifications:
+#  - provider: Webhook
+#    url: https://ci.appveyor.com/api/github/webhook?id=08c7793w1tp839fl
+#    on_build_success: false
+#    on_build_failure: True
