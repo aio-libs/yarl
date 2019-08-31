@@ -21,9 +21,11 @@ jobs:
     python: 3.6
     if: tag IS present
     before_install: skip
-    install: skip
+    install:
+      - pip install -r requirements/cython.txt
+      - make .cythonize
     script: 
-        - ./run_docker.sh
+      - ./run_docker.sh
     after_success: []
     deploy:
       provider: pypi
@@ -40,7 +42,7 @@ env:
 
 install:
   - pip install -r requirements/cython.txt
-  - make cythonize
+  - make .cythonize
   - pip install twine
   - pip install -r requirements/ci.txt
   - pip install codecov
