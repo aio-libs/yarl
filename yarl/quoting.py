@@ -1,6 +1,15 @@
+import os
 import re
+import sys
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Optional, TYPE_CHECKING, cast
+
+
+NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
+
+if sys.implementation.name != "cpython":
+    NO_EXTENSIONS = True
+
 
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
 BPCT_ALLOWED = {"%{:02X}".format(i).encode("ascii") for i in range(256)}
@@ -196,7 +205,7 @@ class _Unquoter:
 _PyQuoter = _Quoter
 _PyUnquoter = _Unquoter
 
-if not TYPE_CHECKING:  # pragma: no branch
+if not TYPE_CHECKING and not NO_EXTENSIONS:  # pragma: no branch
     try:
         from ._quoting import _Quoter, _Unquoter
     except ImportError:  # pragma: no cover

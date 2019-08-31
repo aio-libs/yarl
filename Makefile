@@ -1,3 +1,5 @@
+PYXS = $(wildcard yarl/*.pyx)
+
 all: test
 
 
@@ -6,7 +8,19 @@ all: test
 	@touch .install-deps
 
 
-.develop: .install-deps $(shell find yarl -type f)
+.install-cython: requirements/cython.txt
+	pip install -r requirements/cython.txt
+	touch .install-cython
+
+
+yarl/%.c: yarl/%.pyx
+	cython -3 -o $@ $< -I yarl
+
+
+.cythonize: .install-cython $(PYXS:.pyx=.c)
+
+
+.develop: .install-deps $(shell find yarl -type f) .cythonize
 	@pip install -e .
 	@touch .develop
 

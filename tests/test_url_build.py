@@ -163,17 +163,21 @@ def test_build_with_authority_with_empty_path():
     u = URL.build(scheme="http", host="example.com", path="")
     assert str(u) == "http://example.com"
 
+
 def test_build_with_authority_with_path_without_leading_slash():
     with pytest.raises(ValueError):
         URL.build(scheme="http", host="example.com", path="path_without_leading_slash")
+
 
 def test_build_with_none_path():
     with pytest.raises(TypeError):
         URL.build(scheme="http", host="example.com", path=None)
 
+
 def test_build_with_none_query_string():
     with pytest.raises(TypeError):
         URL.build(scheme="http", host="example.com", query_string=None)
+
 
 def test_build_with_none_fragment():
     with pytest.raises(TypeError):

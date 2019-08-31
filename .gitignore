@@ -101,5 +101,6 @@ yarl/_quoting.html
 .idea
 
 .mypy_cache
+.install-cython
 .install-deps
 .pytest_cache
