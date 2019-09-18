@@ -1,3 +1,5 @@
+from urllib.parse import SplitResult
+
 from typing import overload, Any, Tuple, Optional, Mapping, Union, Sequence, Type
 import multidict
 
@@ -29,6 +31,7 @@ class URL:
     raw_parts: Tuple[str, ...]
     parts: Tuple[str, ...]
     parent: URL
+    _val: SplitResult  # undocumented
     def __init__(
         self, val: Union[str, "URL"] = ..., *, encoded: bool = ...
     ) -> None: ...
