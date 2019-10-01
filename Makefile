@@ -31,8 +31,10 @@ cythonize: .cythonize
 flake8:
 	flake8 $(SRC)
 
+black-check:
+	black --check $(SRC)
 
-lint:
+lint: flake8 black
 	if python -c "import sys; sys.exit(sys.version_info<(3,6))"; then \
 		black --check $(SRC); \
 		mypy yarl tests; \

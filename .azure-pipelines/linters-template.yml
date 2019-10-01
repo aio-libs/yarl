@@ -15,3 +15,20 @@ jobs:
   - script: |
       make flake8
     displayName: "Run flake8"
+
+- job: 'black'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+      architecture: "x64"
+
+  - script: |
+      pip install black
+    displayName: "Install black"
+
+  - script: |
+      make black-check
+    displayName: "Run black checker"
