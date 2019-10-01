@@ -5,6 +5,10 @@
 
 jobs:
 
+variables:
+  - name: no_extensions
+    value: ''
+
 - job: 'Test'
   pool:
     vmImage: 'Ubuntu 16.04'
@@ -25,9 +29,18 @@ jobs:
 
   - script: |
       python -m pip install -- upgrade pip
+    displayName: "Update pip"
+
+  - script: |
       make cythonize
+    condition: eq(variables['no_extensions'], '')
+    displayName: "Cythonize"
+
+  - script: |
       pip install -r requirements/dev.txt
     displayName: 'Install dependencies'
+    env:
+      YARL_NO_EXTENSIONS: '$(no_extensions)'
 
   - script: |
       pip install pytest
