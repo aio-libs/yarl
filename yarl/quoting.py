@@ -152,7 +152,7 @@ class _Unquoter:
                             raise RuntimeError("Cannot quote None")
                         ret.append(to_add)
                     elif unquoted in self._unsafe:
-                        to_add = self._qs_quoter(unquoted)
+                        to_add = self._quoter(unquoted)
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
                         ret.append(to_add)
