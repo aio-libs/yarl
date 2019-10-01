@@ -34,7 +34,7 @@ flake8:
 black-check:
 	black --check $(SRC)
 
-lint: flake8 black
+lint: flake8 black-check
 	if python -c "import sys; sys.exit(sys.version_info<(3,6))"; then \
 		black --check $(SRC); \
 		mypy yarl tests; \
