@@ -1,7 +1,7 @@
-pool:
-  vmImage: 'ubuntu-latest'
 
 jobs:
+pool:
+  vmImage: 'ubuntu-latest'
 - job: 'flake8'
   steps:
   - task: UsePythonVersion@0
