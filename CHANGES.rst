@@ -14,6 +14,8 @@ CHANGES
   ``YARL_NO_EXTENSIONS`` environment variable for falling back to (slower) Pure Python
   implementation (#329)
 
+* Drop Python 3.5 support
+
 1.3.0 (2018-12-11)
 ------------------
 
