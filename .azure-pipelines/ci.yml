@@ -23,7 +23,7 @@ jobs:
         python.version: '3.7'
         no_extensions: 'Y'
       PyPy3:
-        python.version: 'pypy'
+        python.version: 'pypy3'
         no_extensions: 'Y'
 
   steps:
