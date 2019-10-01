@@ -6,6 +6,10 @@ import re
 from setuptools import setup, Extension
 
 
+if sys.version_info < (3, 6):
+    raise RuntimeError("aiohttp 3.x requires Python 3.6+")
+
+
 NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
 
 if sys.implementation.name != "cpython":
@@ -45,8 +49,8 @@ args = dict(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Internet :: WWW/HTTP",
     ],
     author="Andrew Svetlov",
@@ -55,7 +59,7 @@ args = dict(
     license="Apache 2",
     packages=["yarl"],
     install_requires=install_requires,
-    python_requires=">=3.5.3",
+    python_requires=">=3.6",
     include_package_data=True,
 )
 
