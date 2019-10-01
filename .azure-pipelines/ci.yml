@@ -4,15 +4,24 @@ jobs:
     vmImage: 'Ubuntu 16.04'
   strategy:
     matrix:
-      Python35:
+      Py35-Cython:
         python.version: '3.5'
         no_extensions: ''
-      Python36:
+      Py36-Cython:
         python.version: '3.6'
         no_extensions: ''
-      Python37:
+      Py37-Cython:
         python.version: '3.7'
         no_extensions: ''
+      Py35-Pure:
+        python.version: '3.5'
+        no_extensions: 'Y'
+      Py36-Pure:
+        python.version: '3.6'
+        no_extensions: 'Y'
+      Py37-Pure:
+        python.version: '3.7'
+        no_extensions: 'Y'
 
   steps:
   - task: UsePythonVersion@0
