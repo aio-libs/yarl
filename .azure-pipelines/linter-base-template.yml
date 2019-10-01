@@ -1,4 +1,5 @@
-job:
+jobs:
+- job:
   pool:
     vmImage: 'ubuntu-latest'
   steps:
