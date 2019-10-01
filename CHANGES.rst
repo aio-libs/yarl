@@ -16,6 +16,8 @@ CHANGES
 
 * Drop Python 3.5 support
 
+* Fix quoting of plus in path by pure python version (#339)
+
 1.3.0 (2018-12-11)
 ------------------
 
