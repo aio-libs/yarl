@@ -66,8 +66,7 @@ jobs:
       YARL_NO_EXTENSIONS: '$(no_extensions)'
 
   - script: |
-      pip install pytest
-      pytest tests
+      pytest tests -vv
       python -m coverage xml
     displayName: 'pytest'
 
