@@ -11,7 +11,6 @@ environment:
   MAKE: C:\MinGW\bin\mingw32-make.exe
 
 install:
-  - "%MAKE% .cythonize"
   - "build.cmd %PYTHON%\\python.exe -m pip install -U setuptools wheel twine codecov"
   - "%MAKE% cythonize"
   - "build.cmd %PYTHON%\\python.exe -m pip install -r requirements/ci.txt"
