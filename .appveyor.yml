@@ -4,8 +4,6 @@ environment:
   PYPI_PASSWD:
     secure: TQOze1gXXOwWoKv3MxIx4Q==
   matrix:
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python37"
