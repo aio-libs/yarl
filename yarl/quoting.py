@@ -108,7 +108,10 @@ class _Quoter:
 
             ret.extend(("%{:02X}".format(ch)).encode("ascii"))
 
-        return ret.decode("ascii")
+        ret2 = ret.decode("ascii")
+        if ret2 == val:
+            return val
+        return ret2
 
 
 class _Unquoter:
@@ -199,7 +202,10 @@ class _Unquoter:
                     ret.append(to_add)
                 else:
                     ret.append(unquoted)
-        return "".join(ret)
+        ret2 = "".join(ret)
+        if ret2 == val:
+            return val
+        return ret2
 
 
 _PyQuoter = _Quoter
