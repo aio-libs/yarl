@@ -15,12 +15,13 @@ environment:
 install:
   - "%MAKE% .cythonize"
   - "build.cmd %PYTHON%\\python.exe -m pip install -U setuptools wheel twine codecov"
+  - "make cythonize"
   - "build.cmd %PYTHON%\\python.exe -m pip install -r requirements/ci.txt"
 
 build: false
 
 test_script:
-  - "build.cmd %PYTHON%\\python.exe setup.py test"
+  - "build.cmd %PYTHON%\\python.exe -m pytest"
 
 after_test:
   - "build.cmd %PYTHON%\\python.exe setup.py sdist bdist_wheel"
