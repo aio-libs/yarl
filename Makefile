@@ -20,6 +20,9 @@ yarl/%.c: yarl/%.pyx
 .cythonize: .install-cython $(PYXS:.pyx=.c)
 
 
+cythonize: .cythonize
+
+
 .develop: .install-deps $(shell find yarl -type f) .cythonize
 	@pip install -e .
 	@touch .develop
