@@ -71,6 +71,7 @@ jobs:
     displayName: 'pytest'
 
   - script: |
+      pip install codecov
       python -m codecov -f coverage.xml -X gcov
     displayName: 'Upload coverage reports'
     condition: ne(variables['codecov.token'], '')
