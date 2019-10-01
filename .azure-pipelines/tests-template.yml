@@ -67,7 +67,7 @@ jobs:
 
   - script: |
       pip install pytest
-      pytest tests --junitxml=junit/test-results.xml
+      pytest tests
       python -m coverage xml
     displayName: 'pytest'
 
@@ -77,9 +77,3 @@ jobs:
     condition: ne(variables['codecov.token'], '')
     env:
       CODECOV_TOKEN: '$(codecov.token)'
-
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFiles: '**/test-results.xml'
-      testRunTitle: 'Python $(python.version)'
-    condition: succeededOrFailed()
