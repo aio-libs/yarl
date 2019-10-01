@@ -18,10 +18,10 @@ jobs:
         python.version: '3.7'
         no_extensions: 'Y'
         image: 'ubuntu-latest'
-      PyPy3-Linux:
-        python.version: 'pypy3'
-        no_extensions: 'Y'
-        image: 'ubuntu-latest'
+#      PyPy3-Linux:
+#        python.version: 'pypy3'
+#        no_extensions: 'Y'
+#        image: 'ubuntu-latest'
       Py36-Cython-Win:
         python.version: '3.6'
         no_extensions: ''

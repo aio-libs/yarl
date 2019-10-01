@@ -355,3 +355,13 @@ def test_quote_very_large_string(quoter):
 def test_space(quoter):
     s = "% A"
     assert quoter()(s) == "%25%20A"
+
+
+def test_quoter_path_with_plus(quoter):
+    s = "/test/x+y%2Bz/:+%2B/"
+    assert "/test/x+y%2Bz/:+%2B/" == quoter(safe="@:", protected="/+")(s)
+
+
+def test_unquoter_path_with_plus(unquoter):
+    s = "/test/x+y%2Bz/:+%2B/"
+    assert "/test/x+y+z/:++/" == unquoter(unsafe="+")(s)
