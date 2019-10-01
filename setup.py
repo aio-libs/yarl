@@ -19,26 +19,6 @@ extensions = [Extension("yarl._quoting", ["yarl/_quoting.c"])]
 # extra_link_args=["-g"],
 
 
-class BuildFailed(Exception):
-    pass
-
-
-class ve_build_ext(build_ext):
-    # This class allows C extension building to fail.
-
-    def run(self):
-        try:
-            build_ext.run(self)
-        except (DistutilsPlatformError, FileNotFoundError):
-            raise BuildFailed()
-
-    def build_extension(self, ext):
-        try:
-            build_ext.build_extension(self, ext)
-        except (CCompilerError, DistutilsExecError, DistutilsPlatformError, ValueError):
-            raise BuildFailed()
-
-
 here = pathlib.Path(__file__).parent
 fname = here / "yarl" / "__init__.py"
 
@@ -94,7 +74,7 @@ if not NO_EXTENSIONS:
     print("**********************")
     print("* Accellerated build *")
     print("**********************")
-    setup(ext_modules=extensions, cmdclass=dict(build_ext=ve_build_ext), **args)
+    setup(ext_modules=extensions, **args)
 else:
     print("*********************")
     print("* Pure Python build *")
