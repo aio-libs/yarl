@@ -476,6 +476,12 @@ def test_plus_in_path():
     assert "/test/x+y+z/:++/" == url.path
 
 
+def test_nonascii_in_qs():
+    url = URL("http://example.com")
+    url2 = url.with_query({"f\xf8\xf8": "f\xf8\xf8"})
+    assert "http://example.com/?f%C3%B8%C3%B8=f%C3%B8%C3%B8" == str(url2)
+
+
 # modifiers
 
 
