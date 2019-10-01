@@ -7,7 +7,7 @@ from setuptools import setup, Extension
 
 
 if sys.version_info < (3, 6):
-    raise RuntimeError("aiohttp 3.x requires Python 3.6+")
+    raise RuntimeError("yarl 1.4+ requires Python 3.6+")
 
 
 NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
