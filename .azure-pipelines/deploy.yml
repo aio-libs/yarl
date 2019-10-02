@@ -49,7 +49,7 @@ stages:
         displayName: "Collect artifact files"
         inputs:
           sourceFolder: 'dist'
-          contents: '(*.tar.gz|*.whl)'
+          contents: '?(*.tar.gz|*.whl)'
           TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
       - task: PublishBuildArtifacts@1
