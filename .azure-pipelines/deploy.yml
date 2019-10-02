@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+    - refs/tags/*
+pr: none
+
+variables:
+- group: codecov
+
+stages:
+- stage: lint
+  displayName: "Run linters"
+  jobs:
+  - template: linters-template.yml
+
+- stage: test
+  displayName: "Run tests"
+  jobs:
+  - template: tests-template.yml
+    parameters:
+      codecov.token: '$(codecov.token)'
+
+- stage: deploy
+  displayName: "Upload on PyPI"
+  jobs:
+  - job: upload
+    displayName: "Tarball"
+    pool:
+      vmImage: "ubuntu-latest"
+
+    steps:
+      - checkout: self
+        clean: true
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.7'
+        displayName: "Use Python 3.7"
+
+      - script: |
+          pip install -U setuptools twine wheel
+        displayName: "Install tools"
+
+      - script: |
+          python setup.py sdist
+        displayName: "Make dists"
+
+      - task: PublishBuildArtefact@1
+        displayName: "Publish tarball"
+        inputs:
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)/*'
+          artifactName: dist
