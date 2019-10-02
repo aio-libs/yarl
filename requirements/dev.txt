@@ -1,3 +1,2 @@
 -r ci.txt
--r lint.txt
 pytest-sugar==0.9.2
