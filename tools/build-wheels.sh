@@ -13,7 +13,7 @@ fi
 
 export WORKDIR_PATH="${GITHUB_WORKSPACE:-/io}"
 
-BUILD_DIR=`mktemp -d "/tmp/${package_name}-manylinux1-build.XXXXXXXXXX"`
+BUILD_DIR=`mktemp -d "/tmp/${package_name}-manylinux2010-build.XXXXXXXXXX"`
 ORIG_WHEEL_DIR="${BUILD_DIR}/original-wheelhouse"
 SRC_DIR="${BUILD_DIR}/src"
 WHEELHOUSE_DIR="${WORKDIR_PATH}/dist"
@@ -68,7 +68,7 @@ rm -fv ${WHEELHOUSE_DIR}/*-linux_*.whl
 echo
 echo
 echo "Cleanup non-$package_name wheels"
-find "${WHEELHOUSE_DIR}" -maxdepth 1 -type f ! -name "$package_name"'-*-manylinux1_*.whl' -print0 | xargs -0 rm -rf
+find "${WHEELHOUSE_DIR}" -maxdepth 1 -type f ! -name "$package_name"'-*-manylinux2010_*.whl' -print0 | xargs -0 rm -rf
 
 echo
 echo

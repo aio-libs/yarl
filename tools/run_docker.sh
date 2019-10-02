@@ -9,7 +9,7 @@ then
     exit 1
 fi
 
-manylinux1_image_prefix="quay.io/pypa/manylinux1_"
+manylinux1_image_prefix="quay.io/pypa/manylinux2010_"
 dock_ext_args=""
 declare -A docker_pull_pids=()  # This syntax requires at least bash v4
 
