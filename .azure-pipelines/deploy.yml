@@ -61,16 +61,17 @@ stages:
 
 - stage: Publish
   displayName: "Publish distributions"
-  pool:
-    vmImage: "ubuntu-latest"
+  jobs:
+  - job:
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'tarball'
+        downloadPath: '$(System.ArtifactStagingDirectory)'
 
-  steps:
-  - task: DownloadBuildArtifacts@0
-    inputs:
-      buildType: 'current'
-      downloadType: 'single'
-      artifactName: 'tarball'
-      downloadPath: '$(System.ArtifactStagingDirectory)'
-
-  - script: |
-      ls ${ArtifactStagingDirectory}
+    - script: |
+        ls ${ArtifactStagingDirectory}
