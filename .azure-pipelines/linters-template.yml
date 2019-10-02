@@ -10,8 +10,8 @@ jobs:
       architecture: "x64"
 
   - script: |
-      pip install flake8
-    displayName: "Install flake8"
+      pip install -r requirements/lint.txt
+    displayName: "Install deps"
 
   - script: |
       make flake8
@@ -28,9 +28,33 @@ jobs:
       architecture: "x64"
 
   - script: |
-      pip install black
-    displayName: "Install black"
+      pip install -r requirements/lint.txt
+    displayName: "Install deps"
 
   - script: |
       make black-check
+    displayName: "Run black checker"
+
+- job: 'mypy'
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+      architecture: "x64"
+
+  - script: |
+      pip install -r requirements/lint.txt
+    displayName: "Install deps"
+
+  - script: |
+      pip install -e .
+    displayName: "Install itself"
+    env:
+      YARL_NO_EXTENSIONS: 1
+
+  - script: |
+      make mypy
     displayName: "Run black checker"

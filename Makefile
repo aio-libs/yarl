@@ -34,11 +34,10 @@ flake8:
 black-check:
 	black --check $(SRC)
 
-lint: flake8 black-check
-	if python -c "import sys; sys.exit(sys.version_info<(3,6))"; then \
-		black --check $(SRC); \
-		mypy yarl tests; \
-	fi
+mypy:
+	mypy yarl tests
+
+lint: flake8 black-check mypy
 
 fmt:
 	black $(SRC)
@@ -64,7 +63,3 @@ doc: doctest
 
 doctest: .develop
 	make -C docs doctest
-
-
-mypy:
-	mypy yarl tests
