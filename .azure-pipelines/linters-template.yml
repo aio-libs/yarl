@@ -1,5 +1,5 @@
 jobs:
-- job: 'Flake8'
+- job: 'flake8'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -17,7 +17,7 @@ jobs:
       make flake8
     displayName: "Run flake8"
 
-- job: 'Black'
+- job: 'black'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -35,7 +35,7 @@ jobs:
       make black-check
     displayName: "Run black checker"
 
-- job: 'MyPy'
+- job: 'mypy'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -59,7 +59,7 @@ jobs:
       make mypy
     displayName: "Run black checker"
 
-- job: 'Docs'
+- job: 'docs'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -80,7 +80,7 @@ jobs:
     env:
       YARL_NO_EXTENSIONS: 1
 
-- job: 'Twine Checker'
+- job: 'twine'
   pool:
     vmImage: 'ubuntu-latest'
 
