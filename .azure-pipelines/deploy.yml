@@ -45,17 +45,10 @@ stages:
           python setup.py sdist
         displayName: "Make tarball"
 
-      - task: CopyFiles@2
-        displayName: "Collect artifact files"
-        inputs:
-          sourceFolder: 'dist'
-          contents: '?(*.tar.gz|*.whl)'
-          TargetFolder: '$(Build.ArtifactStagingDirectory)'
-
       - task: PublishBuildArtifacts@1
         displayName: "Publish tarball"
         inputs:
-          pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          pathtoPublish: 'dist'
           artifactName: tarball
 
 
