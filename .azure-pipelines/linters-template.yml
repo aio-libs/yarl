@@ -91,7 +91,7 @@ jobs:
       architecture: "x64"
 
   - script: |
-      pip install -U twine
+      pip install -U twine wheel
       python setup.py sdist bdist_wheel
     displayName: "Install deps"
     env:
