@@ -70,7 +70,8 @@ jobs:
       architecture: "x64"
 
   - script: |
-      pip install -r requirements/doc.txt
+      apt install libenchant-dev
+      pip install -r requirements/doc-spelling.txt
     displayName: "Install deps"
 
   - script: |
