@@ -21,7 +21,7 @@ stages:
       codecov.token: '$(codecov.token)'
 
 - stage: deploy
-  displayName: "Upload on PyPI"
+  displayName: "Build distributions"
   jobs:
   - job: upload
     displayName: "Tarball"
@@ -43,10 +43,17 @@ stages:
 
       - script: |
           python setup.py sdist
-        displayName: "Make dists"
+        displayName: "Make tarball"
+
+      - task: CopyFiles@2
+        displayName: "Collect artifact files"
+        inputs:
+          sourceFolder: 'dist'
+          contents: '(*.tar.gz|*.whl)'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
       - task: PublishBuildArtifacts@1
         displayName: "Publish tarball"
         inputs:
-          pathtoPublish: '$(Build.ArtifactStagingDirectory)/*'
-          artifactName: dist
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          artifactName: tarball
