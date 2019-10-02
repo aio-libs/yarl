@@ -56,10 +56,14 @@ cov: lint .develop
 	@echo "open file://`pwd`/htmlcov/index.html"
 
 
-doc: doctest
+doc: doctest doc-spelling
 	make -C docs html SPHINXOPTS="-W -E"
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
 
 doctest: .develop
-	make -C docs doctest
+	make -C docs doctest SPHINXOPTS="-W -E"
+
+
+doc-spelling:
+	make -C docs spelling SPHINXOPTS="-W -E"
