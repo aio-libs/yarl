@@ -82,14 +82,14 @@ Use :meth:`URL.human_repr` for getting human readable representation:
    Sometimes encoding performed by *yarl* is not acceptable for
    certain WEB server.
 
-   Passing ``encoded=True`` parameter prevents URL autoencoding, user is
+   Passing ``encoded=True`` parameter prevents URL auto-encoding, user is
    responsible about URL correctness.
 
    Don't use this option unless there is no other way for keeping URL
    attributes not touched.
 
    Any URL manipulations don't guarantee correct encoding, URL parts
-   could be requoted even if *encoded* parameter was explicitly set.
+   could be re-quoted even if *encoded* parameter was explicitly set.
 
 URL properties
 --------------
@@ -463,7 +463,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_user(user)
 
-   Return a new URL with *user* replaced, autoencode *user* if needed.
+   Return a new URL with *user* replaced, auto-encode *user* if needed.
 
    Clear user/password if *user* is ``None``.
 
@@ -478,7 +478,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_password(password)
 
-   Return a new URL with *password* replaced, autoencode *password* if needed.
+   Return a new URL with *password* replaced, auto-encode *password* if needed.
 
    Clear password if ``None`` is passed.
 
@@ -491,7 +491,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_host(host)
 
-   Return a new URL with *host* replaced, autoencode *host* if needed.
+   Return a new URL with *host* replaced, auto-encode *host* if needed.
 
    Changing *host* for relative URLs is not allowed, use
    :meth:`URL.join` instead.
@@ -535,7 +535,7 @@ section generates a new *URL* instance.
 
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
-   autoencode the argument if needed.
+   auto-encode the argument if needed.
 
    A sequence of ``(key, value)`` pairs is supported as well.
 
@@ -572,7 +572,7 @@ section generates a new *URL* instance.
 
    Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
    :class:`~multidict.MultiDict` instances) or :class:`str`,
-   autoencode the argument if needed.
+   auto-encode the argument if needed.
 
    A sequence of ``(key, value)`` pairs is supported as well.
 
@@ -603,7 +603,7 @@ section generates a new *URL* instance.
 
 .. method:: URL.with_fragment(port)
 
-   Return a new URL with *fragment* replaced, autoencode *fragment* if needed.
+   Return a new URL with *fragment* replaced, auto-encode *fragment* if needed.
 
    Clear *fragment* to default if ``None`` is passed.
 
@@ -695,7 +695,7 @@ The path is encoded if needed.
    .. note::
 
       If ``url`` is an absolute URL (that is, starting with ``//`` or
-      ``scheme://``), the url‘s host name and/or scheme will be
+      ``scheme://``), the URL‘s host name and/or scheme will be
       present in the result, e.g.:
 
       .. doctest::
@@ -708,7 +708,7 @@ Human readable representation
 -----------------------------
 
 All URL data is stored in encoded form internally. It's pretty good
-for passing ``str(url)`` everywhere url string is accepted but quite
+for passing ``str(url)`` everywhere URL string is accepted but quite
 bad for memorizing by humans.
 
 .. method:: human_repr()
@@ -777,10 +777,10 @@ possible.
 .. seealso::
 
    :rfc:`5891` - Internationalized Domain Names in Applications (IDNA): Protocol
-      Document describing non-ascii domain name encoding.
+      Document describing non-ASCII domain name encoding.
 
    :rfc:`3987` - Internationalized Resource Identifiers
-      This specifies conversion rules for non-ascii characters in URL.
+      This specifies conversion rules for non-ASCII characters in URL.
 
    :rfc:`3986` - Uniform Resource Identifiers
       This is the current standard (STD66). Any changes to :mod:`yarl` module

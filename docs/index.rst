@@ -6,13 +6,13 @@
 yarl
 ====
 
-The module provides handy :class:`~yarl.URL` class for url parsing and
+The module provides handy :class:`~yarl.URL` class for URL parsing and
 changing.
 
 Introduction
 ------------
 
-Url is constructed from :class:`str`:
+URL is constructed from :class:`str`:
 
 .. doctest::
 
@@ -21,7 +21,7 @@ Url is constructed from :class:`str`:
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')
 
-All url parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
+All URL parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
 *query* and *fragment* are accessible by properties:
 
 .. doctest::
@@ -39,7 +39,7 @@ All url parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
    >>> url.fragment
    'frag'
 
-All url manipulations produces a new url object:
+All URL manipulations produces a new URL object:
 
 .. doctest::
 
@@ -108,7 +108,7 @@ Comparison with other URL libraries
   The library has a rich functionality but ``furl`` object is mutable.
 
   I afraid to pass this object into foreign code: who knows if the
-  code will modify my url in a terrible way while I just want to send URL
+  code will modify my URL in a terrible way while I just want to send URL
   with handy helpers for accessing URL properties.
 
   ``furl`` has other non obvious tricky things but the main objection
