@@ -20,10 +20,10 @@ stages:
     parameters:
       codecov.token: '$(codecov.token)'
 
-- stage: deploy
+- stage: Build distributions
   displayName: "Build distributions"
   jobs:
-  - job: upload
+  - job: tarball
     displayName: "Tarball"
     pool:
       vmImage: "ubuntu-latest"
@@ -57,3 +57,20 @@ stages:
         inputs:
           pathtoPublish: '$(Build.ArtifactStagingDirectory)'
           artifactName: tarball
+
+
+- stage: Publish
+  displayName: "Publish distributions"
+  pool:
+    vmImage: "ubuntu-latest"
+
+  steps:
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'current'
+      downloadType: 'single'
+      artifactName: 'tarball'
+      downloadPath: '$(System.ArtifactStagingDirectory)'
+
+  - script: |
+      ls ${ArtifactStagingDirectory}
