@@ -45,7 +45,7 @@ stages:
           python setup.py sdist
         displayName: "Make dists"
 
-      - task: PublishBuildArtefact@1
+      - task: PublishBuildArtifact@1
         displayName: "Publish tarball"
         inputs:
           pathtoPublish: '$(Build.ArtifactStagingDirectory)/*'
