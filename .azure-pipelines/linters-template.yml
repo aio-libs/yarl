@@ -98,5 +98,5 @@ jobs:
       YARL_NO_EXTENSIONS: 1
 
   - script: |
-      twine check dist
+      twine check dist/*
     displayName: "Run twine checker"
