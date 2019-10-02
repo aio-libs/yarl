@@ -1,6 +1,13 @@
 jobs:
 - job: 'flake8'
-  template: linter-base-template
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+      architecture: "x64"
 
   - script: |
       pip install flake8
@@ -11,7 +18,14 @@ jobs:
     displayName: "Run flake8"
 
 - job: 'black'
-  template: linter-base-template
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+      architecture: "x64"
 
   - script: |
       pip install black
