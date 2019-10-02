@@ -38,7 +38,7 @@ stages:
         displayName: "Use Python 3.7"
 
       - script: |
-          pip install -U setuptools twine wheel
+          pip install -U setuptools wheel
         displayName: "Install tools"
 
       - script: |
@@ -51,6 +51,37 @@ stages:
           pathtoPublish: 'dist'
           artifactName: tarball
 
+  - job: manylinux
+    displayName: "Manylinux"
+    pool:
+      vmImage: "ubuntu-latest"
+
+    steps:
+      - checkout: self
+        clean: true
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.7'
+        displayName: "Use Python 3.7"
+
+      - task: DockerInstaller@0
+        inputs:
+          dockerVersion: '18.03.1-ce'
+
+      - script: |
+          pip install -U setuptools wheel
+        displayName: "Install tools"
+
+      - script: |
+          ./tools/run_docker.sh yaml
+        displayName: Build manylinux wheels"
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish manylinux"
+        inputs:
+          pathtoPublish: 'dist'
+          artifactName: manylinux
 
 - stage: publish
   displayName: "Publish distributions"
@@ -59,12 +90,25 @@ stages:
     pool:
       vmImage: "ubuntu-latest"
     steps:
+    - script: |
+        mkdir dist
+
     - task: DownloadBuildArtifacts@0
+      displayName: "Download tarball"
       inputs:
         buildType: 'current'
         downloadType: 'single'
         artifactName: 'tarball'
-        downloadPath: '$(System.ArtifactStagingDirectory)'
+        downloadPath: 'dist'
+
+    - task: DownloadBuildArtifacts@0
+      displayName: "Download manylinux"
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'manylinux'
+        downloadPath: 'dist'
 
     - script: |
-        ls ${ArtifactStagingDirectory}
+        tree .
+        ls dist
