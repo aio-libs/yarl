@@ -45,7 +45,6 @@ with _version_path.open() as fp:
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -56,6 +55,13 @@ extensions = [
     'sphinx.ext.viewcode',
     'alabaster',
 ]
+
+
+try:
+    import sphinxcontrib.spelling  # noqa
+    extensions.append('sphinxcontrib.spelling')
+except ImportError:
+    pass
 
 intersphinx_mapping = {
     'python': ('http://docs.python.org/3', None),

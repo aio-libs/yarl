@@ -1,4 +1,5 @@
 PYXS = $(wildcard yarl/*.pyx)
+SRC = yarl tests setup.py
 
 all: test
 
@@ -27,39 +28,42 @@ cythonize: .cythonize
 	@pip install -e .
 	@touch .develop
 
+flake8:
+	flake8 $(SRC)
 
-flake: .develop
-	flake8 yarl tests setup.py
-	if python -c "import sys; sys.exit(sys.version_info<(3,6))"; then \
-		black --check yarl tests setup.py; \
-		mypy yarl tests; \
-	fi
+black-check:
+	black --check $(SRC)
+
+mypy:
+	mypy yarl tests
+
+lint: flake8 black-check mypy
 
 fmt:
-	black yarl tests setup.py
+	black $(SRC)
 
 
-test: flake
+test: lint .develop
 	pytest ./tests ./yarl
 
 
-vtest: flake
+vtest: lint .develop
 	pytest ./tests ./yarl -v
 
 
-cov: flake
+cov: lint .develop
 	pytest --cov yarl --cov-report html --cov-report term ./tests/ ./yarl/
 	@echo "open file://`pwd`/htmlcov/index.html"
 
 
-doc: doctest
+doc: doctest doc-spelling
 	make -C docs html SPHINXOPTS="-W -E"
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
 
 doctest: .develop
-	make -C docs doctest
+	make -C docs doctest SPHINXOPTS="-W -E"
 
 
-mypy:
-	mypy yarl tests
+doc-spelling:
+	make -C docs spelling SPHINXOPTS="-W -E"

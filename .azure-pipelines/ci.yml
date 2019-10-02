@@ -15,6 +15,10 @@ variables:
 - group: codecov
 
 stages:
+- stage: lint
+  displayName: "Run linters"
+  jobs:
+  - template: linters-template.yml
 - stage: test
   displayName: "Run tests"
   jobs:
