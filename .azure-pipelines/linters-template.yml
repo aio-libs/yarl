@@ -92,7 +92,7 @@ jobs:
 
   - script: |
       pip install -U twine
-      make sdist bdist_wheel
+      python setup.py sdist bdist_wheel
     displayName: "Install deps"
     env:
       YARL_NO_EXTENSIONS: 1
