@@ -20,7 +20,7 @@ stages:
     parameters:
       codecov.token: '$(codecov.token)'
 
-- stage: Build distributions
+- stage: build
   displayName: "Build distributions"
   jobs:
   - job: tarball
@@ -59,7 +59,7 @@ stages:
           artifactName: tarball
 
 
-- stage: Publish
+- stage: publish
   displayName: "Publish distributions"
   jobs:
   - job:
