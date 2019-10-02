@@ -1,5 +1,5 @@
 jobs:
-- job: 'flake8'
+- job: 'Flake8'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -17,7 +17,7 @@ jobs:
       make flake8
     displayName: "Run flake8"
 
-- job: 'black'
+- job: 'Black'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -35,7 +35,7 @@ jobs:
       make black-check
     displayName: "Run black checker"
 
-- job: 'mypy'
+- job: 'MyPy'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -59,7 +59,7 @@ jobs:
       make mypy
     displayName: "Run black checker"
 
-- job: 'docs'
+- job: 'Docs'
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -79,3 +79,24 @@ jobs:
     displayName: "Run docs checker"
     env:
       YARL_NO_EXTENSIONS: 1
+
+- job: 'Twine Checker'
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+      architecture: "x64"
+
+  - script: |
+      pip install -U twine
+      make sdist bdist_wheel
+    displayName: "Install deps"
+    env:
+      YARL_NO_EXTENSIONS: 1
+
+  - script: |
+      twine check dist
+    displayName: "Run twine checker"
