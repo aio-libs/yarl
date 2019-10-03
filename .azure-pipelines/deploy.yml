@@ -99,6 +99,7 @@ stages:
 
       - script: |
           pip install -U setuptools wheel
+          make cythonize
         displayName: "Install tools"
 
       - script: |
@@ -127,6 +128,7 @@ stages:
 
       - script: |
           pip install -U setuptools wheel
+          make cythonize
         displayName: "Install tools"
 
       - script: |
