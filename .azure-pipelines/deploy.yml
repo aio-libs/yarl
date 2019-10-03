@@ -83,9 +83,61 @@ stages:
           pathtoPublish: 'dist'
           artifactName: manylinux
 
-  - template: build-win-wheel.yml
-    parameters:
-      versions: ['3.6', '3.7']
+  - job: win-36
+    displayName: "Win-36"
+    pool:
+      vmImage: "windows-latest"
+
+    steps:
+      - checkout: self
+        clean: true
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.6'
+        displayName: "Use Python 3.6"
+
+      - script: |
+          pip install -U setuptools wheel
+        displayName: "Install tools"
+
+      - script: |
+          python setup.py bdist_wheel
+        displayName: "Make wheel"
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish manylinux"
+        inputs:
+          pathtoPublish: 'dist'
+          artifactName: win-36
+
+  - job: win-37
+    displayName: "Win-37"
+    pool:
+      vmImage: "windows-latest"
+
+    steps:
+      - checkout: self
+        clean: true
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.7'
+        displayName: "Use Python 3.7"
+
+      - script: |
+          pip install -U setuptools wheel
+        displayName: "Install tools"
+
+      - script: |
+          python setup.py bdist_wheel
+        displayName: "Make wheel"
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish manylinux"
+        inputs:
+          pathtoPublish: 'dist'
+          artifactName: win-37
 
 - stage: publish
   displayName: "Publish distributions"
