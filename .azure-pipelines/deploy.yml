@@ -8,17 +8,17 @@ variables:
 - group: codecov
 
 stages:
-- stage: lint
-  displayName: "Run linters"
-  jobs:
-  - template: linters-template.yml
+# - stage: lint
+#   displayName: "Run linters"
+#   jobs:
+#   - template: linters-template.yml
 
-- stage: test
-  displayName: "Run tests"
-  jobs:
-  - template: tests-template.yml
-    parameters:
-      codecov.token: '$(codecov.token)'
+# - stage: test
+#   displayName: "Run tests"
+#   jobs:
+#   - template: tests-template.yml
+#     parameters:
+#       codecov.token: '$(codecov.token)'
 
 - stage: build
   displayName: "Build distributions"
@@ -110,7 +110,7 @@ stages:
         displayName: "Publish manylinux"
         inputs:
           pathtoPublish: 'dist'
-          artifactName: win-36
+          artifactName: dist
 
   - job: win_37
     displayName: "Win-37"
@@ -139,7 +139,7 @@ stages:
         displayName: "Publish manylinux"
         inputs:
           pathtoPublish: 'dist'
-          artifactName: win-37
+          artifactName: dist
 
 - stage: publish
   displayName: "Publish distributions"
