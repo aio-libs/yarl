@@ -83,7 +83,7 @@ stages:
           pathtoPublish: 'dist'
           artifactName: manylinux
 
-  - job: win-36
+  - job: win_36
     displayName: "Win-36"
     pool:
       vmImage: "windows-latest"
@@ -111,7 +111,7 @@ stages:
           pathtoPublish: 'dist'
           artifactName: win-36
 
-  - job: win-37
+  - job: win_37
     displayName: "Win-37"
     pool:
       vmImage: "windows-latest"
