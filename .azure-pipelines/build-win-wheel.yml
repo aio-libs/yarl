@@ -1,0 +1,32 @@
+parameters:
+  versions: []
+
+jobs:
+- ${{ each python.version in parameters.versions }}
+  - job: "Win-${{python.version}}"
+    pool:
+      vmImage: "windows-latest'
+
+    steps:
+      - checkout: self
+        clean: true
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '${{ python.version }}'
+        displayName: "Use Python ${{ python.version }}"
+
+      - script: |
+          pip install -U setuptools wheel
+        displayName: "Install tools"
+
+      - script: |
+          python setup.py bdist_wheel
+        displayName: "Make wheel"
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish wheel"
+        inputs:
+          pathtoPublish: 'dist'
+          artifactName: "win-${{ python.version }}"
+

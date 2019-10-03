@@ -83,6 +83,10 @@ stages:
           pathtoPublish: 'dist'
           artifactName: manylinux
 
+  - template: build-win-wheel
+    parameters:
+      versions: ['3.6', '3.7']
+
 - stage: publish
   displayName: "Publish distributions"
   jobs:
