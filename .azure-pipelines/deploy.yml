@@ -83,7 +83,7 @@ stages:
           pathtoPublish: 'dist'
           artifactName: manylinux
 
-  - template: build-win-wheel
+  - template: build-win-wheel.yml
     parameters:
       versions: ['3.6', '3.7']
 
