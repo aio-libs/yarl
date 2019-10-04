@@ -1,6 +1,6 @@
 parameters:
   steps: []
-  python.version: ''
+  python: ''
 
 steps:                            
   - checkout: self
@@ -9,7 +9,7 @@ steps:
 
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: ${{ python.version }}
+      versionSpec: ${{ python }}
 
   - script: |
       pip install -U setuptools wheel
