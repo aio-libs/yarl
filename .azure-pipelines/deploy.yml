@@ -30,27 +30,14 @@ stages:
       vmImage: "ubuntu-latest"
 
     steps:
-      - checkout: self
-        clean: true
-
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '3.7'
-        displayName: "Use Python 3.7"
-
-      - script: |
-          pip install -U setuptools wheel
-        displayName: "Install tools"
-
-      - script: |
-          python setup.py sdist
-        displayName: "Make tarball"
-
-      - task: PublishBuildArtifacts@1
-        displayName: "Publish tarball"
-        inputs:
-          pathtoPublish: 'dist'
-          artifactName: dist
+      - temlate: build-wheel.yml
+        parameters:
+          python: "$(python.version)"
+          architecture: "$(python.architecture)"
+          steps:
+            - script: |
+                python setup.py sdist
+              displayName: "Make tarball"
 
   - job: manylinux
     displayName: "Manylinux"
@@ -84,7 +71,7 @@ stages:
           pathtoPublish: 'dist'
           artifactName: manylinux
 
-  - job: win
+  - job:
     strategy:
       matrix:
         win_py36_64:
@@ -93,6 +80,12 @@ stages:
         win_py37_64:
           python.version: "3.7"
           python.architecture: "x64"
+        win_py36_32:
+          python.version: "3.6"
+          python.architecture: "x86"
+        win_py37_32:
+          python.version: "3.7"
+          python.architecture: "x86"
     pool:
       vmImage: "windows-latest"
     steps:
