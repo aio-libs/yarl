@@ -86,10 +86,9 @@ stages:
   - job: win
     strategy:
       matrix:
-        py36:
-          python.version: "3.6"
-        py37:
-          python.version: "3.7"
+        ${{ each python in ["3.6", "3.7"] }}:
+          "py${{ python }}":
+            python.version: ${{ python }}
     pool:
       vmImage: "windows-latest"
     steps:
