@@ -7,6 +7,13 @@ pr: none
 variables:
 - group: codecov
 
+resources:
+  containers:
+  - container: manylinux_64
+    image: pyca/cryptography-manylinux1:x86_64
+  - container: manylinux_86
+    image: pyca/cryptography-manylinux1:i686
+
 stages:
 # - stage: lint
 #   displayName: 'Run linters'
@@ -39,35 +46,28 @@ stages:
 
   - job: manylinux
     displayName: 'Manylinux'
+    strategy:
+      matrix:
+        py36 x64:
+          python.version: '3.6'
+        py37 x64:
+          python.version: '3.7'
     pool:
       vmImage: 'ubuntu-latest'
-
+    container: manylinux_64
     steps:
-      - checkout: self
-        clean: true
+      - template: build-wheel.yml
+        parameters:
+          python: '$(python.version)'
+          steps:
+            - script: |
+                make cythonize
+                python setup.py bdist_wheel
+              displayName: 'Make wheel'
 
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '3.7'
-        displayName: 'Use Python 3.7'
-
-      - task: DockerInstaller@0
-        inputs:
-          dockerVersion: '18.03.1-ce'
-
-      - script: |
-          pip install -U setuptools wheel
-        displayName: 'Install tools'
-
-      - script: |
-          ./tools/run_docker.sh yaml
-        displayName: Build manylinux wheels'
-
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish manylinux'
-        inputs:
-          pathtoPublish: 'dist'
-          artifactName: manylinux
+            - script: |
+                auditwheel repair dist/*.whl
+              displayName: 'Repair wheel'
 
   - job:
     strategy:
