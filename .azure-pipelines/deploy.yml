@@ -91,9 +91,11 @@ stages:
         mac py36:
           python.version: '3.6'
           image: 'macos-latest'
+          python.architecture: 'x64'
         mac py37:
           python.version: '3.7'
           image: 'macos-latest'
+          python.architecture: 'x64'
     pool:
       vmImage: '$(image)'
     steps:
