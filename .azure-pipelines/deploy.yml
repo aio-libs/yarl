@@ -89,7 +89,7 @@ stages:
   - job: win
     strategy:
       matrix:
-        ${{ each python in ["3.6", "3.7"] }}:
+        ${{ each python in variables.python_versions }}:
           "py${{ python }}":
             python.version: ${{ python }}
     pool:
