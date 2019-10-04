@@ -132,7 +132,7 @@ stages:
         buildType: 'current'
         downloadType: 'single'
         artifactName: 'dist'
-        downloadPath: ''
+        downloadPath: 'dist'
 
     - script: |
-        ls
+        ls dist/*
