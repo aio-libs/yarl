@@ -62,7 +62,7 @@ stages:
           manylinux: 'manylinux_86'
     pool:
       vmImage: 'ubuntu-latest'
-    container: '$(manylinux)'
+    container: ${{ manylinux }}
     steps:
       - script: |
           /opt/python/$(python.code)/bin/python -m venv .build-venv
