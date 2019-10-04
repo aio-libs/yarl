@@ -1,7 +1,7 @@
 parameters:
   steps: []
-  python: ""
-  architecture: ""
+  python: ''
+  architecture: ''
 
 steps:                            
   - checkout: self
@@ -11,7 +11,7 @@ steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: ${{ parameters.python }}
-      ${{ if ne(parameters.architecture, "") }}:
+      ${{ if ne(parameters.architecture, '') }}:
         architecture: ${{ parameters.architecture }}
 
   - script: |
