@@ -5,7 +5,7 @@ jobs:
 - ${{ each job in parameters.jobs }}: # Each job
   - ${{ each pair in job }}:          # Insert all properties other than "steps"
       ${{ if ne(pair.key, 'steps') }}:
-        ${{ pair.key }}: ${{ pair.value }}  job:
+        ${{ pair.key }}: ${{ pair.value }}
     displayName: ${{ job.displayName }}
     pool:
       vmImage: ${{ job.image }}
