@@ -13,17 +13,17 @@ resources:
     image: quay.io/pypa/manylinux1_x86_64
 
 stages:
-# - stage: lint
-#   displayName: 'Run linters'
-#   jobs:
-#   - template: linters-template.yml
+- stage: lint
+  displayName: 'Run linters'
+  jobs:
+  - template: linters-template.yml
 
-# - stage: test
-#   displayName: 'Run tests'
-#   jobs:
-#   - template: tests-template.yml
-#     parameters:
-#       codecov.token: '$(codecov.token)'
+- stage: test
+  displayName: 'Run tests'
+  jobs:
+  - template: tests-template.yml
+    parameters:
+      codecov.token: '$(codecov.token)'
 
 - stage: build
   displayName: 'Build distributions'
@@ -126,6 +126,11 @@ stages:
     steps:
     - checkout: none
 
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+      displayName: "Use Python 3.7"
+
     - task: DownloadBuildArtifacts@0
       displayName: 'Download distributions'
       inputs:
@@ -136,3 +141,18 @@ stages:
 
     - script: |
         ls dist/*
+
+    - task: TwineAuthenticate@1
+      displayName: "Twine Authenticate"
+      inputs:
+        pythonUploadServiceConnection: pypi
+
+    - script: >-
+        python -m twine upload
+          -r "pypi"
+          --config-file $(PYPIRC_PATH)
+          --disable-progress-bar
+          --verbose
+          dist/*.whl
+      displayName: "Upload to PyPI"
+
