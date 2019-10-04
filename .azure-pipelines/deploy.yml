@@ -57,9 +57,16 @@ stages:
     container: manylinux_64
     steps:
       - script: |
-          echo '##vso[task.prependpath]/opt/python/$(python.code)/bin:$PATH'
+          /opt/python/$(python.code)/bin/python -m venv .build-venv
         displayName: 'Use Python $(python.code)'
+
       - script: |
+          .build-venv/bin/activate
+          pip install -U setuptools wheel
+          displayName: 'Install tools'
+
+      - script: |
+          .build-venv/bin/activate
           make cythonize
           python setup.py bdist_wheel
         displayName: 'Make wheel'
