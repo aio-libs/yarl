@@ -88,6 +88,12 @@ stages:
           python.version: '3.7'
           python.architecture: 'x86'
           image: 'windows-latest'
+        mac py36:
+          python.version: '3.6'
+          image: 'macos-latest'
+        mac py37:
+          python.version: '3.7'
+          image: 'macos-latest'
     pool:
       vmImage: '$(image)'
     steps:
