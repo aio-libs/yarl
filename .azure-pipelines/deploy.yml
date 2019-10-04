@@ -30,7 +30,7 @@ stages:
       vmImage: "ubuntu-latest"
 
     steps:
-      - temlate: build-wheel.yml
+      - template: build-wheel.yml
         parameters:
           python: "$(python.version)"
           architecture: "$(python.architecture)"
