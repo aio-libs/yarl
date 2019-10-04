@@ -22,8 +22,6 @@ stages:
 
 - stage: build
   displayName: "Build distributions"
-  variables:
-    python_versions: ["3.6", "3.7"]
 
   jobs:
   - job: tarball
@@ -89,15 +87,19 @@ stages:
   - job: win
     strategy:
       matrix:
-        ${{ each python in variables.python_versions }}:
-          "py${{ python }}":
-            python.version: ${{ python }}
+        win_py36_64:
+          python.version: "3.6"
+          python.architecture: "x64"
+        win_py37_64:
+          python.version: "3.7"
+          python.architecture: "x64"
     pool:
       vmImage: "windows-latest"
     steps:
       - template: build-wheel.yml
         parameters:
           python: "$(python.version)"
+          architecture: "$(python.architecture)"
           steps:
             - script: |
                 make cythonize
