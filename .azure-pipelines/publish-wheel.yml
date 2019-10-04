@@ -1,0 +1,6 @@
+steps:
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish distribution'
+    inputs:
+      pathtoPublish: 'dist'
+      artifactName: dist

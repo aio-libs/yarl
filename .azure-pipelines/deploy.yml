@@ -10,9 +10,9 @@ variables:
 resources:
   containers:
   - container: manylinux_64
-    image: pyca/cryptography-manylinux1:x86_64
+    image: quay.io/pypa/manylinux1_x86_64
   - container: manylinux_86
-    image: pyca/cryptography-manylinux1:i686
+    image: quay.io/pypa/manylinux1_i686
 
 stages:
 # - stage: lint
@@ -49,25 +49,26 @@ stages:
     strategy:
       matrix:
         py36 x64:
-          python.version: '3.6'
+          python.code: 'cp36-cp36m'
         py37 x64:
-          python.version: '3.7'
+          python.code: 'cp36-cp36m'
     pool:
       vmImage: 'ubuntu-latest'
     container: manylinux_64
     steps:
-      - template: build-wheel.yml
-        parameters:
-          python: '$(python.version)'
-          steps:
-            - script: |
-                make cythonize
-                python setup.py bdist_wheel
-              displayName: 'Make wheel'
+      - script: |
+          echo '##vso[task.prependpath]/opt/python/$(python.code)/bin:$PATH'
+        displayName: 'Use Python $(python.code)'
+      - script: |
+          make cythonize
+          python setup.py bdist_wheel
+        displayName: 'Make wheel'
 
-            - script: |
-                auditwheel repair dist/*.whl
-              displayName: 'Repair wheel'
+      - script: |
+          auditwheel repair dist/*.whl
+        displayName: 'Repair wheel'
+
+      - template: publish-wheel.yml
 
   - job:
     strategy:
