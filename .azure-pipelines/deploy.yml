@@ -51,7 +51,7 @@ stages:
         py36 x64:
           python.code: 'cp36-cp36m'
         py37 x64:
-          python.code: 'cp36-cp36m'
+          python.code: 'cp37-cp37m'
     pool:
       vmImage: 'ubuntu-latest'
     container: manylinux_64
@@ -136,5 +136,4 @@ stages:
         downloadPath: 'dist'
 
     - script: |
-        tree .
         ls dist
