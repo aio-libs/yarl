@@ -6,6 +6,7 @@ pr: none
 
 variables:
 - group: codecov
+- python_versions: ["3.6", "3.7"]
 
 stages:
 # - stage: lint
@@ -86,7 +87,7 @@ stages:
   - job: win
     strategy:
       matrix:
-        ${{ each python in ["3.6", "3.7"] }}:
+        ${{ each python in python_versions }}:
           "py${{ python }}":
             python.version: ${{ python }}
     pool:
