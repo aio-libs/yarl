@@ -125,8 +125,6 @@ stages:
       vmImage: 'ubuntu-latest'
     steps:
     - checkout: none
-    - script: |
-        mkdir dist
 
     - task: DownloadBuildArtifacts@0
       displayName: 'Download distributions'
@@ -134,7 +132,7 @@ stages:
         buildType: 'current'
         downloadType: 'single'
         artifactName: 'dist'
-        downloadPath: 'dist'
+        downloadPath: ''
 
     - script: |
-        ls dist/*
+        ls
