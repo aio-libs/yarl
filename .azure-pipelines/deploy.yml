@@ -95,7 +95,7 @@ stages:
     steps:
       - template: build-wheel.yml
         parameters:
-          python: "$(python.version)"
+          python.version: "$(python.version)"
           steps:
             - script: |
                 make cythonize
