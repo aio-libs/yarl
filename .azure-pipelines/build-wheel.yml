@@ -1,6 +1,6 @@
 parameters:
   steps: []
-  python: ''
+  python: '3.7'
   architecture: ''
 
 steps:                            
@@ -16,12 +16,12 @@ steps:
 
   - script: |
       pip install -U setuptools wheel
-    displayName: "Install tools"
+    displayName: 'Install tools'
 
   - ${{ parameters.steps }}                # Users steps
 
   - task: PublishBuildArtifacts@1
-    displayName: "Publish distribution"
+    displayName: 'Publish distribution'
     inputs:
       pathtoPublish: 'dist'
       artifactName: dist

@@ -52,12 +52,12 @@ jobs:
 
   - script: |
       python -m pip install --upgrade pip
-    displayName: "Update pip"
+    displayName: 'Update pip'
 
   - script: |
       make cythonize
     condition: eq(variables['no_extensions'], '')
-    displayName: "Cythonize"
+    displayName: 'Cythonize'
 
   - script: |
       pip install -r requirements/dev.txt

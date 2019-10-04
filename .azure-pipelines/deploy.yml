@@ -9,40 +9,38 @@ variables:
 
 stages:
 # - stage: lint
-#   displayName: "Run linters"
+#   displayName: 'Run linters'
 #   jobs:
 #   - template: linters-template.yml
 
 # - stage: test
-#   displayName: "Run tests"
+#   displayName: 'Run tests'
 #   jobs:
 #   - template: tests-template.yml
 #     parameters:
 #       codecov.token: '$(codecov.token)'
 
 - stage: build
-  displayName: "Build distributions"
+  displayName: 'Build distributions'
 
   jobs:
   - job: tarball
-    displayName: "Tarball"
+    displayName: 'Tarball'
     pool:
-      vmImage: "ubuntu-latest"
+      vmImage: 'ubuntu-latest'
 
     steps:
       - template: build-wheel.yml
         parameters:
-          python: "$(python.version)"
-          architecture: "$(python.architecture)"
           steps:
             - script: |
                 python setup.py sdist
-              displayName: "Make tarball"
+              displayName: 'Make tarball'
 
   - job: manylinux
-    displayName: "Manylinux"
+    displayName: 'Manylinux'
     pool:
-      vmImage: "ubuntu-latest"
+      vmImage: 'ubuntu-latest'
 
     steps:
       - checkout: self
@@ -51,7 +49,7 @@ stages:
       - task: UsePythonVersion@0
         inputs:
           versionSpec: '3.7'
-        displayName: "Use Python 3.7"
+        displayName: 'Use Python 3.7'
 
       - task: DockerInstaller@0
         inputs:
@@ -59,14 +57,14 @@ stages:
 
       - script: |
           pip install -U setuptools wheel
-        displayName: "Install tools"
+        displayName: 'Install tools'
 
       - script: |
           ./tools/run_docker.sh yaml
-        displayName: Build manylinux wheels"
+        displayName: Build manylinux wheels'
 
       - task: PublishBuildArtifacts@1
-        displayName: "Publish manylinux"
+        displayName: 'Publish manylinux'
         inputs:
           pathtoPublish: 'dist'
           artifactName: manylinux
@@ -74,43 +72,47 @@ stages:
   - job:
     strategy:
       matrix:
-        win_py36_64:
-          python.version: "3.6"
-          python.architecture: "x64"
-        win_py37_64:
-          python.version: "3.7"
-          python.architecture: "x64"
-        win_py36_32:
-          python.version: "3.6"
-          python.architecture: "x86"
-        win_py37_32:
-          python.version: "3.7"
-          python.architecture: "x86"
+        win py36 x64:
+          python.version: '3.6'
+          python.architecture: 'x64'
+          image: 'windows-latest'
+        win py37 x64:
+          python.version: '3.7'
+          python.architecture: 'x64'
+          image: 'windows-latest'
+        win py36 x86:
+          python.version: '3.6'
+          python.architecture: 'x86'
+          image: 'windows-latest'
+        win py37 x86:
+          python.version: '3.7'
+          python.architecture: 'x86'
+          image: 'windows-latest'
     pool:
-      vmImage: "windows-latest"
+      vmImage: '$(image)'
     steps:
       - template: build-wheel.yml
         parameters:
-          python: "$(python.version)"
-          architecture: "$(python.architecture)"
+          python: '$(python.version)'
+          architecture: '$(python.architecture)'
           steps:
             - script: |
                 make cythonize
                 python setup.py bdist_wheel
-              displayName: "Make wheel"
+              displayName: 'Make wheel'
               
 - stage: publish
-  displayName: "Publish distributions"
+  displayName: 'Publish distributions'
   jobs:
   - job:
     pool:
-      vmImage: "ubuntu-latest"
+      vmImage: 'ubuntu-latest'
     steps:
     - script: |
         mkdir dist
 
     - task: DownloadBuildArtifacts@0
-      displayName: "Download distributions"
+      displayName: 'Download distributions'
       inputs:
         buildType: 'current'
         downloadType: 'single'

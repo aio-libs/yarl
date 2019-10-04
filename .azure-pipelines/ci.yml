@@ -16,11 +16,11 @@ variables:
 
 stages:
 - stage: lint
-  displayName: "Run linters"
+  displayName: 'Run linters'
   jobs:
   - template: linters-template.yml
 - stage: test
-  displayName: "Run tests"
+  displayName: 'Run tests'
   jobs:
   - template: tests-template.yml
     parameters:
