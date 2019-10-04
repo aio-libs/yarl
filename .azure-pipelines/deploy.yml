@@ -50,11 +50,19 @@ stages:
       matrix:
         py36 x64:
           python.code: 'cp36-cp36m'
+          manylinux: 'manylinux_64'
         py37 x64:
           python.code: 'cp37-cp37m'
+          manylinux: 'manylinux_64'
+        py36 x86:
+          python.code: 'cp36-cp36m'
+          manylinux: 'manylinux_86'
+        py37 x86:
+          python.code: 'cp37-cp37m'
+          manylinux: 'manylinux_86'
     pool:
       vmImage: 'ubuntu-latest'
-    container: manylinux_64
+    container: '$(manylinux)'
     steps:
       - script: |
           /opt/python/$(python.code)/bin/python -m venv .build-venv
