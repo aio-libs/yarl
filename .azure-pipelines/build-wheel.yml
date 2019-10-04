@@ -1,29 +1,25 @@
 parameters:
-  jobs: []
+  steps: []
+  python: ''
 
-jobs:
-- ${{ each job in parameters.jobs }}: # Each job
-  - job:
-      pool:
-        vmImage: "windows-latest"
-      steps:                            # Wrap the steps
-      - checkout: self
-        submodules: true
-        clean: true
+steps:                            
+  - checkout: self
+    submodules: true
+    clean: true
 
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: "3.6"
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "$(python)"
 
-      - script: |
-          pip install -U setuptools wheel
-        displayName: "Install tools"
+  - script: |
+      pip install -U setuptools wheel
+    displayName: "Install tools"
 
-      - ${{ job.steps }}                # Users steps
+  - ${{ parameters.steps }}                # Users steps
 
-      - task: PublishBuildArtifacts@1
-        displayName: "Publish distribution"
-        inputs:
-          pathtoPublish: 'dist'
-          artifactName: dist
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish distribution"
+    inputs:
+      pathtoPublish: 'dist'
+      artifactName: dist
 
