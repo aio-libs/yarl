@@ -124,6 +124,7 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    - checkout: none
     - script: |
         mkdir dist
 
@@ -136,4 +137,4 @@ stages:
         downloadPath: 'dist'
 
     - script: |
-        ls dist
+        ls dist/*
