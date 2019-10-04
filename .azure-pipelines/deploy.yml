@@ -6,7 +6,6 @@ pr: none
 
 variables:
 - group: codecov
-python_versions: ["3.6", "3.7"]
 
 stages:
 # - stage: lint
@@ -23,6 +22,9 @@ stages:
 
 - stage: build
   displayName: "Build distributions"
+  variables:
+    python_versions: ["3.6", "3.7"]
+
   jobs:
   - job: tarball
     displayName: "Tarball"
