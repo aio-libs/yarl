@@ -6,7 +6,7 @@ pr: none
 
 variables:
 - group: codecov
-- python_versions: ["3.6", "3.7"]
+python_versions: ["3.6", "3.7"]
 
 stages:
 # - stage: lint
