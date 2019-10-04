@@ -3,12 +3,8 @@ parameters:
 
 jobs:
 - ${{ each job in parameters.jobs }}: # Each job
-  - ${{ each pair in job }}:          # Insert all properties other than "steps"
-      ${{ if ne(pair.key, 'steps') }}:
-        ${{ pair.key }}: ${{ pair.value }}
-    displayName: ${{ job.displayName }}
     pool:
-      vmImage: ${{ job.image }}
+      vmImage: "windows-latest"
     steps:                            # Wrap the steps
     - checkout: self
       submodules: true
@@ -16,9 +12,7 @@ jobs:
 
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: ${{ job.python }}
-      displayName: "Use Python ${{ job.python }}"
-
+        versionSpec: "3.6"
 
     - script: |
         pip install -U setuptools wheel

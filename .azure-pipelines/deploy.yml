@@ -87,8 +87,6 @@ stages:
     parameters:
       jobs:
         - job:
-            image: "windows-latest"
-            python: "3.6"
             steps:
               - script: |
                   make cythonize
