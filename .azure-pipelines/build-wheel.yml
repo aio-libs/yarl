@@ -7,7 +7,7 @@ jobs:
       pool:
         vmImage: "windows-latest"
       steps:                            # Wrap the steps
-    -   checkout: self
+      - checkout: self
         submodules: true
         clean: true
 
