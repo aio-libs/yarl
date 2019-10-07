@@ -145,10 +145,10 @@ stages:
         buildType: 'current'
         downloadType: 'single'
         artifactName: 'dist'
-        downloadPath: 'dist'
+        downloadPath: 'upload'
 
     - script: |
-        ls dist/*
+        ls upload/dist/*
 
     - script: |
         python -m twine upload --verbose dist/*
