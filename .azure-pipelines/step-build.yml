@@ -2,6 +2,8 @@ parameters:
   steps: []
   python: '3.7'
   architecture: ''
+  artifact: dist
+  distfolder: $(Build.SourcesDirectory)/dist
 
 steps:                            
   - checkout: self
@@ -21,4 +23,6 @@ steps:
   - ${{ parameters.steps }}                # Users steps
 
   - template: step-save-dist.yml
-
+    parameters:
+      artifact: ${{ parameters.artifact }}
+      folder: ${{ distfolder }}
