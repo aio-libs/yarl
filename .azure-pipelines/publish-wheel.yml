@@ -1,5 +1,5 @@
 parameters:
-  dist.folder: dist
+  dist.folder: $(Build.SourcesDirectory)/dist
 
 steps:
 - task: CopyFiles@2
