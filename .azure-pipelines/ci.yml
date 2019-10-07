@@ -18,10 +18,10 @@ stages:
 - stage: lint
   displayName: 'Run linters'
   jobs:
-  - template: linters-template.yml
+  - template: stage-lint.yml
 - stage: test
   displayName: 'Run tests'
   jobs:
-  - template: tests-template.yml
+  - template: stage-test.yml
     parameters:
       codecov.token: '$(codecov.token)'

@@ -20,5 +20,5 @@ steps:
 
   - ${{ parameters.steps }}                # Users steps
 
-  - template: publish-wheel.yml
+  - template: step-save-dist.yml
 

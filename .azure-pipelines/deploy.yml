@@ -20,12 +20,12 @@ stages:
 - stage: lint
   displayName: 'Run linters'
   jobs:
-  - template: linters-template.yml
+  - template: stage-lint.yml
 
 - stage: test
   displayName: 'Run tests'
   jobs:
-  - template: tests-template.yml
+  - template: stage-test.yml
     parameters:
       codecov.token: '$(codecov.token)'
 
@@ -39,7 +39,7 @@ stages:
       vmImage: 'ubuntu-latest'
 
     steps:
-      - template: build-wheel.yml
+      - template: step-build.yml
         parameters:
           steps:
             - script: |
@@ -79,7 +79,7 @@ stages:
           auditwheel repair dist/*.whl --wheel-dir wheelhouse/
         displayName: 'Repair wheel'
 
-      - template: publish-wheel.yml
+      - template: step-store-dist.yml
         parameters:
           folder: wheelhouse
 
@@ -113,7 +113,7 @@ stages:
     pool:
       vmImage: '$(image)'
     steps:
-      - template: build-wheel.yml
+      - template: step-build.yml
         parameters:
           python: '$(python.version)'
           architecture: '$(python.architecture)'
