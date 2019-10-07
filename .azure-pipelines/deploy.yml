@@ -81,7 +81,7 @@ stages:
 
       - template: publish-wheel.yml
         parameters:
-          dist.folder: wheelhouse
+          folder: wheelhouse
 
   - job:
     strategy:

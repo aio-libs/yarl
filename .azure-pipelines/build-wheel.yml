@@ -22,5 +22,5 @@ steps:
 
   - template: publish-wheel.yml
     parameters:
-      dist.folder: $(Build.SourcesDirectory)/dist
+      folder: $(Build.SourcesDirectory)/dist
 
