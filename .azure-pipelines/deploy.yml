@@ -4,13 +4,16 @@ trigger:
     - refs/tags/*
 pr: none
 
+
 variables:
 - group: codecov
+
 
 resources:
   containers:
   - container: manylinux
     image: quay.io/pypa/manylinux1_x86_64
+
 
 stages:
 - stage: lint
