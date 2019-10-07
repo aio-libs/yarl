@@ -154,12 +154,7 @@ stages:
       inputs:
         pythonUploadServiceConnection: pypi
 
-    - script: >
-        python -m twine upload
-          -r "pypi"
-          --config-file $(PYPIRC_PATH)
-          --disable-progress-bar
-          --verbose
-          dist/*.whl
+    - script: |
+        python -m twine upload -r "pypi" --config-file $(PYPIRC_PATH) --disable-progress-bar --verbose dist/*.whl
       displayName: "Upload to PyPI"
 
