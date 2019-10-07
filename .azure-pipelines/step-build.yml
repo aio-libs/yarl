@@ -22,7 +22,7 @@ steps:
 
   - ${{ parameters.steps }}                # Users steps
 
-  - template: step-save-dist.yml
+  - template: step-store-dist.yml
     parameters:
       artifact: ${{ parameters.artifact }}
       folder: ${{ coalesce(parameters.distfolder, '$(Build.SourcesDirectory)/dist') }}
