@@ -21,4 +21,6 @@ steps:
   - ${{ parameters.steps }}                # Users steps
 
   - template: publish-wheel.yml
+    parameters:
+      dist.folder: $(Build.SourcesDirectory)/dist
 
