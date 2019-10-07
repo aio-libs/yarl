@@ -151,6 +151,7 @@ stages:
 
     - script: |
         ls $(Build.ArtifactStagingDirectory)/dist
+      displayName: 'Distributions list'
 
     - script: |
         python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
@@ -158,3 +159,8 @@ stages:
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: $(twine.token)
+
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: aio-libs
+        assets: $(Build.ArtifactStagingDirectory)/dist/*
