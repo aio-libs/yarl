@@ -76,7 +76,7 @@ stages:
         displayName: 'Make wheel'
 
       - script: |
-          auditwheel repair dist/*.whl -wheel-dir wheelhouse/
+          auditwheel repair dist/*.whl --wheel-dir wheelhouse/
         displayName: 'Repair wheel'
 
       - template: publish-wheel.yml
