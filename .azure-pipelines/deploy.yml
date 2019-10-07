@@ -150,10 +150,10 @@ stages:
         downloadPath: $(Build.ArtifactStagingDirectory)
 
     - script: |
-        ls $(Build.ArtifactStagingDirectory)
+        ls $(Build.ArtifactStagingDirectory)/dist
 
     - script: |
-        python -m twine --verbose $(Build.ArtifactStagingDirectory)/dist/*
+        python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
       displayName: 'Upload to PyPI'
       env:
         TWINE_USERNAME: __token__
