@@ -25,4 +25,4 @@ steps:
   - template: step-save-dist.yml
     parameters:
       artifact: ${{ parameters.artifact }}
-      folder: ${{ coalesce(distfolder, '$(Build.SourcesDirectory)/dist') }}
+      folder: ${{ coalesce(parameters.distfolder, '$(Build.SourcesDirectory)/dist') }}
