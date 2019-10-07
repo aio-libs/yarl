@@ -7,6 +7,7 @@ pr: none
 
 variables:
 - group: codecov
+- group: twine
 
 
 resources:
@@ -149,12 +150,9 @@ stages:
     - script: |
         ls dist/*
 
-    - task: TwineAuthenticate@1
-      displayName: "Twine Authenticate"
-      inputs:
-        pythonUploadServiceConnection: pypi
-
     - script: |
-        python -m twine upload -r "pypi" --config-file $(PYPIRC_PATH) --disable-progress-bar --verbose dist/*.whl
+        python -m twine upload --verbose dist/*.whl
       displayName: "Upload to PyPI"
-
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: $(twine.token)
