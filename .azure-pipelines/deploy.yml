@@ -153,12 +153,12 @@ stages:
         ls $(Build.ArtifactStagingDirectory)/dist
       displayName: 'Distributions list'
 
-    - script: |
-        python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
-      displayName: 'Upload to PyPI'
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: $(twine.token)
+    # - script: |
+    #     python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
+    #   displayName: 'Upload to PyPI'
+    #   env:
+    #     TWINE_USERNAME: __token__
+    #     TWINE_PASSWORD: $(twine.token)
 
     - task: GitHubRelease@0
       inputs:
