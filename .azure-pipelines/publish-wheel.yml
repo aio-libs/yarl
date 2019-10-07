@@ -4,7 +4,7 @@ parameters:
 steps:
 - task: CopyFiles@2
   inputs:
-    contents: '$(dist.folder)/**'
+    sourceFolder: $(dist.folder)
     targetFolder: $(Build.ArtifactStagingDirectory)
   displayName: 'Copy distribution'
 - task: PublishBuildArtifacts@1
