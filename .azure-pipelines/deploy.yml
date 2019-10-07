@@ -134,6 +134,10 @@ stages:
         versionSpec: '3.7'
       displayName: "Use Python 3.7"
 
+    - script: |
+        pip install -U twine
+      displayName: 'Install twine'
+
     - task: DownloadBuildArtifacts@0
       displayName: 'Download distributions'
       inputs:
