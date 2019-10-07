@@ -133,7 +133,7 @@ stages:
     - checkout: none
 
     - bash: |
-        echo '##vso[task.setvariable variable=gittag]`git describe --exact-match $(Build.SourceVersion)`
+        echo '##vso[task.setvariable variable=gittag]`git describe --exact-match $(Build.SourceVersion)`'
       displayName: 'Match GitHub tag'
 
     - task: UsePythonVersion@0
