@@ -2,6 +2,9 @@ parameters:
   dist.folder: $(Build.SourcesDirectory)/dist
 
 steps:
+- script: |
+    echo FIRST ${{ parameters.dist.folder }}
+    echo SECOND $(Build.ArtifactStagingDirectory)
 - task: CopyFiles@2
   inputs:
     sourceFolder: ${{ parameters.dist.folder }}
