@@ -17,17 +17,17 @@ resources:
 
 
 stages:
-# - stage: lint
-#   displayName: 'Run linters'
-#   jobs:
-#   - template: linters-template.yml
+- stage: lint
+  displayName: 'Run linters'
+  jobs:
+  - template: linters-template.yml
 
-# - stage: test
-#   displayName: 'Run tests'
-#   jobs:
-#   - template: tests-template.yml
-#     parameters:
-#       codecov.token: '$(codecov.token)'
+- stage: test
+  displayName: 'Run tests'
+  jobs:
+  - template: tests-template.yml
+    parameters:
+      codecov.token: '$(codecov.token)'
 
 - stage: build
   displayName: 'Build distributions'
@@ -132,6 +132,10 @@ stages:
     steps:
     - checkout: none
 
+    - bash: |
+        echo '##vso[task.setvariable variable=gittag]`git describe --exact-match $(Build.SourceVersion)`
+      displayName: 'Match GitHub tag'
+
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.7'
@@ -153,14 +157,16 @@ stages:
         ls $(Build.ArtifactStagingDirectory)/dist
       displayName: 'Distributions list'
 
-    # - script: |
-    #     python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
-    #   displayName: 'Upload to PyPI'
-    #   env:
-    #     TWINE_USERNAME: __token__
-    #     TWINE_PASSWORD: $(twine.token)
+    - script: |
+        python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
+      displayName: 'Upload to PyPI'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: $(twine.token)
 
     - task: GitHubRelease@0
       inputs:
         gitHubConnection: release-upload
         assets: $(Build.ArtifactStagingDirectory)/dist/*
+        # pre-release for alpha or beta
+        isPreRelease: or(contains($[ variables.gittag ], 'a'), contains($[ variables.gittag ], 'b'))
