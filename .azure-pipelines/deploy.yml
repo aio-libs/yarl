@@ -162,5 +162,5 @@ stages:
 
     - task: GitHubRelease@0
       inputs:
-        gitHubConnection: aio-libs
+        gitHubConnection: release-upload
         assets: $(Build.ArtifactStagingDirectory)/dist/*
