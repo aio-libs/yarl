@@ -1,6 +1,14 @@
+parameters:
+  dist.folder: dist
+
 steps:
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish distribution'
-    inputs:
-      pathtoPublish: 'dist'
-      artifactName: dist
+- task: CopyFiles@2
+  inputs:
+    contents: '$(dist.folder)/**'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+  displayName: 'Copy distribution'
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish distribution'
+  inputs:
+    pathtoPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: dist

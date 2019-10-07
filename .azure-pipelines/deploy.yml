@@ -76,10 +76,12 @@ stages:
         displayName: 'Make wheel'
 
       - script: |
-          auditwheel repair dist/*.whl
+          auditwheel repair dist/*.whl -wheel-dir wheelhouse/
         displayName: 'Repair wheel'
 
       - template: publish-wheel.yml
+        parameters:
+          dist.folder: wheelhouse
 
   - job:
     strategy:
@@ -148,10 +150,10 @@ stages:
         downloadPath: 'upload'
 
     - script: |
-        ls upload/dist/*
+        ls upload/*
 
     - script: |
-        python -m twine upload --verbose upload/dist/*
+        python -m twine upload --verbose upload/*
       displayName: "Upload to PyPI"
       env:
         TWINE_USERNAME: __token__
