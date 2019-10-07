@@ -154,7 +154,7 @@ stages:
       inputs:
         pythonUploadServiceConnection: pypi
 
-    - script: >-
+    - script: >
         python -m twine upload
           -r "pypi"
           --config-file $(PYPIRC_PATH)
