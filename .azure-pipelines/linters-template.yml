@@ -6,16 +6,16 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: "3.7"
-      architecture: "x64"
+      versionSpec: '3.7'
+      architecture: 'x64'
 
   - script: |
       pip install -r requirements/lint.txt
-    displayName: "Install deps"
+    displayName: 'Install deps'
 
   - script: |
       make flake8
-    displayName: "Run flake8"
+    displayName: 'Run flake8'
 
 - job: 'black'
   pool:
@@ -24,16 +24,16 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: "3.7"
-      architecture: "x64"
+      versionSpec: '3.7'
+      architecture: 'x64'
 
   - script: |
       pip install -r requirements/lint.txt
-    displayName: "Install deps"
+    displayName: 'Install deps'
 
   - script: |
       make black-check
-    displayName: "Run black checker"
+    displayName: 'Run black checker'
 
 - job: 'mypy'
   pool:
@@ -42,22 +42,22 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: "3.7"
-      architecture: "x64"
+      versionSpec: '3.7'
+      architecture: 'x64'
 
   - script: |
       pip install -r requirements/lint.txt
-    displayName: "Install deps"
+    displayName: 'Install deps'
 
   - script: |
       pip install -e .
-    displayName: "Install itself"
+    displayName: 'Install itself'
     env:
       YARL_NO_EXTENSIONS: 1
 
   - script: |
       make mypy
-    displayName: "Run black checker"
+    displayName: 'Run black checker'
 
 - job: 'docs'
   pool:
@@ -66,17 +66,17 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: "3.7"
-      architecture: "x64"
+      versionSpec: '3.7'
+      architecture: 'x64'
 
   - script: |
       apt install libenchant-dev
       pip install -r requirements/doc-spelling.txt
-    displayName: "Install deps"
+    displayName: 'Install deps'
 
   - script: |
       make doc
-    displayName: "Run docs checker"
+    displayName: 'Run docs checker'
     env:
       YARL_NO_EXTENSIONS: 1
 
@@ -87,16 +87,16 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: "3.7"
-      architecture: "x64"
+      versionSpec: '3.7'
+      architecture: 'x64'
 
   - script: |
       pip install -U twine wheel
       python setup.py sdist bdist_wheel
-    displayName: "Install deps"
+    displayName: 'Install deps'
     env:
       YARL_NO_EXTENSIONS: 1
 
   - script: |
       twine check dist/*
-    displayName: "Run twine checker"
+    displayName: 'Run twine checker'

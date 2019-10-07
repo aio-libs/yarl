@@ -4,56 +4,158 @@ trigger:
     - refs/tags/*
 pr: none
 
+
 variables:
 - group: codecov
 
+
+resources:
+  containers:
+  - container: manylinux
+    image: quay.io/pypa/manylinux1_x86_64
+
+
 stages:
 - stage: lint
-  displayName: "Run linters"
+  displayName: 'Run linters'
   jobs:
   - template: linters-template.yml
 
 - stage: test
-  displayName: "Run tests"
+  displayName: 'Run tests'
   jobs:
   - template: tests-template.yml
     parameters:
       codecov.token: '$(codecov.token)'
 
-- stage: deploy
-  displayName: "Build distributions"
+- stage: build
+  displayName: 'Build distributions'
+
   jobs:
-  - job: upload
-    displayName: "Tarball"
+  - job: tarball
+    displayName: 'Tarball'
     pool:
-      vmImage: "ubuntu-latest"
+      vmImage: 'ubuntu-latest'
 
     steps:
-      - checkout: self
-        clean: true
+      - template: build-wheel.yml
+        parameters:
+          steps:
+            - script: |
+                python setup.py sdist
+              displayName: 'Make tarball'
 
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '3.7'
-        displayName: "Use Python 3.7"
+  - job: manylinux
+    displayName: 'Manylinux'
+    strategy:
+      matrix:
+        py36 x64:
+          python.code: 'cp36-cp36m'
+          manylinux: 'manylinux_64'
+        py37 x64:
+          python.code: 'cp37-cp37m'
+          manylinux: 'manylinux_64'
+    pool:
+      vmImage: 'ubuntu-latest'
+    container: manylinux
+    steps:
+      - script: |
+          /opt/python/$(python.code)/bin/python -m venv .build-venv
+        displayName: 'Use Python $(python.code)'
 
       - script: |
-          pip install -U setuptools twine wheel
-        displayName: "Install tools"
+          source .build-venv/bin/activate
+          pip install -U setuptools wheel
+        displayName: 'Install tools'
 
       - script: |
-          python setup.py sdist
-        displayName: "Make tarball"
+          source .build-venv/bin/activate
+          make cythonize
+          python setup.py bdist_wheel
+        displayName: 'Make wheel'
 
-      - task: CopyFiles@2
-        displayName: "Collect artifact files"
-        inputs:
-          sourceFolder: 'dist'
-          contents: '?(*.tar.gz|*.whl)'
-          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      - script: |
+          auditwheel repair dist/*.whl
+        displayName: 'Repair wheel'
 
-      - task: PublishBuildArtifacts@1
-        displayName: "Publish tarball"
-        inputs:
-          pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          artifactName: tarball
+      - template: publish-wheel.yml
+
+  - job:
+    strategy:
+      matrix:
+        Win py36 x64:
+          python.version: '3.6'
+          python.architecture: 'x64'
+          image: 'windows-latest'
+        Win py37 x64:
+          python.version: '3.7'
+          python.architecture: 'x64'
+          image: 'windows-latest'
+        Win py36 x86:
+          python.version: '3.6'
+          python.architecture: 'x86'
+          image: 'windows-latest'
+        Win py37 x86:
+          python.version: '3.7'
+          python.architecture: 'x86'
+          image: 'windows-latest'
+        Mac py36:
+          python.version: '3.6'
+          image: 'macos-latest'
+          python.architecture: 'x64'
+        Mac py37:
+          python.version: '3.7'
+          image: 'macos-latest'
+          python.architecture: 'x64'
+    pool:
+      vmImage: '$(image)'
+    steps:
+      - template: build-wheel.yml
+        parameters:
+          python: '$(python.version)'
+          architecture: '$(python.architecture)'
+          steps:
+            - script: |
+                make cythonize
+                python setup.py bdist_wheel
+              displayName: 'Make wheel'
+              
+- stage: publish
+  displayName: 'Publish distributions'
+  jobs:
+  - job:
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: none
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+      displayName: "Use Python 3.7"
+
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download distributions'
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'dist'
+        downloadPath: 'dist'
+
+    - script: |
+        ls dist/*
+
+    - task: TwineAuthenticate@1
+      displayName: "Twine Authenticate"
+      inputs:
+        pythonUploadServiceConnection: pypi
+
+    - script: >-
+        python -m twine upload
+          -r "pypi"
+          --config-file $(PYPIRC_PATH)
+          --disable-progress-bar
+          --verbose
+          dist/*.whl
+      displayName: "Upload to PyPI"
+

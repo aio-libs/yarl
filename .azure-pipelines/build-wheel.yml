@@ -1,0 +1,24 @@
+parameters:
+  steps: []
+  python: '3.7'
+  architecture: ''
+
+steps:                            
+  - checkout: self
+    submodules: true
+    clean: true
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: ${{ parameters.python }}
+      ${{ if ne(parameters.architecture, '') }}:
+        architecture: ${{ parameters.architecture }}
+
+  - script: |
+      pip install -U setuptools wheel
+    displayName: 'Install tools'
+
+  - ${{ parameters.steps }}                # Users steps
+
+  - template: publish-wheel.yml
+
