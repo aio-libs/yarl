@@ -2,14 +2,11 @@ parameters:
   folder: $(Build.SourcesDirectory)/dist
 
 steps:
-- script: |
-    echo FIRST ${{ parameters.folder }}
-    echo SECOND $(Build.ArtifactStagingDirectory)
 - task: CopyFiles@2
+  displayName: 'Copy distribution'
   inputs:
     sourceFolder: ${{ parameters.folder }}
     targetFolder: $(Build.ArtifactStagingDirectory)
-  displayName: 'Copy distribution'
 - task: PublishBuildArtifacts@1
   displayName: 'Publish distribution'
   inputs:

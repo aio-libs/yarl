@@ -144,17 +144,17 @@ stages:
     - task: DownloadBuildArtifacts@0
       displayName: 'Download distributions'
       inputs:
-        buildType: 'current'
-        downloadType: 'single'
-        artifactName: 'dist'
-        downloadPath: 'upload'
+        buildType: current
+        downloadType: single
+        artifactName: dist
+        downloadPath: $(Build.ArtifactStagingDirectory)
 
     - script: |
-        ls upload/*
+        ls $(Build.ArtifactStagingDirectory)
 
     - script: |
-        python -m twine upload --verbose upload/*
-      displayName: "Upload to PyPI"
+        python -m twine --verbose $(Build.ArtifactStagingDirectory)/dist/*
+      displayName: 'Upload to PyPI'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: $(twine.token)
