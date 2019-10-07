@@ -3,7 +3,7 @@ parameters:
   python: '3.7'
   architecture: ''
   artifact: dist
-  distfolder: $(Build.SourcesDirectory)/dist
+  distfolder: ''
 
 steps:                            
   - checkout: self
@@ -25,4 +25,4 @@ steps:
   - template: step-save-dist.yml
     parameters:
       artifact: ${{ parameters.artifact }}
-      folder: ${{ distfolder }}
+      folder: ${{ coalesce(distfolder, '$(Build.SourcesDirectory)/dist' }}
