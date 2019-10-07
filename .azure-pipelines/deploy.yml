@@ -151,7 +151,7 @@ stages:
         ls dist/*
 
     - script: |
-        python -m twine upload --verbose dist/*.whl
+        python -m twine upload --verbose dist/*
       displayName: "Upload to PyPI"
       env:
         TWINE_USERNAME: __token__
