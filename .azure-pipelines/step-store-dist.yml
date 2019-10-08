@@ -1,4 +1,5 @@
 parameters:
+  artifact: dist
   folder: $(Build.SourcesDirectory)/dist
 
 steps:
@@ -11,4 +12,4 @@ steps:
   displayName: 'Publish distribution'
   inputs:
     pathtoPublish: $(Build.ArtifactStagingDirectory)
-    artifactName: dist
+    artifactName: ${{ parameters.artifact }}
