@@ -1,6 +1,6 @@
 parameters:
   artifact: dist
-  github: release-upload
+  github: ''
 
 stages:
 - stage: publish
@@ -48,10 +48,11 @@ stages:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: $(twine.token)
 
-    - task: GitHubRelease@1
-      inputs:
-        gitHubConnection: ${{ parameters.github }}
-        assets: $(Build.ArtifactStagingDirectory)/dist/*
-        addChangeLog: false
-        # pre-release for alpha or beta
-        isPreRelease: or(contains($[ variables.gittag ], 'a'), contains($[ variables.gittag ], 'b'))
+    - ${{ if ne(parameters.github, '') }}:
+      - task: GitHubRelease@1
+        inputs:
+          gitHubConnection: ${{ parameters.github }}
+          assets: $(Build.ArtifactStagingDirectory)/dist/*
+          addChangeLog: false
+          # pre-release for alpha or beta
+          isPreRelease: or(contains($[ variables.gittag ], 'a'), contains($[ variables.gittag ], 'b'))

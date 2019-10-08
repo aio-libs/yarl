@@ -14,7 +14,11 @@ resources:
   containers:
   - container: manylinux
     image: quay.io/pypa/manylinux1_x86_64
-
+  repositories:
+  - repository: templates
+    type: github
+    name: aio-libs/azure-pipelines
+    endpoint: aio-libs
 
 stages:
 - template: stage-lint.yml
@@ -33,7 +37,7 @@ stages:
       vmImage: 'ubuntu-latest'
 
     steps:
-      - template: step-build.yml
+      - template: templates/step-build.yml@templates
         parameters:
           steps:
             - script: |
@@ -73,7 +77,7 @@ stages:
           auditwheel repair dist/*.whl --wheel-dir wheelhouse/
         displayName: 'Repair wheel'
 
-      - template: step-store-dist.yml
+      - template: templates/step-store-dist.yml@templates
         parameters:
           folder: wheelhouse
 
@@ -107,7 +111,7 @@ stages:
     pool:
       vmImage: '$(image)'
     steps:
-      - template: step-build.yml
+      - template: templates/step-build.yml@templates
         parameters:
           python: '$(python.version)'
           architecture: '$(python.architecture)'
@@ -117,4 +121,6 @@ stages:
                 python setup.py bdist_wheel
               displayName: 'Make wheel'
               
-- template: stage-publish.yml
+- template: templates/stage-publish.yml@templates
+  parameters:
+    github: release-upload
