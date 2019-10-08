@@ -17,17 +17,11 @@ resources:
 
 
 stages:
-- stage: lint
-  displayName: 'Lint'
-  jobs:
-  - template: stage-lint.yml
+- template: stage-lint.yml
 
-- stage: test
-  displayName: 'Test'
-  jobs:
-  - template: stage-test.yml
-    parameters:
-      codecov.token: '$(codecov.token)'
+- template: stage-test.yml
+  parameters:
+    codecov.token: '$(codecov.token)'
 
 - stage: build
   displayName: 'Build'
