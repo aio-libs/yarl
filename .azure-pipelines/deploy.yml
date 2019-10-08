@@ -41,6 +41,9 @@ stages:
         parameters:
           steps:
             - script: |
+                make cythonize
+              displayName: 'Cythonize'
+            - script: |
                 python setup.py sdist
               displayName: 'Make tarball'
 
