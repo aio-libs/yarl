@@ -48,8 +48,8 @@ stages:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: $(twine.token)
 
-    ${{ if ne(parameters.github, '') }}:
-      - task: GitHubRelease@1
+    - ${{ if ne(parameters.github, '') }}:
+      task: GitHubRelease@1
         inputs:
           gitHubConnection: ${{ parameters.github }}
           assets: $(Build.ArtifactStagingDirectory)/dist/*
