@@ -6,7 +6,7 @@ stages:
   displayName: 'Run tests'
 
   jobs:
-  - job: 'Test'
+  - job:
     strategy:
       matrix:
         Py36-Cython-Linux:
