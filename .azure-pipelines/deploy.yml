@@ -118,3 +118,4 @@ stages:
               displayName: 'Make wheel'
               
 - template: stage-publish.yml
+  github: release-upload
