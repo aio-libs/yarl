@@ -18,6 +18,7 @@ resources:
   - repository: templates
     type: github
     name: aio-libs/azure-pipelines
+    endpoint: aio-libs
 
 stages:
 - template: stage-lint.yml
