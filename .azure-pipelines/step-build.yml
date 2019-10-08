@@ -2,6 +2,8 @@ parameters:
   steps: []
   python: '3.7'
   architecture: ''
+  artifact: dist
+  distfolder: ''
 
 steps:                            
   - checkout: self
@@ -20,5 +22,7 @@ steps:
 
   - ${{ parameters.steps }}                # Users steps
 
-  - template: publish-wheel.yml
-
+  - template: step-store-dist.yml
+    parameters:
+      artifact: ${{ parameters.artifact }}
+      folder: ${{ coalesce(parameters.distfolder, '$(Build.SourcesDirectory)/dist') }}

@@ -17,20 +17,14 @@ resources:
 
 
 stages:
-- stage: lint
-  displayName: 'Run linters'
-  jobs:
-  - template: linters-template.yml
+- template: stage-lint.yml
 
-- stage: test
-  displayName: 'Run tests'
-  jobs:
-  - template: tests-template.yml
-    parameters:
-      codecov.token: '$(codecov.token)'
+- template: stage-test.yml
+  parameters:
+    codecov.token: '$(codecov.token)'
 
 - stage: build
-  displayName: 'Build distributions'
+  displayName: 'Build'
 
   jobs:
   - job: tarball
@@ -39,7 +33,7 @@ stages:
       vmImage: 'ubuntu-latest'
 
     steps:
-      - template: build-wheel.yml
+      - template: step-build.yml
         parameters:
           steps:
             - script: |
@@ -79,7 +73,7 @@ stages:
           auditwheel repair dist/*.whl --wheel-dir wheelhouse/
         displayName: 'Repair wheel'
 
-      - template: publish-wheel.yml
+      - template: step-store-dist.yml
         parameters:
           folder: wheelhouse
 
@@ -113,7 +107,7 @@ stages:
     pool:
       vmImage: '$(image)'
     steps:
-      - template: build-wheel.yml
+      - template: step-build.yml
         parameters:
           python: '$(python.version)'
           architecture: '$(python.architecture)'
@@ -123,50 +117,4 @@ stages:
                 python setup.py bdist_wheel
               displayName: 'Make wheel'
               
-- stage: publish
-  displayName: 'Publish distributions'
-  jobs:
-  - job:
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - checkout: none
-
-    - bash: |
-        echo '##vso[task.setvariable variable=gittag]`git describe --exact-match $(Build.SourceVersion)`'
-      displayName: 'Match GitHub tag'
-
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.7'
-      displayName: "Use Python 3.7"
-
-    - script: |
-        pip install -U twine
-      displayName: 'Install twine'
-
-    - task: DownloadBuildArtifacts@0
-      displayName: 'Download distributions'
-      inputs:
-        buildType: current
-        downloadType: single
-        artifactName: dist
-        downloadPath: $(Build.ArtifactStagingDirectory)
-
-    - script: |
-        ls $(Build.ArtifactStagingDirectory)/dist
-      displayName: 'Distributions list'
-
-    - script: |
-        python -m twine upload --verbose $(Build.ArtifactStagingDirectory)/dist/*
-      displayName: 'Upload to PyPI'
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: $(twine.token)
-
-    - task: GitHubRelease@0
-      inputs:
-        gitHubConnection: release-upload
-        assets: $(Build.ArtifactStagingDirectory)/dist/*
-        # pre-release for alpha or beta
-        isPreRelease: or(contains($[ variables.gittag ], 'a'), contains($[ variables.gittag ], 'b'))
+- template: stage-publish.yml
