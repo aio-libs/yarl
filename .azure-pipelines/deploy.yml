@@ -18,19 +18,19 @@ resources:
 
 stages:
 - stage: lint
-  displayName: 'Run linters'
+  displayName: 'Lint'
   jobs:
   - template: stage-lint.yml
 
 - stage: test
-  displayName: 'Run tests'
+  displayName: 'Test'
   jobs:
   - template: stage-test.yml
     parameters:
       codecov.token: '$(codecov.token)'
 
 - stage: build
-  displayName: 'Build distributions'
+  displayName: 'Build'
 
   jobs:
   - job: tarball

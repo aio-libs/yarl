@@ -1,102 +1,106 @@
-jobs:
-- job: 'flake8'
-  pool:
-    vmImage: 'ubuntu-latest'
+stages:
+- stage: lint
+  displayName: 'Run linters'
 
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-      architecture: 'x64'
+  jobs:
+  - job: 'flake8'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  - script: |
-      pip install -r requirements/lint.txt
-    displayName: 'Install deps'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: 'x64'
 
-  - script: |
-      make flake8
-    displayName: 'Run flake8'
+    - script: |
+        pip install -r requirements/lint.txt
+      displayName: 'Install deps'
 
-- job: 'black'
-  pool:
-    vmImage: 'ubuntu-latest'
+    - script: |
+        make flake8
+      displayName: 'Run flake8'
 
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-      architecture: 'x64'
+  - job: 'black'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  - script: |
-      pip install -r requirements/lint.txt
-    displayName: 'Install deps'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: 'x64'
 
-  - script: |
-      make black-check
-    displayName: 'Run black checker'
+    - script: |
+        pip install -r requirements/lint.txt
+      displayName: 'Install deps'
 
-- job: 'mypy'
-  pool:
-    vmImage: 'ubuntu-latest'
+    - script: |
+        make black-check
+      displayName: 'Run black checker'
 
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-      architecture: 'x64'
+  - job: 'mypy'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  - script: |
-      pip install -r requirements/lint.txt
-    displayName: 'Install deps'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: 'x64'
 
-  - script: |
-      pip install -e .
-    displayName: 'Install itself'
-    env:
-      YARL_NO_EXTENSIONS: 1
+    - script: |
+        pip install -r requirements/lint.txt
+      displayName: 'Install deps'
 
-  - script: |
-      make mypy
-    displayName: 'Run black checker'
+    - script: |
+        pip install -e .
+      displayName: 'Install itself'
+      env:
+        YARL_NO_EXTENSIONS: 1
 
-- job: 'docs'
-  pool:
-    vmImage: 'ubuntu-latest'
+    - script: |
+        make mypy
+      displayName: 'Run black checker'
 
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-      architecture: 'x64'
+  - job: 'docs'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  - script: |
-      apt install libenchant-dev
-      pip install -r requirements/doc-spelling.txt
-    displayName: 'Install deps'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: 'x64'
 
-  - script: |
-      make doc
-    displayName: 'Run docs checker'
-    env:
-      YARL_NO_EXTENSIONS: 1
+    - script: |
+        apt install libenchant-dev
+        pip install -r requirements/doc-spelling.txt
+      displayName: 'Install deps'
 
-- job: 'twine'
-  pool:
-    vmImage: 'ubuntu-latest'
+    - script: |
+        make doc
+      displayName: 'Run docs checker'
+      env:
+        YARL_NO_EXTENSIONS: 1
 
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-      architecture: 'x64'
+  - job: 'twine'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  - script: |
-      pip install -U twine wheel
-      python setup.py sdist bdist_wheel
-    displayName: 'Install deps'
-    env:
-      YARL_NO_EXTENSIONS: 1
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        architecture: 'x64'
 
-  - script: |
-      twine check dist/*
-    displayName: 'Run twine checker'
+    - script: |
+        pip install -U twine wheel
+        python setup.py sdist bdist_wheel
+      displayName: 'Install deps'
+      env:
+        YARL_NO_EXTENSIONS: 1
+
+    - script: |
+        twine check dist/*
+      displayName: 'Run twine checker'

@@ -4,7 +4,7 @@ parameters:
 
 stages:
 - stage: publish
-  displayName: 'Publish distributions'
+  displayName: 'Publish'
   jobs:
   - job:
     pool:
