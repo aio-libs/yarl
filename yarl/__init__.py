@@ -9,7 +9,7 @@ import idna
 
 from .quoting import _Quoter, _Unquoter
 
-__version__ = "1.4.0a10"
+__version__ = "1.4.0a11"
 
 __all__ = ("URL",)
 
