@@ -1,8 +1,8 @@
 yarl
 ====
 
-.. image:: https://travis-ci.com/aio-libs/yarl.svg?branch=master
-  :target:  https://travis-ci.com/aio-libs/yarl
+.. image:: https://dev.azure.com/aio-libs/yarl/_apis/build/status/CI?branchName=master
+  :target: https://dev.azure.com/aio-libs/yarl/_build/latest?definitionId=7&branchName=master
   :align: right
 
 .. image:: https://codecov.io/gh/aio-libs/yarl/branch/master/graph/badge.svg
@@ -132,7 +132,7 @@ Please file an issue on the `bug tracker
 <https://github.com/aio-libs/yarl/issues>`_ if you have found a bug
 or have some suggestion in order to improve the library.
 
-The library uses `Travis <https://travis-ci.org/aio-libs/yarl>`_ for
+The library uses `Azure Pipelines <https://dev.azure.com/aio-libs/yarl>`_ for
 Continuous Integration.
 
 Discussion list

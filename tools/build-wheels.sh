@@ -87,5 +87,3 @@ for PYTHON in ${PYTHON_VERSIONS}; do
     /opt/python/${PYTHON}/bin/pip install "$package_name" --no-index -f "file://${WHEELHOUSE_DIR}"
     /opt/python/${PYTHON}/bin/py.test ${WORKDIR_PATH}/tests
 done
-
-chown -R --reference="${WORKDIR_PATH}/.travis.yml" "${WORKDIR_PATH}"
