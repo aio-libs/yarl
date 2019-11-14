@@ -292,7 +292,7 @@ class URL:
     def __truediv__(self, name):
         name = self._PATH_QUOTER(name)
         if name.startswith("/"):
-            raise ValueError("Appending path " "starting from slash is forbidden")
+            raise ValueError("Appending path \"{}\" starting from slash is forbidden".format(name))
         path = self._val.path
         if path == "/":
             new_path = "/" + name
