@@ -18,6 +18,8 @@ CHANGES
 
 * Fix quoting of plus in path by pure python version (#339)
 
+* Included in error msg the path that produces starting slash forbidden error (#376)
+
 1.3.0 (2018-12-11)
 ------------------
 
