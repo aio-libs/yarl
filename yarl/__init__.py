@@ -293,7 +293,7 @@ class URL:
         name = self._PATH_QUOTER(name)
         if name.startswith("/"):
             raise ValueError(
-                "Appending path \"{}\" starting from slash is forbidden".format(name)
+                "Appending path {!r} starting from slash is forbidden".format(name)
             )
         path = self._val.path
         if path == "/":
