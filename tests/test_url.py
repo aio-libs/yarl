@@ -668,6 +668,18 @@ def test_with_fragment_None():
     assert str(url2) == "http://example.com/path"
 
 
+def test_with_fragment_None_matching():
+    url = URL("http://example.com/path")
+    url2 = url.with_fragment(None)
+    assert url is url2
+
+
+def test_with_fragment_matching():
+    url = URL("http://example.com/path#frag")
+    url2 = url.with_fragment("frag")
+    assert url is url2
+
+
 def test_with_fragment_bad_type():
     url = URL("http://example.com")
     with pytest.raises(TypeError):

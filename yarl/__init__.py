@@ -916,6 +916,8 @@ class URL:
             fragment = ""
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
+        if self.fragment == fragment:
+            return self
         return URL(
             self._val._replace(fragment=self._FRAGMENT_QUOTER(fragment)), encoded=True
         )
