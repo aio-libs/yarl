@@ -913,12 +913,14 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         if fragment is None:
-            fragment = ""
+            raw_fragment = ""
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
-        return URL(
-            self._val._replace(fragment=self._FRAGMENT_QUOTER(fragment)), encoded=True
-        )
+        else:
+            raw_fragment = self._FRAGMENT_QUOTER(fragment)
+        if self.raw_fragment == raw_fragment:
+            return self
+        return URL(self._val._replace(fragment=raw_fragment), encoded=True)
 
     def with_name(self, name):
         """Return a new URL with name (last part of path) replaced.

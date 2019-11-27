@@ -18,6 +18,8 @@ CHANGES
 
 * Fix quoting of plus in path by pure python version (#339)
 
+* Don't create a new URL if fragment is unchanged (#292)
+
 1.3.0 (2018-12-11)
 ------------------
 
