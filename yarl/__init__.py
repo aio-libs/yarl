@@ -452,7 +452,6 @@ class URL:
             # fe80::2%Проверка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
-
         try:
             return idna.decode(raw.encode("ascii"))
         except UnicodeError:  # e.g. '::1'
@@ -667,6 +666,10 @@ class URL:
             ip, sep, zone = host.partition("%")
             ip = ip_address(ip)
         except ValueError:
+            # IDNA encoding is slow,
+            # skip it for ASCII-only strings
+            if host.isascii():
+                return host
             try:
                 host = idna.encode(host, uts46=True).decode("ascii")
             except UnicodeError:
