@@ -22,6 +22,8 @@ CHANGES
 
 * Included in error msg the path that produces starting slash forbidden error (#376)
 
+* Skip slow IDNA encoding for ASCII-only strings (#387)
+
 
 1.3.0 (2018-12-11)
 ------------------
