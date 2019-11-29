@@ -659,6 +659,7 @@ class URL:
         return "/".join(resolved_path)
 
     if sys.version_info >= (3, 7):
+
         @classmethod
         def _encode_host(cls, host):
             try:
@@ -680,6 +681,7 @@ class URL:
                 if ip.version == 6:
                     host = "[" + host + "]"
             return host
+
     else:
         # the same bug without isascii check
         @classmethod
