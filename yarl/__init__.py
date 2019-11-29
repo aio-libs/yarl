@@ -14,9 +14,6 @@ __version__ = "1.5.0a0"
 __all__ = ("URL",)
 
 
-# is_leaf()
-
-
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
 sentinel = object()
