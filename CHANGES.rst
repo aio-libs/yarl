@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+1.4.1 (2019-11-29)
+------------------
+
+* Fix regression, make the library work on Python 3.5 and 3.6 again.
+
 1.4.0 (2019-11-29)
 ------------------
 
