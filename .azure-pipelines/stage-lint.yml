@@ -92,6 +92,8 @@ stages:
     - script: |
         make doc
       displayName: 'Run docs checker'
+      env:
+        YARL_NO_EXTENSIONS: 1
 
   - job: 'twine'
     pool:
