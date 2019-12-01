@@ -1,7 +1,3 @@
-[build-system]
-requires = ["pip>=18", "setuptools>=40", "wheel"]
-
-
 [tool.towncrier]
 package = "yarl"
 filename = "CHANGES.rst"
