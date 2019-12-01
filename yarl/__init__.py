@@ -691,7 +691,7 @@ class URL:
                 ip = ip_address(ip)
             except ValueError:
                 for char in host:
-                    if ord(char) > 127:
+                    if char > "\x7f":
                         break
                 else:
                     return host
