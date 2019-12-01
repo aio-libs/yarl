@@ -80,16 +80,18 @@ stages:
       displayName: 'Install deps'
 
     - script: |
+        pip install -e .
+      displayName: 'Install self'
+      env:
+        YARL_NO_EXTENSIONS: 1
+
+    - script: |
         towncrier --yes
       displayName: 'Run towncrier'
-      env:
-        MULTIDICT_NO_EXTENSIONS: 1
 
     - script: |
         make doc
       displayName: 'Run docs checker'
-      env:
-        YARL_NO_EXTENSIONS: 1
 
   - job: 'twine'
     pool:
