@@ -76,7 +76,18 @@ stages:
     - script: |
         apt install libenchant-dev
         pip install -r requirements/doc-spelling.txt
+        pip install -r requirements/towncrier.txt
       displayName: 'Install deps'
+
+    - script: |
+        pip install -e .
+      displayName: 'Install self'
+      env:
+        YARL_NO_EXTENSIONS: 1
+
+    - script: |
+        towncrier --yes
+      displayName: 'Run towncrier'
 
     - script: |
         make doc
