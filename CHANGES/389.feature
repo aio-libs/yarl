@@ -1,0 +1,1 @@
+Workaround for missing `str.isascii()` in Python 3.6
