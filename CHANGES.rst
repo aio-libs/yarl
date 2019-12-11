@@ -14,6 +14,19 @@ Changelog
 
 .. towncrier release notes start
 
+1.4.2 (2019-12-05)
+==================
+
+Features
+--------
+
+- Workaround for missing `str.isascii()` in Python 3.6
+  `#389 <https://github.com/aio-libs/yarl/issues/389>`_
+
+
+----
+
+
 1.4.1 (2019-11-29)
 ==================
 
