@@ -1,0 +1,1 @@
+Allows for parameter parsing of booleans with URL.with_query.
