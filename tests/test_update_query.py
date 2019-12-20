@@ -14,6 +14,7 @@ def test_with_query():
     assert str(url.with_query({"a": "1"})) == "http://example.com/?a=1"
 
 
+
 def test_update_query():
     url = URL("http://example.com/")
     assert str(url.update_query({"a": "1"})) == "http://example.com/?a=1"
@@ -125,8 +126,7 @@ def test_with_query_non_str():
 
 def test_with_query_bool():
     url = URL("http://example.com")
-    with pytest.raises(TypeError):
-        url.with_query({"a": True})
+    assert str(url.with_query({"a": True})) == "http://example.com/?a=true"
 
 
 def test_with_query_none():
