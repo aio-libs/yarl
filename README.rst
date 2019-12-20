@@ -99,6 +99,20 @@ API documentation
 
 The documentation is located at https://yarl.readthedocs.org
 
+
+Why boolean is not supported by URL query API?
+----------------------------------------------
+
+There is no standard for boolean representation of boolean values.
+
+Some systems prefer ``true``/``false``, others like ``yes``/``no``, ``on``/``off``,
+``Y``/``N``, ``1``/``0``, etc.
+
+``yarl`` cannot make an unambiguous decision how to serialize a :class:`bool` values.
+The library doesn't accept booleans in the API; a user should convert bools into strings
+using own preferred translation protocol.
+
+
 Comparison with other URL libraries
 ------------------------------------
 
