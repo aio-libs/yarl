@@ -99,7 +99,6 @@ API documentation
 
 The documentation is located at https://yarl.readthedocs.org
 
-
 Why boolean is not supported by URL query API?
 ----------------------------------------------
 

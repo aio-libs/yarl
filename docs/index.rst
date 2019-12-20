@@ -124,6 +124,8 @@ Comparison with other URL libraries
   user to cope with these gory details.
 
 
+.. _yarl-bools-support:
+
 Why boolean is not supported by URL query API?
 ----------------------------------------------
 

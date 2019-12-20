@@ -5,3 +5,6 @@ IPv
 mailto
 multi
 svetlov
+boolean
+booleans
+bools
