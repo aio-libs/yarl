@@ -858,6 +858,8 @@ class URL:
             return v
         if type(v) is int:  # no subclasses like bool
             return str(v)
+        if isinstance(v, bool):
+            return "true" if v else "false"
         raise TypeError(
             "Invalid variable type: value "
             "should be str or int, got {!r} "
