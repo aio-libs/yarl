@@ -909,8 +909,8 @@ class URL:
     def with_query(self, *args, **kwargs):
         """Return a new URL with query part replaced.
 
-        Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
-        or str, autoencode the argument if needed.
+        Accepts any Mapping (e.g. dict, multidict.MultiDict instances),
+        str, or bool; autoencode the argument if needed.
 
         A sequence of (key, value) pairs is supported as well.
 
