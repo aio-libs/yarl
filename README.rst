@@ -107,7 +107,7 @@ There is no standard for boolean representation of boolean values.
 Some systems prefer ``true``/``false``, others like ``yes``/``no``, ``on``/``off``,
 ``Y``/``N``, ``1``/``0``, etc.
 
-``yarl`` cannot make an unambiguous decision how to serialize a ``bool`` values.
+``yarl`` cannot make an unambiguous decision on how to serialize ``bool`` values because it is specific to how the end-user's application is built and would be different for different apps.
 The library doesn't accept booleans in the API; a user should convert bools into strings
 using own preferred translation protocol.
 
