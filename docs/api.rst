@@ -543,6 +543,13 @@ section generates a new *URL* instance.
 
    Clear *query* if ``None`` is passed.
 
+   .. note::
+
+      The library accepts :class:`str` and :class:`int` as query argument values.
+
+      Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
+      supported out-of-the-box.
+
    .. doctest::
 
       >>> URL('http://example.com/path?a=b').with_query('c=d')
@@ -579,6 +586,13 @@ section generates a new *URL* instance.
    Also it can take an arbitrary number of keyword arguments.
 
    Clear *query* if ``None`` is passed.
+
+   .. note::
+
+      The library accepts :class:`str` and :class:`int` as query argument values.
+
+      Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
+      supported out-of-the-box.
 
    .. doctest::
 

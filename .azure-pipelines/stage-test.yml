@@ -96,7 +96,7 @@ stages:
       displayName: 'Cythonize'
 
     - script: |
-        pip install -r requirements/dev.txt
+        pip install -r requirements/test.txt
       displayName: 'Install dependencies'
       env:
         YARL_NO_EXTENSIONS: '$(no_extensions)'
