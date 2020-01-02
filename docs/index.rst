@@ -87,11 +87,11 @@ The library is Python 3 only!
 
 PyPI contains binary wheels for Linux, Windows and MacOS.  If you want to install
 ``yarl`` on another operation system (or *Alpine Linux* inside a Docker) the
-Tarball will be used to compile the library from sources.  It requires C compiler and
+tarball will be used to compile the library from sources.  It requires a C compiler and
 Python headers installed.
 
-To skip the compilation please use `YARL_NO_EXTENSIONS` environment variable,
-e.g.:
+To skip the compilation you must explicitly opt-in by setting use `YARL_NO_EXTENSIONS`
+environment variable to a non-empty value, e.g.:
 
 ::
 
