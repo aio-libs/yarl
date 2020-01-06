@@ -88,19 +88,21 @@ Installation
 The library is Python 3 only!
 
 PyPI contains binary wheels for Linux, Windows and MacOS.  If you want to install
-``yarl`` on another operation system (or *Alpine Linux* inside a Docker) the
-tarball will be used to compile the library from sources.  It requires a C compiler and
-Python headers installed.
+``yarl`` on another operating system (like *Alpine Linux*, which is not
+manylinux-compliant because of the missing glibc and therefore, cannot be
+used with our wheels) the the tarball will be used to compile the library from
+the source code. It requires a C compiler and and Python headers installed.
 
-To skip the compilation you must explicitly opt-in by setting use `YARL_NO_EXTENSIONS`
+To skip the compilation you must explicitly opt-in by setting the `YARL_NO_EXTENSIONS`
 environment variable to a non-empty value, e.g.:
 
 .. code-block:: bash
 
    $ YARL_NO_EXTENSIONS=1 pip install yarl
 
-Please note that Pure Python (uncompiled) version is much slower. However, PyPy always
-uses pure python implementation, and, as such, it is unaffected by this variable.
+Please note that the pure-Python (uncompiled) version is much slower. However,
+PyPy always uses a pure python implementation, and, as such, it is unaffected
+by this variable.
 
 Dependencies
 ------------
