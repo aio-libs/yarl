@@ -9,3 +9,5 @@ boolean
 booleans
 bools
 uncompiled
+glibc
+manylinux

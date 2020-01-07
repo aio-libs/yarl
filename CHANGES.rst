@@ -14,6 +14,24 @@ Changelog
 
 .. towncrier release notes start
 
+1.5.0a0 (2020-01-07)
+====================
+
+No significant changes.
+
+
+----
+
+
+1.5.0a0 (2020-01-07)
+====================
+
+No significant changes.
+
+
+----
+
+
 1.4.2 (2019-12-05)
 ==================
 

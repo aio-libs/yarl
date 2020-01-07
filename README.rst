@@ -101,7 +101,7 @@ environment variable to a non-empty value, e.g.:
    $ YARL_NO_EXTENSIONS=1 pip install yarl
 
 Please note that the pure-Python (uncompiled) version is much slower. However,
-PyPy always uses a pure python implementation, and, as such, it is unaffected
+PyPy always uses a pure-Python implementation, and, as such, it is unaffected
 by this variable.
 
 Dependencies
