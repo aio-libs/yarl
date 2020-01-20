@@ -1,5 +1,5 @@
 pytest-cov>=2.3.1
-pytest==5.3.2
+pytest==5.3.3
 multidict==4.7.4
 idna==2.8
 -e .
