@@ -219,3 +219,13 @@ def test_update_query_multiple_keys():
     u2 = url.update_query([("a", "3"), ("a", "4")])
 
     assert str(u2) == "http://example.com/path?a=3&a=4"
+
+
+# mod operator
+
+
+def test_update_query_with_mod_operator():
+    url = URL("http://example.com/")
+    assert str(url % {"a": "1"}) == "http://example.com/?a=1"
+    assert str(url % {"a": "1"} % {"b": "2"}) == "http://example.com/?a=1&b=2"
+    assert str(url % {"a": "1"} % {"a": "3", "b": "2"}) == "http://example.com/?a=3&b=2"
