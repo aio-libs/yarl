@@ -120,6 +120,10 @@ def test_with_query_list_int():
 @pytest.mark.parametrize(
     "query,expected",
     [
+        pytest.param({"a": []}, "?", id="empty list"),
+        pytest.param({"a": ()}, "?", id="empty tuple"),
+        pytest.param({"a": [1]}, "?a=1", id="single list"),
+        pytest.param({"a": (1,)}, "?a=1", id="single tuple"),
         pytest.param({"a": [1, 2]}, "?a=1&a=2", id="list"),
         pytest.param({"a": (1, 2)}, "?a=1&a=2", id="tuple"),
         pytest.param({"a[]": [1, 2]}, "?a[]=1&a[]=2", id="key with braces"),
