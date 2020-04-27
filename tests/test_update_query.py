@@ -122,6 +122,7 @@ def test_with_query_list_int():
     [
         pytest.param({"a": [1, 2]}, "?a=1&a=2", id="list"),
         pytest.param({"a": (1, 2)}, "?a=1&a=2", id="tuple"),
+        pytest.param({"a[]": [1, 2]}, "?a[]=1&a[]=2", id="key with braces"),
         pytest.param({"a": ["1", 2]}, "?a=1&a=2", id="mixed types"),
         pytest.param({"a": 1, "b": [2, 3]}, "?a=1&b=2&b=3", id="single then list"),
         pytest.param({"a": [1, 2], "b": 3}, "?a=1&a=2&b=3", id="list then single"),
