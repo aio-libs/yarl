@@ -123,7 +123,9 @@ def test_with_query_list_int():
         pytest.param({"a": [1, 2]}, "?a=1&a=2", id="list"),
         pytest.param({"a": (1, 2)}, "?a=1&a=2", id="tuple"),
         pytest.param({"a[]": [1, 2]}, "?a[]=1&a[]=2", id="key with braces"),
+        pytest.param({"&": [1, 2]}, "?%26=1&%26=2", id="quote key"),
         pytest.param({"a": ["1", 2]}, "?a=1&a=2", id="mixed types"),
+        pytest.param({"&": ["=", 2]}, "?%26=%3D&%26=2", id="quote key and value"),
         pytest.param({"a": 1, "b": [2, 3]}, "?a=1&b=2&b=3", id="single then list"),
         pytest.param({"a": [1, 2], "b": 3}, "?a=1&a=2&b=3", id="list then single"),
         pytest.param({"a": ["1&a=2", 3]}, "?a=1%26a%3D2&a=3", id="ampersand then int"),
@@ -234,6 +236,8 @@ def test_with_query_memoryview():
         pytest.param({"key": "1;2;3"}, "?key=1%3B2%3B3", id="mapping semicolon"),
         pytest.param([("key", "1&a=2")], "?key=1%26a%3D2", id="tuple list ampersand"),
         pytest.param({"key": "1&a=2"}, "?key=1%26a%3D2", id="mapping ampersand"),
+        pytest.param([("&", "=")], "?%26=%3D", id="tuple list quote key"),
+        pytest.param({"&": "="}, "?%26=%3D", id="mapping quote key"),
     ],
 )
 def test_with_query_params(query, expected):
