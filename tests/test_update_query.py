@@ -134,12 +134,14 @@ def test_with_query_sequence_mixed_types():
 
 def test_with_query_sequence_single_then_list():
     url = URL("http://example.com")
-    assert url.with_query({"a": 1, "b": [2, 3]}) == URL("http://example.com/?a=1&b=2&b=3")
+    expected = URL("http://example.com/?a=1&b=2&b=3")
+    assert url.with_query({"a": 1, "b": [2, 3]}) == expected
 
 
 def test_with_query_sequence_list_then_single():
     url = URL("http://example.com")
-    assert url.with_query({"a": [1, 2], "b": 3}) == URL("http://example.com/?a=1&a=2&b=3")
+    expected = URL("http://example.com/?a=1&a=2&b=3")
+    assert url.with_query({"a": [1, 2], "b": 3}) == expected
 
 
 def test_with_query_sequence_nested_sequence():
