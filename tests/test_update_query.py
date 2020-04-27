@@ -117,22 +117,36 @@ def test_with_query_list_int():
     assert str(url.with_query([("a", 1)])) == "http://example.com/?a=1"
 
 
-@pytest.mark.parametrize("query,expected", [
-    ({"a": [1, 2]}, "http://example.com/?a=1&a=2"),
-    ({"a": (1, 2)}, "http://example.com/?a=1&a=2"),
-    ({"a": ["1", 2]}, "http://example.com/?a=1&a=2"),
-    ({"a": 1, "b": [2, 3]}, "http://example.com/?a=1&b=2&b=3"),
-    ({"a": [1, 2], "b": 3}, "http://example.com/?a=1&a=2&b=3"),
-])
+@pytest.mark.parametrize(
+    "query,expected",
+    [
+        pytest.param({"a": [1, 2]}, "http://example.com/?a=1&a=2", id="list"),
+        pytest.param({"a": (1, 2)}, "http://example.com/?a=1&a=2", id="tuple"),
+        pytest.param({"a": ["1", 2]}, "http://example.com/?a=1&a=2", id="mixed types"),
+        pytest.param(
+            {"a": 1, "b": [2, 3]},
+            "http://example.com/?a=1&b=2&b=3",
+            id="single then list",
+        ),
+        pytest.param(
+            {"a": [1, 2], "b": 3},
+            "http://example.com/?a=1&a=2&b=3",
+            id="list then single",
+        ),
+    ],
+)
 def test_with_query_sequence(query, expected):
     url = URL("http://example.com")
     assert url.with_query(query) == URL(expected)
 
 
-@pytest.mark.parametrize("query", [
-    {"a": [[1]]},
-    [("a", [1, 2])],
-])
+@pytest.mark.parametrize(
+    "query",
+    [
+        pytest.param({"a": [[1]]}, id="nested"),
+        pytest.param([("a", [1, 2])], id="tuple list"),
+    ],
+)
 def test_with_query_sequence_invalid_use(query):
     url = URL("http://example.com")
     with pytest.raises(TypeError):
