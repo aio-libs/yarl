@@ -123,8 +123,10 @@ def test_with_query_list_int():
         pytest.param({"a": [1, 2]}, "?a=1&a=2", id="list"),
         pytest.param({"a": (1, 2)}, "?a=1&a=2", id="tuple"),
         pytest.param({"a": ["1", 2]}, "?a=1&a=2", id="mixed types"),
-        pytest.param({"a": 1, "b": [2, 3]}, "?a=1&b=2&b=3", id="single then list",),
-        pytest.param({"a": [1, 2], "b": 3}, "?a=1&a=2&b=3", id="list then single",),
+        pytest.param({"a": 1, "b": [2, 3]}, "?a=1&b=2&b=3", id="single then list"),
+        pytest.param({"a": [1, 2], "b": 3}, "?a=1&a=2&b=3", id="list then single"),
+        pytest.param({"a": ["1&a=2", 3]}, "?a=1%26a%3D2&a=3", id="ampersand then int"),
+        pytest.param({"a": [1, "2&a=3"]}, "?a=1&a=2%26a%3D3", id="int then ampersand"),
     ],
 )
 def test_with_query_sequence(query, expected):
