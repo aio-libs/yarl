@@ -143,7 +143,7 @@ def test_with_query_sequence(query, expected):
 )
 def test_with_query_sequence_invalid_use(query):
     url = URL("http://example.com")
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Invalid variable type"):
         url.with_query(query)
 
 
