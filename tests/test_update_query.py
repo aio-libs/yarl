@@ -226,16 +226,19 @@ def test_with_query_memoryview():
         url.with_query(memoryview(b"123"))
 
 
-def test_with_query_params():
+@pytest.mark.parametrize(
+    "query,expected",
+    [
+        pytest.param([("key", "1;2;3")], "?key=1%3B2%3B3", id="tuple list semicolon"),
+        pytest.param({"key": "1;2;3"}, "?key=1%3B2%3B3", id="mapping semicolon"),
+        pytest.param([("key", "1&a=2")], "?key=1%26a%3D2", id="tuple list ampersand"),
+        pytest.param({"key": "1&a=2"}, "?key=1%26a%3D2", id="mapping ampersand"),
+    ],
+)
+def test_with_query_params(query, expected):
     url = URL("http://example.com/get")
-    url2 = url.with_query([("key", "1;2;3")])
-    assert str(url2) == "http://example.com/get?key=1%3B2%3B3"
-
-
-def test_with_query_params2():
-    url = URL("http://example.com/get")
-    url2 = url.with_query({"key": "1;2;3"})
-    assert str(url2) == "http://example.com/get?key=1%3B2%3B3"
+    url2 = url.with_query(query)
+    assert str(url2) == ("http://example.com/get" + expected)
 
 
 def test_with_query_only():
