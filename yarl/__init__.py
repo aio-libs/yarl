@@ -852,6 +852,15 @@ class URL:
             path = "/" + path
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
+    @classmethod
+    def _query_seq_pairs(cls, quoter, pairs):
+        for key, val in pairs:
+            if isinstance(val, (list, tuple)):
+                for v in val:
+                    yield quoter(key) + "=" + quoter(cls._query_var(v))
+            else:
+                yield quoter(key) + "=" + quoter(cls._query_var(val))
+
     @staticmethod
     def _query_var(v):
         if isinstance(v, str):
@@ -882,9 +891,7 @@ class URL:
             query = ""
         elif isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
-            query = "&".join(
-                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query.items()
-            )
+            query = "&".join(self._query_seq_pairs(quoter, query.items()))
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
@@ -893,6 +900,10 @@ class URL:
             )
         elif isinstance(query, Sequence):
             quoter = self._QUERY_PART_QUOTER
+            # We don't expect sequence values if we're given a list of pairs
+            # already; only mappings like builtin `dict` which can't have the
+            # same key pointing to multiple values are allowed to use
+            # `_query_seq_pairs`.
             query = "&".join(
                 quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
             )

@@ -117,6 +117,43 @@ def test_with_query_list_int():
     assert str(url.with_query([("a", 1)])) == "http://example.com/?a=1"
 
 
+def test_with_query_sequence():
+    url = URL("http://example.com")
+    assert url.with_query({"a": [1, 2]}) == URL("http://example.com/?a=1&a=2")
+
+
+def test_with_query_sequence_tuple():
+    url = URL("http://example.com")
+    assert url.with_query({"a": (1, 2)}) == URL("http://example.com/?a=1&a=2")
+
+
+def test_with_query_sequence_mixed_types():
+    url = URL("http://example.com")
+    assert url.with_query({"a": ["1", 2]}) == URL("http://example.com/?a=1&a=2")
+
+
+def test_with_query_sequence_single_then_list():
+    url = URL("http://example.com")
+    assert url.with_query({"a": 1, "b": [2, 3]}) == URL("http://example.com/?a=1&b=2&b=3")
+
+
+def test_with_query_sequence_list_then_single():
+    url = URL("http://example.com")
+    assert url.with_query({"a": [1, 2], "b": 3}) == URL("http://example.com/?a=1&a=2&b=3")
+
+
+def test_with_query_sequence_nested_sequence():
+    url = URL("http://example.com")
+    with pytest.raises(TypeError):
+        url.with_query({"a": [[1]]})
+
+
+def test_with_query_sequence_using_pairs():
+    url = URL("http://example.com")
+    with pytest.raises(TypeError):
+        url.with_query([("a", [1, 2])])
+
+
 def test_with_query_non_str():
     url = URL("http://example.com")
     with pytest.raises(TypeError):
