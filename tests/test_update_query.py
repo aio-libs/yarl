@@ -118,7 +118,7 @@ def test_with_query_list_int():
 
 
 @pytest.mark.parametrize(
-    "query,expected",
+    ("query", "expected"),
     [
         pytest.param({"a": []}, "?", id="empty list"),
         pytest.param({"a": ()}, "?", id="empty tuple"),
@@ -234,7 +234,7 @@ def test_with_query_memoryview():
 
 
 @pytest.mark.parametrize(
-    "query,expected",
+    ("query" , "expected"),
     [
         pytest.param([("key", "1;2;3")], "?key=1%3B2%3B3", id="tuple list semicolon"),
         pytest.param({"key": "1;2;3"}, "?key=1%3B2%3B3", id="mapping semicolon"),
