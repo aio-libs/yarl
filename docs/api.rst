@@ -439,6 +439,10 @@ section generates a new *URL* instance.
       >>> URL.build(scheme="http", host="example.com", query_string="a=b")
       URL('http://example.com/?a=b')
 
+      >>> URL.build(scheme="http", host="example.com",
+      ...           query=[("a[]", "b"), ("a[]", "c")])
+      URL('http://example.com/?a[]=b&a[]=c')
+
       >>> URL.build()
       URL('')
 
@@ -451,6 +455,11 @@ section generates a new *URL* instance.
 
    .. note::
       Only one of ``query`` or ``query_string`` should be passed then AssertionError will be raised.
+
+   .. versionchanged:: 1.4.3
+
+      The ``'[]'`` characters are not escaped in the keys of the query
+      because some endpoints expect those to be present when specifying arrays.
 
 .. method:: URL.with_scheme(scheme)
 
@@ -564,6 +573,14 @@ section generates a new *URL* instance.
       URL('http://example.com/path?b=2')
       >>> URL('http://example.com/path?a=b&b=1').with_query([('b', '2')])
       URL('http://example.com/path?b=2')
+      >>> URL('http://example.com/path?a[]=1&b[]=2')\
+      ...     .with_query([("a[]", "b"), ("a[]", "c")])
+      URL('http://example.com/?a[]=b&a[]=c')
+
+   .. versionchanged:: 1.4.3
+
+      The ``'[]'`` characters are not escaped in the keys of the query
+      because some endpoints expect those to be present when specifying arrays.
 
 .. method:: URL.update_query(query)
             URL.update_query(**kwargs)
@@ -610,10 +627,18 @@ section generates a new *URL* instance.
       URL('http://example.com/path?a=b&c=d')
       >>> URL('http://example.com/path?a=b').update_query('c=d&c=f')
       URL('http://example.com/path?a=b&c=d&c=f')
+      >>> URL('http://example.com/path?a=b')\
+      ...     .update_query([("c[]", "d"), ("c[]", "e")])
+      URL('http://example.com/path?a=b&c[]=d&c[]=e')
 
    .. versionchanged:: 1.0
 
       All multiple key/value pairs are applied to the multi-dictionary.
+
+   .. versionchanged:: 1.4.3
+
+      The ``'[]'`` characters are not escaped in the keys of the query
+      because some endpoints expect those to be present when specifying arrays.
 
 .. method:: URL.with_fragment(fragment)
 

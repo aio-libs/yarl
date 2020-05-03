@@ -1,0 +1,1 @@
+Fix unintended quoting of braces (``[]``) in the keys of a query.
