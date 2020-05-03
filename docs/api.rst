@@ -575,7 +575,7 @@ section generates a new *URL* instance.
       URL('http://example.com/path?b=2')
       >>> URL('http://example.com/path?a[]=1&b[]=2')\
       ...     .with_query([("a[]", "b"), ("a[]", "c")])
-      URL('http://example.com/?a[]=b&a[]=c')
+      URL('http://example.com/path?a[]=b&a[]=c')
 
    .. versionchanged:: 1.4.3
 
