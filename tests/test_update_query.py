@@ -120,25 +120,26 @@ def test_with_query_list_int():
 @pytest.mark.parametrize(
     ("query", "expected"),
     [
-        pytest.param({"a": []}, "?", id="empty list"),
-        pytest.param({"a": ()}, "?", id="empty tuple"),
-        pytest.param({"a": [1]}, "?a=1", id="single list"),
-        pytest.param({"a": (1,)}, "?a=1", id="single tuple"),
-        pytest.param({"a": [1, 2]}, "?a=1&a=2", id="list"),
-        pytest.param({"a": (1, 2)}, "?a=1&a=2", id="tuple"),
-        pytest.param({"a[]": [1, 2]}, "?a[]=1&a[]=2", id="key with braces"),
-        pytest.param({"&": [1, 2]}, "?%26=1&%26=2", id="quote key"),
-        pytest.param({"a": ["1", 2]}, "?a=1&a=2", id="mixed types"),
-        pytest.param({"&": ["=", 2]}, "?%26=%3D&%26=2", id="quote key and value"),
-        pytest.param({"a": 1, "b": [2, 3]}, "?a=1&b=2&b=3", id="single then list"),
-        pytest.param({"a": [1, 2], "b": 3}, "?a=1&a=2&b=3", id="list then single"),
-        pytest.param({"a": ["1&a=2", 3]}, "?a=1%26a%3D2&a=3", id="ampersand then int"),
-        pytest.param({"a": [1, "2&a=3"]}, "?a=1&a=2%26a%3D3", id="int then ampersand"),
+        pytest.param({"a": []}, "", id="empty list"),
+        pytest.param({"a": ()}, "", id="empty tuple"),
+        pytest.param({"a": [1]}, "/?a=1", id="single list"),
+        pytest.param({"a": (1,)}, "/?a=1", id="single tuple"),
+        pytest.param({"a": [1, 2]}, "/?a=1&a=2", id="list"),
+        pytest.param({"a": (1, 2)}, "/?a=1&a=2", id="tuple"),
+        pytest.param({"a[]": [1, 2]}, "/?a[]=1&a[]=2", id="key with braces"),
+        pytest.param({"&": [1, 2]}, "/?%26=1&%26=2", id="quote key"),
+        pytest.param({"a": ["1", 2]}, "/?a=1&a=2", id="mixed types"),
+        pytest.param({"&": ["=", 2]}, "/?%26=%3D&%26=2", id="quote key and value"),
+        pytest.param({"a": 1, "b": [2, 3]}, "/?a=1&b=2&b=3", id="single then list"),
+        pytest.param({"a": [1, 2], "b": 3}, "/?a=1&a=2&b=3", id="list then single"),
+        pytest.param({"a": ["1&a=2", 3]}, "/?a=1%26a%3D2&a=3", id="ampersand then int"),
+        pytest.param({"a": [1, "2&a=3"]}, "/?a=1&a=2%26a%3D3", id="int then ampersand"),
     ],
 )
 def test_with_query_sequence(query, expected):
     url = URL("http://example.com")
-    assert url.with_query(query) == URL("http://example.com/" + expected)
+    expected = "http://example.com{expected}".format_map(locals())
+    assert str(url.with_query(query)) == expected
 
 
 @pytest.mark.parametrize(
@@ -234,7 +235,7 @@ def test_with_query_memoryview():
 
 
 @pytest.mark.parametrize(
-    ("query" , "expected"),
+    ("query", "expected"),
     [
         pytest.param([("key", "1;2;3")], "?key=1%3B2%3B3", id="tuple list semicolon"),
         pytest.param({"key": "1;2;3"}, "?key=1%3B2%3B3", id="mapping semicolon"),
