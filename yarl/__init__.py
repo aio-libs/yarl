@@ -126,7 +126,8 @@ class URL:
     _QUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe="@:", protected="/+")
     _QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
-    _QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True)
+    _QUERY_PART_KEY_QUOTER = _Quoter(safe="?/:@[]", qs=True)
+    _QUERY_PART_VALUE_QUOTER = _Quoter(safe="?/:@", qs=True)
     _FRAGMENT_QUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
@@ -881,9 +882,11 @@ class URL:
         if query is None:
             query = ""
         elif isinstance(query, Mapping):
-            quoter = self._QUERY_PART_QUOTER
+            key_quoter = self._QUERY_PART_KEY_QUOTER
+            val_quoter = self._QUERY_PART_VALUE_QUOTER
             query = "&".join(
-                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query.items()
+                key_quoter(k) + "=" + val_quoter(self._query_var(v))
+                for k, v in query.items()
             )
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
@@ -892,9 +895,10 @@ class URL:
                 "Invalid query type: bytes, bytearray and " "memoryview are forbidden"
             )
         elif isinstance(query, Sequence):
-            quoter = self._QUERY_PART_QUOTER
+            key_quoter = self._QUERY_PART_KEY_QUOTER
+            val_quoter = self._QUERY_PART_VALUE_QUOTER
             query = "&".join(
-                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
+                key_quoter(k) + "=" + val_quoter(self._query_var(v)) for k, v in query
             )
         else:
             raise TypeError(
