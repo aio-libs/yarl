@@ -547,6 +547,9 @@ section generates a new *URL* instance.
 
       The library accepts :class:`str` and :class:`int` as query argument values.
 
+      If a mapping such as :class:`dict` is used, the values may also be
+      :class:`list` or :class:`tuple` to represent a key has many values.
+
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
 
@@ -556,6 +559,8 @@ section generates a new *URL* instance.
       URL('http://example.com/path?c=d')
       >>> URL('http://example.com/path?a=b').with_query({'c': 'd'})
       URL('http://example.com/path?c=d')
+      >>> URL('http://example.com/path?a=b').with_query({'c': [1, 2]})
+      URL('http://example.com/path?c=1&c=2')
       >>> URL('http://example.com/path?a=b').with_query({'кл': 'зн'})
       URL('http://example.com/path?%D0%BA%D0%BB=%D0%B7%D0%BD')
       >>> URL('http://example.com/path?a=b').with_query(None)
@@ -591,6 +596,9 @@ section generates a new *URL* instance.
 
       The library accepts :class:`str` and :class:`int` as query argument values.
 
+      If a mapping such as :class:`dict` is used, the values may also be
+      :class:`list` or :class:`tuple` to represent a key has many values.
+
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
 
@@ -600,6 +608,8 @@ section generates a new *URL* instance.
       URL('http://example.com/path?a=b&c=d')
       >>> URL('http://example.com/path?a=b').update_query({'c': 'd'})
       URL('http://example.com/path?a=b&c=d')
+      >>> URL('http://example.com/path?a=b').update_query({'c': [1, 2]})
+      URL('http://example.com/path?a=b&c=1&c=2')
       >>> URL('http://example.com/path?a=b').update_query({'кл': 'зн'})
       URL('http://example.com/path?a=b&%D0%BA%D0%BB=%D0%B7%D0%BD')
       >>> URL('http://example.com/path?a=b&b=1').update_query(b='2')

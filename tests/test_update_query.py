@@ -117,6 +117,44 @@ def test_with_query_list_int():
     assert str(url.with_query([("a", 1)])) == "http://example.com/?a=1"
 
 
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        pytest.param({"a": []}, "", id="empty list"),
+        pytest.param({"a": ()}, "", id="empty tuple"),
+        pytest.param({"a": [1]}, "/?a=1", id="single list"),
+        pytest.param({"a": (1,)}, "/?a=1", id="single tuple"),
+        pytest.param({"a": [1, 2]}, "/?a=1&a=2", id="list"),
+        pytest.param({"a": (1, 2)}, "/?a=1&a=2", id="tuple"),
+        pytest.param({"a[]": [1, 2]}, "/?a%5B%5D=1&a%5B%5D=2", id="key with braces"),
+        pytest.param({"&": [1, 2]}, "/?%26=1&%26=2", id="quote key"),
+        pytest.param({"a": ["1", 2]}, "/?a=1&a=2", id="mixed types"),
+        pytest.param({"&": ["=", 2]}, "/?%26=%3D&%26=2", id="quote key and value"),
+        pytest.param({"a": 1, "b": [2, 3]}, "/?a=1&b=2&b=3", id="single then list"),
+        pytest.param({"a": [1, 2], "b": 3}, "/?a=1&a=2&b=3", id="list then single"),
+        pytest.param({"a": ["1&a=2", 3]}, "/?a=1%26a%3D2&a=3", id="ampersand then int"),
+        pytest.param({"a": [1, "2&a=3"]}, "/?a=1&a=2%26a%3D3", id="int then ampersand"),
+    ],
+)
+def test_with_query_sequence(query, expected):
+    url = URL("http://example.com")
+    expected = "http://example.com{expected}".format_map(locals())
+    assert str(url.with_query(query)) == expected
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        pytest.param({"a": [[1]]}, id="nested"),
+        pytest.param([("a", [1, 2])], id="tuple list"),
+    ],
+)
+def test_with_query_sequence_invalid_use(query):
+    url = URL("http://example.com")
+    with pytest.raises(TypeError, match="Invalid variable type"):
+        url.with_query(query)
+
+
 def test_with_query_non_str():
     url = URL("http://example.com")
     with pytest.raises(TypeError):
@@ -196,16 +234,27 @@ def test_with_query_memoryview():
         url.with_query(memoryview(b"123"))
 
 
-def test_with_query_params():
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        pytest.param([("key", "1;2;3")], "?key=1%3B2%3B3", id="tuple list semicolon"),
+        pytest.param({"key": "1;2;3"}, "?key=1%3B2%3B3", id="mapping semicolon"),
+        pytest.param([("key", "1&a=2")], "?key=1%26a%3D2", id="tuple list ampersand"),
+        pytest.param({"key": "1&a=2"}, "?key=1%26a%3D2", id="mapping ampersand"),
+        pytest.param([("&", "=")], "?%26=%3D", id="tuple list quote key"),
+        pytest.param({"&": "="}, "?%26=%3D", id="mapping quote key"),
+        pytest.param([("a[]", "3")], "?a%5B%5D=3", id="quote one key braces",),
+        pytest.param(
+            [("a[]", "3"), ("a[]", "4")],
+            "?a%5B%5D=3&a%5B%5D=4",
+            id="quote many key braces",
+        ),
+    ],
+)
+def test_with_query_params(query, expected):
     url = URL("http://example.com/get")
-    url2 = url.with_query([("key", "1;2;3")])
-    assert str(url2) == "http://example.com/get?key=1%3B2%3B3"
-
-
-def test_with_query_params2():
-    url = URL("http://example.com/get")
-    url2 = url.with_query({"key": "1;2;3"})
-    assert str(url2) == "http://example.com/get?key=1%3B2%3B3"
+    url2 = url.with_query(query)
+    assert str(url2) == ("http://example.com/get" + expected)
 
 
 def test_with_query_only():
