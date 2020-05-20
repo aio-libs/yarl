@@ -55,6 +55,11 @@ def test_with_user_None():
     assert str(url.with_user(None)) == "http://example.com"
 
 
+def test_with_user_ipv6():
+    url = URL("http://john:pass@[::1]:8080/")
+    assert str(url.with_user(None)) == "http://[::1]:8080/"
+
+
 def test_with_user_None_when_password_present():
     url = URL("http://john:pass@example.com")
     assert str(url.with_user(None)) == "http://example.com"
@@ -63,6 +68,11 @@ def test_with_user_None_when_password_present():
 def test_with_password():
     url = URL("http://john@example.com")
     assert str(url.with_password("pass")) == "http://john:pass@example.com"
+
+
+def test_with_password_ipv6():
+    url = URL("http://john:pass@[::1]:8080/")
+    assert str(url.with_password(None)) == "http://john@[::1]:8080/"
 
 
 def test_with_password_non_ascii():
@@ -147,6 +157,11 @@ def test_with_host_invalid_type():
 def test_with_port():
     url = URL("http://example.com")
     assert str(url.with_port(8888)) == "http://example.com:8888"
+
+
+def test_with_port_ipv6():
+    url = URL("http://[::1]:8080/")
+    assert str(url.with_port(80)) == "http://[::1]:80/"
 
 
 def test_with_port_keeps_query_and_fragment():

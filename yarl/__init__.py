@@ -761,7 +761,7 @@ class URL:
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(
-                    user, password, val.hostname, val.port, encode=False
+                    user, password, val.hostname, val.port, encode=True
                 )
             ),
             encoded=True,
@@ -788,7 +788,7 @@ class URL:
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(
-                    val.username, password, val.hostname, val.port, encode=False
+                    val.username, password, val.hostname, val.port, encode=True
                 )
             ),
             encoded=True,
@@ -836,7 +836,7 @@ class URL:
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(
-                    val.username, val.password, val.hostname, port, encode=False
+                    val.username, val.password, val.hostname, port, encode=True
                 )
             ),
             encoded=True,
