@@ -26,7 +26,9 @@ yarl
 Introduction
 ------------
 
-Url is constructed from ``str``::
+Url is constructed from ``str``:
+
+.. code-block:: pycon
 
    >>> from yarl import URL
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
@@ -34,7 +36,9 @@ Url is constructed from ``str``::
    URL('https://www.python.org/~guido?arg=1#frag')
 
 All url parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
-*query* and *fragment* are accessible by properties::
+*query* and *fragment* are accessible by properties:
+
+.. code-block:: pycon
 
    >>> url.scheme
    'https'
@@ -49,20 +53,26 @@ All url parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
    >>> url.fragment
    'frag'
 
-All url manipulations produce a new url object::
+All url manipulations produce a new url object:
+
+.. code-block:: pycon
 
    >>> url.parent / 'downloads/source'
    URL('https://www.python.org/downloads/source')
 
 Strings passed to constructor and modification methods are
-automatically encoded giving canonical representation as result::
+automatically encoded giving canonical representation as result:
+
+.. code-block:: pycon
 
    >>> url = URL('https://www.python.org/путь')
    >>> url
    URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
 
 Regular properties are *percent-decoded*, use ``raw_`` versions for
-getting *encoded* strings::
+getting *encoded* strings:
+
+.. code-block:: pycon
 
    >>> url.path
    '/путь'
@@ -70,7 +80,9 @@ getting *encoded* strings::
    >>> url.raw_path
    '/%D0%BF%D1%83%D1%82%D1%8C'
 
-Human readable representation of URL is available as ``.human_repr()``::
+Human readable representation of URL is available as ``.human_repr()``:
+
+.. code-block:: pycon
 
    >>> url.human_repr()
    'https://www.python.org/путь'
