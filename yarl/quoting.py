@@ -26,11 +26,17 @@ _IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
 
 class _Quoter:
     def __init__(
-        self, *, safe: str = "", protected: str = "", qs: bool = False
+        self,
+        *,
+        safe: str = "",
+        protected: str = "",
+        qs: bool = False,
+        requote: bool = True
     ) -> None:
         self._safe = safe
         self._protected = protected
         self._qs = qs
+        self._requote = requote
 
     def __call__(self, val: Optional[str]) -> Optional[str]:
         if val is None:
@@ -88,7 +94,7 @@ class _Quoter:
 
                 continue
 
-            elif ch == ord("%"):
+            elif ch == ord("%") and self._requote:
                 pct.clear()
                 pct.append(ch)
 
