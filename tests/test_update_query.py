@@ -227,5 +227,8 @@ def test_update_query_multiple_keys():
 def test_update_query_with_mod_operator():
     url = URL("http://example.com/")
     assert str(url % {"a": "1"}) == "http://example.com/?a=1"
+    assert str(url % [("a", "1")]) == "http://example.com/?a=1"
+    assert str(url % "a=1&b=2") == "http://example.com/?a=1&b=2"
     assert str(url % {"a": "1"} % {"b": "2"}) == "http://example.com/?a=1&b=2"
     assert str(url % {"a": "1"} % {"a": "3", "b": "2"}) == "http://example.com/?a=3&b=2"
+    assert str(url / "foo" % {"a": "1"}) == "http://example.com/foo?a=1"
