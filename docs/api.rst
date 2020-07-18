@@ -587,6 +587,9 @@ section generates a new *URL* instance.
 
    Clear *query* if ``None`` is passed.
 
+   Mod operator (``%``) can be used as alternative to the direct call of
+   ``URL.update_query``.
+
    .. note::
 
       The library accepts :class:`str` and :class:`int` as query argument values.
@@ -610,6 +613,8 @@ section generates a new *URL* instance.
       URL('http://example.com/path?a=b&c=d')
       >>> URL('http://example.com/path?a=b').update_query('c=d&c=f')
       URL('http://example.com/path?a=b&c=d&c=f')
+      >>> URL('http://example.com/path?a=b') % {'c': 'd'}
+      URL('http://example.com/path?a=b&c=d')
 
    .. versionchanged:: 1.0
 
