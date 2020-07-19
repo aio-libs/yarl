@@ -104,3 +104,4 @@ yarl/_quoting.html
 .install-cython
 .install-deps
 .pytest_cache
+pip-wheel-metadata

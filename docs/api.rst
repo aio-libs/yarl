@@ -800,7 +800,7 @@ IDNA conversion used for host encoding is quite expensive operation, that's why 
 ``yarl`` library caches IDNA encoding/decoding calls by storing last ``256`` encodes
 and last ``256`` decodes in the global LRU cache.
 
-.. function:: clear_cache()
+.. function:: cache_clear()
 
    Clear IDNA caches.
 
@@ -819,7 +819,7 @@ and last ``256`` decodes in the global LRU cache.
        'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15)}
 
 
-.. function:: set_cache_sizes(*, idna_encode_size=256, idna_decode_size=256)
+.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256)
 
    Set IDNA encode and decode cache sizes (``256`` for each by default).
 

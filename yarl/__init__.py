@@ -1047,9 +1047,9 @@ def _idna_encode(host):
         return host.encode("idna").decode("ascii")
 
 
-def clear_cache():
-    _idna_decode.clear_cache()
-    _idna_encode.clear_cache()
+def cache_clear():
+    _idna_decode.cache_clear()
+    _idna_encode.cache_clear()
 
 
 def cache_info():
@@ -1059,7 +1059,7 @@ def cache_info():
     }
 
 
-def set_cache_sizes(*, idna_encode_size=_MAXCACHE, idna_decode_size=_MAXCACHE):
+def cache_configure(*, idna_encode_size=_MAXCACHE, idna_decode_size=_MAXCACHE):
     global _idna_decode, _idna_encode
 
     _idna_encode = functools.lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
