@@ -633,6 +633,10 @@ section generates a new *URL* instance.
 
       All multiple key/value pairs are applied to the multi-dictionary.
 
+   .. versionadded:: 1.5
+
+      Support for mod operator (``%``) to update the URL's query part.
+
 .. method:: URL.with_fragment(fragment)
 
    Return a new URL with *fragment* replaced, auto-encode *fragment* if needed.
