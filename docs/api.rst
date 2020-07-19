@@ -446,11 +446,14 @@ section generates a new *URL* instance.
    ``__init__`` without arguments.
 
    .. note::
-      When ``scheme`` and ``host`` are passed new URL will be “absolute”. If only one of ``scheme`` or ``host`` is
-      passed then AssertionError will be raised.
+
+      When ``scheme`` and ``host`` are passed new URL will be “absolute”. If only one of
+      ``scheme`` or ``host`` is passed then ValueError will be raised.
 
    .. note::
-      Only one of ``query`` or ``query_string`` should be passed then AssertionError will be raised.
+
+      Only one of ``query`` or ``query_string`` should be passed then ValueError
+      will be raised.
 
 .. method:: URL.with_scheme(scheme)
 
