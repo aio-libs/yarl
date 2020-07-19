@@ -913,7 +913,7 @@ class URL:
         else:
             raise TypeError(
                 "Invalid query type: only str, mapping or "
-                "sequence of (str, str) pairs is allowed"
+                "sequence of (key, value) pairs is allowed"
             )
 
         return query
