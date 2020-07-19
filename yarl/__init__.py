@@ -200,10 +200,6 @@ class URL:
     ):
         """Creates and returns a new URL"""
 
-        if scheme and (not host and not authority):
-            raise ValueError(
-                'Can\'t build URL with "scheme" but without "host" or "authority".'
-            )
         if authority and (user or password or host or port):
             raise ValueError(
                 'Can\'t mix "authority" with "user", "password", "host" or "port".'
