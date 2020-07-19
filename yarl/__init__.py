@@ -187,7 +187,7 @@ class URL:
         cls,
         *,
         scheme="",
-        authority=None,
+        authority="",
         user=None,
         password=None,
         host="",
@@ -208,10 +208,16 @@ class URL:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
             raise ValueError('Only one of "query" or "query_string" should be passed')
-        if path is None or query_string is None or fragment is None:
+        if (
+            scheme is None
+            or authority is None
+            or path is None
+            or query_string is None
+            or fragment is None
+        ):
             raise TypeError(
-                'NoneType is illegal for "path", "query_string" and '
-                '"fragment" args, use string values instead.'
+                'NoneType is illegal for "scheme", "authority", "path", '
+                '"query_string", and "fragment" args, use empty string instead.'
             )
 
         if authority:
@@ -658,7 +664,7 @@ class URL:
         """
         if len(host) > 0 and len(path) > 0 and not path.startswith("/"):
             raise ValueError(
-                "Path in a URL with authority " "should start with a slash ('/') if set"
+                "Path in a URL with authority should start with a slash ('/') if set"
             )
 
     @classmethod
@@ -764,7 +770,7 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         if not self.is_absolute():
-            raise ValueError("scheme replacement is not allowed " "for relative URLs")
+            raise ValueError("scheme replacement is not allowed for relative URLs")
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
     def with_user(self, user):
@@ -785,7 +791,7 @@ class URL:
         else:
             raise TypeError("Invalid user type")
         if not self.is_absolute():
-            raise ValueError("user replacement is not allowed " "for relative URLs")
+            raise ValueError("user replacement is not allowed for relative URLs")
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(
@@ -811,7 +817,7 @@ class URL:
         else:
             raise TypeError("Invalid password type")
         if not self.is_absolute():
-            raise ValueError("password replacement is not allowed " "for relative URLs")
+            raise ValueError("password replacement is not allowed for relative URLs")
         val = self._val
         return URL(
             self._val._replace(
@@ -835,7 +841,7 @@ class URL:
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
         if not self.is_absolute():
-            raise ValueError("host replacement is not allowed " "for relative URLs")
+            raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
         host = self._encode_host(host)
@@ -859,7 +865,7 @@ class URL:
         if port is not None and not isinstance(port, int):
             raise TypeError("port should be int or None, got {}".format(type(port)))
         if not self.is_absolute():
-            raise ValueError("port replacement is not allowed " "for relative URLs")
+            raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
         return URL(
             self._val._replace(
@@ -905,15 +911,13 @@ class URL:
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
-                    "Either kwargs or single query parameter " "must be present"
+                    "Either kwargs or single query parameter must be present"
                 )
             query = kwargs
         elif len(args) == 1:
             query = args[0]
         else:
-            raise ValueError(
-                "Either kwargs or single query parameter " "must be present"
-            )
+            raise ValueError("Either kwargs or single query parameter must be present")
 
         if query is None:
             query = ""
@@ -924,7 +928,7 @@ class URL:
             query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError(
-                "Invalid query type: bytes, bytearray and " "memoryview are forbidden"
+                "Invalid query type: bytes, bytearray and memoryview are forbidden"
             )
         elif isinstance(query, Sequence):
             quoter = self._QUERY_PART_QUOTER

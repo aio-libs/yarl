@@ -17,8 +17,8 @@ class URL:
     raw_host: Final[Optional[str]]
     host: Final[Optional[str]]
     port: Final[Optional[int]]
-    raw_authority: Final[Optional[str]]
-    authority: Final[Optional[str]]
+    raw_authority: Final[str]
+    authority: Final[str]
     raw_path: Final[str]
     path: Final[str]
     raw_query_string: Final[str]
@@ -41,7 +41,7 @@ class URL:
         cls,
         *,
         scheme: str = ...,
-        authority: Optional[str] = ...,
+        authority: str = ...,
         user: Optional[str] = ...,
         password: Optional[str] = ...,
         host: str = ...,

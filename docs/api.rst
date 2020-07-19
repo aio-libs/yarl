@@ -236,7 +236,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    ``authority = [ user [ ":" password ] "@" ] host [ ":" port ]``.
 
-   *authority* is ``None`` if all parts are missing.
+   *authority* is empty string if all parts are missing.
 
    .. doctest::
 
@@ -248,7 +248,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
 .. attribute:: URL.raw_authority
 
    Encoded *authority* part of URL, a combination of *user*, *password*, *host*, and
-   *port*.  ``None`` if all parts are missing.
+   *port*.  empty string if all parts are missing.
 
    .. doctest::
 
@@ -451,8 +451,9 @@ New URL generation
 URL is an immutable object, every operation described in the
 section generates a new *URL* instance.
 
-.. method:: URL.build(*, scheme, user, password, host, port, path, query, \
-                      query_string, fragment, encoded=False)
+.. method:: URL.build(*, scheme=..., authority=..., user=..., password=..., \
+                      host=..., port=..., path=..., query=.., \
+                      query_string=..., fragment=..., encoded=False)
 
    Creates and returns a new URL:
 
@@ -472,11 +473,6 @@ section generates a new *URL* instance.
 
    Calling ``build`` method without arguments is equal to calling
    ``__init__`` without arguments.
-
-   .. note::
-
-      When ``scheme`` and ``host`` are passed new URL will be “absolute”. If only one of
-      ``scheme`` or ``host`` is passed then ValueError will be raised.
 
    .. note::
 
