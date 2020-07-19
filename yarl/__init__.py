@@ -187,6 +187,7 @@ class URL:
         cls,
         *,
         scheme="",
+        authority=None,
         user=None,
         password=None,
         host="",
@@ -387,6 +388,26 @@ class URL:
 
         """
         return self._val.scheme
+
+    @property
+    def raw_authority(self):
+        """Encoded authority part of URL.
+
+        Empty string for relative URLs.
+
+        """
+        return self._val.scheme
+
+    @cached_property
+    def authority(self):
+        """Decoded authority part of URL.
+
+        Empty string for relative URLs.
+
+        """
+        return self._make_netloc(
+            self.user, self.password, self.host, self.port, encode=True
+        )
 
     @property
     def raw_user(self):

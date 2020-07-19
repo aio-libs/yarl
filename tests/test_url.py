@@ -190,6 +190,16 @@ def test_raw_host_from_str_with_ipv6():
     assert url.raw_host == "::1"
 
 
+def test_authority_full() -> None:
+    url = URL("http://user:passwd@host.com:8080/path")
+    assert url.authority == "user:passwd@host.com:8080"
+
+
+def test_authority_short() -> None:
+    url = URL("http://host.com/path")
+    assert url.authority == "host.com"
+
+
 def test_lowercase():
     url = URL("http://gitHUB.com")
     assert url.raw_host == "github.com"
