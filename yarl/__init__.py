@@ -308,6 +308,9 @@ class URL:
             self._val._replace(path=new_path, query="", fragment=""), encoded=True
         )
 
+    def __mod__(self, query):
+        return self.update_query(query)
+
     def __bool__(self) -> bool:
         return bool(
             self._val.netloc or self._val.path or self._val.query or self._val.fragment

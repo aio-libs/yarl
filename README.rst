@@ -57,8 +57,11 @@ All url manipulations produce a new url object:
 
 .. code-block:: pycon
 
-   >>> url.parent / 'downloads/source'
-   URL('https://www.python.org/downloads/source')
+   >>> url = URL('https://www.python.org')
+   >>> url / 'foo' / 'bar'
+   URL('https://www.python.org/foo/bar')
+   >>> url / 'foo' % {'bar': 'baz'}
+   URL('https://www.python.org/foo?bar=baz')
 
 Strings passed to constructor and modification methods are
 automatically encoded giving canonical representation as result:
