@@ -13,7 +13,7 @@ from .quoting import _Quoter, _Unquoter
 
 __version__ = "1.5.0a0"
 
-__all__ = ("URL",)
+__all__ = ("URL", "cache_clear", "cache_configure", "cache_info")
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
