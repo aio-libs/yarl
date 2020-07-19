@@ -206,7 +206,7 @@ class URL:
             )
         if authority and (user or password or host or port):
             raise ValueError(
-                'Can\'t mix "authority" with ' '"user", "password", "host" or "port".'
+                'Can\'t mix "authority" with "user", "password", "host" or "port".'
             )
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
