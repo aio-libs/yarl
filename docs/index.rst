@@ -46,7 +46,7 @@ All URL manipulations produces a new URL object:
    >>> url.parent / 'downloads/source'
    URL('https://www.python.org/downloads/source')
 
-Url can be modified with ``/`` and ``%`` operators:
+A URL object can be modified with ``/`` and ``%`` operators:
 
 .. doctest::
 
