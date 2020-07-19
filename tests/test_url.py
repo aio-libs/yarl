@@ -190,6 +190,26 @@ def test_raw_host_from_str_with_ipv6():
     assert url.raw_host == "::1"
 
 
+def test_authority_full() -> None:
+    url = URL("http://user:passwd@host.com:8080/path")
+    assert url.raw_authority == "user:passwd@host.com:8080"
+    assert url.authority == "user:passwd@host.com:8080"
+
+
+def test_authority_short() -> None:
+    url = URL("http://host.com/path")
+    assert url.raw_authority == "host.com"
+
+
+def test_authority_full_nonasci() -> None:
+    url = URL("http://ваня:пароль@айдеко.рф:8080/path")
+    assert url.raw_authority == (
+        "%D0%B2%D0%B0%D0%BD%D1%8F:%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C@"
+        "xn--80aidohy.xn--p1ai:8080"
+    )
+    assert url.authority == "ваня:пароль@айдеко.рф:8080"
+
+
 def test_lowercase():
     url = URL("http://gitHUB.com")
     assert url.raw_host == "github.com"

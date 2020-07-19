@@ -187,6 +187,7 @@ class URL:
         cls,
         *,
         scheme="",
+        authority=None,
         user=None,
         password=None,
         host="",
@@ -199,8 +200,14 @@ class URL:
     ):
         """Creates and returns a new URL"""
 
-        if not host and scheme:
-            raise ValueError('Can\'t build URL with "scheme" but without "host".')
+        if scheme and (not host and not authority):
+            raise ValueError(
+                'Can\'t build URL with "scheme" but without "host" or "authority".'
+            )
+        if authority and (user or password or host or port):
+            raise ValueError(
+                'Can\'t mix "authority" with "user", "password", "host" or "port".'
+            )
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
@@ -211,7 +218,15 @@ class URL:
                 '"fragment" args, use string values instead.'
             )
 
-        if not user and not password and not host and not port:
+        if authority:
+            if encoded:
+                netloc = authority
+            else:
+                tmp = SplitResult("", authority, "", "", "")
+                netloc = cls._make_netloc(
+                    tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
+                )
+        elif not user and not password and not host and not port:
             netloc = ""
         else:
             netloc = cls._make_netloc(user, password, host, port, encode=not encoded)
@@ -387,6 +402,26 @@ class URL:
 
         """
         return self._val.scheme
+
+    @property
+    def raw_authority(self):
+        """Encoded authority part of URL.
+
+        Empty string for relative URLs.
+
+        """
+        return self._val.netloc
+
+    @cached_property
+    def authority(self):
+        """Decoded authority part of URL.
+
+        Empty string for relative URLs.
+
+        """
+        return self._make_netloc(
+            self.user, self.password, self.host, self.port, encode=False
+        )
 
     @property
     def raw_user(self):
