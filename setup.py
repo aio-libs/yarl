@@ -30,7 +30,7 @@ with fname.open(encoding="utf8") as fp:
     except IndexError:
         raise RuntimeError("Unable to determine version.")
 
-install_requires = ["multidict>=4.0", "idna>=2.0"]
+install_requires = ["multidict>=4.0", "idna>=2.0", "typing_extensions>=3.7.4"]
 
 
 def read(name):
