@@ -673,7 +673,7 @@ class URL:
                 # to reduce the cache size
                 if host.isascii():
                     return host
-                return _idna_encode(host)
+                host = _idna_encode(host)
             else:
                 host = ip.compressed
                 if sep:
@@ -695,10 +695,7 @@ class URL:
                         break
                 else:
                     return host
-                try:
-                    host = idna.encode(host, uts46=True).decode("ascii")
-                except UnicodeError:
-                    host = host.encode("idna").decode("ascii")
+                host = _idna_encode(host)
             else:
                 host = ip.compressed
                 if sep:
