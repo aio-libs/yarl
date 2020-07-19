@@ -1,3 +1,4 @@
+import functools
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
@@ -453,10 +454,7 @@ class URL:
             # fe80::2%Проверка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
-        try:
-            return idna.decode(raw.encode("ascii"))
-        except UnicodeError:  # e.g. '::1'
-            return raw.encode("ascii").decode("idna")
+        return _idna_decode(raw)
 
     @property
     def port(self):
@@ -671,12 +669,11 @@ class URL:
             except ValueError:
                 # IDNA encoding is slow,
                 # skip it for ASCII-only strings
+                # Don't move the check into _idna_encode() helper
+                # to reduce the cache size
                 if host.isascii():
                     return host
-                try:
-                    host = idna.encode(host, uts46=True).decode("ascii")
-                except UnicodeError:
-                    host = host.encode("idna").decode("ascii")
+                return _idna_encode(host)
             else:
                 host = ip.compressed
                 if sep:
@@ -1029,3 +1026,41 @@ class URL:
                 self.fragment,
             )
         )
+
+
+_MAXCACHE = 256
+
+
+@functools.lru_cache(_MAXCACHE)
+def _idna_decode(raw):
+    try:
+        return idna.decode(raw.encode("ascii"))
+    except UnicodeError:  # e.g. '::1'
+        return raw.encode("ascii").decode("idna")
+
+
+@functools.lru_cache(_MAXCACHE)
+def _idna_encode(host):
+    try:
+        return idna.encode(host, uts46=True).decode("ascii")
+    except UnicodeError:
+        return host.encode("idna").decode("ascii")
+
+
+def clear_cache():
+    _idna_decode.clear_cache()
+    _idna_encode.clear_cache()
+
+
+def cache_info():
+    return {
+        "idna_encode": _idna_encode.cache_info(),
+        "idna_decode": _idna_decode.cache_info(),
+    }
+
+
+def set_cache_sizes(*, idna_encode_size=_MAXCACHE, idna_decode_size=_MAXCACHE):
+    global _idna_decode, _idna_encode
+
+    _idna_encode = functools.lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
+    _idna_decode = functools.lru_cache(idna_decode_size)(_idna_decode.__wrapped__)

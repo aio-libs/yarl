@@ -793,6 +793,39 @@ Default port substitution
       False
 
 
+Cache control
+-------------
+
+IDNA conversion used for host encoding is quite expensive operation, that's why the
+``yarl`` library caches IDNA encoding/decoding calls by storing last ``256`` encodes
+and last ``256`` decodes in the global LRU cache.
+
+.. function:: clear_cache()
+
+   Clear IDNA caches.
+
+
+.. function:: cache_info()
+
+   Return a dictionary with ``"idna_encode"`` and ``"idna_decode"`` keys, each value
+   points to corresponding ``CacheInfo`` structure (see :func:`functools.lru_cache` for
+   details):
+
+   .. doctest::
+      :options: +SKIP
+
+      >>> yarl.cache_info()
+      {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=256, currsize=5),
+       'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15)}
+
+
+.. function:: set_cache_sizes(*, idna_encode_size=256, idna_decode_size=256)
+
+   Set IDNA encode and decode cache sizes (``256`` for each by default).
+
+   Pass ``None`` to make the corresponding cache unbounded (may speed up the IDNA
+   encoding/decoding operation a little but the memory footprint can be very high,
+   please use with caution).
 
 References
 ----------
