@@ -17,8 +17,8 @@ def test_build_simple():
 
 
 def test_build_with_scheme():
-    with pytest.raises(ValueError):
-        URL.build(scheme="http")
+    u = URL.build(scheme="blob", path="path")
+    assert str(u) == "blob:path"
 
 
 def test_build_with_host():
