@@ -588,7 +588,7 @@ section generates a new *URL* instance.
    Clear *query* if ``None`` is passed.
 
    Mod operator (``%``) can be used as alternative to the direct call of
-   ``URL.update_query``.
+   :meth:`URL.update_query`.
 
    .. note::
 
