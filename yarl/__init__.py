@@ -202,6 +202,10 @@ class URL:
 
         if not host and scheme:
             raise ValueError('Can\'t build URL with "scheme" but without "host".')
+        if authority and (user or password or host or port):
+            raise ValueError(
+                'Can\'t mix "authority" with ' '"user", "password", "host" or "port".'
+            )
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
@@ -212,7 +216,15 @@ class URL:
                 '"fragment" args, use string values instead.'
             )
 
-        if not user and not password and not host and not port:
+        if authority:
+            if encoded:
+                netloc = authority
+            else:
+                tmp = SplitResult("", netloc, "", "", "")
+                netloc = cls._make_netloc(
+                    tmp.username, tmp.password, tmp.hostname, port, encode=True
+                )
+        elif not user and not password and not host and not port:
             netloc = ""
         else:
             netloc = cls._make_netloc(user, password, host, port, encode=not encoded)
@@ -396,7 +408,7 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return self._val.scheme
+        return self._val.netloc
 
     @cached_property
     def authority(self):
@@ -406,7 +418,7 @@ class URL:
 
         """
         return self._make_netloc(
-            self.user, self.password, self.host, self.port, encode=True
+            self.user, self.password, self.host, self.port, encode=False
         )
 
     @property
