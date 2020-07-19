@@ -11,7 +11,7 @@ from yarl import URL
 def test_inheritance():
     with pytest.raises(TypeError) as ctx:
 
-        class MyURL(URL):
+        class MyURL(URL):  # type: ignore[misc]
             pass
 
     assert (

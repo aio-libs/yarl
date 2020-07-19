@@ -35,7 +35,7 @@ black-check:
 	black --check $(SRC)
 
 mypy:
-	mypy yarl tests
+	mypy --show-error-codes yarl tests
 
 lint: flake8 black-check mypy
 

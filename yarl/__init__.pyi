@@ -1,5 +1,5 @@
 from typing import overload, Any, Tuple, Optional, Mapping, Union, Sequence, Type
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Final, final
 import multidict
 from functools import _CacheInfo
 
@@ -7,30 +7,30 @@ _QueryVariable = Union[str, int]
 _Query = Union[
     None, str, Mapping[str, _QueryVariable], Sequence[Tuple[str, _QueryVariable]]
 ]
-
+@final
 class URL:
-    scheme: str
-    raw_user: str
-    user: Optional[str]
-    raw_password: Optional[str]
-    password: Optional[str]
-    raw_host: Optional[str]
-    host: Optional[str]
-    port: Optional[int]
-    raw_path: str
-    path: str
-    raw_query_string: str
-    query_string: str
-    path_qs: str
-    raw_path_qs: str
-    raw_fragment: str
-    fragment: str
-    query: multidict.MultiDict[str]
-    raw_name: str
-    name: str
-    raw_parts: Tuple[str, ...]
-    parts: Tuple[str, ...]
-    parent: URL
+    scheme: Final[str]
+    raw_user: Final[str]
+    user: Final[Optional[str]]
+    raw_password: Final[Optional[str]]
+    password: Final[Optional[str]]
+    raw_host: Final[Optional[str]]
+    host: Final[Optional[str]]
+    port: Final[Optional[int]]
+    raw_path: Final[str]
+    path: Final[str]
+    raw_query_string: Final[str]
+    query_string: Final[str]
+    path_qs: Final[str]
+    raw_path_qs: Final[str]
+    raw_fragment: Final[str]
+    fragment: Final[str]
+    query: Final[multidict.MultiDict[str]]
+    raw_name: Final[str]
+    name: Final[str]
+    raw_parts: Final[Tuple[str, ...]]
+    parts: Final[Tuple[str, ...]]
+    parent: Final[URL]
     def __init__(
         self, val: Union[str, "URL"] = ..., *, encoded: bool = ...
     ) -> None: ...
@@ -85,6 +85,7 @@ class URL:
     @classmethod
     def _normalize_path(cls, path: str) -> str: ...
 
+@final
 class cached_property:
     def __init__(self, wrapped: Any) -> None: ...
     def __get__(self, inst: URL, owner: Type[URL]) -> Any: ...
