@@ -80,6 +80,16 @@ def test_build_with_all():
     assert str(u) == "http://foo:bar@127.0.0.1:8000/index.html?arg=value1#top"
 
 
+def test_build_with_authority_and_host():
+    with pytest.raises(ValueError):
+        URL.build(authority="host.com", host="example.com")
+
+
+def test_build_with_authority():
+    url = URL.build(scheme="http", authority="foo:bar@host.com:8000", path="path")
+    assert str(url) == "http://foo:bar@host.com:8000/path"
+
+
 def test_query_str():
     u = URL.build(scheme="http", host="127.0.0.1", path="/", query_string="arg=value1")
     assert str(u) == "http://127.0.0.1/?arg=value1"

@@ -200,8 +200,10 @@ class URL:
     ):
         """Creates and returns a new URL"""
 
-        if not host and scheme:
-            raise ValueError('Can\'t build URL with "scheme" but without "host".')
+        if scheme and (not host and not authority):
+            raise ValueError(
+                'Can\'t build URL with "scheme" but without "host" or "authority".'
+            )
         if authority and (user or password or host or port):
             raise ValueError(
                 'Can\'t mix "authority" with ' '"user", "password", "host" or "port".'
@@ -220,9 +222,9 @@ class URL:
             if encoded:
                 netloc = authority
             else:
-                tmp = SplitResult("", netloc, "", "", "")
+                tmp = SplitResult("", authority, "", "", "")
                 netloc = cls._make_netloc(
-                    tmp.username, tmp.password, tmp.hostname, port, encode=True
+                    tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
                 )
         elif not user and not password and not host and not port:
             netloc = ""
