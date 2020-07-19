@@ -229,6 +229,34 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    .. versionadded:: 1.3
 
+.. attribute:: URL.authority
+
+   Decoded *authority* part of URL, a combination of *user*, *password*, *host*, and
+   *port*.
+
+   ``authority = [ user [ ":" password ] "@" ] host [ ":" port ]``.
+
+   *authority* is ``None`` if all parts are missing.
+
+   .. doctest::
+
+      >>> URL('http://john:pass@example.com:8000').authority
+      'john:pass@example.com:8000'
+
+   .. versionadded:: 1.5
+
+.. attribute:: URL.raw_authority
+
+   Encoded *authority* part of URL, a combination of *user*, *password*, *host*, and
+   *port*.  ``None`` if all parts are missing.
+
+   .. doctest::
+
+      >>> URL('http://john:pass@хост.домен:8000').raw_authority
+      'john:pass@xn--n1agdj.xn--d1acufc:8000'
+
+   .. versionadded:: 1.5
+
 .. attribute:: URL.path
 
    Decoded *path* part of URL, ``'/'`` for absolute URLs without *path* part.
