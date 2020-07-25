@@ -16,7 +16,7 @@ if sys.implementation.name != "cpython":
     NO_EXTENSIONS = True
 
 
-extensions = [Extension("yarl._quoting", ["yarl/_quoting.c"])]
+extensions = [Extension("yarl._quoting_c", ["yarl/_quoting_c.c"])]
 # extra_compile_args=["-g"],
 # extra_link_args=["-g"],
 

@@ -9,7 +9,7 @@ from multidict import MultiDict, MultiDictProxy
 import idna
 
 
-from .quoting import _Quoter, _Unquoter
+from ._quoting import _Quoter, _Unquoter
 
 __version__ = "1.5.0a0"
 
