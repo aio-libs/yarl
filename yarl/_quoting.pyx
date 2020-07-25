@@ -185,14 +185,18 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
 
 cdef class _Quoter:
     cdef bint _qs
+    cdef bint _requote
 
     cdef uint8_t _safe_table[16]
     cdef uint8_t _protected_table[16]
 
-    def __init__(self, *, str safe='', str protected='', bint qs=False):
+    def __init__(
+            self, *, str safe='', str protected='', bint qs=False, bint requote=True,
+    ):
         cdef Py_UCS4 ch
 
         self._qs = qs
+        self._requote = requote
 
         if not self._qs:
             memcpy(self._safe_table,
@@ -268,7 +272,7 @@ cdef class _Quoter:
                         raise
                 continue
 
-            elif ch == '%':
+            elif ch == '%' and self._requote:
                 has_pct = 1
                 continue
 

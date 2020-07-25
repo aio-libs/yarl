@@ -263,6 +263,12 @@ def test_with_query_only():
     assert str(url2) == "?key=value"
 
 
+def test_with_query_complex_url():
+    target_url = "http://example.com/?game=bulls+%26+cows"
+    url = URL("/redir").with_query({"t": target_url})
+    assert url.query["t"] == target_url
+
+
 def test_update_query_multiple_keys():
     url = URL("http://example.com/path?a=1&a=2")
     u2 = url.update_query([("a", "3"), ("a", "4")])

@@ -1,0 +1,1 @@
+Fix a bug where query component, passed in a form of mapping or sequence, is unquoted in unexpected way.

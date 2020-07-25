@@ -127,7 +127,7 @@ class URL:
     _QUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe="@:", protected="/+")
     _QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
-    _QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True)
+    _QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True, requote=False)
     _FRAGMENT_QUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()

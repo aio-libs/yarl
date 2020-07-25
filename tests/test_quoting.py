@@ -93,6 +93,8 @@ def test_default_quoting_percent(quoter):
     assert "%25" == result
     result = quoter(qs=True)("%25")
     assert "%25" == result
+    result = quoter(requote=False)("%25")
+    assert "%2525" == result
 
 
 def test_default_quoting_partial(quoter):
@@ -324,7 +326,7 @@ def test_unquote_plus_to_space_unsafe(unquoter):
     assert unquoter(unsafe="+", qs=True)("a+b") == "a+b"
 
 
-def test_qoute_qs_with_colon(quoter):
+def test_quote_qs_with_colon(quoter):
     s = quoter(safe="=+&?/:@", qs=True)("next=http%3A//example.com/")
     assert s == "next=http://example.com/"
 
