@@ -706,6 +706,7 @@ class URL:
                 ip, sep, zone = host.partition("%")
                 ip = ip_address(ip)
             except ValueError:
+                host = host.lower()
                 # IDNA encoding is slow,
                 # skip it for ASCII-only strings
                 # Don't move the check into _idna_encode() helper
@@ -729,6 +730,8 @@ class URL:
                 ip, sep, zone = host.partition("%")
                 ip = ip_address(ip)
             except ValueError:
+                host = host.lower()
+
                 for char in host:
                     if char > "\x7f":
                         break
