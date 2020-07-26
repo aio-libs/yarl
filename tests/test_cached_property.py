@@ -1,6 +1,6 @@
 import pytest
 
-from yarl import cached_property
+from yarl._url import cached_property
 
 
 def test_reify():

@@ -1,14 +1,6 @@
-import os
 import re
-import sys
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Optional, TYPE_CHECKING, cast
-
-
-NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
-
-if sys.implementation.name != "cpython":
-    NO_EXTENSIONS = True
+from typing import Optional, cast
 
 
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
@@ -212,14 +204,3 @@ class _Unquoter:
         if ret2 == val:
             return val
         return ret2
-
-
-_PyQuoter = _Quoter
-_PyUnquoter = _Unquoter
-
-if not TYPE_CHECKING and not NO_EXTENSIONS:  # pragma: no branch
-    try:
-        from ._quoting import _Quoter, _Unquoter
-    except ImportError:  # pragma: no cover
-        _Quoter = _PyQuoter
-        _Unquoter = _PyUnquoter

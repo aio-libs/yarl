@@ -1,16 +1,31 @@
 import pytest
 
-from yarl.quoting import _PyQuoter, _PyUnquoter, _Quoter, _Unquoter
+from yarl._quoting import NO_EXTENSIONS
+
+from yarl._quoting_py import _Quoter as _PyQuoter, _Unquoter as _PyUnquoter
 
 
-@pytest.fixture(params=[_PyQuoter, _Quoter], ids=["py_quoter", "c_quoter"])
-def quoter(request):
-    return request.param
+if not NO_EXTENSIONS:
+    from yarl._quoting_c import _Quoter as _CQuoter, _Unquoter as _CUnquoter
+
+    @pytest.fixture(params=[_PyQuoter, _CQuoter], ids=["py_quoter", "c_quoter"])
+    def quoter(request):
+        return request.param
+
+    @pytest.fixture(params=[_PyUnquoter, _CUnquoter], ids=["py_unquoter", "c_unquoter"])
+    def unquoter(request):
+        return request.param
 
 
-@pytest.fixture(params=[_PyUnquoter, _Unquoter], ids=["py_unquoter", "c_unquoter"])
-def unquoter(request):
-    return request.param
+else:
+
+    @pytest.fixture(params=[_PyQuoter], ids=["py_quoter"])
+    def quoter(request):
+        return request.param
+
+    @pytest.fixture(params=[_PyUnquoter], ids=["py_unquoter"])
+    def unquoter(request):
+        return request.param
 
 
 def hexescape(char):
@@ -336,15 +351,15 @@ def test_quote_protected(quoter):
     assert s == "/path%2Fto/three"
 
 
-def test_quote_fastpath_safe():
+def test_quote_fastpath_safe(quoter):
     s1 = "/path/to"
-    s2 = _Quoter(safe="/")(s1)
+    s2 = quoter(safe="/")(s1)
     assert s1 is s2
 
 
-def test_quote_fastpath_pct():
+def test_quote_fastpath_pct(quoter):
     s1 = "abc%A0"
-    s2 = _Quoter()(s1)
+    s2 = quoter()(s1)
     assert s1 is s2
 
 
