@@ -1,2 +1,3 @@
 -r ci.txt
 pytest-sugar==0.9.4
+towncrier==19.2.0

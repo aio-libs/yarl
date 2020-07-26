@@ -14,6 +14,50 @@ Changelog
 
 .. towncrier release notes start
 
+1.5.0 (2020-07-26)
+==================
+
+Features
+--------
+
+- Convert host to lowercase on URL building.
+  `#386 <https://github.com/aio-libs/yarl/issues/386>`_
+- Allow using `mod` operator (`%`) for updating query string (an alias for `update_query()` method).
+  `#435 <https://github.com/aio-libs/yarl/issues/435>`_
+- Allow use of sequences such as :class:`list` and :class:`tuple` in the values
+  of a mapping such as :class:`dict` to represent that a key has many values:
+
+      url = URL("http://example.com")
+      assert url.with_query({"a": [1, 2]}) == URL("http://example.com/?a=1&a=2")
+  `#443 <https://github.com/aio-libs/yarl/issues/443>`_
+- Support URL.build() with scheme and path (creates a relative URL).
+  `#464 <https://github.com/aio-libs/yarl/issues/464>`_
+- Cache slow IDNA encode/decode calls.
+  `#476 <https://github.com/aio-libs/yarl/issues/476>`_
+- Add ``@final`` / ``Final`` type hints
+  `#477 <https://github.com/aio-libs/yarl/issues/477>`_
+- Support URL authority/raw_authority properties and authority argument of ``URL.build()`` method.
+  `#478 <https://github.com/aio-libs/yarl/issues/478>`_
+- Hide the library implementation details, make the exposed public list very clean.
+  `#483 <https://github.com/aio-libs/yarl/issues/483>`_
+
+
+Bugfixes
+--------
+
+- Fix tests with newer Python (3.7.6, 3.8.1 and 3.9.0+).
+  `#409 <https://github.com/aio-libs/yarl/issues/409>`_
+- Fix a bug where query component, passed in a form of mapping or sequence, is unquoted in unexpected way.
+  `#426 <https://github.com/aio-libs/yarl/issues/426>`_
+- Hide `Query` and `QueryVariable` type aliases in `__init__.pyi`, now they are prefixed with underscore.
+  `#431 <https://github.com/aio-libs/yarl/issues/431>`_
+- Keep ipv6 brackets after updating port/user/password.
+  `#451 <https://github.com/aio-libs/yarl/issues/451>`_
+
+
+----
+
+
 1.4.2 (2019-12-05)
 ==================
 

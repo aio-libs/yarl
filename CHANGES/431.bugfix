@@ -1,1 +1,0 @@
-Hide `Query` and `QueryVariable` type aliases in `__init__.pyi`, now they are prefixed with underscore.

@@ -1,1 +1,0 @@
-Cache slow IDNA encode/decode calls.
