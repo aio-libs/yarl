@@ -29,6 +29,7 @@ Features
 
       url = URL("http://example.com")
       assert url.with_query({"a": [1, 2]}) == URL("http://example.com/?a=1&a=2")
+
   `#443 <https://github.com/aio-libs/yarl/issues/443>`_
 - Support URL.build() with scheme and path (creates a relative URL).
   `#464 <https://github.com/aio-libs/yarl/issues/464>`_
