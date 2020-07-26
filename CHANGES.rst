@@ -22,10 +22,10 @@ Features
 
 - Convert host to lowercase on URL building.
   `#386 <https://github.com/aio-libs/yarl/issues/386>`_
-- Allow using `mod` operator (`%`) for updating query string (an alias for `update_query()` method).
+- Allow using ``mod`` operator (`%`) for updating query string (an alias for ``update_query()`` method).
   `#435 <https://github.com/aio-libs/yarl/issues/435>`_
-- Allow use of sequences such as :class:`list` and :class:`tuple` in the values
-  of a mapping such as :class:`dict` to represent that a key has many values:
+- Allow use of sequences such as ``list`` and ``tuple`` in the values
+  of a mapping such as ``dict`` to represent that a key has many values::
 
       url = URL("http://example.com")
       assert url.with_query({"a": [1, 2]}) == URL("http://example.com/?a=1&a=2")
