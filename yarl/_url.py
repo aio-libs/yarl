@@ -17,6 +17,11 @@ DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 sentinel = object()
 
 
+def rewrite_module(obj: object) -> object:
+    obj.__module__ = "yarl"
+    return obj
+
+
 class cached_property:
     """Use as a class method decorator.  It operates almost exactly like
     the Python `@property` decorator, but it puts the result of the
@@ -48,6 +53,7 @@ class cached_property:
         raise AttributeError("cached property is read-only")
 
 
+@rewrite_module
 class URL:
     # Don't derive from str
     # follow pathlib.Path design
@@ -1075,11 +1081,13 @@ def _idna_encode(host):
         return host.encode("idna").decode("ascii")
 
 
+@rewrite_module
 def cache_clear():
     _idna_decode.cache_clear()
     _idna_encode.cache_clear()
 
 
+@rewrite_module
 def cache_info():
     return {
         "idna_encode": _idna_encode.cache_info(),
@@ -1087,6 +1095,7 @@ def cache_info():
     }
 
 
+@rewrite_module
 def cache_configure(*, idna_encode_size=_MAXCACHE, idna_decode_size=_MAXCACHE):
     global _idna_decode, _idna_encode
 
