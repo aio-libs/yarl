@@ -6,9 +6,8 @@ graft docs
 graft tests
 global-exclude *.pyc
 global-exclude *.cache
-include yarl/*.c
-exclude yarl/_quoting.html
-exclude yarl/_quoting.*.so
-exclude yarl/_quoting.pyd
-exclude yarl/_quoting.*.pyd
+include yarl/_quoting_c.c
+exclude yarl/*.html
+exclude yarl/*.so
+exclude yarl/*.pyd
 prune docs/_build

@@ -92,8 +92,8 @@ ENV/
 coverage
 
 
-yarl/_quoting.c
-yarl/_quoting.html
+yarl/*.c
+yarl/*.html
 
 .develop
 
