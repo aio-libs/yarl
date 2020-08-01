@@ -1,1 +1,0 @@
-Fix including relocated internal ``yarl._quoting_c`` C-extension into published PyPI dists.

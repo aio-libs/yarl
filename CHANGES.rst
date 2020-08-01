@@ -14,6 +14,25 @@ Changelog
 
 .. towncrier release notes start
 
+1.5.1 (2020-08-01)
+==================
+
+Bugfixes
+--------
+
+- Fix including relocated internal ``yarl._quoting_c`` C-extension into published PyPI dists.
+  `#485 <https://github.com/aio-libs/yarl/issues/485>`_
+
+
+Misc
+----
+
+- `#484 <https://github.com/aio-libs/yarl/issues/484>`_
+
+
+----
+
+
 1.5.0 (2020-07-26)
 ==================
 
