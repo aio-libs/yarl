@@ -904,7 +904,7 @@ class URL:
     def _query_var(v):
         if isinstance(v, str):
             return v
-        if type(v) is int:  # no subclasses like bool
+        if isinstance(v, int) and not isinstance(v, bool):  # no subclasses like bool
             return str(v)
         raise TypeError(
             "Invalid variable type: value "
