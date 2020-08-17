@@ -159,11 +159,16 @@ class _CStr(str):
     pass
 
 
-class _CInt(int):
+class _EmptyStrEr:
+    def __str__(self):
+        return ""
+
+
+class _CInt(int, _EmptyStrEr):
     pass
 
 
-class _CFloat(float):
+class _CFloat(float, _EmptyStrEr):
     pass
 
 
@@ -185,7 +190,12 @@ def test_with_query_valid_type(value, expected):
 
 
 @pytest.mark.parametrize(
-    ("value"), [pytest.param(True, id="bool"), pytest.param(None, id="none")]
+    ("value"),
+    [
+        pytest.param(True, id="bool"),
+        pytest.param(None, id="none"),
+        pytest.param(float("inf"), id="non-finite float"),
+    ],
 )
 def test_with_query_invalid_type(value):
     url = URL("http://example.com")

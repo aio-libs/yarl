@@ -8,6 +8,8 @@ from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit
 from multidict import MultiDict, MultiDictProxy
 import idna
 
+import math
+
 
 from ._quoting import _Quoter, _Unquoter
 
@@ -905,8 +907,10 @@ class URL:
         cls = type(v)
         if issubclass(cls, str):
             return v
-        if issubclass(cls, (int, float)) and not cls is bool:
-            return int.__str__(v) # same as float.__str__
+        if issubclass(cls, (int, float)) and cls is not bool:
+            if not math.isfinite(v):
+                raise TypeError("Value should be finite")
+            return int.__str__(v)  # same as float.__str__
         raise TypeError(
             "Invalid variable type: value "
             "should be str, int or float, got {!r} "
