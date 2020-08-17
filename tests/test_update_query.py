@@ -155,9 +155,16 @@ def test_with_query_sequence_invalid_use(query):
         url.with_query(query)
 
 
-class _CStr(str): pass
-class _CInt(int): pass
-class _CFloat(float): pass
+class _CStr(str):
+    pass
+
+
+class _CInt(int):
+    pass
+
+
+class _CFloat(float):
+    pass
 
 
 @pytest.mark.parametrize(
@@ -168,8 +175,8 @@ class _CFloat(float): pass
         pytest.param(1, "1", id="int"),
         pytest.param(_CInt(1), "1", id="custom int"),
         pytest.param(1.1, "1.1", id="float"),
-        pytest.param(_CFloat(1.1), "1.1", id="custom float")
-    ]
+        pytest.param(_CFloat(1.1), "1.1", id="custom float"),
+    ],
 )
 def test_with_query_valid_type(value, expected):
     url = URL("http://example.com")
@@ -178,11 +185,7 @@ def test_with_query_valid_type(value, expected):
 
 
 @pytest.mark.parametrize(
-    ("value"),
-    [
-        pytest.param(True, id="bool"),
-        pytest.param(None, id="none")
-    ]
+    ("value"), [pytest.param(True, id="bool"), pytest.param(None, id="none")]
 )
 def test_with_query_invalid_type(value):
     url = URL("http://example.com")
@@ -198,8 +201,8 @@ def test_with_query_invalid_type(value):
         pytest.param(1, "1", id="int"),
         pytest.param(_CInt(1), "1", id="custom int"),
         pytest.param(1.1, "1.1", id="float"),
-        pytest.param(_CFloat(1.1), "1.1", id="custom float")
-    ]
+        pytest.param(_CFloat(1.1), "1.1", id="custom float"),
+    ],
 )
 def test_with_query_list_valid_type(value, expected):
     url = URL("http://example.com")
@@ -208,11 +211,7 @@ def test_with_query_list_valid_type(value, expected):
 
 
 @pytest.mark.parametrize(
-    ("value"),
-    [
-        pytest.param(True, id="bool"),
-        pytest.param(None, id="none")
-    ]
+    ("value"), [pytest.param(True, id="bool"), pytest.param(None, id="none")]
 )
 def test_with_query_list_invalid_type(value):
     url = URL("http://example.com")
