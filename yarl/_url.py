@@ -902,14 +902,15 @@ class URL:
 
     @staticmethod
     def _query_var(v):
-        if isinstance(v, str):
+        cls = type(v)
+        if issubclass(cls, str):
             return v
-        if isinstance(v, (int, float)) and not isinstance(v, bool):
-            return str(v)
+        if issubclass(cls, (int, float)) and not cls is bool:
+            return int.__str__(v) # same as float.__str__
         raise TypeError(
             "Invalid variable type: value "
             "should be str, int or float, got {!r} "
-            "of type {}".format(v, type(v))
+            "of type {}".format(v, cls)
         )
 
     def _get_str_query(self, *args, **kwargs):
