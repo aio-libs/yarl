@@ -1,1 +1,1 @@
-Do not requote arguments in ``URL.build()`` and ``with_xxx()``.
+Do not requote arguments in ``URL.build()``, ``with_xxx()`` and in ``/`` operator.
