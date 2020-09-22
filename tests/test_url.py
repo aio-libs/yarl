@@ -619,12 +619,25 @@ def test_div_for_relative_url_started_with_slash():
 
 
 def test_div_non_ascii():
+    url = URL("http://example.com/сюда")
+    url2 = url / "туда"
+    assert url2.path == "/сюда/туда"
+    assert url2.raw_path == "/%D1%81%D1%8E%D0%B4%D0%B0/%D1%82%D1%83%D0%B4%D0%B0"
+    assert url2.parts == ("/", "сюда", "туда")
+    assert url2.raw_parts == (
+        "/",
+        "%D1%81%D1%8E%D0%B4%D0%B0",
+        "%D1%82%D1%83%D0%B4%D0%B0",
+    )
+
+
+def test_div_percent_encoded():
     url = URL("http://example.com/path")
-    url2 = url / "сюда"
-    assert url2.path == "/path/сюда"
-    assert url2.raw_path == "/path/%D1%81%D1%8E%D0%B4%D0%B0"
-    assert url2.parts == ("/", "path", "сюда")
-    assert url2.raw_parts == ("/", "path", "%D1%81%D1%8E%D0%B4%D0%B0")
+    url2 = url / "%cf%80"
+    assert url2.path == "/path/%cf%80"
+    assert url2.raw_path == "/path/%25cf%2580"
+    assert url2.parts == ("/", "path", "%cf%80")
+    assert url2.raw_parts == ("/", "path", "%25cf%2580")
 
 
 def test_div_with_colon_and_at():
