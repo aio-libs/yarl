@@ -192,16 +192,16 @@ def test_with_query_valid_type(value, expected):
 
 
 @pytest.mark.parametrize(
-    ("value"),
+    ("value", "exc_type"),
     [
-        pytest.param(True, id="bool"),
-        pytest.param(None, id="none"),
-        pytest.param(float("inf"), id="non-finite float"),
+        pytest.param(True, TypeError, id="bool"),
+        pytest.param(None, TypeError, id="none"),
+        pytest.param(float("inf"), ValueError, id="non-finite float"),
     ],
 )
-def test_with_query_invalid_type(value):
+def test_with_query_invalid_type(value, exc_type):
     url = URL("http://example.com")
-    with pytest.raises(TypeError):
+    with pytest.raises(exc_type):
         url.with_query({"a": value})
 
 

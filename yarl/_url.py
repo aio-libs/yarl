@@ -911,7 +911,7 @@ class URL:
             return v
         if issubclass(cls, float):
             if not math.isfinite(v):
-                raise TypeError("Value should be finite")
+                raise ValueError("Value should be finite")
             return str(float(v))
         if issubclass(cls, int) and cls is not bool:
             return str(int(v))
