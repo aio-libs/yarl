@@ -65,6 +65,16 @@ def test_origin():
     assert URL("http://example.com:8888") == url.origin()
 
 
+def test_origin_nonascii():
+    url = URL("http://user:password@историк.рф:8888/path/to?a=1&b=2")
+    assert str(url.origin()) == "http://xn--h1aagokeh.xn--p1ai:8888"
+
+
+def test_origin_ipv6():
+    url = URL("http://user:password@[::1]:8888/path/to?a=1&b=2")
+    assert str(url.origin()) == "http://[::1]:8888"
+
+
 def test_origin_not_absolute_url():
     url = URL("/path/to?a=1&b=2")
     with pytest.raises(ValueError):
@@ -502,6 +512,15 @@ def test_nonascii_in_qs():
     assert "http://example.com/?f%C3%B8%C3%B8=f%C3%B8%C3%B8" == str(url2)
 
 
+def test_percent_encoded_in_qs():
+    url = URL("http://example.com")
+    url2 = url.with_query({"k%cf%80": "v%cf%80"})
+    assert str(url2) == "http://example.com/?k%25cf%2580=v%25cf%2580"
+    assert url2.raw_query_string == "k%25cf%2580=v%25cf%2580"
+    assert url2.query_string == "k%cf%80=v%cf%80"
+    assert url2.query == {"k%cf%80": "v%cf%80"}
+
+
 # modifiers
 
 
@@ -600,12 +619,25 @@ def test_div_for_relative_url_started_with_slash():
 
 
 def test_div_non_ascii():
+    url = URL("http://example.com/сюда")
+    url2 = url / "туда"
+    assert url2.path == "/сюда/туда"
+    assert url2.raw_path == "/%D1%81%D1%8E%D0%B4%D0%B0/%D1%82%D1%83%D0%B4%D0%B0"
+    assert url2.parts == ("/", "сюда", "туда")
+    assert url2.raw_parts == (
+        "/",
+        "%D1%81%D1%8E%D0%B4%D0%B0",
+        "%D1%82%D1%83%D0%B4%D0%B0",
+    )
+
+
+def test_div_percent_encoded():
     url = URL("http://example.com/path")
-    url2 = url / "сюда"
-    assert url2.path == "/path/сюда"
-    assert url2.raw_path == "/path/%D1%81%D1%8E%D0%B4%D0%B0"
-    assert url2.parts == ("/", "path", "сюда")
-    assert url2.raw_parts == ("/", "path", "%D1%81%D1%8E%D0%B4%D0%B0")
+    url2 = url / "%cf%80"
+    assert url2.path == "/path/%cf%80"
+    assert url2.raw_path == "/path/%25cf%2580"
+    assert url2.parts == ("/", "path", "%cf%80")
+    assert url2.raw_parts == ("/", "path", "%25cf%2580")
 
 
 def test_div_with_colon_and_at():
@@ -623,12 +655,50 @@ def test_div_with_dots():
 
 def test_with_path():
     url = URL("http://example.com")
-    assert str(url.with_path("/test")) == "http://example.com/test"
+    url2 = url.with_path("/test")
+    assert str(url2) == "http://example.com/test"
+    assert url2.raw_path == "/test"
+    assert url2.path == "/test"
+
+
+def test_with_path_nonascii():
+    url = URL("http://example.com")
+    url2 = url.with_path("/π")
+    assert str(url2) == "http://example.com/%CF%80"
+    assert url2.raw_path == "/%CF%80"
+    assert url2.path == "/π"
+
+
+def test_with_path_percent_encoded():
+    url = URL("http://example.com")
+    url2 = url.with_path("/%cf%80")
+    assert str(url2) == "http://example.com/%25cf%2580"
+    assert url2.raw_path == "/%25cf%2580"
+    assert url2.path == "/%cf%80"
 
 
 def test_with_path_encoded():
     url = URL("http://example.com")
-    assert str(url.with_path("/test", encoded=True)) == "http://example.com/test"
+    url2 = url.with_path("/test", encoded=True)
+    assert str(url2) == "http://example.com/test"
+    assert url2.raw_path == "/test"
+    assert url2.path == "/test"
+
+
+def test_with_path_encoded_nonascii():
+    url = URL("http://example.com")
+    url2 = url.with_path("/π", encoded=True)
+    assert str(url2) == "http://example.com/π"
+    assert url2.raw_path == "/π"
+    assert url2.path == "/π"
+
+
+def test_with_path_encoded_percent_encoded():
+    url = URL("http://example.com")
+    url2 = url.with_path("/%cf%80", encoded=True)
+    assert str(url2) == "http://example.com/%cf%80"
+    assert url2.raw_path == "/%cf%80"
+    assert url2.path == "/π"
 
 
 def test_with_path_dots():
@@ -666,7 +736,10 @@ def test_with_path_leading_slash():
 
 def test_with_fragment():
     url = URL("http://example.com")
-    assert str(url.with_fragment("frag")) == "http://example.com/#frag"
+    url2 = url.with_fragment("frag")
+    assert str(url2) == "http://example.com/#frag"
+    assert url2.raw_fragment == "frag"
+    assert url2.fragment == "frag"
 
 
 def test_with_fragment_safe():
@@ -680,6 +753,14 @@ def test_with_fragment_non_ascii():
     url2 = url.with_fragment("фрагм")
     assert url2.raw_fragment == "%D1%84%D1%80%D0%B0%D0%B3%D0%BC"
     assert url2.fragment == "фрагм"
+
+
+def test_with_fragment_percent_encoded():
+    url = URL("http://example.com")
+    url2 = url.with_fragment("%cf%80")
+    assert str(url2) == "http://example.com/#%25cf%2580"
+    assert url2.raw_fragment == "%25cf%2580"
+    assert url2.fragment == "%cf%80"
 
 
 def test_with_fragment_None():
@@ -714,6 +795,9 @@ def test_with_name():
     assert url.raw_parts == ("/", "a", "b")
     url2 = url.with_name("c")
     assert url2.raw_parts == ("/", "a", "c")
+    assert url2.parts == ("/", "a", "c")
+    assert url2.raw_path == "/a/c"
+    assert url2.path == "/a/c"
 
 
 def test_with_name_for_naked_path():
@@ -757,6 +841,15 @@ def test_with_name_non_ascii():
     assert url.raw_path == "/%D0%BF%D1%83%D1%82%D1%8C"
     assert url.parts == ("/", "путь")
     assert url.raw_parts == ("/", "%D0%BF%D1%83%D1%82%D1%8C")
+
+
+def test_with_name_percent_encoded():
+    url = URL("http://example.com/path")
+    url2 = url.with_name("%cf%80")
+    assert url2.raw_parts == ("/", "%25cf%2580")
+    assert url2.parts == ("/", "%cf%80")
+    assert url2.raw_path == "/%25cf%2580"
+    assert url2.path == "/%cf%80"
 
 
 def test_with_name_with_slash():

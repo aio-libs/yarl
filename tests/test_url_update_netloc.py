@@ -37,6 +37,17 @@ def test_with_user_non_ascii():
     url2 = url.with_user("вася")
     assert url2.raw_user == "%D0%B2%D0%B0%D1%81%D1%8F"
     assert url2.user == "вася"
+    assert url2.raw_authority == "%D0%B2%D0%B0%D1%81%D1%8F@example.com"
+    assert url2.authority == "вася@example.com:80"
+
+
+def test_with_user_percent_encoded():
+    url = URL("http://example.com")
+    url2 = url.with_user("%cf%80")
+    assert url2.raw_user == "%25cf%2580"
+    assert url2.user == "%cf%80"
+    assert url2.raw_authority == "%25cf%2580@example.com"
+    assert url2.authority == "%cf%80@example.com:80"
 
 
 def test_with_user_for_relative_url():
@@ -80,6 +91,17 @@ def test_with_password_non_ascii():
     url2 = url.with_password("пароль")
     assert url2.raw_password == "%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C"
     assert url2.password == "пароль"
+    assert url2.raw_authority == "john:%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C@example.com"
+    assert url2.authority == "john:пароль@example.com:80"
+
+
+def test_with_password_percent_encoded():
+    url = URL("http://john@example.com")
+    url2 = url.with_password("%cf%80")
+    assert url2.raw_password == "%25cf%2580"
+    assert url2.password == "%cf%80"
+    assert url2.raw_authority == "john:%25cf%2580@example.com"
+    assert url2.authority == "john:%cf%80@example.com:80"
 
 
 def test_with_password_non_ascii_with_colon():
@@ -141,6 +163,17 @@ def test_with_host_non_ascii():
     url2 = url.with_host("историк.рф")
     assert url2.raw_host == "xn--h1aagokeh.xn--p1ai"
     assert url2.host == "историк.рф"
+    assert url2.raw_authority == "xn--h1aagokeh.xn--p1ai:123"
+    assert url2.authority == "историк.рф:123"
+
+
+def test_with_host_percent_encoded():
+    url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123")
+    url2 = url.with_host("%cf%80.org")
+    assert url2.raw_host == "%cf%80.org"
+    assert url2.host == "%cf%80.org"
+    assert url2.raw_authority == "%25cf%2580%CF%80:%25cf%2580%CF%80@%cf%80.org:123"
+    assert url2.authority == "%cf%80π:%cf%80π@%cf%80.org:123"
 
 
 def test_with_host_for_relative_url():
