@@ -572,7 +572,8 @@ section generates a new *URL* instance.
 
    .. note::
 
-      The library accepts :class:`str` and :class:`int` as query argument values.
+      The library accepts :class:`str`, :class:`float`, :class:`int` and their
+      subclasses except :class:`bool` as query argument values.
 
       If a mapping such as :class:`dict` is used, the values may also be
       :class:`list` or :class:`tuple` to represent a key has many values.
@@ -596,6 +597,15 @@ section generates a new *URL* instance.
       URL('http://example.com/path?b=2')
       >>> URL('http://example.com/path?a=b&b=1').with_query([('b', '2')])
       URL('http://example.com/path?b=2')
+
+   .. versionchanged:: 1.5
+
+      Support :class:`list` and :class:`tuple` as a query parameter value.
+
+   .. versionchanged:: 1.6
+
+      Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
+      as a query parameter value.
 
 .. method:: URL.update_query(query)
             URL.update_query(**kwargs)
@@ -624,7 +634,8 @@ section generates a new *URL* instance.
 
    .. note::
 
-      The library accepts :class:`str` and :class:`int` as query argument values.
+      The library accepts :class:`str`, :class:`float`, :class:`int` and their
+      subclasses except :class:`bool` as query argument values.
 
       If a mapping such as :class:`dict` is used, the values may also be
       :class:`list` or :class:`tuple` to represent a key has many values.
@@ -660,6 +671,15 @@ section generates a new *URL* instance.
    .. versionadded:: 1.5
 
       Support for mod operator (``%``) to update the URL's query part.
+
+   .. versionchanged:: 1.5
+
+      Support :class:`list` and :class:`tuple` as a query parameter value.
+
+   .. versionchanged:: 1.6
+
+      Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
+      as a query parameter value.
 
 .. method:: URL.with_fragment(fragment)
 

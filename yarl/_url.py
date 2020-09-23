@@ -8,6 +8,8 @@ from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit
 from multidict import MultiDict, MultiDictProxy
 import idna
 
+import math
+
 
 from ._quoting import _Quoter, _Unquoter
 
@@ -904,14 +906,21 @@ class URL:
 
     @staticmethod
     def _query_var(v):
-        if isinstance(v, str):
+        cls = type(v)
+        if issubclass(cls, str):
             return v
-        if type(v) is int:  # no subclasses like bool
-            return str(v)
+        if issubclass(cls, float):
+            if math.isinf(v):
+                raise ValueError("float('inf') is not supported")
+            if math.isnan(v):
+                raise ValueError("float('nan') is not supported")
+            return str(float(v))
+        if issubclass(cls, int) and cls is not bool:
+            return str(int(v))
         raise TypeError(
             "Invalid variable type: value "
-            "should be str or int, got {!r} "
-            "of type {}".format(v, type(v))
+            "should be str, int or float, got {!r} "
+            "of type {}".format(v, cls)
         )
 
     def _get_str_query(self, *args, **kwargs):

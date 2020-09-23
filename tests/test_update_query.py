@@ -1,3 +1,5 @@
+import enum
+
 import pytest
 
 from multidict import MultiDict
@@ -155,34 +157,97 @@ def test_with_query_sequence_invalid_use(query):
         url.with_query(query)
 
 
-def test_with_query_non_str():
+class _CStr(str):
+    pass
+
+
+class _EmptyStrEr:
+    def __str__(self):
+        return ""
+
+
+class _CInt(int, _EmptyStrEr):
+    pass
+
+
+class _CFloat(float, _EmptyStrEr):
+    pass
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("1", "1", id="str"),
+        pytest.param(_CStr("1"), "1", id="custom str"),
+        pytest.param(1, "1", id="int"),
+        pytest.param(_CInt(1), "1", id="custom int"),
+        pytest.param(1.1, "1.1", id="float"),
+        pytest.param(_CFloat(1.1), "1.1", id="custom float"),
+    ],
+)
+def test_with_query_valid_type(value, expected):
+    url = URL("http://example.com")
+    expected = "http://example.com/?a={expected}".format_map(locals())
+    assert str(url.with_query({"a": value})) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "exc_type"),
+    [
+        pytest.param(True, TypeError, id="bool"),
+        pytest.param(None, TypeError, id="none"),
+        pytest.param(float("inf"), ValueError, id="non-finite float"),
+        pytest.param(float("nan"), ValueError, id="NaN float"),
+    ],
+)
+def test_with_query_invalid_type(value, exc_type):
+    url = URL("http://example.com")
+    with pytest.raises(exc_type):
+        url.with_query({"a": value})
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("1", "1", id="str"),
+        pytest.param(_CStr("1"), "1", id="custom str"),
+        pytest.param(1, "1", id="int"),
+        pytest.param(_CInt(1), "1", id="custom int"),
+        pytest.param(1.1, "1.1", id="float"),
+        pytest.param(_CFloat(1.1), "1.1", id="custom float"),
+    ],
+)
+def test_with_query_list_valid_type(value, expected):
+    url = URL("http://example.com")
+    expected = "http://example.com/?a={expected}".format_map(locals())
+    assert str(url.with_query([("a", value)])) == expected
+
+
+@pytest.mark.parametrize(
+    ("value"), [pytest.param(True, id="bool"), pytest.param(None, id="none")]
+)
+def test_with_query_list_invalid_type(value):
     url = URL("http://example.com")
     with pytest.raises(TypeError):
-        url.with_query({"a": 1.1})
+        url.with_query([("a", value)])
 
 
-def test_with_query_bool():
-    url = URL("http://example.com")
-    with pytest.raises(TypeError):
-        url.with_query({"a": True})
+def test_with_int_enum():
+    class IntEnum(int, enum.Enum):
+        A = 1
+
+    url = URL("http://example.com/path")
+    url2 = url.with_query(a=IntEnum.A)
+    assert str(url2) == "http://example.com/path?a=1"
 
 
-def test_with_query_none():
-    url = URL("http://example.com")
-    with pytest.raises(TypeError):
-        url.with_query({"a": None})
+def test_with_float_enum():
+    class FloatEnum(float, enum.Enum):
+        A = 1.1
 
-
-def test_with_query_list_non_str():
-    url = URL("http://example.com")
-    with pytest.raises(TypeError):
-        url.with_query([("a", 1.0)])
-
-
-def test_with_query_list_bool():
-    url = URL("http://example.com")
-    with pytest.raises(TypeError):
-        url.with_query([("a", False)])
+    url = URL("http://example.com/path")
+    url2 = url.with_query(a=FloatEnum.A)
+    assert str(url2) == "http://example.com/path?a=1.1"
 
 
 def test_with_query_multidict():

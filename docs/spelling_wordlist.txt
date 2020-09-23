@@ -11,3 +11,5 @@ bools
 uncompiled
 glibc
 manylinux
+subclass
+subclasses
