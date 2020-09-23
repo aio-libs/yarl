@@ -909,10 +909,12 @@ class URL:
         cls = type(v)
         if issubclass(cls, str):
             return v
-        if issubclass(cls, (int, float)) and cls is not bool:
+        if issubclass(cls, float):
             if not math.isfinite(v):
                 raise TypeError("Value should be finite")
-            return int.__str__(v)  # same as float.__str__
+            return str(float(v))
+        if issubclass(cls, int) and cls is not bool:
+            return str(int(v))
         raise TypeError(
             "Invalid variable type: value "
             "should be str, int or float, got {!r} "

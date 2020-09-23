@@ -1,3 +1,5 @@
+import enum
+
 import pytest
 
 from multidict import MultiDict
@@ -227,6 +229,24 @@ def test_with_query_list_invalid_type(value):
     url = URL("http://example.com")
     with pytest.raises(TypeError):
         url.with_query([("a", value)])
+
+
+def test_with_int_enum():
+    class IntEnum(int, enum.Enum):
+        A = 1
+
+    url = URL("http://example.com/path")
+    url2 = url.with_query(a=IntEnum.A)
+    assert str(url2) == "http://example.com/path?a=1"
+
+
+def test_with_float_enum():
+    class FloatEnum(float, enum.Enum):
+        A = 1.1
+
+    url = URL("http://example.com/path")
+    url2 = url.with_query(a=FloatEnum.A)
+    assert str(url2) == "http://example.com/path?a=1.1"
 
 
 def test_with_query_multidict():
