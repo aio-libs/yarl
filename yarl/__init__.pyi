@@ -8,7 +8,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import TypedDict, Final, final
 
-_QueryVariable = Union[str, int]
+_QueryVariable = Union[str, int, float]
 _Query = Union[
     None, str, Mapping[str, _QueryVariable], Sequence[Tuple[str, _QueryVariable]]
 ]
