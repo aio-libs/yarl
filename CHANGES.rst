@@ -14,6 +14,28 @@ Changelog
 
 .. towncrier release notes start
 
+1.6.0 (2020-09-23)
+==================
+
+Features
+--------
+
+- Allow for int and float subclasses in query, while still denying bool.
+  `#492 <https://github.com/aio-libs/yarl/issues/492>`_
+
+
+Bugfixes
+--------
+
+- Do not requote arguments in ``URL.build()``, ``with_xxx()`` and in ``/`` operator.
+  `#502 <https://github.com/aio-libs/yarl/issues/502>`_
+- Keep IPv6 brackets in ``origin()``.
+  `#504 <https://github.com/aio-libs/yarl/issues/504>`_
+
+
+----
+
+
 1.5.1 (2020-08-01)
 ==================
 
