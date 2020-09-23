@@ -197,6 +197,7 @@ def test_with_query_valid_type(value, expected):
         pytest.param(True, TypeError, id="bool"),
         pytest.param(None, TypeError, id="none"),
         pytest.param(float("inf"), ValueError, id="non-finite float"),
+        pytest.param(float("nan"), ValueError, id="NaN float"),
     ],
 )
 def test_with_query_invalid_type(value, exc_type):

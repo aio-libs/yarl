@@ -910,8 +910,10 @@ class URL:
         if issubclass(cls, str):
             return v
         if issubclass(cls, float):
-            if not math.isfinite(v):
-                raise ValueError("Value should be finite")
+            if math.isinf(v):
+                raise ValueError("float('inf') is not supported")
+            if math.isnan(v):
+                raise ValueError("float('nan') is not supported")
             return str(float(v))
         if issubclass(cls, int) and cls is not bool:
             return str(int(v))
