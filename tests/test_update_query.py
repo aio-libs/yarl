@@ -308,7 +308,11 @@ def test_with_query_memoryview():
         pytest.param({"key": "1&a=2"}, "?key=1%26a%3D2", id="mapping ampersand"),
         pytest.param([("&", "=")], "?%26=%3D", id="tuple list quote key"),
         pytest.param({"&": "="}, "?%26=%3D", id="mapping quote key"),
-        pytest.param([("a[]", "3")], "?a%5B%5D=3", id="quote one key braces",),
+        pytest.param(
+            [("a[]", "3")],
+            "?a%5B%5D=3",
+            id="quote one key braces",
+        ),
         pytest.param(
             [("a[]", "3"), ("a[]", "4")],
             "?a%5B%5D=3&a%5B%5D=4",
