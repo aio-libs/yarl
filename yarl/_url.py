@@ -126,11 +126,15 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_val")
 
-    _QUOTER = _Quoter()
-    _PATH_QUOTER = _Quoter(safe="@:", protected="/+")
-    _QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
+    _QUOTER = _Quoter(requote=False)
+    _REQUOTER = _Quoter()
+    _PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
+    _PATH_REQUOTER = _Quoter(safe="@:", protected="/+")
+    _QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
+    _QUERY_REQUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
     _QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True, requote=False)
-    _FRAGMENT_QUOTER = _Quoter(safe="?/:@")
+    _FRAGMENT_QUOTER = _Quoter(safe="?/:@", requote=False)
+    _FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
     _PATH_UNQUOTER = _Unquoter(unsafe="+")
@@ -168,15 +172,15 @@ class URL:
                     ) from e
 
                 netloc = cls._make_netloc(
-                    val.username, val.password, host, port, encode=True
+                    val.username, val.password, host, port, encode=True, requote=True
                 )
-            path = cls._PATH_QUOTER(val[2])
+            path = cls._PATH_REQUOTER(val[2])
             if netloc:
                 path = cls._normalize_path(path)
 
             cls._validate_authority_uri_abs_path(host=host, path=path)
-            query = cls._QUERY_QUOTER(val[3])
-            fragment = cls._FRAGMENT_QUOTER(val[4])
+            query = cls._QUERY_REQUOTER(val[3])
+            fragment = cls._FRAGMENT_REQUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
 
         self = object.__new__(cls)
@@ -233,7 +237,9 @@ class URL:
         elif not user and not password and not host and not port:
             netloc = ""
         else:
-            netloc = cls._make_netloc(user, password, host, port, encode=not encoded)
+            netloc = cls._make_netloc(
+                user, password, host, port, encode=not encoded, encode_host=not encoded
+            )
         if not encoded:
             path = cls._PATH_QUOTER(path)
             if netloc:
@@ -383,7 +389,7 @@ class URL:
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
         v = self._val
-        netloc = self._make_netloc(None, None, v.hostname, v.port, encode=False)
+        netloc = self._make_netloc(None, None, v.hostname, v.port)
         val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
 
@@ -424,7 +430,7 @@ class URL:
 
         """
         return self._make_netloc(
-            self.user, self.password, self.host, self.port, encode=False
+            self.user, self.password, self.host, self.port, encode_host=False
         )
 
     @property
@@ -747,8 +753,11 @@ class URL:
             return host
 
     @classmethod
-    def _make_netloc(cls, user, password, host, port, encode):
-        if encode:
+    def _make_netloc(
+        cls, user, password, host, port, encode=False, encode_host=True, requote=False
+    ):
+        quoter = cls._REQUOTER if requote else cls._QUOTER
+        if encode_host:
             ret = cls._encode_host(host)
         else:
             ret = host
@@ -759,12 +768,12 @@ class URL:
                 user = ""
             else:
                 if encode:
-                    user = cls._QUOTER(user)
+                    user = quoter(user)
             if encode:
-                password = cls._QUOTER(password)
+                password = quoter(password)
             user = user + ":" + password
         elif user and encode:
-            user = cls._QUOTER(user)
+            user = quoter(user)
         if user:
             ret = user + "@" + ret
         return ret
@@ -799,9 +808,7 @@ class URL:
             raise ValueError("user replacement is not allowed for relative URLs")
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(
-                    user, password, val.hostname, val.port, encode=True
-                )
+                netloc=self._make_netloc(user, password, val.hostname, val.port)
             ),
             encoded=True,
         )
@@ -826,9 +833,7 @@ class URL:
         val = self._val
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(
-                    val.username, password, val.hostname, val.port, encode=True
-                )
+                netloc=self._make_netloc(val.username, password, val.hostname, val.port)
             ),
             encoded=True,
         )
@@ -849,13 +854,10 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        host = self._encode_host(host)
         val = self._val
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(
-                    val.username, val.password, host, val.port, encode=False
-                )
+                netloc=self._make_netloc(val.username, val.password, host, val.port)
             ),
             encoded=True,
         )
@@ -1056,7 +1058,11 @@ class URL:
             SplitResult(
                 self.scheme,
                 self._make_netloc(
-                    self.user, self.password, self.host, self._val.port, encode=False
+                    self.user,
+                    self.password,
+                    self.host,
+                    self._val.port,
+                    encode_host=False,
                 ),
                 self.path,
                 self.query_string,
