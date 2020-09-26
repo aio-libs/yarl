@@ -32,7 +32,7 @@ flake8:
 	flake8 $(SRC)
 
 black-check:
-	black --check $(SRC)
+	black --check --diff -t py35 $(SRC)
 
 mypy:
 	mypy --show-error-codes yarl tests
@@ -40,7 +40,7 @@ mypy:
 lint: flake8 black-check mypy
 
 fmt:
-	black $(SRC)
+	black -t py35 $(SRC)
 
 
 test: lint .develop
