@@ -1071,7 +1071,7 @@ class URL:
             host = self._encode_host(self.host, human=True)
         path = _human_quote(self.path, "#?")
         query_string = "&".join(
-            "%s=%s" % (_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
+            "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
             for k, v in self.query.items()
         )
         fragment = _human_quote(self.fragment, "")
@@ -1097,7 +1097,7 @@ def _human_quote(s, unsafe):
         return s
     for c in "%" + unsafe:
         if c in s:
-            s = s.replace(c, "%%%02X" % ord(c))
+            s = s.replace(c, "%{:02X}".format(ord(c)))
     if s.isprintable():
         return s
     return "".join(c if c.isprintable() else quote(c) for c in s)
