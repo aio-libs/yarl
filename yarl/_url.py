@@ -3,7 +3,7 @@ import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
-from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit
+from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit, quote
 
 from multidict import MultiDict, MultiDictProxy
 import idna
@@ -709,7 +709,7 @@ class URL:
     if sys.version_info >= (3, 7):
 
         @classmethod
-        def _encode_host(cls, host):
+        def _encode_host(cls, host, human=False):
             try:
                 ip, sep, zone = host.partition("%")
                 ip = ip_address(ip)
@@ -719,7 +719,7 @@ class URL:
                 # skip it for ASCII-only strings
                 # Don't move the check into _idna_encode() helper
                 # to reduce the cache size
-                if host.isascii():
+                if human or host.isascii():
                     return host
                 host = _idna_encode(host)
             else:
@@ -733,12 +733,14 @@ class URL:
     else:
         # work around for missing str.isascii() in Python <= 3.6
         @classmethod
-        def _encode_host(cls, host):
+        def _encode_host(cls, host, human=False):
             try:
                 ip, sep, zone = host.partition("%")
                 ip = ip_address(ip)
             except ValueError:
                 host = host.lower()
+                if human:
+                    return host
 
                 for char in host:
                     if char > "\x7f":
@@ -1062,22 +1064,43 @@ class URL:
 
     def human_repr(self):
         """Return decoded human readable string for URL representation."""
-
+        user = _human_quote(self.user, "#/:?@")
+        password = _human_quote(self.password, "#/:?@")
+        host = self.host
+        if host:
+            host = self._encode_host(self.host, human=True)
+        path = _human_quote(self.path, "#?")
+        query_string = "&".join(
+            "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
+            for k, v in self.query.items()
+        )
+        fragment = _human_quote(self.fragment, "")
         return urlunsplit(
             SplitResult(
                 self.scheme,
                 self._make_netloc(
-                    self.user,
-                    self.password,
-                    self.host,
+                    user,
+                    password,
+                    host,
                     self._val.port,
                     encode_host=False,
                 ),
-                self.path,
-                self.query_string,
-                self.fragment,
+                path,
+                query_string,
+                fragment,
             )
         )
+
+
+def _human_quote(s, unsafe):
+    if not s:
+        return s
+    for c in "%" + unsafe:
+        if c in s:
+            s = s.replace(c, "%{:02X}".format(ord(c)))
+    if s.isprintable():
+        return s
+    return "".join(c if c.isprintable() else quote(c) for c in s)
 
 
 _MAXCACHE = 256

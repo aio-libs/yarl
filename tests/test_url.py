@@ -1242,6 +1242,7 @@ def test_split_result_non_decoded():
 def test_human_repr():
     url = URL("http://вася:пароль@хост.домен:8080/путь/сюда?арг=вал#фраг")
     s = url.human_repr()
+    assert URL(s) == url
     assert s == "http://вася:пароль@хост.домен:8080/путь/сюда?арг=вал#фраг"
 
 
@@ -1254,7 +1255,65 @@ def test_human_repr_defaults():
 def test_human_repr_default_port():
     url = URL("http://вася:пароль@хост.домен/путь/сюда?арг=вал#фраг")
     s = url.human_repr()
+    assert URL(s) == url
     assert s == "http://вася:пароль@хост.домен/путь/сюда?арг=вал#фраг"
+
+
+def test_human_repr_ipv6():
+    url = URL("http://[::1]:8080/path")
+    s = url.human_repr()
+    url2 = URL(s)
+    assert url2 == url
+    assert url2.host == "::1"
+    assert s == "http://[::1]:8080/path"
+
+
+def test_human_repr_delimiters():
+    url = URL.build(
+        scheme="http",
+        user=" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+        password=" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+        host="хост.домен",
+        port=8080,
+        path="/ !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+        query={
+            " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~": " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+        },
+        fragment=" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+    )
+    s = url.human_repr()
+    assert URL(s) == url
+    assert (
+        s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40[\\]^_`{|}~"
+        ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40[\\]^_`{|}~"
+        "@хост.домен:8080"
+        "/ !\"%23$%25&'()*+,-./:;<=>%3F@[\\]^_`{|}~"
+        "? !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
+        "= !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
+        "# !\"#$%25&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    )
+
+
+def test_human_repr_non_printable():
+    url = URL.build(
+        scheme="http",
+        user="вася\n\xad\u200b",
+        password="пароль\n\xad\u200b",
+        host="хост.домен",
+        port=8080,
+        path="/путь\n\xad\u200b",
+        query={"арг\n\xad\u200b": "вал\n\xad\u200b"},
+        fragment="фраг\n\xad\u200b",
+    )
+    s = url.human_repr()
+    assert URL(s) == url
+    assert (
+        s == "http://вася%0A%C2%AD%E2%80%8B:пароль%0A%C2%AD%E2%80%8B"
+        "@хост.домен:8080"
+        "/путь%0A%C2%AD%E2%80%8B"
+        "?арг%0A%C2%AD%E2%80%8B=вал%0A%C2%AD%E2%80%8B"
+        "#фраг%0A%C2%AD%E2%80%8B"
+    )
 
 
 # relative
