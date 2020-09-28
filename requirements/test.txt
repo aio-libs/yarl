@@ -1,5 +1,5 @@
 pytest-cov>=2.3.1
-pytest==6.0.2
+pytest==6.1.0
 multidict==4.7.6
 idna==2.10
 typing_extensions==3.7.4.2;python_version<"3.8"
