@@ -182,25 +182,29 @@ def test_unquoting(num, unquoter):
         assert expect == result
 
 
-@pytest.mark.xfail
-# FIXME: Expected value should be the same as given.
+# Expected value should be the same as given.
 # See https://url.spec.whatwg.org/#percent-encoded-bytes
-def test_unquoting_bad_percent_escapes_1(unquoter):
-    assert "%" == unquoter()("%")
-
-
-@pytest.mark.xfail
-# FIXME: Expected value should be the same as given.
-# See https://url.spec.whatwg.org/#percent-encoded-bytes
-def test_unquoting_bad_percent_escapes_2(unquoter):
-    assert "%x" == unquoter()("%x")
-
-
-@pytest.mark.xfail
-# FIXME: Expected value should be the same as given.
-# See https://url.spec.whatwg.org/#percent-encoded-bytes
-def test_unquoting_bad_percent_escapes_3(unquoter):
-    assert "%xa" == unquoter()("%xa")
+@pytest.mark.parametrize(
+    ("input", "expected"),
+    [
+        ("%", "%"),
+        ("%2", "%2"),
+        ("%x", "%x"),
+        ("%€", "%€"),
+        ("%2x", "%2x"),
+        ("%2 ", "%2 "),
+        ("% 2", "% 2"),
+        ("%xa", "%xa"),
+        ("%%", "%%"),
+        ("%%3f", "%?"),
+        ("%2%", "%2%"),
+        ("%2%3f", "%2?"),
+        ("%x%3f", "%x?"),
+        ("%€%3f", "%€?"),
+    ],
+)
+def test_unquoting_bad_percent_escapes(unquoter, input, expected):
+    assert unquoter()(input) == expected
 
 
 @pytest.mark.xfail
