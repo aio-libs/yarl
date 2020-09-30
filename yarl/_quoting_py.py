@@ -157,13 +157,9 @@ class _Unquoter:
             if ch == "%" and idx <= len(val) - 2:
                 pct = val[idx : idx + 2]  # noqa: E203
                 if _IS_HEX_STR.fullmatch(pct):
-                    try:
-                        pcts.append(int(pct, base=16))
-                    except ValueError:
-                        ret.append("%")
-                    else:
-                        last_pct = "%" + pct
-                        idx += 2
+                    pcts.append(int(pct, base=16))
+                    last_pct = "%" + pct
+                    idx += 2
                     continue
 
             if pcts:

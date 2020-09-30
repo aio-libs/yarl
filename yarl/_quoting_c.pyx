@@ -355,13 +355,13 @@ cdef class _Unquoter:
 
             if ch == '%' and idx <= length - 2:
                 ch = _restore_ch(val[idx], val[idx + 1])
-                if ch == <Py_UCS4>-1:
-                    ret.append("%")
-                else:
+                if ch != <Py_UCS4>-1:
                     pcts.append(ch)
                     last_pct = val[idx - 1 : idx + 2]
                     idx += 2
-                continue
+                    continue
+                else:
+                    ch = '%'
 
             if pcts:
                 ret.append(last_pct)  # %F8ab
