@@ -1,0 +1,1 @@
+Fixed  requoting a single percent followed by a percent-encoded character in the Cython implementation.

@@ -39,6 +39,10 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
+cdef inline int _is_lower_hex(Py_UCS4 v):
+    return 'a' <= v <= 'f'
+
+
 cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
@@ -124,26 +128,6 @@ cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed):
     if _write_char(writer, _to_hex(<uint8_t>ch >> 4), changed) < 0:
         return -1
     return _write_char(writer, _to_hex(<uint8_t>ch & 0x0f), changed)
-
-
-cdef inline int _write_percent(Writer* writer):
-    if _write_char(writer, '%', True) < 0:
-        return -1
-    if _write_char(writer, '2', True) < 0:
-        return -1
-    return _write_char(writer, '5', True)
-
-
-cdef inline int _write_pct_check(Writer* writer, Py_UCS4 ch, Py_UCS4 pct[]):
-    cdef Py_UCS4 pct1 = _to_hex(<uint8_t>ch >> 4)
-    cdef Py_UCS4 pct2 = _to_hex(<uint8_t>ch & 0x0f)
-    cdef bint changed = pct[0] != pct1 or pct[1] != pct2
-
-    if _write_char(writer, '%', changed) < 0:
-        return -1
-    if _write_char(writer, pct1, changed) < 0:
-        return -1
-    return _write_char(writer, pct2, changed)
 
 
 cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
@@ -236,27 +220,17 @@ cdef class _Quoter:
 
     cdef str _do_quote(self, str val, Writer *writer):
         cdef Py_UCS4 ch
-        cdef int has_pct = 0
-        cdef Py_UCS4 pct[2]
+        cdef int changed
         cdef int idx = 0
+        cdef int length = len(val)
 
-        for ch in val:
-            if has_pct:
-                pct[has_pct-1] = ch
-                has_pct += 1
-                if has_pct == 3:
-                    ch = _restore_ch(pct[0], pct[1])
-                    has_pct = 0
-
-                    if ch == <Py_UCS4>-1:
-                        if _write_percent(writer) < 0:
-                            raise
-                        if self._write(writer, pct[0]) < 0:
-                            raise
-                        if self._write(writer, pct[1]) < 0:
-                            raise
-                        continue
-
+        while idx < length:
+            ch = val[idx]
+            idx += 1
+            if ch == '%' and self._requote and idx <= length - 2:
+                ch = _restore_ch(val[idx], val[idx + 1])
+                if ch != <Py_UCS4>-1:
+                    idx += 2
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
                             if _write_pct(writer, ch, True) < 0:
@@ -268,23 +242,16 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                    if _write_pct_check(writer, ch, pct) < 0:
+                    changed = (_is_lower_hex(val[idx - 2]) or
+                               _is_lower_hex(val[idx - 1]))
+                    if _write_pct(writer, ch, changed) < 0:
                         raise
-                continue
-
-            elif ch == '%' and self._requote:
-                has_pct = 1
-                continue
+                    continue
+                else:
+                    ch = '%'
 
             if self._write(writer, ch) < 0:
                 raise
-
-        if has_pct:
-            if _write_percent(writer) < 0:
-                raise
-            if has_pct > 1:  # the value is 2
-                if self._write(writer, ch) < 0:
-                    raise
 
         if not writer.changed:
             return val

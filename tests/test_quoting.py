@@ -44,8 +44,28 @@ def test_quote_unfinished_tail_percent_non_strict(quoter):
     assert quoter()("%") == "%25"
 
 
-def test_quote_unfinished_tail_non_strict(quoter):
+def test_quote_unfinished_tail_digit_non_strict(quoter):
     assert quoter()("%2") == "%252"
+
+
+def test_quote_unfinished_tail_safe_non_strict(quoter):
+    assert quoter()("%x") == "%25x"
+
+
+def test_quote_unfinished_tail_unsafe_non_strict(quoter):
+    assert quoter()("%#") == "%25%23"
+
+
+def test_quote_unfinished_tail_non_ascii_non_strict(quoter):
+    assert quoter()("%ß") == "%25%C3%9F"
+
+
+def test_quote_unfinished_tail_non_ascii2_non_strict(quoter):
+    assert quoter()("%€") == "%25%E2%82%AC"
+
+
+def test_quote_unfinished_tail_non_ascii3_non_strict(quoter):
+    assert quoter()("%🐍") == "%25%F0%9F%90%8D"
 
 
 def test_quote_from_bytes(quoter):
@@ -307,6 +327,34 @@ def test_quote_non_ascii(quoter):
 
 def test_quote_non_ascii2(quoter):
     assert quoter()("a%F8b") == "a%F8b"
+
+
+def test_quote_percent_percent_encoded(quoter):
+    assert quoter()("%%3f") == "%25%3F"
+
+
+def test_quote_percent_digit_percent_encoded(quoter):
+    assert quoter()("%2%3f") == "%252%3F"
+
+
+def test_quote_percent_safe_percent_encoded(quoter):
+    assert quoter()("%x%3f") == "%25x%3F"
+
+
+def test_quote_percent_unsafe_percent_encoded(quoter):
+    assert quoter()("%#%3f") == "%25%23%3F"
+
+
+def test_quote_percent_non_ascii_percent_encoded(quoter):
+    assert quoter()("%ß%3f") == "%25%C3%9F%3F"
+
+
+def test_quote_percent_non_ascii2_percent_encoded(quoter):
+    assert quoter()("%€%3f") == "%25%E2%82%AC%3F"
+
+
+def test_quote_percent_non_ascii3_percent_encoded(quoter):
+    assert quoter()("%🐍%3f") == "%25%F0%9F%90%8D%3F"
 
 
 class StrLike(str):
