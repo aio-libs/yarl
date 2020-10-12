@@ -38,6 +38,11 @@ jobs:
       uses: py-actions/py-dependency-install@v2
       with:
         path: requirements/lint.txt
+    - name: Install itself
+      run: |
+        python setup.py install
+      env:
+        YARL_NO_EXTENSIONS: 1
     - name: Run linters
       run: |
         make lint
