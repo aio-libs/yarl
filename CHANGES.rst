@@ -14,6 +14,16 @@ Changelog
 
 .. towncrier release notes start
 
+1.6.2 (2020-10-12)
+==================
+
+
+Bugfixes
+--------
+
+- Provide generated ``.c`` files in TarBall distribution.
+  `#530  <https://github.com/aio-libs/multidict/issues/530>`_
+
 1.6.1 (2020-10-12)
 ==================
 
@@ -22,9 +32,9 @@ Features
 
 - Provide wheels for ``aarch64``, ``i686``, ``ppc64le``, ``s390x`` architectures on
   Linux as well as ``x86_64``.
-  `#507  <https://github.com/aio-libs/multidict/issues/507>`_
+  `#507  <https://github.com/aio-libs/yarl/issues/507>`_
 - Provide wheels for Python 3.9.
-  `#526 <https://github.com/aio-libs/multidict/issues/526>`_
+  `#526 <https://github.com/aio-libs/yarl/issues/526>`_
 
 Bugfixes
 --------
