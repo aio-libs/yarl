@@ -13,3 +13,4 @@ glibc
 manylinux
 subclass
 subclasses
+yarl
