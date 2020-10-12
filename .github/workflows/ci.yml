@@ -119,6 +119,7 @@ jobs:
     - name: Run unittests
       env:
         COLOR: 'yes'
+        YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: |
         python -m pytest tests -vv
         python -m coverage xml
