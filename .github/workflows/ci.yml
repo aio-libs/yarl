@@ -49,7 +49,7 @@ jobs:
     - name: Install spell checker
       run: |
         sudo apt install libenchant-dev
-        pip install -r requirements/doc.txt
+        pip install -r requirements/doc-spelling.txt
     - name: Run docs spelling
       run: |
         make doc-spelling
