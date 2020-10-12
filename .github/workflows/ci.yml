@@ -97,12 +97,12 @@ jobs:
         restore-keys: |
             pip-ci-${{ runner.os }}-${{ matrix.pyver }}-
     - name: Install cython
-      if: ${{ matrix.no-extensions == "" }} 
+      if: ${{ matrix.no-extensions == '' }} 
       uses: py-actions/py-dependency-install@v2
       with:
         path: requirements/cython.txt
     - name: Cythonize
-      if: ${{ matrix.no-extensions == "" }} 
+      if: ${{ matrix.no-extensions == '' }} 
       run: |
         make cythonize
     - name: Install dependencies
@@ -181,12 +181,12 @@ jobs:
       with:
         python-version: 3.8
     - name: Install cython
-      if: ${{ matrix.no-extensions == "" }} 
+      if: ${{ matrix.no-extensions == '' }} 
       uses: py-actions/py-dependency-install@v2
       with:
         path: requirements/cython.txt
     - name: Cythonize
-      if: ${{ matrix.no-extensions == "" }} 
+      if: ${{ matrix.no-extensions == '' }} 
       run: |
         make cythonize
     - name: Install tools
@@ -224,12 +224,12 @@ jobs:
       with:
         python-version: ${{ matrix.pyver }}
     - name: Install cython
-      if: ${{ matrix.no-extensions == "" }} 
+      if: ${{ matrix.no-extensions == '' }} 
       uses: py-actions/py-dependency-install@v2
       with:
         path: requirements/cython.txt
     - name: Cythonize
-      if: ${{ matrix.no-extensions == "" }} 
+      if: ${{ matrix.no-extensions == '' }} 
       run: |
         make cythonize
     - name: Install dependencies
