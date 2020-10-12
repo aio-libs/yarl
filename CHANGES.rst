@@ -14,6 +14,41 @@ Changelog
 
 .. towncrier release notes start
 
+1.6.1 (2020-10-12)
+==================
+
+Features
+--------
+
+- Provide wheels for ``aarch64``, ``i686``, ``ppc64le``, ``s390x`` architectures on
+  Linux as well as ``x86_64``.
+  `#507  <https://github.com/aio-libs/multidict/issues/507>`_
+- Provide wheels for Python 3.9.
+  `#526 <https://github.com/aio-libs/multidict/issues/526>`_
+
+Bugfixes
+--------
+
+- ``human_repr()`` now always produces valid representation equivalent to the original URL (if the original URL is valid).
+  `#511 <https://github.com/aio-libs/yarl/issues/511>`_
+- Fixed  requoting a single percent followed by a percent-encoded character in the Cython implementation.
+  `#514 <https://github.com/aio-libs/yarl/issues/514>`_
+- Fix ValueError when decoding ``%`` which is not followed by two hexadecimal digits.
+  `#516 <https://github.com/aio-libs/yarl/issues/516>`_
+- Fix decoding ``%`` followed by a space and hexadecimal digit.
+  `#520 <https://github.com/aio-libs/yarl/issues/520>`_
+- Fix annotation of ``with_query()``/``update_query()`` methods for ``key=[val1, val2]`` case.
+  `#528 <https://github.com/aio-libs/yarl/issues/528>`_
+
+Removal
+-------
+
+- Drop Python 3.5 support; Python 3.6 is the minimal supported Python version.
+
+
+----
+
+
 1.6.0 (2020-09-23)
 ==================
 

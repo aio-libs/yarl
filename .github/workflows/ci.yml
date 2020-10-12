@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     # Run only on pushing a tag
-    # if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     steps:
       - name: Dummy
         run: |
@@ -253,7 +253,6 @@ jobs:
   deploy:
     name: Deploy
     needs: [build-linux, build-binary, build-tarball]
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
     - name: Setup Python 3.8
