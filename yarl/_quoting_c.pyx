@@ -295,19 +295,17 @@ cdef class _Unquoter:
     cdef str _do_unquote(self, str val):
         if len(val) == 0:
             return val
-        cdef str pct = ''
         cdef str last_pct = ''
         cdef bytearray pcts = bytearray()
         cdef list ret = []
         cdef str unquoted
-        for ch in val:
-            if pct:
-                pct += ch
-                if len(pct) == 3:  # pragma: no branch   # peephole optimizer
-                    pcts.append(int(pct[1:], base=16))
-                    last_pct = pct
-                    pct = ''
-                continue
+        cdef Py_UCS4 ch = 0
+        cdef int idx = 0
+        cdef int length = len(val)
+
+        while idx < length:
+            ch = val[idx]
+            idx += 1
             if pcts:
                 try:
                     unquoted = pcts.decode('utf8')
@@ -322,9 +320,15 @@ cdef class _Unquoter:
                         ret.append(unquoted)
                     del pcts[:]
 
-            if ch == '%':
-                pct = ch
-                continue
+            if ch == '%' and idx <= length - 2:
+                ch = _restore_ch(val[idx], val[idx + 1])
+                if ch != <Py_UCS4>-1:
+                    pcts.append(ch)
+                    last_pct = val[idx - 1 : idx + 2]
+                    idx += 2
+                    continue
+                else:
+                    ch = '%'
 
             if pcts:
                 ret.append(last_pct)  # %F8ab

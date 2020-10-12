@@ -14,6 +14,7 @@ ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
 _IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
+_IS_HEX_STR = re.compile("[A-Fa-f0-9][A-Fa-f0-9]")
 
 
 class _Quoter:
@@ -126,18 +127,13 @@ class _Unquoter:
             raise TypeError("Argument should be str")
         if not val:
             return ""
-        pct = ""
         last_pct = ""
         pcts = bytearray()
         ret = []
-        for ch in val:
-            if pct:
-                pct += ch
-                if len(pct) == 3:  # pragma: no branch   # peephole optimizer
-                    pcts.append(int(pct[1:], base=16))
-                    last_pct = pct
-                    pct = ""
-                continue
+        idx = 0
+        while idx < len(val):
+            ch = val[idx]
+            idx += 1
             if pcts:
                 try:
                     unquoted = pcts.decode("utf8")
@@ -158,9 +154,13 @@ class _Unquoter:
                         ret.append(unquoted)
                     del pcts[:]
 
-            if ch == "%":
-                pct = ch
-                continue
+            if ch == "%" and idx <= len(val) - 2:
+                pct = val[idx : idx + 2]  # noqa: E203
+                if _IS_HEX_STR.fullmatch(pct):
+                    pcts.append(int(pct, base=16))
+                    last_pct = "%" + pct
+                    idx += 2
+                    continue
 
             if pcts:
                 ret.append(last_pct)  # %F8ab
