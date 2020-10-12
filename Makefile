@@ -15,7 +15,7 @@ all: test
 
 
 yarl/%.c: yarl/%.pyx
-	cython -3 -o $@ $< -I yarl
+	python -m cython -3 -o $@ $< -I yarl
 
 
 .cythonize: .install-cython $(PYXS:.pyx=.c)

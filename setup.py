@@ -54,10 +54,10 @@ args = dict(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Internet :: WWW/HTTP",
     ],
     author="Andrew Svetlov",
@@ -66,7 +66,7 @@ args = dict(
     license="Apache 2",
     packages=["yarl"],
     install_requires=install_requires,
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     include_package_data=True,
 )
 
