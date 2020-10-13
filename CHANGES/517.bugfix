@@ -1,1 +1,1 @@
-No longer loss characters when decode incorrect percent-sequences (like ``%e2%82%f8``). All non-decodable percent-sequences are now preserved intact.
+No longer loose characters when decoding incorrect percent-sequences (like ``%e2%82%f8``). All non-decodable percent-sequences are now preserved.
