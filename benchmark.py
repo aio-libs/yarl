@@ -2,13 +2,13 @@ import timeit
 
 
 cython_setup = """\
-from yarl.quoting import _Quoter as Quoter
-from yarl.quoting import _Unquoter as Unquoter
+from yarl._quoting_c import _Quoter as Quoter
+from yarl._quoting_c import _Unquoter as Unquoter
 """
 
 python_setup = """\
-from yarl.quoting import _PyQuoter as Quoter
-from yarl.quoting import _PyUnquoter as Unquoter
+from yarl._quoting_py import _Quoter as Quoter
+from yarl._quoting_py import _Unquoter as Unquoter
 """
 
 
