@@ -1,8 +1,8 @@
 yarl
 ====
 
-.. image:: https://dev.azure.com/aio-libs/yarl/_apis/build/status/CI?branchName=master
-  :target: https://dev.azure.com/aio-libs/yarl/_build/latest?definitionId=7&branchName=master
+.. image:: ![CI](https://github.com/aio-libs/yarl/workflows/CI/badge.svg)
+  :target: https://github.com/aio-libs/yarl/actions?query=workflow%3ACI
   :align: right
 
 .. image:: https://codecov.io/gh/aio-libs/yarl/branch/master/graph/badge.svg

@@ -4,9 +4,9 @@ include README.rst
 graft yarl
 graft docs
 graft tests
+include yarl/*.c
 global-exclude *.pyc
 global-exclude *.cache
-include yarl/_quoting_c.c
 exclude yarl/*.html
 exclude yarl/*.so
 exclude yarl/*.pyd

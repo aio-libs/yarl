@@ -1,1 +1,0 @@
-Fix decoding ``%`` followed by a space and hexadecimal digit.
