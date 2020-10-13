@@ -7,6 +7,7 @@ from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
+import codecs
 from string import ascii_letters, digits
 
 cdef str GEN_DELIMS = ":/?#[]@"
@@ -20,6 +21,7 @@ cdef str QS = '+&=;'
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 cdef char BUFFER[BUF_SIZE]
 
+utf8_decoder = codecs.getincrementaldecoder("utf-8")
 
 cdef inline Py_UCS4 _to_hex(uint8_t v):
     if v < 10:
@@ -295,44 +297,51 @@ cdef class _Unquoter:
     cdef str _do_unquote(self, str val):
         if len(val) == 0:
             return val
-        cdef str last_pct = ''
-        cdef bytearray pcts = bytearray()
         cdef list ret = []
+        cdef bytes b
         cdef str unquoted
         cdef Py_UCS4 ch = 0
         cdef int idx = 0
         cdef int length = len(val)
+        cdef int start_pct
+
+        decoder = utf8_decoder()
 
         while idx < length:
             ch = val[idx]
             idx += 1
-            if pcts:
-                try:
-                    unquoted = pcts.decode('utf8')
-                except UnicodeDecodeError:
-                    pass
-                else:
+            if ch == '%' and idx <= length - 2:
+                ch = _restore_ch(val[idx], val[idx + 1])
+                if ch != <Py_UCS4>-1:
+                    b = bytes((<int>ch,))
+                    idx += 2
+                    try:
+                        unquoted = decoder.decode(b)
+                    except UnicodeDecodeError:
+                        start_pct = idx - 3 - len(decoder.buffer) * 3
+                        ret.append(val[start_pct : idx - 3])
+                        decoder.reset()
+                        try:
+                            unquoted = decoder.decode(b)
+                        except UnicodeDecodeError:
+                            ret.append(val[idx - 3 : idx])
+                            continue
+                    if not unquoted:
+                        continue
                     if self._qs and unquoted in '+=&;':
                         ret.append(self._qs_quoter(unquoted))
                     elif unquoted in self._unsafe:
                         ret.append(self._quoter(unquoted))
                     else:
                         ret.append(unquoted)
-                    del pcts[:]
-
-            if ch == '%' and idx <= length - 2:
-                ch = _restore_ch(val[idx], val[idx + 1])
-                if ch != <Py_UCS4>-1:
-                    pcts.append(ch)
-                    last_pct = val[idx - 1 : idx + 2]
-                    idx += 2
                     continue
                 else:
                     ch = '%'
 
-            if pcts:
-                ret.append(last_pct)  # %F8ab
-                last_pct = ''
+            if decoder.buffer:
+                start_pct = idx - 1 - len(decoder.buffer) * 3
+                ret.append(val[start_pct : idx - 1])
+                decoder.reset()
 
             if ch == '+':
                 if not self._qs or ch in self._unsafe:
@@ -350,16 +359,7 @@ cdef class _Unquoter:
 
             ret.append(ch)
 
-        if pcts:
-            try:
-                unquoted = pcts.decode('utf8')
-            except UnicodeDecodeError:
-                ret.append(last_pct)  # %F8
-            else:
-                if self._qs and unquoted in '+=&;':
-                    ret.append(self._qs_quoter(unquoted))
-                elif unquoted in self._unsafe:
-                    ret.append(self._quoter(unquoted))
-                else:
-                    ret.append(unquoted)
+        if decoder.buffer:
+            ret.append(val[length - len(decoder.buffer) * 3 : length])
+
         return ''.join(ret)
