@@ -5,9 +5,8 @@ from libc.string cimport memcpy, memset
 
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from cpython.unicode cimport PyUnicode_DecodeASCII
+from cpython.unicode cimport PyUnicode_DecodeASCII, PyUnicode_DecodeUTF8Stateful
 
-import codecs
 from string import ascii_letters, digits
 
 cdef str GEN_DELIMS = ":/?#[]@"
@@ -20,8 +19,6 @@ cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 cdef char BUFFER[BUF_SIZE]
-
-utf8_decoder = codecs.getincrementaldecoder("utf-8")
 
 cdef inline Py_UCS4 _to_hex(uint8_t v):
     if v < 10:
@@ -298,14 +295,14 @@ cdef class _Unquoter:
         if len(val) == 0:
             return val
         cdef list ret = []
-        cdef bytes b
+        cdef char buffer[4]
+        cdef Py_ssize_t buflen = 0
+        cdef Py_ssize_t consumed
         cdef str unquoted
         cdef Py_UCS4 ch = 0
-        cdef int idx = 0
-        cdef int length = len(val)
-        cdef int start_pct
-
-        decoder = utf8_decoder()
+        cdef Py_ssize_t idx = 0
+        cdef Py_ssize_t length = len(val)
+        cdef Py_ssize_t start_pct
 
         while idx < length:
             ch = val[idx]
@@ -313,21 +310,30 @@ cdef class _Unquoter:
             if ch == '%' and idx <= length - 2:
                 ch = _restore_ch(val[idx], val[idx + 1])
                 if ch != <Py_UCS4>-1:
-                    b = bytes((<int>ch,))
                     idx += 2
+                    assert buflen < 4
+                    buffer[buflen] = ch
+                    buflen += 1
                     try:
-                        unquoted = decoder.decode(b)
+                        unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
+                                                                NULL, &consumed)
                     except UnicodeDecodeError:
-                        start_pct = idx - 3 - len(decoder.buffer) * 3
+                        start_pct = idx - buflen * 3
+                        buffer[0] = ch
+                        buflen = 1
                         ret.append(val[start_pct : idx - 3])
-                        decoder.reset()
                         try:
-                            unquoted = decoder.decode(b)
+                            unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
+                                                                    NULL, &consumed)
                         except UnicodeDecodeError:
+                            buflen = 0
                             ret.append(val[idx - 3 : idx])
                             continue
                     if not unquoted:
+                        assert consumed == 0
                         continue
+                    assert consumed == buflen
+                    buflen = 0
                     if self._qs and unquoted in '+=&;':
                         ret.append(self._qs_quoter(unquoted))
                     elif unquoted in self._unsafe:
@@ -338,10 +344,10 @@ cdef class _Unquoter:
                 else:
                     ch = '%'
 
-            if decoder.buffer:
-                start_pct = idx - 1 - len(decoder.buffer) * 3
+            if buflen:
+                start_pct = idx - 1 - buflen * 3
                 ret.append(val[start_pct : idx - 1])
-                decoder.reset()
+                buflen = 0
 
             if ch == '+':
                 if not self._qs or ch in self._unsafe:
@@ -359,7 +365,7 @@ cdef class _Unquoter:
 
             ret.append(ch)
 
-        if decoder.buffer:
-            ret.append(val[length - len(decoder.buffer) * 3 : length])
+        if buflen:
+            ret.append(val[length - buflen * 3 : length])
 
         return ''.join(ret)
