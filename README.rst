@@ -1,7 +1,7 @@
 yarl
 ====
 
-.. image:: ![CI](https://github.com/aio-libs/yarl/workflows/CI/badge.svg)
+.. image:: https://github.com/aio-libs/yarl/workflows/CI/badge.svg
   :target: https://github.com/aio-libs/yarl/actions?query=workflow%3ACI
   :align: right
 
