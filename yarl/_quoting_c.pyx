@@ -5,7 +5,7 @@ from libc.string cimport memcpy, memset
 
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from cpython.unicode cimport PyUnicode_DecodeASCII
+from cpython.unicode cimport PyUnicode_DecodeASCII, PyUnicode_DecodeUTF8Stateful
 
 from string import ascii_letters, digits
 
@@ -19,7 +19,6 @@ cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 cdef char BUFFER[BUF_SIZE]
-
 
 cdef inline Py_UCS4 _to_hex(uint8_t v):
     if v < 10:
@@ -295,44 +294,60 @@ cdef class _Unquoter:
     cdef str _do_unquote(self, str val):
         if len(val) == 0:
             return val
-        cdef str last_pct = ''
-        cdef bytearray pcts = bytearray()
         cdef list ret = []
+        cdef char buffer[4]
+        cdef Py_ssize_t buflen = 0
+        cdef Py_ssize_t consumed
         cdef str unquoted
         cdef Py_UCS4 ch = 0
-        cdef int idx = 0
-        cdef int length = len(val)
+        cdef Py_ssize_t idx = 0
+        cdef Py_ssize_t length = len(val)
+        cdef Py_ssize_t start_pct
 
         while idx < length:
             ch = val[idx]
             idx += 1
-            if pcts:
-                try:
-                    unquoted = pcts.decode('utf8')
-                except UnicodeDecodeError:
-                    pass
-                else:
+            if ch == '%' and idx <= length - 2:
+                ch = _restore_ch(val[idx], val[idx + 1])
+                if ch != <Py_UCS4>-1:
+                    idx += 2
+                    assert buflen < 4
+                    buffer[buflen] = ch
+                    buflen += 1
+                    try:
+                        unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
+                                                                NULL, &consumed)
+                    except UnicodeDecodeError:
+                        start_pct = idx - buflen * 3
+                        buffer[0] = ch
+                        buflen = 1
+                        ret.append(val[start_pct : idx - 3])
+                        try:
+                            unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
+                                                                    NULL, &consumed)
+                        except UnicodeDecodeError:
+                            buflen = 0
+                            ret.append(val[idx - 3 : idx])
+                            continue
+                    if not unquoted:
+                        assert consumed == 0
+                        continue
+                    assert consumed == buflen
+                    buflen = 0
                     if self._qs and unquoted in '+=&;':
                         ret.append(self._qs_quoter(unquoted))
                     elif unquoted in self._unsafe:
                         ret.append(self._quoter(unquoted))
                     else:
                         ret.append(unquoted)
-                    del pcts[:]
-
-            if ch == '%' and idx <= length - 2:
-                ch = _restore_ch(val[idx], val[idx + 1])
-                if ch != <Py_UCS4>-1:
-                    pcts.append(ch)
-                    last_pct = val[idx - 1 : idx + 2]
-                    idx += 2
                     continue
                 else:
                     ch = '%'
 
-            if pcts:
-                ret.append(last_pct)  # %F8ab
-                last_pct = ''
+            if buflen:
+                start_pct = idx - 1 - buflen * 3
+                ret.append(val[start_pct : idx - 1])
+                buflen = 0
 
             if ch == '+':
                 if not self._qs or ch in self._unsafe:
@@ -350,16 +365,7 @@ cdef class _Unquoter:
 
             ret.append(ch)
 
-        if pcts:
-            try:
-                unquoted = pcts.decode('utf8')
-            except UnicodeDecodeError:
-                ret.append(last_pct)  # %F8
-            else:
-                if self._qs and unquoted in '+=&;':
-                    ret.append(self._qs_quoter(unquoted))
-                elif unquoted in self._unsafe:
-                    ret.append(self._quoter(unquoted))
-                else:
-                    ret.append(unquoted)
+        if buflen:
+            ret.append(val[length - buflen * 3 : length])
+
         return ''.join(ret)

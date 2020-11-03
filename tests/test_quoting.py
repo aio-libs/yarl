@@ -317,12 +317,27 @@ def test_unquote_unsafe4(unquoter):
     assert unquoter(unsafe="@")("a@b") == "a%40b"
 
 
-def test_unquote_non_ascii(unquoter):
-    assert unquoter()("%F8") == "%F8"
+@pytest.mark.parametrize(
+    ("input", "expected"),
+    [
+        ("%e2%82", "%e2%82"),
+        ("%e2%82ac", "%e2%82ac"),
+        ("%e2%82%f8", "%e2%82%f8"),
+        ("%e2%82%2b", "%e2%82+"),
+        ("%e2%82%e2%82%ac", "%e2%82€"),
+        ("%e2%82%e2%82", "%e2%82%e2%82"),
+    ],
+)
+def test_unquote_non_utf8(unquoter, input, expected):
+    assert unquoter()(input) == expected
 
 
-def test_unquote_non_ascii_non_tailing(unquoter):
-    assert unquoter()("%F8ab") == "%F8ab"
+def test_unquote_unsafe_non_utf8(unquoter):
+    assert unquoter(unsafe="\n")("%e2%82%0a") == "%e2%82%0A"
+
+
+def test_unquote_plus_non_utf8(unquoter):
+    assert unquoter(qs=True)("%e2%82%2b") == "%e2%82%2B"
 
 
 def test_quote_non_ascii(quoter):
