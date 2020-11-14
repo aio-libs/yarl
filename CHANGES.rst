@@ -14,6 +14,21 @@ Changelog
 
 .. towncrier release notes start
 
+1.6.3 (2020-11-14)
+==================
+
+Bugfixes
+--------
+
+- No longer loose characters when decoding incorrect percent-sequences (like ``%e2%82%f8``). All non-decodable percent-sequences are now preserved.
+  `#517 <https://github.com/aio-libs/yarl/issues/517>`_
+- Provide x86 Windows wheels.
+  `#535 <https://github.com/aio-libs/yarl/issues/535>`_
+
+
+----
+
+
 1.6.2 (2020-10-12)
 ==================
 
