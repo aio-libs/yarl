@@ -226,6 +226,10 @@ jobs:
       matrix:
         pyver: [3.6, 3.7, 3.8, 3.9]
         os: [macos, windows]
+        arch: [x86, x64]
+        exclude:
+        - os: macos
+          arch: x86
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
     needs: pre-deploy
@@ -236,6 +240,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.pyver }}
+        architecture: ${{ matrix.arch }}
     - name: Install cython
       if: ${{ matrix.no-extensions == '' }} 
       uses: py-actions/py-dependency-install@v2
