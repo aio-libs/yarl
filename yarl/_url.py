@@ -126,7 +126,7 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ("_cache", "_val")
+    __slots__ = ("_cache", "_val", "_separator")
 
     _QUOTER = _Quoter(requote=False)
     _REQUOTER = _Quoter()
@@ -142,7 +142,7 @@ class URL:
     _PATH_UNQUOTER = _Unquoter(unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
-    def __new__(cls, val="", *, encoded=False, strict=None):
+    def __new__(cls, val="", *, encoded=False, strict=None, separator="&"):
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is cls:
@@ -188,6 +188,7 @@ class URL:
         self = object.__new__(cls)
         self._val = val
         self._cache = {}
+        self._separator = separator
         return self
 
     @classmethod
@@ -551,7 +552,10 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
+        if (3, 8, 8) <= sys.version_info < (3, 9) or sys.version_info >= (3, 9, 2):
+            ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True, separator=self._separator))
+        else:
+            ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
 
     @property

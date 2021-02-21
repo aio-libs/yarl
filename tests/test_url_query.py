@@ -63,7 +63,7 @@ def test_ampersand_as_value():
 
 
 def test_semicolon_as_separator():
-    u = URL("http://127.0.0.1/?a=1;b=2")
+    u = URL("http://127.0.0.1/?a=1;b=2", separator=";")
     assert len(u.query) == 2
 
 
