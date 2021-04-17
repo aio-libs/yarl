@@ -553,10 +553,10 @@ class URL:
 
         """
         if (
-            (3, 6, 13) <= sys.version_info < (3, 7) or
-            (3, 7, 10) <= sys.version_info < (3, 8) or
-            (3, 8, 8) <= sys.version_info < (3, 9) or
-            sys.version_info >= (3, 9, 2)
+            (3, 6, 13) <= sys.version_info < (3, 7)
+            or (3, 7, 10) <= sys.version_info < (3, 8)
+            or (3, 8, 8) <= sys.version_info < (3, 9)
+            or sys.version_info >= (3, 9, 2)
         ):
             ret = MultiDict(
                 parse_qsl(
