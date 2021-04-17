@@ -553,7 +553,13 @@ class URL:
 
         """
         if (3, 8, 8) <= sys.version_info < (3, 9) or sys.version_info >= (3, 9, 2):
-            ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True, separator=self._separator))
+            ret = MultiDict(
+                parse_qsl(
+                    self.raw_query_string,
+                    keep_blank_values=True,
+                    separator=self._separator,
+                )
+            )
         else:
             ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
