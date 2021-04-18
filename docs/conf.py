@@ -67,6 +67,10 @@ intersphinx_mapping = {
     'python': ('http://docs.python.org/3', None),
     'multidict': ('http://multidict.readthedocs.io/', None)}
 
+
+# Add any paths that contain templates here, relative to this directory.
+# templates_path = ['_templates']
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
