@@ -15,7 +15,7 @@ def test_inheritance():
             pass
 
     assert (
-        "Inheritance a class "
+        "Inheriting a class "
         "<class 'test_url.test_inheritance.<locals>.MyURL'> "
         "from URL is forbidden" == str(ctx.value)
     )
@@ -1025,6 +1025,14 @@ def test_from_non_ascii_path():
     ) == str(url)
 
 
+def test_bytes():
+    url = URL("http://example.com/путь/туда")
+    assert (
+        b"http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
+        == bytes(url)
+    )
+
+
 def test_from_ascii_query_parts():
     url = URL(
         "http://example.com/"
@@ -1223,7 +1231,7 @@ ABNORMAL = [
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 5), reason="Python 3.4 doen't support abnormal cases"
+    sys.version_info < (3, 5), reason="Python 3.4 doesn't support abnormal cases"
 )
 @pytest.mark.parametrize("url,expected", ABNORMAL)
 def test_join_from_rfc_3986_abnormal(url, expected):

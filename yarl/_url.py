@@ -261,7 +261,7 @@ class URL:
             return url
 
     def __init_subclass__(cls):
-        raise TypeError("Inheritance a class {!r} from URL is forbidden".format(cls))
+        raise TypeError("Inheriting a class {!r} from URL is forbidden".format(cls))
 
     def __str__(self):
         val = self._val
@@ -271,6 +271,9 @@ class URL:
 
     def __repr__(self):
         return "{}('{}')".format(self.__class__.__name__, str(self))
+
+    def __bytes__(self):
+        return str(self).encode("ascii")
 
     def __eq__(self, other):
         if not type(other) is URL:
