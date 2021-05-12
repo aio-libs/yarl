@@ -32,6 +32,6 @@ jobs:
         with:
           app_id: ${{ secrets.BOT_APP_ID }}
           private_key: ${{ secrets.BOT_PRIVATE_KEY }}
-      - uses: tibdex/autosquash@v2
+      - uses: tibdex/autosquash@v2.2.2
         with:
           github_token: ${{ steps.generate_token.outputs.token }}
