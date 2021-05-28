@@ -1,5 +1,5 @@
 mypy==0.812; implementation_name=="cpython"
-flake8==3.8.4
+flake8==3.9.2
 flake8-pyi==20.10.0; python_version >= "3.6"
 black==20.8b1; python_version >= "3.6" and implementation_name=="cpython"
 mypy-extensions==0.4.3; implementation_name=="cpython"
