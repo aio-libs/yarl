@@ -6,7 +6,7 @@ body:
 - type: markdown
   attributes:
     value: |
-      **Thanks for taking a minute to file a feature for aiohttp!**
+      **Thanks for taking a minute to file a feature for multidict!**
 
       ⚠
       Verify first that your feature request is not [already reported on
