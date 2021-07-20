@@ -158,6 +158,10 @@ def test_quoting_space(quoter):
     assert expect == result
 
 
+def test_quoting_tab(quoter):
+    assert quoter()("\t") == "%09"
+
+
 def test_quoting_plus(quoter):
     assert quoter(qs=False)("alpha+beta gamma") == "alpha+beta%20gamma"
     assert quoter(qs=True)("alpha+beta gamma") == "alpha%2Bbeta+gamma"
