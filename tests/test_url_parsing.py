@@ -219,6 +219,17 @@ class TestHost:
         assert u.fragment == ""
 
 
+class TestPath:
+    def test_tabs(self):
+        u = URL("//host/\t")
+        assert u.scheme == ""
+        assert u.host == "host"
+        assert u.path == "/\t"
+        assert u.raw_path == "/%09"
+        assert u.query_string == ""
+        assert u.fragment == ""
+
+
 class TestPort:
     def test_canonical(self):
         u = URL("//host:80/path")
