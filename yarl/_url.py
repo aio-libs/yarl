@@ -316,11 +316,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = self._PATH_QUOTER(name)
-        if name.startswith("/"):
-            raise ValueError(
-                "Appending path {!r} starting from slash is forbidden".format(name)
-            )
+        name = self._PATH_QUOTER(name).lstrip("/")
         path = self._val.path
         if path == "/":
             new_path = "/" + name
