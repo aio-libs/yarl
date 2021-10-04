@@ -14,6 +14,17 @@ Changelog
 
 .. towncrier release notes start
 
+1.7.0a0 (2021-10-04)
+====================
+
+Features
+--------
+
+- Started shipping platform-specific wheels with the ``musl`` tag targeting typical Alpine Linux runtimes.Started shipping platform-specific arm64 wheels for Apple Silicon. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
+- Started shipping platform-specific wheels with the ``musl`` tag targeting typical Alpine Linux runtimes. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
+- Added support Python 3.10 (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
+
+
 1.6.3 (2020-11-14)
 ==================
 
