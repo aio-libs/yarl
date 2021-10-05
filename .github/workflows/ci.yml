@@ -175,8 +175,8 @@ jobs:
       matrix:
         os: [ubuntu, windows, macos]
         qemu: ['']
-        include:
-          # Split ubuntu job for the sake of speed-up
+        # include:
+        #   # Split ubuntu job for the sake of speed-up
         # - os: ubuntu
         #   qemu: aarch64
         # - os: ubuntu
