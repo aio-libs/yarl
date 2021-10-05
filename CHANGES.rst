@@ -14,6 +14,18 @@ Changelog
 
 .. towncrier release notes start
 
+1.7.0a3 (2021-10-05)
+====================
+
+Features
+--------
+
+- Add `__bytes__()` magic method so that `bytes(url)` will work and use optimal ASCII encoding. (`#582 <https://github.com/aio-libs/yarl/issues/582>`_)
+- Started shipping platform-specific arm64 wheels for Apple Silicon. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
+- Started shipping platform-specific wheels with the ``musl`` tag targeting typical Alpine Linux runtimes. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
+- Added support for Python 3.10. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
+
+
 1.6.3 (2020-11-14)
 ==================
 
