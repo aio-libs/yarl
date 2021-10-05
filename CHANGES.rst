@@ -14,7 +14,7 @@ Changelog
 
 .. towncrier release notes start
 
-1.7.0a0 (2021-10-04)
+1.7.0a1 (2021-10-04)
 ====================
 
 Features
