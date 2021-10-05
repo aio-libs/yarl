@@ -272,6 +272,9 @@ class URL:
     def __repr__(self):
         return "{}('{}')".format(self.__class__.__name__, str(self))
 
+    def __bytes__(self):
+        return str(self).encode("ascii")
+
     def __eq__(self, other):
         if not type(other) is URL:
             return NotImplemented

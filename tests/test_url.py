@@ -1021,6 +1021,14 @@ def test_from_non_ascii_path():
     ) == str(url)
 
 
+def test_bytes():
+    url = URL("http://example.com/путь/туда")
+    assert (
+        b"http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
+        == bytes(url)
+    )
+
+
 def test_from_ascii_query_parts():
     url = URL(
         "http://example.com/"
