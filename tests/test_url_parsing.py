@@ -254,7 +254,6 @@ class TestPort:
         with pytest.raises(ValueError):
             URL("//h:22:no/path")
 
-    @pytest.mark.skipif(sys.version_info < (3, 6), reason="Requires Python 3.6+")
     def test_bad_port_again(self):
         with pytest.raises(ValueError):
             URL("//h:-80/path")

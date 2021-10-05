@@ -33,7 +33,7 @@ with fname.open(encoding="utf8") as fp:
 install_requires = [
     "multidict>=4.0",
     "idna>=2.0",
-    'typing_extensions>=3.7.4;python_version<"3.8"',
+    'typing-extensions>=3.7.4;python_version<"3.8"',
 ]
 
 
