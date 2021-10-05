@@ -73,7 +73,7 @@ args = dict(
 
 if not NO_EXTENSIONS:
     print("**********************")
-    print("* Accellerated build *")
+    print("* Accelerated build *")
     print("**********************")
     setup(ext_modules=extensions, **args)
 else:
