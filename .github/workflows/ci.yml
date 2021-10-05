@@ -68,7 +68,7 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        pyver: [3.6, 3.7, 3.8, 3.9]
+        pyver: [3.6, 3.7, 3.8, 3.9, 3.10.0-rc.2]
         no-extensions: ['', 'Y']
         os: [ubuntu, macos, windows]
         exclude:
