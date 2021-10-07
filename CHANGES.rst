@@ -14,6 +14,14 @@ Changelog
 
 .. towncrier release notes start
 
+1.7.1 (2021-10-07)
+==================
+
+Bugfixes
+--------
+
+- Fix 1.7.0 build error
+
 1.7.0 (2021-10-06)
 ==================
 
