@@ -230,7 +230,7 @@ jobs:
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
     - name: Make Release
-      uses: aio-libs/create-release@v1.2.1
+      uses: aio-libs/create-release@v1.2.2
       with:
         changes_file: CHANGES.rst
         name: yarl
