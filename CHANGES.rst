@@ -14,6 +14,15 @@ Changelog
 
 .. towncrier release notes start
 
+1.7.2 (2021-11-01)
+==================
+
+Bugfixes
+--------
+
+- Changed call in ``with_port()`` to stop reencoding parts of the URL that were already encoded. (`#623 <https://github.com/aio-libs/yarl/issues/623>`_)
+
+
 1.7.1 (2021-10-07)
 ==================
 
