@@ -202,6 +202,11 @@ def test_with_port_keeps_query_and_fragment():
     assert str(url.with_port(8888)) == "http://example.com:8888/?a=1#frag"
 
 
+def test_with_port_percent_encoded():
+    url = URL("http://user%name:pass%word@example.com/")
+    assert str(url.with_port(808)) == "http://user%25name:pass%25word@example.com:808/"
+
+
 def test_with_port_for_relative_url():
     with pytest.raises(ValueError):
         URL("path/to").with_port(1234)

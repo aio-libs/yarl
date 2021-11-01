@@ -883,9 +883,7 @@ class URL:
         val = self._val
         return URL(
             self._val._replace(
-                netloc=self._make_netloc(
-                    val.username, val.password, val.hostname, port, encode=True
-                )
+                netloc=self._make_netloc(val.username, val.password, val.hostname, port)
             ),
             encoded=True,
         )
