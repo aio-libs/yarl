@@ -235,13 +235,12 @@ jobs:
         name: dist
         path: dist
     - name: Make Release
-      uses: aio-libs/create-release@v1.2.2
+      uses: aio-libs/create-release@v1.2.3
       with:
         changes_file: CHANGES.rst
         name: yarl
         version_file: yarl/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
         pypi_token: ${{ secrets.PYPI_API_TOKEN }}
-        dist_dir: dist
         fix_issue_regex: "`#(\\d+) <https://github.com/aio-libs/yarl/issues/\\1>`"
         fix_issue_repl: "(#\\1)"
