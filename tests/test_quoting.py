@@ -16,7 +16,6 @@ if not NO_EXTENSIONS:
     def unquoter(request):
         return request.param
 
-
 else:
 
     @pytest.fixture(params=[_PyQuoter], ids=["py_quoter"])
