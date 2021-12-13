@@ -1,12 +1,13 @@
-from typing import overload, Any, Tuple, Optional, Mapping, Union, Sequence, Type
-import multidict
-from functools import _CacheInfo
 import sys
+from functools import _CacheInfo
+from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, overload
+
+import multidict
 
 if sys.version_info >= (3, 8):
-    from typing import TypedDict, Final, final
+    from typing import Final, TypedDict, final
 else:
-    from typing_extensions import TypedDict, Final, final
+    from typing_extensions import Final, TypedDict, final
 
 _SimpleQuery = Union[str, int, float]
 _QueryVariable = Union[_SimpleQuery, Sequence[_SimpleQuery]]

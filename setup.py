@@ -1,10 +1,9 @@
-import pathlib
 import os
-import sys
+import pathlib
 import re
+import sys
 
-from setuptools import setup, Extension
-
+from setuptools import Extension, setup
 
 if sys.version_info < (3, 5):
     raise RuntimeError("yarl 1.4+ requires Python 3.5+")

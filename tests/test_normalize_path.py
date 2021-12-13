@@ -2,7 +2,6 @@ import pytest
 
 from yarl import URL
 
-
 PATHS = [
     # No dots
     ("", ""),

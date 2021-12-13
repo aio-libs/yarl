@@ -2,7 +2,6 @@ import pytest
 
 from yarl import URL
 
-
 # build classmethod
 
 
