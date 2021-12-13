@@ -1,3 +1,2 @@
 -r ci.txt
-pytest-sugar==0.9.4
 towncrier==21.3.0

@@ -1,18 +1,15 @@
 import functools
+import math
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
-from urllib.parse import SplitResult, parse_qsl, urljoin, urlsplit, urlunsplit, quote
+from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
-from multidict import MultiDict, MultiDictProxy
 import idna
-
-import math
-
+from multidict import MultiDict, MultiDictProxy
 
 from ._quoting import _Quoter, _Unquoter
-
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
@@ -204,7 +201,7 @@ class URL:
         query=None,
         query_string="",
         fragment="",
-        encoded=False
+        encoded=False,
     ):
         """Creates and returns a new URL"""
 
@@ -261,7 +258,7 @@ class URL:
             return url
 
     def __init_subclass__(cls):
-        raise TypeError("Inheriting a class {!r} from URL is forbidden".format(cls))
+        raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
     def __str__(self):
         val = self._val
@@ -270,7 +267,7 @@ class URL:
         return urlunsplit(val)
 
     def __repr__(self):
-        return "{}('{}')".format(self.__class__.__name__, str(self))
+        return f"{self.__class__.__name__}('{str(self)}')"
 
     def __bytes__(self):
         return str(self).encode("ascii")
@@ -322,7 +319,7 @@ class URL:
         name = self._PATH_QUOTER(name)
         if name.startswith("/"):
             raise ValueError(
-                "Appending path {!r} starting from slash is forbidden".format(name)
+                f"Appending path {name!r} starting from slash is forbidden"
             )
         path = self._val.path
         if path == "/":
@@ -580,14 +577,14 @@ class URL:
         """Decoded path of URL with query."""
         if not self.query_string:
             return self.path
-        return "{}?{}".format(self.path, self.query_string)
+        return f"{self.path}?{self.query_string}"
 
     @cached_property
     def raw_path_qs(self):
         """Encoded path of URL with query."""
         if not self.raw_query_string:
             return self.raw_path
-        return "{}?{}".format(self.raw_path, self.raw_query_string)
+        return f"{self.raw_path}?{self.raw_query_string}"
 
     @property
     def raw_fragment(self):
@@ -877,7 +874,7 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         if port is not None and not isinstance(port, int):
-            raise TypeError("port should be int or None, got {}".format(type(port)))
+            raise TypeError(f"port should be int or None, got {type(port)}")
         if not self.is_absolute():
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
@@ -1098,7 +1095,7 @@ def _human_quote(s, unsafe):
         return s
     for c in "%" + unsafe:
         if c in s:
-            s = s.replace(c, "%{:02X}".format(ord(c)))
+            s = s.replace(c, f"%{ord(c):02X}")
     if s.isprintable():
         return s
     return "".join(c if c.isprintable() else quote(c) for c in s)

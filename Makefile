@@ -5,7 +5,8 @@ all: test
 
 
 .install-deps: $(shell find requirements -type f)
-	@pip install -U -r requirements/dev.txt
+	pip install -U -r requirements/dev.txt
+	pre-commit install
 	@touch .install-deps
 
 
@@ -28,20 +29,15 @@ cythonize: .cythonize
 	@pip install -e .
 	@touch .develop
 
-flake8:
-	flake8 $(SRC)
-
-black-check:
-	black --check --diff -t py35 $(SRC)
-
-mypy:
-	mypy --show-error-codes yarl tests
-
-lint: flake8 black-check mypy
-
 fmt:
-	black -t py35 $(SRC)
+ifdef CI
+	pre-commit run --all-files --show-diff-on-failure
+else
+	pre-commit run --all-files
+endif
 
+lint: fmt
+	mypy --show-error-codes yarl tests
 
 test: lint .develop
 	pytest ./tests ./yarl

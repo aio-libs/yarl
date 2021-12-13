@@ -3,9 +3,8 @@ import re
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Optional, cast
 
-
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
-BPCT_ALLOWED = {"%{:02X}".format(i).encode("ascii") for i in range(256)}
+BPCT_ALLOWED = {f"%{i:02X}".encode("ascii") for i in range(256)}
 GEN_DELIMS = ":/?#[]@"
 SUB_DELIMS_WITHOUT_QS = "!$'()*,"
 SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + "+&=;"
@@ -27,7 +26,7 @@ class _Quoter:
         safe: str = "",
         protected: str = "",
         qs: bool = False,
-        requote: bool = True
+        requote: bool = True,
     ) -> None:
         self._safe = safe
         self._protected = protected
@@ -108,7 +107,7 @@ class _Quoter:
                 ret.append(ch)
                 continue
 
-            ret.extend(("%{:02X}".format(ch)).encode("ascii"))
+            ret.extend((f"%{ch:02X}").encode("ascii"))
 
         ret2 = ret.decode("ascii")
         if ret2 == val:

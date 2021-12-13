@@ -1,6 +1,5 @@
 from yarl import URL
 
-
 # comparison and hashing
 
 

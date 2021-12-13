@@ -1,4 +1,4 @@
+-e .
 -r test.txt
 -r doc.txt
 -r lint.txt
--e .

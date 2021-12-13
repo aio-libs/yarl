@@ -1,12 +1,9 @@
 import enum
 
 import pytest
-
 from multidict import MultiDict
 
-
 from yarl import URL
-
 
 # with_query
 

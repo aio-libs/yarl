@@ -2,7 +2,6 @@ import pickle
 
 from yarl import URL
 
-
 # serialize
 
 

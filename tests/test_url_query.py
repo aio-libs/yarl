@@ -2,7 +2,6 @@ from urllib.parse import urlencode
 
 from multidict import MultiDict, MultiDictProxy
 
-
 from yarl import URL
 
 # query
