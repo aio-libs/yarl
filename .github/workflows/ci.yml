@@ -35,7 +35,7 @@ jobs:
         restore-keys: |
             pip-lint-
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v2
+      uses: py-actions/py-dependency-install@v3
       with:
         path: requirements/lint.txt
     - name: Install itself
@@ -103,7 +103,7 @@ jobs:
             pip-ci-${{ runner.os }}-${{ matrix.pyver }}-{{ matrix.no-extensions }}-
     - name: Install cython
       if: ${{ matrix.no-extensions == '' }}
-      uses: py-actions/py-dependency-install@v2
+      uses: py-actions/py-dependency-install@v3
       with:
         path: requirements/cython.txt
     - name: Cythonize
@@ -111,7 +111,7 @@ jobs:
       run: |
         make cythonize
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v2
+      uses: py-actions/py-dependency-install@v3
       with:
         path: requirements/ci.txt
       env:
@@ -152,7 +152,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2.2.2
     - name: Install cython
-      uses: py-actions/py-dependency-install@v2
+      uses: py-actions/py-dependency-install@v3
       with:
         path: requirements/cython.txt
     - name: Cythonize
@@ -203,7 +203,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2.2.2
     - name: Install cython
-      uses: py-actions/py-dependency-install@v2
+      uses: py-actions/py-dependency-install@v3
       with:
         path: requirements/cython.txt
     - name: Cythonize
