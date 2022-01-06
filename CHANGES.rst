@@ -241,7 +241,7 @@ Features
 
 * Add ``URL.explicit_port`` property (#218)
 
-* Give a friendlier error when port cant be converted to int (#168)
+* Give a friendlier error when port can't be converted to int (#168)
 
 * ``bool(URL())`` now returns ``False`` (#272)
 
@@ -285,7 +285,7 @@ Features
 1.1.1 (2018-02-17)
 ==================
 
-* Fix performance regression: don't encode enmpty netloc (#170)
+* Fix performance regression: don't encode empty netloc (#170)
 
 1.1.0 (2018-01-21)
 ==================
