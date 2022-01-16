@@ -1,3 +1,0 @@
-Fixed broken internal references to :meth:`~URL.human_repr()`.
-Fixed broken external references to :doc:`multidict:index` docs.
-Minor styling improvements.
