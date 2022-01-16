@@ -67,8 +67,8 @@ except ImportError:
     pass
 
 intersphinx_mapping = {
-    "python": ("http://docs.python.org/3", None),
-    "multidict": ("http://multidict.readthedocs.io/", None),
+    "python": ("https://docs.python.org/3", None),
+    "multidict": ("https://multidict.readthedocs.io/en/stable", None),
 }
 
 
@@ -402,7 +402,3 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
-
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/": None}

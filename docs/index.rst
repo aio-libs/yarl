@@ -76,7 +76,7 @@ getting *encoded* strings:
    >>> url.raw_path
    '/%D0%BF%D1%83%D1%82%D1%8C'
 
-Human readable representation of URL is available as :meth:`~yarl.URL.human_repr()`:
+Human readable representation of URL is available as :meth:`~yarl.URL.human_repr`:
 
 .. doctest::
 
