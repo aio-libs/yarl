@@ -1012,7 +1012,7 @@ def test_with_suffix_for_naked_path():
     with pytest.raises(ValueError) as excinfo:
         url.with_suffix(".a")
     (msg,) = excinfo.value.args
-    assert msg == f"{url!s} has an empty name"
+    assert msg == f"{url!r} has an empty name"
 
 
 def test_with_suffix_for_relative_path():
@@ -1065,7 +1065,7 @@ def test_with_suffix_without_dot():
     with pytest.raises(ValueError) as excinfo:
         URL("http://example.com/a").with_suffix("b")
     (msg,) = excinfo.value.args
-    assert msg == "Invalid suffix b"
+    assert msg == "Invalid suffix 'b'"
 
 
 def test_with_suffix_non_str():
@@ -1079,14 +1079,14 @@ def test_with_suffix_dot():
     with pytest.raises(ValueError) as excinfo:
         URL("http://example.com").with_suffix(".")
     (msg,) = excinfo.value.args
-    assert msg == "Invalid suffix ."
+    assert msg == "Invalid suffix '.'"
 
 
 def test_with_suffix_with_slash():
     with pytest.raises(ValueError) as excinfo:
         URL("http://example.com/a").with_suffix("/.b")
     (msg,) = excinfo.value.args
-    assert msg == "Invalid suffix /.b"
+    assert msg == "Invalid suffix '/.b'"
 
 
 def test_with_suffix_with_slash2():

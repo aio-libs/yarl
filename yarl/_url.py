@@ -1078,10 +1078,10 @@ class URL:
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
         if suffix and not suffix.startswith(".") or suffix == ".":
-            raise ValueError(f"Invalid suffix {suffix}")
+            raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
-            raise ValueError(f"{self} has an empty name")
+            raise ValueError(f"{self!r} has an empty name")
         old_suffix = self.raw_suffix
         if not old_suffix:
             name = name + suffix
