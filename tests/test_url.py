@@ -498,6 +498,126 @@ def test_name_non_ascii():
     assert url.name == "путь"
 
 
+def test_suffix_for_empty_url():
+    url = URL()
+    assert "" == url.raw_suffix
+
+
+def test_raw_suffix():
+    url = URL("http://example.com/path/to.txt#frag")
+    assert ".txt" == url.raw_suffix
+
+
+def test_raw_suffix_root():
+    url = URL("http://example.com/#frag")
+    assert "" == url.raw_suffix
+
+
+def test_raw_suffix_root2():
+    url = URL("http://example.com")
+    assert "" == url.raw_suffix
+
+
+def test_raw_suffix_root3():
+    url = URL("http://example.com/")
+    assert "" == url.raw_suffix
+
+
+def test_relative_raw_suffix():
+    url = URL("path/to")
+    assert "" == url.raw_suffix
+
+
+def test_relative_raw_suffix_starting_from_slash():
+    url = URL("/path/to")
+    assert "" == url.raw_suffix
+
+
+def test_relative_raw_suffix_dot():
+    url = URL(".")
+    assert "" == url.raw_suffix
+
+
+def test_suffix_non_ascii():
+    url = URL("http://example.com/путь.суффикс")
+    assert url.suffix == ".суффикс"
+
+
+def test_suffix_with_empty_name():
+    url = URL("http://example.com/.hgrc")
+    assert "" == url.raw_suffix
+
+
+def test_suffix_multi_dot():
+    url = URL("http://example.com/doc.tar.gz")
+    assert ".gz" == url.raw_suffix
+
+
+def test_suffix_with_dot_name():
+    url = URL("http://example.com/doc.")
+    assert "" == url.raw_suffix
+
+
+def test_suffixes_for_empty_url():
+    url = URL()
+    assert [] == url.raw_suffixes
+
+
+def test_raw_suffixes():
+    url = URL("http://example.com/path/to.txt#frag")
+    assert [".txt"] == url.raw_suffixes
+
+
+def test_raw_suffixes_root():
+    url = URL("http://example.com/#frag")
+    assert [] == url.raw_suffixes
+
+
+def test_raw_suffixes_root2():
+    url = URL("http://example.com")
+    assert [] == url.raw_suffixes
+
+
+def test_raw_suffixes_root3():
+    url = URL("http://example.com/")
+    assert [] == url.raw_suffixes
+
+
+def test_relative_raw_suffixes():
+    url = URL("path/to")
+    assert [] == url.raw_suffixes
+
+
+def test_relative_raw_suffixes_starting_from_slash():
+    url = URL("/path/to")
+    assert [] == url.raw_suffixes
+
+
+def test_relative_raw_suffixes_dot():
+    url = URL(".")
+    assert [] == url.raw_suffixes
+
+
+def test_suffixes_non_ascii():
+    url = URL("http://example.com/путь.суффикс")
+    assert url.suffixes == [".суффикс"]
+
+
+def test_suffixes_with_empty_name():
+    url = URL("http://example.com/.hgrc")
+    assert [] == url.raw_suffixes
+
+
+def test_suffixes_multi_dot():
+    url = URL("http://example.com/doc.tar.gz")
+    assert [".tar", ".gz"] == url.raw_suffixes
+
+
+def test_suffixes_with_dot_name():
+    url = URL("http://example.com/doc.")
+    assert [] == url.raw_suffixes
+
+
 def test_plus_in_path():
     url = URL("http://example.com/test/x+y%2Bz/:+%2B/")
     assert "/test/x+y+z/:++/" == url.path
@@ -872,6 +992,108 @@ def test_with_name_dot():
 def test_with_name_double_dot():
     with pytest.raises(ValueError):
         URL("http://example.com").with_name("..")
+
+
+# with_suffix
+
+
+def test_with_suffix():
+    url = URL("http://example.com/a/b")
+    assert url.raw_parts == ("/", "a", "b")
+    url2 = url.with_suffix(".c")
+    assert url2.raw_parts == ("/", "a", "b.c")
+    assert url2.parts == ("/", "a", "b.c")
+    assert url2.raw_path == "/a/b.c"
+    assert url2.path == "/a/b.c"
+
+
+def test_with_suffix_for_naked_path():
+    url = URL("http://example.com")
+    with pytest.raises(ValueError) as excinfo:
+        url.with_suffix(".a")
+    (msg,) = excinfo.value.args
+    assert msg == f"{url!s} has an empty name"
+
+
+def test_with_suffix_for_relative_path():
+    url = URL("a")
+    url2 = url.with_suffix(".b")
+    assert url2.raw_parts == ("a.b",)
+
+
+def test_with_suffix_for_relative_path2():
+    url = URL("a/b")
+    url2 = url.with_suffix(".c")
+    assert url2.raw_parts == ("a", "b.c")
+
+
+def test_with_suffix_for_relative_path_starting_from_slash():
+    url = URL("/a")
+    url2 = url.with_suffix(".b")
+    assert url2.raw_parts == ("/", "a.b")
+
+
+def test_with_suffix_for_relative_path_starting_from_slash2():
+    url = URL("/a/b")
+    url2 = url.with_suffix(".c")
+    assert url2.raw_parts == ("/", "a", "b.c")
+
+
+def test_with_suffix_empty():
+    url = URL("http://example.com/path/to").with_suffix("")
+    assert str(url) == "http://example.com/path/to"
+
+
+def test_with_suffix_non_ascii():
+    url = URL("http://example.com/path").with_suffix(".путь")
+    assert url.path == "/path.путь"
+    assert url.raw_path == "/path.%D0%BF%D1%83%D1%82%D1%8C"
+    assert url.parts == ("/", "path.путь")
+    assert url.raw_parts == ("/", "path.%D0%BF%D1%83%D1%82%D1%8C")
+
+
+def test_with_suffix_percent_encoded():
+    url = URL("http://example.com/path")
+    url2 = url.with_suffix(".%cf%80")
+    assert url2.raw_parts == ("/", "path.%25cf%2580")
+    assert url2.parts == ("/", "path.%cf%80")
+    assert url2.raw_path == "/path.%25cf%2580"
+    assert url2.path == "/path.%cf%80"
+
+
+def test_with_suffix_without_dot():
+    with pytest.raises(ValueError) as excinfo:
+        URL("http://example.com/a").with_suffix("b")
+    (msg,) = excinfo.value.args
+    assert msg == "Invalid suffix b"
+
+
+def test_with_suffix_non_str():
+    with pytest.raises(TypeError) as excinfo:
+        URL("http://example.com").with_suffix(123)
+    (msg,) = excinfo.value.args
+    assert msg == "Invalid suffix type"
+
+
+def test_with_suffix_dot():
+    with pytest.raises(ValueError) as excinfo:
+        URL("http://example.com").with_suffix(".")
+    (msg,) = excinfo.value.args
+    assert msg == "Invalid suffix ."
+
+
+def test_with_suffix_with_slash():
+    with pytest.raises(ValueError) as excinfo:
+        URL("http://example.com/a").with_suffix("/.b")
+    (msg,) = excinfo.value.args
+    assert msg == "Invalid suffix /.b"
+
+
+def test_with_suffix_with_slash2():
+    with pytest.raises(ValueError) as excinfo:
+        URL("http://example.com/a").with_suffix(".b/.d")
+    (msg,) = excinfo.value.args
+    assert msg == "Slash in name is not allowed"
 
 
 # is_absolute

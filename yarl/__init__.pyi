@@ -1,6 +1,6 @@
 import sys
 from functools import _CacheInfo
-from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Type, Union, overload
 
 import multidict
 
@@ -38,6 +38,10 @@ class URL:
     query: Final[multidict.MultiDict[str]]
     raw_name: Final[str]
     name: Final[str]
+    raw_suffix: Final[str]
+    suffix: Final[str]
+    raw_suffixes: Final[List[str]]
+    suffixes: Final[List[str]]
     raw_parts: Final[Tuple[str, ...]]
     parts: Final[Tuple[str, ...]]
     parent: Final[URL]
@@ -90,6 +94,7 @@ class URL:
     def update_query(self, **kwargs: _QueryVariable) -> URL: ...
     def with_fragment(self, fragment: Optional[str]) -> URL: ...
     def with_name(self, name: str) -> URL: ...
+    def with_suffix(self, suffix: str) -> URL: ...
     def join(self, url: URL) -> URL: ...
     def human_repr(self) -> str: ...
     # private API
