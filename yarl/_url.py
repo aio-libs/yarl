@@ -1069,7 +1069,7 @@ class URL:
         )
 
     def with_suffix(self, suffix):
-        """Return a new URL with suffix replaced.
+        """Return a new URL with suffix (file extension of name) replaced.
 
         Query and fragment parts are cleaned up.
 
