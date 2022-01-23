@@ -58,8 +58,8 @@ doc: doctest doc-spelling
 
 
 doctest: .develop
-	make -C docs doctest SPHINXOPTS="-W -E"
+	make -C docs doctest SPHINXOPTS="-W -E --keep-going -n"
 
 
 doc-spelling:
-	make -C docs spelling SPHINXOPTS="-W -E"
+	make -C docs spelling SPHINXOPTS="-W -E --keep-going -n"
