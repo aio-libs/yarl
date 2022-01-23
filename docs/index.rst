@@ -76,7 +76,7 @@ getting *encoded* strings:
    >>> url.raw_path
    '/%D0%BF%D1%83%D1%82%D1%8C'
 
-Human readable representation of URL is available as :meth:`~yarl.URL.human_repr()`:
+Human readable representation of URL is available as :meth:`~yarl.URL.human_repr`:
 
 .. doctest::
 
@@ -101,7 +101,7 @@ manylinux-compliant because of the missing glibc and therefore, cannot be
 used with our wheels) the the tarball will be used to compile the library from
 the source code. It requires a C compiler and and Python headers installed.
 
-To skip the compilation you must explicitly opt-in by setting the `YARL_NO_EXTENSIONS`
+To skip the compilation you must explicitly opt-in by setting the ``YARL_NO_EXTENSIONS``
 environment variable to a non-empty value, e.g.:
 
 ::
@@ -115,7 +115,7 @@ by this variable.
 Dependencies
 ------------
 
-YARL requires :mod:`multidict` library.
+``yarl`` requires :mod:`multidict` library.
 
 It installs it automatically.
 

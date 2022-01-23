@@ -53,13 +53,13 @@ cov: lint .develop
 
 
 doc: doctest doc-spelling
-	make -C docs html SPHINXOPTS="-W -E"
+	make -C docs html SPHINXOPTS="-W -E --keep-going -n"
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
 
 doctest: .develop
-	make -C docs doctest SPHINXOPTS="-W -E"
+	make -C docs doctest SPHINXOPTS="-W -E --keep-going -n"
 
 
 doc-spelling:
-	make -C docs spelling SPHINXOPTS="-W -E"
+	make -C docs spelling SPHINXOPTS="-W -E --keep-going -n"
