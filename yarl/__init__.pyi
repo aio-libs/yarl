@@ -35,7 +35,7 @@ class URL:
     raw_path_qs: Final[str]
     raw_fragment: Final[str]
     fragment: Final[str]
-    query: Final[multidict.MultiDict[str]]
+    query: Final[multidict.MultiDict[str, str]]
     raw_name: Final[str]
     name: Final[str]
     raw_parts: Final[Tuple[str, ...]]
