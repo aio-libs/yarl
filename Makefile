@@ -53,7 +53,7 @@ cov: lint .develop
 
 
 doc: doctest doc-spelling
-	make -C docs html SPHINXOPTS="-W -E"
+	make -C docs html SPHINXOPTS="-W -E --keep-going -n"
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
 
