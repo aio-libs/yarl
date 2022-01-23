@@ -403,5 +403,5 @@ texinfo_documents = [
 #
 # texinfo_no_detailmenu = False
 
-default_role = 'any'
+default_role = "any"
 nitpicky = True
