@@ -1,6 +1,5 @@
 import functools
 import math
-import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from ipaddress import ip_address
@@ -706,55 +705,27 @@ class URL:
 
         return "/".join(resolved_path)
 
-    if sys.version_info >= (3, 7):
-
-        @classmethod
-        def _encode_host(cls, host, human=False):
-            try:
-                ip, sep, zone = host.partition("%")
-                ip = ip_address(ip)
-            except ValueError:
-                host = host.lower()
-                # IDNA encoding is slow,
-                # skip it for ASCII-only strings
-                # Don't move the check into _idna_encode() helper
-                # to reduce the cache size
-                if human or host.isascii():
-                    return host
-                host = _idna_encode(host)
-            else:
-                host = ip.compressed
-                if sep:
-                    host += "%" + zone
-                if ip.version == 6:
-                    host = "[" + host + "]"
-            return host
-
-    else:
-        # work around for missing str.isascii() in Python <= 3.6
-        @classmethod
-        def _encode_host(cls, host, human=False):
-            try:
-                ip, sep, zone = host.partition("%")
-                ip = ip_address(ip)
-            except ValueError:
-                host = host.lower()
-                if human:
-                    return host
-
-                for char in host:
-                    if char > "\x7f":
-                        break
-                else:
-                    return host
-                host = _idna_encode(host)
-            else:
-                host = ip.compressed
-                if sep:
-                    host += "%" + zone
-                if ip.version == 6:
-                    host = "[" + host + "]"
-            return host
+    @classmethod
+    def _encode_host(cls, host, human=False):
+        try:
+            ip, sep, zone = host.partition("%")
+            ip = ip_address(ip)
+        except ValueError:
+            host = host.lower()
+            # IDNA encoding is slow,
+            # skip it for ASCII-only strings
+            # Don't move the check into _idna_encode() helper
+            # to reduce the cache size
+            if human or host.isascii():
+                return host
+            host = _idna_encode(host)
+        else:
+            host = ip.compressed
+            if sep:
+                host += "%" + zone
+            if ip.version == 6:
+                host = "[" + host + "]"
+        return host
 
     @classmethod
     def _make_netloc(
