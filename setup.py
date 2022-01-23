@@ -5,10 +5,6 @@ import sys
 
 from setuptools import Extension, setup
 
-if sys.version_info < (3, 5):
-    raise RuntimeError("yarl 1.4+ requires Python 3.5+")
-
-
 NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
 
 if sys.implementation.name != "cpython":
@@ -53,7 +49,6 @@ args = dict(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -66,7 +61,7 @@ args = dict(
     license="Apache 2",
     packages=["yarl"],
     install_requires=install_requires,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     include_package_data=True,
     exclude_package_data={"": ["*.c"]},
 )
