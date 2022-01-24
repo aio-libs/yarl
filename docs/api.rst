@@ -427,11 +427,11 @@ For *path* and *query* *yarl* supports additional helpers:
    .. doctest::
 
       >>> URL('http://example.com/path/to.tar.gz').suffixes
-      ['.tar', '.gz']
+      ('.tar', '.gz')
       >>> URL('http://example.com/путь.тут.да').suffixes
-      ['.тут', '.да']
+      ('.тут', '.да')
       >>> URL('http://example.com/path').suffixes
-      []
+      ()
 
 .. attribute:: URL.raw_suffixes
 
@@ -440,7 +440,7 @@ For *path* and *query* *yarl* supports additional helpers:
    .. doctest::
 
       >>> URL('http://example.com/путь.тут.да').raw_suffixes
-      ['.%D1%82%D1%83%D1%82', '.%D0%B4%D0%B0']
+      ('.%D1%82%D1%83%D1%82', '.%D0%B4%D0%B0')
 
 
 .. attribute:: URL.query
