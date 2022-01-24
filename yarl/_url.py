@@ -683,13 +683,13 @@ class URL:
     def raw_suffixes(self):
         name = self.raw_name
         if name.endswith("."):
-            return []
+            return ()
         name = name.lstrip(".")
-        return ["." + suffix for suffix in name.split(".")[1:]]
+        return tuple("." + suffix for suffix in name.split(".")[1:])
 
     @cached_property
     def suffixes(self):
-        return [self._UNQUOTER(suffix) for suffix in self.raw_suffixes]
+        return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
     @staticmethod
     def _validate_authority_uri_abs_path(host, path):

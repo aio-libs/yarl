@@ -560,62 +560,62 @@ def test_suffix_with_dot_name():
 
 def test_suffixes_for_empty_url():
     url = URL()
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_raw_suffixes():
     url = URL("http://example.com/path/to.txt#frag")
-    assert [".txt"] == url.raw_suffixes
+    assert (".txt",) == url.raw_suffixes
 
 
 def test_raw_suffixes_root():
     url = URL("http://example.com/#frag")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_raw_suffixes_root2():
     url = URL("http://example.com")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_raw_suffixes_root3():
     url = URL("http://example.com/")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_relative_raw_suffixes():
     url = URL("path/to")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_relative_raw_suffixes_starting_from_slash():
     url = URL("/path/to")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_relative_raw_suffixes_dot():
     url = URL(".")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_suffixes_non_ascii():
     url = URL("http://example.com/путь.суффикс")
-    assert url.suffixes == [".суффикс"]
+    assert url.suffixes == (".суффикс",)
 
 
 def test_suffixes_with_empty_name():
     url = URL("http://example.com/.hgrc")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_suffixes_multi_dot():
     url = URL("http://example.com/doc.tar.gz")
-    assert [".tar", ".gz"] == url.raw_suffixes
+    assert (".tar", ".gz") == url.raw_suffixes
 
 
 def test_suffixes_with_dot_name():
     url = URL("http://example.com/doc.")
-    assert [] == url.raw_suffixes
+    assert () == url.raw_suffixes
 
 
 def test_plus_in_path():
@@ -1094,6 +1094,12 @@ def test_with_suffix_with_slash2():
         URL("http://example.com/a").with_suffix(".b/.d")
     (msg,) = excinfo.value.args
     assert msg == "Slash in name is not allowed"
+
+
+def test_with_suffix_replace():
+    url = URL("/a.b")
+    url2 = url.with_suffix(".c")
+    assert url2.raw_parts == ("/", "a.c")
 
 
 # is_absolute

@@ -1,6 +1,6 @@
 import sys
 from functools import _CacheInfo
-from typing import Any, List, Mapping, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, overload
 
 import multidict
 
@@ -40,8 +40,8 @@ class URL:
     name: Final[str]
     raw_suffix: Final[str]
     suffix: Final[str]
-    raw_suffixes: Final[List[str]]
-    suffixes: Final[List[str]]
+    raw_suffixes: Final[Tuple[str]]
+    suffixes: Final[Tuple[str]]
     raw_parts: Final[Tuple[str, ...]]
     parts: Final[Tuple[str, ...]]
     parent: Final[URL]
