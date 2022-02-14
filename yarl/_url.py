@@ -665,6 +665,31 @@ class URL:
         """The last part of parts."""
         return self._UNQUOTER(self.raw_name)
 
+    @cached_property
+    def raw_suffix(self):
+        name = self.raw_name
+        i = name.rfind(".")
+        if 0 < i < len(name) - 1:
+            return name[i:]
+        else:
+            return ""
+
+    @cached_property
+    def suffix(self):
+        return self._UNQUOTER(self.raw_suffix)
+
+    @cached_property
+    def raw_suffixes(self):
+        name = self.raw_name
+        if name.endswith("."):
+            return ()
+        name = name.lstrip(".")
+        return tuple("." + suffix for suffix in name.split(".")[1:])
+
+    @cached_property
+    def suffixes(self):
+        return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
+
     @staticmethod
     def _validate_authority_uri_abs_path(host, path):
         """Ensure that path in URL with authority starts with a leading slash.
@@ -1013,6 +1038,27 @@ class URL:
             self._val._replace(path="/".join(parts), query="", fragment=""),
             encoded=True,
         )
+
+    def with_suffix(self, suffix):
+        """Return a new URL with suffix (file extension of name) replaced.
+
+        Query and fragment parts are cleaned up.
+
+        suffix is encoded if needed.
+        """
+        if not isinstance(suffix, str):
+            raise TypeError("Invalid suffix type")
+        if suffix and not suffix.startswith(".") or suffix == ".":
+            raise ValueError(f"Invalid suffix {suffix!r}")
+        name = self.raw_name
+        if not name:
+            raise ValueError(f"{self!r} has an empty name")
+        old_suffix = self.raw_suffix
+        if not old_suffix:
+            name = name + suffix
+        else:
+            name = name[: -len(old_suffix)] + suffix
+        return self.with_name(name)
 
     def join(self, url):
         """Join URLs

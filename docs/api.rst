@@ -398,6 +398,50 @@ For *path* and *query* *yarl* supports additional helpers:
       >>> URL('http://example.com/путь/сюда').raw_name
       '%D1%81%D1%8E%D0%B4%D0%B0'
 
+.. attribute:: URL.suffix
+
+   The file extension of :attr:`name`.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to.txt').suffix
+      '.txt'
+      >>> URL('http://example.com/путь.сюда').suffix
+      '.сюда'
+      >>> URL('http://example.com/path').suffix
+      ''
+
+.. attribute:: URL.raw_suffix
+
+   The file extension of :attr:`raw_name`.
+
+   .. doctest::
+
+      >>> URL('http://example.com/путь.сюда').raw_suffix
+      '.%D1%81%D1%8E%D0%B4%D0%B0'
+
+.. attribute:: URL.suffixes
+
+   A list of :attr:`name`'s file extensions.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to.tar.gz').suffixes
+      ('.tar', '.gz')
+      >>> URL('http://example.com/путь.тут.да').suffixes
+      ('.тут', '.да')
+      >>> URL('http://example.com/path').suffixes
+      ()
+
+.. attribute:: URL.raw_suffixes
+
+   A list of :attr:`raw_name`'s file extensions.
+
+   .. doctest::
+
+      >>> URL('http://example.com/путь.тут.да').raw_suffixes
+      ('.%D1%82%D1%83%D1%82', '.%D0%B4%D0%B0')
+
 
 .. attribute:: URL.query
 
@@ -710,6 +754,20 @@ section generates a new :class:`URL` instance.
       URL('http://example.com/path/new')
       >>> URL('http://example.com/path/to').with_name('имя')
       URL('http://example.com/path/%D0%B8%D0%BC%D1%8F')
+
+.. method:: URL.with_suffix(suffix)
+
+   Return a new URL with *suffix* (file extension of *name*) replaced and
+   cleaned up *query* and *fragment* parts.
+
+   Name is encoded if needed.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path/to?arg#frag').with_suffix('.doc')
+      URL('http://example.com/path/to.doc')
+      >>> URL('http://example.com/path/to').with_suffix('.cуффикс')
+      URL('http://example.com/path/to.c%D1%83%D1%84%D1%84%D0%B8%D0%BA%D1%81')
 
 .. attribute:: URL.parent
 
