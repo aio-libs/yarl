@@ -1,0 +1,1 @@
+Replaced git:// URL in pre-commit hook configuration with https://
