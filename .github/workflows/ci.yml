@@ -10,8 +10,14 @@ on:
     branches:
       - master
       - ?.?*
+    types: [opened, reopened]
   schedule:
     - cron:  '0 6 * * *'  # Daily 6AM UTC build
+
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 
 jobs:
