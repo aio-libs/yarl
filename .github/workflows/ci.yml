@@ -4,13 +4,12 @@ on:
   push:
     branches:
       - master
-      - ?.?*  # matches to backport branches, e.g. 3.9
+      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
     tags: [ 'v*' ]
   pull_request:
     branches:
       - master
-      - ?.?*
-    types: [opened, reopened]
+      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
   schedule:
     - cron:  '0 6 * * *'  # Daily 6AM UTC build
 
