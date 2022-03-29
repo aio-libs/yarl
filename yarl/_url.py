@@ -263,7 +263,7 @@ class URL:
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
-        return urlunsplit(val)
+        return _urlunsplit(val)
 
     def __repr__(self):
         return f"{self.__class__.__name__}('{str(self)}')"
@@ -1090,7 +1090,7 @@ class URL:
             for k, v in self.query.items()
         )
         fragment = _human_quote(self.fragment, "")
-        return urlunsplit(
+        return _urlunsplit(
             SplitResult(
                 self.scheme,
                 self._make_netloc(
@@ -1105,6 +1105,13 @@ class URL:
                 fragment,
             )
         )
+
+
+def _urlunsplit(s):
+    url = urlunsplit(s)
+    if s.scheme == "file" and not s.path.startswith("/"):
+        url = url.replace("///", "")
+    return url
 
 
 def _human_quote(s, unsafe):

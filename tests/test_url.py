@@ -52,6 +52,13 @@ def test_str():
     assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
 
 
+def test_str_relative_file():
+    url1 = URL("file:foo/bar")
+    assert str(url1) == "file:foo/bar"
+    url2 = URL("file:///foo/bar")
+    assert str(url2) == "file:///foo/bar"
+
+
 def test_repr():
     url = URL("http://example.com")
     assert "URL('http://example.com')" == repr(url)
@@ -1544,6 +1551,16 @@ def test_human_repr_non_printable():
         "?арг%0A%C2%AD%E2%80%8B=вал%0A%C2%AD%E2%80%8B"
         "#фраг%0A%C2%AD%E2%80%8B"
     )
+
+
+def test_human_repr_file():
+    url = URL.build(
+        scheme="file",
+        path="foo/bar",
+    )
+    s = url.human_repr()
+    assert URL(s) == url
+    assert s == "file:foo/bar"
 
 
 # relative
