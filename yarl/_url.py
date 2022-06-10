@@ -983,8 +983,11 @@ class URL:
         """Return a new URL with query part updated."""
         s = self._get_str_query(*args, **kwargs)
         new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
-        query = MultiDict(self.query)
-        query.update(new_query)
+        if args and args[0] is None:
+            query = new_query
+        else:
+            query = MultiDict(self.query)
+            query.update(new_query)
 
         return URL(self._val._replace(query=self._get_str_query(query)), encoded=True)
 

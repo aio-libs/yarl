@@ -272,6 +272,11 @@ def test_with_query_None():
     assert url.with_query(None).query_string == ""
 
 
+def test_update_query_None():
+    url = URL("http://example.com/path?a=b")
+    assert url.update_query(None).query_string == ""
+
+
 def test_with_query_bad_type():
     url = URL("http://example.com")
     with pytest.raises(TypeError):

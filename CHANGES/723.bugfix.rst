@@ -1,0 +1,1 @@
+Fixed issue when update_query(None) doesn't clear the query.
