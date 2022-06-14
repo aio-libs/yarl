@@ -84,6 +84,10 @@ jobs:
           - os: ubuntu
             pyver: "3.11.0-alpha - 3.11.0"
             experimental: true
+            no-extensions: ''
+          - os: ubuntu
+            pyver: "3.11.0-alpha - 3.11.0"
+            experimental: true
             no-extensions: 'Y'
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
