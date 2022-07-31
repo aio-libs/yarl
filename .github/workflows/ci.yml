@@ -245,7 +245,7 @@ jobs:
         name: dist
         path: dist
     - name: Make Release
-      uses: aio-libs/create-release@v1.6.4
+      uses: aio-libs/create-release@v1.6.5
       with:
         changes_file: CHANGES.rst
         name: yarl
