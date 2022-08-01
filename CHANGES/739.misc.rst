@@ -1,1 +1,0 @@
-Changed the Sphinx ``language`` parameter to ``"en"`` to allow for Sphinx 5.0.

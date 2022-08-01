@@ -1,2 +1,0 @@
-Updated pre-commit-hooks black to a newer release with a fix for black#2964,
-dropping the need for a work-around.

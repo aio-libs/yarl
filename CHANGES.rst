@@ -14,6 +14,15 @@ Changelog
 
 .. towncrier release notes start
 
+1.8.1 (2022-08-01)
+==================
+
+Misc
+----
+
+- `#694 <https://github.com/aio-libs/yarl/issues/694>`_, `#699 <https://github.com/aio-libs/yarl/issues/699>`_, `#700 <https://github.com/aio-libs/yarl/issues/700>`_, `#701 <https://github.com/aio-libs/yarl/issues/701>`_, `#702 <https://github.com/aio-libs/yarl/issues/702>`_, `#703 <https://github.com/aio-libs/yarl/issues/703>`_, `#739 <https://github.com/aio-libs/yarl/issues/739>`_
+
+
 1.8.0 (2022-08-01)
 ==================
 
