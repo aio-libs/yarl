@@ -67,31 +67,23 @@ jobs:
     name: Test
     strategy:
       matrix:
-        pyver: ['3.7', '3.8', '3.9', '3.10']
+        pyver: ['3.7', '3.8', '3.9', '3.10', '~3.11.0-0']
         no-extensions: ['', 'Y']
         os: [ubuntu, macos, windows]
-        experimental: [false]
         exclude:
           - os: macos
             no-extensions: 'Y'
           - os: windows
             no-extensions: 'Y'
         include:
+          - pyver: pypy-3.9
+            no-extensions: 'Y'
+            os: ubuntu
           - pyver: pypy-3.8
             no-extensions: 'Y'
             os: ubuntu
-            experimental: false
-          - os: ubuntu
-            pyver: "3.11.0-alpha - 3.11.0"
-            experimental: true
-            no-extensions: ''
-          - os: ubuntu
-            pyver: "3.11.0-alpha - 3.11.0"
-            experimental: true
-            no-extensions: 'Y'
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
-    continue-on-error: ${{ matrix.experimental }}
     timeout-minutes: 15
     steps:
     - name: Checkout
