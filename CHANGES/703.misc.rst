@@ -1,1 +1,1 @@
-Furter cleaned up github workflow event matching.
+Further cleaned up github workflow event matching.
