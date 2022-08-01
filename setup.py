@@ -38,11 +38,22 @@ def read(name):
         return f.read()
 
 
+# $ echo ':something:`test <sdf>`' | sed 's/:\w\+:`\(\w\+\)\(\s\+\(.*\)\)\?`/``\1``/g'
+# ``test``
+def sanitize_rst_roles(rst_source_text: str) -> str:
+    """Replace RST roles with inline highlighting."""
+    role_regex = r":\w+:`(?P<rendered_text>[^`]+)(\s+(.*))?`"
+    substitution_pattern = r"``(?P=rendered_text)``"
+    return re.sub(role_regex, substitution_pattern, rst_source_text)
+
+
 args = dict(
     name="yarl",
     version=version,
     description=("Yet another URL library"),
-    long_description="\n\n".join([read("README.rst"), read("CHANGES.rst")]),
+    long_description="\n\n".join(
+        [read("README.rst"), sanitize_rst_roles(read("CHANGES.rst"))]
+    ),
     long_description_content_type="text/x-rst",
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
