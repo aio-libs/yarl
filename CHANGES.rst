@@ -14,6 +14,34 @@ Changelog
 
 .. towncrier release notes start
 
+1.8.0 (2022-08-01)
+==================
+
+Features
+--------
+
+- Added ``URL.raw_suffix``, ``URL.suffix``, ``URL.raw_suffixes``, ``URL.suffixes``, ``URL.with_suffix``. (`#613 <https://github.com/aio-libs/yarl/issues/613>`_)
+
+
+Improved Documentation
+----------------------
+
+- Fixed broken internal references to :meth:`~URL.human_repr`. (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
+- Fixed broken external references to :doc:`multidict:index` docs. (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Dropped Python 3.6 support. (`#672 <https://github.com/aio-libs/yarl/issues/672>`_)
+
+
+Misc
+----
+
+- `#646 <https://github.com/aio-libs/yarl/issues/646>`_, `#699 <https://github.com/aio-libs/yarl/issues/699>`_, `#701 <https://github.com/aio-libs/yarl/issues/701>`_
+
+
 1.7.2 (2021-11-01)
 ==================
 
