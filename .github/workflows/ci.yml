@@ -67,7 +67,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        pyver: ['3.7', '3.8', '3.9', '3.10']
+        pyver: ['3.7', '3.8', '3.9', '3.10', '~3.11.0-0']
         no-extensions: ['', 'Y']
         os: [ubuntu, macos, windows]
         exclude:
@@ -82,12 +82,6 @@ jobs:
           - pyver: pypy-3.8
             no-extensions: 'Y'
             os: ubuntu
-          - os: ubuntu
-            pyver: "3.11.0-alpha - 3.11.0"
-            no-extensions: ''
-          - os: ubuntu
-            pyver: "3.11.0-alpha - 3.11.0"
-            no-extensions: 'Y'
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
     timeout-minutes: 15
