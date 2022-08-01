@@ -1,2 +1,0 @@
-Updated the black .pre-commit-hook configuration to avoid it breaking due to
-`Black issue #2964 <https://github.com/psf/black/issues/2964>`_.
