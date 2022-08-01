@@ -60,5 +60,6 @@ repos:
   rev: v1.0.1
   hooks:
   - id: rst-linter
+    exclude: ^CHANGES\.rst$
     files: >-
       ^[^/]+[.]rst$
