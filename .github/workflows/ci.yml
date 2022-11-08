@@ -35,7 +35,7 @@ jobs:
         cache: 'pip'
         cache-dependency-path: 'requirements/*.txt'
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/lint.txt
     - name: Install itself
@@ -96,7 +96,7 @@ jobs:
         cache-dependency-path: 'requirements/*.txt'
     - name: Install cython
       if: ${{ matrix.no-extensions == '' }}
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/cython.txt
     - name: Cythonize
@@ -104,7 +104,7 @@ jobs:
       run: |
         make cythonize
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/ci.txt
       env:
@@ -156,7 +156,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
     - name: Install cython
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/cython.txt
     - name: Cythonize
@@ -207,7 +207,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
     - name: Install cython
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/cython.txt
     - name: Cythonize
