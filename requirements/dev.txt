@@ -1,2 +1,2 @@
 -r ci.txt
-towncrier==21.9.0
+towncrier==22.8.0
