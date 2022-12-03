@@ -1,6 +1,8 @@
 yarl
 ====
 
+The module provides handy URL class for URL parsing and changing.
+
 .. image:: https://github.com/aio-libs/yarl/workflows/CI/badge.svg
   :target: https://github.com/aio-libs/yarl/actions?query=workflow%3ACI
   :align: right
