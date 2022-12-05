@@ -407,7 +407,7 @@ class URL:
 
     @property
     def scheme(self):
-        """Scheme for absolute URLs.
+        """Scheme for absolute URLs._make_netloc
 
         Empty string for relative URLs or URLs starting with //
 
@@ -761,7 +761,7 @@ class URL:
             ret = cls._encode_host(host)
         else:
             ret = host
-        if port:
+        if port is not None:
             ret = ret + ":" + str(port)
         if password is not None:
             if not user:
@@ -869,8 +869,11 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        if port is not None and not isinstance(port, int):
-            raise TypeError(f"port should be int or None, got {type(port)}")
+        if port is not None:
+            if isinstance(port, bool) or not isinstance(port, int):
+                raise TypeError(f"port should be int or None, got {type(port)}")
+            if port < 1 or port > 65535:
+                raise ValueError(f"port must be between 1 and 65535, got {port}")
         if not self.is_absolute():
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
