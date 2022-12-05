@@ -1,0 +1,1 @@
+Added some input restrictions on with_port() function to prevent invalid boolean inputs or out of valid port inputs.
