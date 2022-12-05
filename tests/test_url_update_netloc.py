@@ -225,4 +225,4 @@ def test_with_port_invalid_type():
 
 def test_with_port_invalid_range():
     with pytest.raises(ValueError):
-        URL("http://example.com").with_port(0)
+        URL("http://example.com").with_port(-1)

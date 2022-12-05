@@ -872,8 +872,8 @@ class URL:
         if port is not None:
             if isinstance(port, bool) or not isinstance(port, int):
                 raise TypeError(f"port should be int or None, got {type(port)}")
-            if port < 1 or port > 65535:
-                raise ValueError(f"port must be between 1 and 65535, got {port}")
+            if port < 0 or port > 65535:
+                raise ValueError(f"port must be between 0 and 65535, got {port}")
         if not self.is_absolute():
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
