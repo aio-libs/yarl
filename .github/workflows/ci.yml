@@ -48,7 +48,7 @@ jobs:
         make lint
     - name: Install spell checker
       run: |
-        sudo apt install libenchant-dev
+        sudo apt install libenchant-2-dev
         pip install -r requirements/doc-spelling.txt
     - name: Run docs spelling
       run: |
