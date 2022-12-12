@@ -48,7 +48,7 @@ jobs:
         make lint
     - name: Install spell checker
       run: |
-        sudo apt install libenchant-dev
+        sudo apt install libenchant-2-dev
         pip install -r requirements/doc-spelling.txt
     - name: Run docs spelling
       run: |
@@ -214,7 +214,7 @@ jobs:
       run: |
         make cythonize
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.11.2
+      uses: pypa/cibuildwheel@v2.11.3
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
     - uses: actions/upload-artifact@v3
