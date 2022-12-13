@@ -765,7 +765,7 @@ class URL:
             ret = cls._encode_host(host)
         else:
             ret = host
-        if port:
+        if port is not None:
             ret = ret + ":" + str(port)
         if password is not None:
             if not user:
@@ -873,8 +873,11 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        if port is not None and not isinstance(port, int):
-            raise TypeError(f"port should be int or None, got {type(port)}")
+        if port is not None:
+            if isinstance(port, bool) or not isinstance(port, int):
+                raise TypeError(f"port should be int or None, got {type(port)}")
+            if port < 0 or port > 65535:
+                raise ValueError(f"port must be between 0 and 65535, got {port}")
         if not self.is_absolute():
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
@@ -986,9 +989,11 @@ class URL:
     def update_query(self, *args, **kwargs):
         """Return a new URL with query part updated."""
         s = self._get_str_query(*args, **kwargs)
-        new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
-        query = MultiDict(self.query)
-        query.update(new_query)
+        query = None
+        if s:
+            new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
+            query = MultiDict(self.query)
+            query.update(new_query)
 
         return URL(self._val._replace(query=self._get_str_query(query)), encoded=True)
 

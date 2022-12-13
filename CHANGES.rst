@@ -14,6 +14,49 @@ Changelog
 
 .. towncrier release notes start
 
+1.8.2 (2022-12-03)
+==================
+
+This is the first release that started shipping wheels for Python 3.11.
+
+
+1.8.1 (2022-08-01)
+==================
+
+Misc
+----
+
+- `#694 <https://github.com/aio-libs/yarl/issues/694>`_, `#699 <https://github.com/aio-libs/yarl/issues/699>`_, `#700 <https://github.com/aio-libs/yarl/issues/700>`_, `#701 <https://github.com/aio-libs/yarl/issues/701>`_, `#702 <https://github.com/aio-libs/yarl/issues/702>`_, `#703 <https://github.com/aio-libs/yarl/issues/703>`_, `#739 <https://github.com/aio-libs/yarl/issues/739>`_
+
+
+1.8.0 (2022-08-01)
+==================
+
+Features
+--------
+
+- Added ``URL.raw_suffix``, ``URL.suffix``, ``URL.raw_suffixes``, ``URL.suffixes``, ``URL.with_suffix``. (`#613 <https://github.com/aio-libs/yarl/issues/613>`_)
+
+
+Improved Documentation
+----------------------
+
+- Fixed broken internal references to :meth:`~URL.human_repr`. (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
+- Fixed broken external references to :doc:`multidict:index` docs. (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
+
+
+Deprecations and Removals
+-------------------------
+
+- Dropped Python 3.6 support. (`#672 <https://github.com/aio-libs/yarl/issues/672>`_)
+
+
+Misc
+----
+
+- `#646 <https://github.com/aio-libs/yarl/issues/646>`_, `#699 <https://github.com/aio-libs/yarl/issues/699>`_, `#701 <https://github.com/aio-libs/yarl/issues/701>`_
+
+
 1.7.2 (2021-11-01)
 ==================
 

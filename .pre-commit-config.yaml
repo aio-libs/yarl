@@ -16,6 +16,9 @@ repos:
   hooks:
   - id: black
     language_version: python3 # Should be a command that runs python3.6+
+    # Black misbehaved and broke when click 8.1.0 was released with an internal
+    # module removed. See https://github.com/psf/black/issues/2964
+    additional_dependencies: ['click<8.1.0']
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: 'v4.0.1'
   hooks:
@@ -57,5 +60,6 @@ repos:
   rev: v1.0.1
   hooks:
   - id: rst-linter
+    exclude: ^CHANGES\.rst$
     files: >-
       ^[^/]+[.]rst$

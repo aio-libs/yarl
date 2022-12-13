@@ -1,2 +1,2 @@
-mypy==0.961; implementation_name=="cpython"
-pre-commit==2.19.0
+mypy==0.971; implementation_name=="cpython"
+pre-commit==2.20.0
