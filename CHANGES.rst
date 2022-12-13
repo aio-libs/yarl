@@ -14,6 +14,12 @@ Changelog
 
 .. towncrier release notes start
 
+1.8.2 (2022-12-03)
+==================
+
+This is the first release that started shipping wheels for Python 3.11.
+
+
 1.8.1 (2022-08-01)
 ==================
 
