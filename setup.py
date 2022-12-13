@@ -70,7 +70,7 @@ args = dict(
     author="Andrew Svetlov",
     author_email="andrew.svetlov@gmail.com",
     url="https://github.com/aio-libs/yarl/",
-    license="Apache 2",
+    license="Apache-2.0",
     packages=["yarl"],
     install_requires=install_requires,
     python_requires=">=3.7",
