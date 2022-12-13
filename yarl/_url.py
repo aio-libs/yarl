@@ -2,6 +2,7 @@ import functools
 import math
 import warnings
 from collections.abc import Mapping, Sequence
+from contextlib import suppress
 from ipaddress import ip_address
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
@@ -705,30 +706,33 @@ class URL:
     def _normalize_path(cls, path):
         # Drop '.' and '..' from path
 
+        prefix = ""
+        if path.startswith("/"):
+            # preserve the "/" root element of absolute paths, copying it to the
+            # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
+            prefix = "/"
+            path = path[1:]
+
         segments = path.split("/")
         resolved_path = []
 
         for seg in segments:
             if seg == "..":
-                try:
+                # ignore any .. segments that would otherwise cause an
+                # IndexError when popped from resolved_path if
+                # resolving for rfc3986
+                with suppress(IndexError):
                     resolved_path.pop()
-                except IndexError:
-                    # ignore any .. segments that would otherwise cause an
-                    # IndexError when popped from resolved_path if
-                    # resolving for rfc3986
-                    pass
-            elif seg == ".":
-                continue
-            else:
+            elif seg != ".":
                 resolved_path.append(seg)
 
-        if segments[-1] in (".", ".."):
+        if segments and segments[-1] in (".", ".."):
             # do some post-processing here.
             # if the last segment was a relative dir,
             # then we need to append the trailing '/'
             resolved_path.append("")
 
-        return "/".join(resolved_path)
+        return prefix + "/".join(resolved_path)
 
     @classmethod
     def _encode_host(cls, host, human=False):
