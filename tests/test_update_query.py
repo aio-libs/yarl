@@ -40,6 +40,12 @@ def test_update_query_with_multiple_args():
         url.update_query("a", "b")
 
 
+def test_update_query_with_none_arg():
+    url = URL("http://example.com/?foo=bar&baz=foo")
+    expected_url = URL("http://example.com/")
+    assert url.update_query(None) == expected_url
+
+
 def test_with_query_list_of_pairs():
     url = URL("http://example.com")
     assert str(url.with_query([("a", "1")])) == "http://example.com/?a=1"

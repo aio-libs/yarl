@@ -191,6 +191,11 @@ def test_with_port():
     assert str(url.with_port(8888)) == "http://example.com:8888"
 
 
+def test_with_port_with_no_port():
+    url = URL("http://example.com")
+    assert str(url.with_port(None)) == "http://example.com"
+
+
 def test_with_port_ipv6():
     url = URL("http://[::1]:8080/")
     assert str(url.with_port(80)) == "http://[::1]:80/"
@@ -214,3 +219,10 @@ def test_with_port_for_relative_url():
 def test_with_port_invalid_type():
     with pytest.raises(TypeError):
         URL("http://example.com").with_port("123")
+    with pytest.raises(TypeError):
+        URL("http://example.com").with_port(True)
+
+
+def test_with_port_invalid_range():
+    with pytest.raises(ValueError):
+        URL("http://example.com").with_port(-1)
