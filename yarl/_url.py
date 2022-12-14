@@ -52,6 +52,30 @@ class cached_property:
         raise AttributeError("cached property is read-only")
 
 
+def _normalize_path_segments(segments):
+    """Drop '.' and '..' from a sequence of str segments"""
+
+    resolved_path = []
+
+    for seg in segments:
+        if seg == "..":
+            # ignore any .. segments that would otherwise cause an
+            # IndexError when popped from resolved_path if
+            # resolving for rfc3986
+            with suppress(IndexError):
+                resolved_path.pop()
+        elif seg != ".":
+            resolved_path.append(seg)
+
+    if segments and segments[-1] in (".", ".."):
+        # do some post-processing here.
+        # if the last segment was a relative dir,
+        # then we need to append the trailing '/'
+        resolved_path.append("")
+
+    return resolved_path
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -316,25 +340,7 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        name = self._PATH_QUOTER(name)
-        if name.startswith("/"):
-            raise ValueError(
-                f"Appending path {name!r} starting from slash is forbidden"
-            )
-        path = self._val.path
-        if path == "/":
-            new_path = "/" + name
-        elif not path and not self.is_absolute():
-            new_path = name
-        else:
-            parts = path.rstrip("/").split("/")
-            parts.append(name)
-            new_path = "/".join(parts)
-        if self.is_absolute():
-            new_path = self._normalize_path(new_path)
-        return URL(
-            self._val._replace(path=new_path, query="", fragment=""), encoded=True
-        )
+        return self._make_child((name,))
 
     def __mod__(self, query):
         return self.update_query(query)
@@ -702,9 +708,37 @@ class URL:
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
 
+    def _make_child(self, segments, encoded=False):
+        """add segments to self._val.path, accounting for absolute vs relative paths"""
+        parsed = []
+        for seg in reversed(segments):
+            if not seg:
+                continue
+            if seg[0] == "/":
+                raise ValueError(
+                    f"Appending path {seg!r} starting from slash is forbidden"
+                )
+            seg = seg if encoded else self._PATH_QUOTER(seg)
+            if "/" in seg:
+                parsed += (
+                    sub for sub in reversed(seg.split("/")) if sub and sub != "."
+                )
+            elif seg != ".":
+                parsed.append(seg)
+        parsed.reverse()
+        old_path = self._val.path
+        if old_path:
+            parsed = [*old_path.rstrip("/").split("/"), *parsed]
+        if self.is_absolute():
+            parsed = _normalize_path_segments(parsed)
+        new_path = "/".join(parsed)
+        return URL(
+            self._val._replace(path=new_path, query="", fragment=""), encoded=True
+        )
+
     @classmethod
     def _normalize_path(cls, path):
-        # Drop '.' and '..' from path
+        # Drop '.' and '..' from str path
 
         prefix = ""
         if path.startswith("/"):
@@ -714,25 +748,7 @@ class URL:
             path = path[1:]
 
         segments = path.split("/")
-        resolved_path = []
-
-        for seg in segments:
-            if seg == "..":
-                # ignore any .. segments that would otherwise cause an
-                # IndexError when popped from resolved_path if
-                # resolving for rfc3986
-                with suppress(IndexError):
-                    resolved_path.pop()
-            elif seg != ".":
-                resolved_path.append(seg)
-
-        if segments and segments[-1] in (".", ".."):
-            # do some post-processing here.
-            # if the last segment was a relative dir,
-            # then we need to append the trailing '/'
-            resolved_path.append("")
-
-        return prefix + "/".join(resolved_path)
+        return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
     def _encode_host(cls, host, human=False):
@@ -1085,6 +1101,10 @@ class URL:
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
         return URL(urljoin(str(self), str(url)), encoded=True)
+
+    def joinpath(self, *other, encoded=False):
+        """Return a new URL with the elements in other appended to the path."""
+        return self._make_child(other, encoded=encoded)
 
     def human_repr(self):
         """Return decoded human readable string for URL representation."""

@@ -817,6 +817,30 @@ The path is encoded if needed.
       >>> url
       URL('http://example.com/path/%D1%81%D1%8E%D0%B4%D0%B0')
 
+.. method:: URL.joinpath(*other, encoded=False)
+
+   Construct a new URL by with all ``other`` elements appended to
+   *path*, and cleaned up *query* and *fragment* parts.
+
+   Passing ``encoded=True`` parameter prevents path element auto-encoding, the caller is
+   responsible for taking care of URL correctness.
+
+   .. doctest::
+
+      >>> url = URL('http://example.com/path?arg#frag').joinpath('to', 'subpath')
+      >>> url
+      URL('http://example.com/path/to/subpath')
+      >>> url.parts
+      ('/', 'path', 'to', 'subpath')
+      >>> url = URL('http://example.com/path?arg#frag').joinpath('сюда')
+      >>> url
+      URL('http://example.com/path/%D1%81%D1%8E%D0%B4%D0%B0')
+      >>> url = URL('http://example.com/path').joinpath('%D1%81%D1%8E%D0%B4%D0%B0', encoded=True)
+      >>> url
+      URL('http://example.com/path/%D1%81%D1%8E%D0%B4%D0%B0')
+
+   .. versionadded:: 1.9
+
 .. method:: URL.join(url)
 
    Construct a full (“absolute”) URL by combining a “base URL”

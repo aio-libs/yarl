@@ -767,6 +767,111 @@ def test_div_with_dots():
     assert url.raw_path == "/path/to"
 
 
+# joinpath
+
+
+@pytest.mark.parametrize(
+    "base,to_join,expected",
+    [
+        pytest.param("", ("path", "to"), "http://example.com/path/to", id="root"),
+        pytest.param(
+            "/", ("path", "to"), "http://example.com/path/to", id="root-with-slash"
+        ),
+        pytest.param("/path", ("to",), "http://example.com/path/to", id="path"),
+        pytest.param(
+            "/path/", ("to",), "http://example.com/path/to", id="path-with-slash"
+        ),
+        pytest.param(
+            "/path?a=1#frag",
+            ("to",),
+            "http://example.com/path/to",
+            id="cleanup-query-and-fragment",
+        ),
+    ],
+)
+def test_joinpath(base, to_join, expected):
+    url = URL(f"http://example.com{base}")
+    assert str(url.joinpath(*to_join)) == expected
+
+
+@pytest.mark.parametrize(
+    "url,to_join,expected",
+    [
+        pytest.param(URL(), ("a",), ("a",), id="empty-url"),
+        pytest.param(URL("a"), ("b",), ("a", "b"), id="relative-path"),
+        pytest.param(URL("a"), ("b", "", "c"), ("a", "b", "c"), id="empty-element"),
+        pytest.param(URL("/a"), ("b"), ("/", "a", "b"), id="absolute-path"),
+    ],
+)
+def test_joinpath_relative(url, to_join, expected):
+    assert url.joinpath(*to_join).raw_parts == expected
+
+
+@pytest.mark.parametrize(
+    "url,to_join,encoded,e_path,e_raw_path,e_parts,e_raw_parts",
+    [
+        pytest.param(
+            "http://example.com/сюда",
+            ("туда",),
+            False,
+            "/сюда/туда",
+            "/%D1%81%D1%8E%D0%B4%D0%B0/%D1%82%D1%83%D0%B4%D0%B0",
+            ("/", "сюда", "туда"),
+            ("/", "%D1%81%D1%8E%D0%B4%D0%B0", "%D1%82%D1%83%D0%B4%D0%B0"),
+            id="non-ascii",
+        ),
+        pytest.param(
+            "http://example.com/path",
+            ("%cf%80",),
+            False,
+            "/path/%cf%80",
+            "/path/%25cf%2580",
+            ("/", "path", "%cf%80"),
+            ("/", "path", "%25cf%2580"),
+            id="percent-encoded",
+        ),
+        pytest.param(
+            "http://example.com/path",
+            ("%cf%80",),
+            True,
+            "/path/π",
+            "/path/%cf%80",
+            ("/", "path", "π"),
+            ("/", "path", "%cf%80"),
+            id="encoded-percent-encoded",
+        ),
+    ],
+)
+def test_joinpath_encoding(
+    url, to_join, encoded, e_path, e_raw_path, e_parts, e_raw_parts
+):
+    joined = URL(url).joinpath(*to_join, encoded=encoded)
+    assert joined.path == e_path
+    assert joined.raw_path == e_raw_path
+    assert joined.parts == e_parts
+    assert joined.raw_parts == e_raw_parts
+
+
+@pytest.mark.parametrize(
+    "to_join,expected",
+    [
+        pytest.param(("path:abc@123",), "/base/path:abc@123", id="with-colon-and-at"),
+        pytest.param(("..", "path", ".", "to"), "/path/to", id="with-dots"),
+    ],
+)
+def test_joinpath_edgecases(to_join, expected):
+    url = URL("http://example.com/base").joinpath(*to_join)
+    assert url.raw_path == expected
+
+
+def test_joinpath_path_starting_from_slash_is_forbidden():
+    url = URL("http://example.com/path/")
+    with pytest.raises(
+        ValueError, match="Appending path .* starting from slash is forbidden"
+    ):
+        assert url.joinpath("/to/others")
+
+
 # with_path
 
 
