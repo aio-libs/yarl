@@ -73,8 +73,8 @@ class TestScheme:
         assert u.fragment == ""
 
     def test_not_a_scheme2(self):
-        u = URL("37signals:book")
-        assert u.scheme == "37signals"
+        u = URL("signals37:book")
+        assert u.scheme == "signals37"
         assert u.host is None
         assert u.path == "book"
         assert u.query_string == ""
