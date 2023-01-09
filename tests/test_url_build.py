@@ -239,6 +239,11 @@ def test_build_with_authority_with_path_without_leading_slash():
         URL.build(scheme="http", host="example.com", path="path_without_leading_slash")
 
 
+def test_build_with_none_host():
+    with pytest.raises(TypeError, match="NoneType is illegal for.*host"):
+        URL.build(scheme="http", host=None)
+
+
 def test_build_with_none_path():
     with pytest.raises(TypeError):
         URL.build(scheme="http", host="example.com", path=None)

@@ -1,0 +1,1 @@
+Made ``URL.build()`` raise a ``TypeError`` if the ``host`` argument is ``None``.

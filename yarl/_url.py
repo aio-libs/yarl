@@ -240,12 +240,13 @@ class URL:
         if (
             scheme is None
             or authority is None
+            or host is None
             or path is None
             or query_string is None
             or fragment is None
         ):
             raise TypeError(
-                'NoneType is illegal for "scheme", "authority", "path", '
+                'NoneType is illegal for "scheme", "authority", "host", "path", '
                 '"query_string", and "fragment" args, use empty string instead.'
             )
 
