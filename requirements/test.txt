@@ -1,6 +1,6 @@
 -e .
 idna==3.4
 multidict==6.0.3
-pytest==7.2.0
+pytest==7.2.1
 pytest-cov>=2.3.1
 typing_extensions==4.4.0
