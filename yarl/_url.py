@@ -937,6 +937,8 @@ class URL:
             return str(float(v))
         if issubclass(cls, int) and cls is not bool:
             return str(int(v))
+        if issubclass(cls, bool):
+            return str(v).lower()
         raise TypeError(
             "Invalid variable type: value "
             "should be str, int or float, got {!r} "
