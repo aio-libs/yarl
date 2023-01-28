@@ -1,0 +1,1 @@
+Allow bool type at query var.
