@@ -715,6 +715,12 @@ def test_div_path_starting_from_slash_is_forbidden():
         url / "/to/others"
 
 
+def test_div_bad_type():
+    url = URL("http://example.com/path/")
+    with pytest.raises(TypeError):
+        url / 3
+
+
 def test_div_cleanup_query_and_fragment():
     url = URL("http://example.com/path?a=1#frag")
     assert str(url / "to") == "http://example.com/path/to"

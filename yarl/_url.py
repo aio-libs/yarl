@@ -341,6 +341,8 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
+        if not type(name) is str:
+            return NotImplemented
         return self._make_child((name,))
 
     def __mod__(self, query):
