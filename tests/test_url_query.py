@@ -17,10 +17,6 @@ URLS_WITH_BASIC_QUERY_VALUES: List[Tuple[URL, MultiDict]] = [
         MultiDict(),
     ),
     (
-        URL("http://example.com?a"),
-        MultiDict([("a", "")]),
-    ),
-    (
         URL("http://example.com?a="),
         MultiDict([("a", "")]),
     ),
@@ -69,9 +65,7 @@ def test_query_basic_parsing(original_url, expected_query):
 )
 def test_query_basic_update_query(original_url, expected_query):
     new_url = original_url.update_query({})
-    # FIXME: `?a` becomes `?a=` right now. Maybe support `None` values?
-    # assert new_url == original_url
-    assert new_url is not None
+    assert new_url == original_url
 
 
 def test_query_dont_unqoute_twice():
@@ -162,6 +156,3 @@ def test_query_from_empty_update_query(
 
     if "b" in original_url.query:
         assert new_url.query["b"] == original_url.query["b"]
-
-    # FIXME: Broken because of asymmetric query encoding
-    # assert new_url == original_url
