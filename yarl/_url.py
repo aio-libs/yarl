@@ -956,7 +956,7 @@ class URL:
             raise ValueError("Either kwargs or single query parameter must be present")
 
         if query is None:
-            query = ""
+            query = None
         elif isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
             query = "&".join(self._query_seq_pairs(quoter, query.items()))
@@ -998,7 +998,7 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
 
-        new_query = self._get_str_query(*args, **kwargs)
+        new_query = self._get_str_query(*args, **kwargs) or ""
         return URL(
             self._val._replace(path=self._val.path, query=new_query), encoded=True
         )
@@ -1007,12 +1007,14 @@ class URL:
         """Return a new URL with query part updated."""
         s = self._get_str_query(*args, **kwargs)
         query = None
-        if s:
+        if s is not None:
             new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
             query = MultiDict(self.query)
             query.update(new_query)
 
-        return URL(self._val._replace(query=self._get_str_query(query)), encoded=True)
+        return URL(
+            self._val._replace(query=self._get_str_query(query) or ""), encoded=True
+        )
 
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.
