@@ -1,2 +1,2 @@
 mypy==0.971; implementation_name=="cpython"
-pre-commit==2.20.0
+pre-commit==3.2.2; python_version>="3.8"
