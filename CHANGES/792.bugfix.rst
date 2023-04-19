@@ -1,1 +1,0 @@
-Fixed an issue with update_query() not getting rid of the query when argument is None.

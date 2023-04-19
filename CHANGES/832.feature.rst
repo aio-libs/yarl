@@ -1,1 +1,0 @@
-Made :py:meth:`URL.__truediv__` return ``NotImplemented`` if called with an unsupported type — by :user:`michaeljpeters`.

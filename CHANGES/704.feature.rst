@@ -1,1 +1,0 @@
-Added ``URL.joinpath(*elements)``, to create a new URL appending multiple path elements.

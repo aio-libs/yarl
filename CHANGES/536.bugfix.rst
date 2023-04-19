@@ -1,2 +1,0 @@
-Path normalisation for absolute URLs no longer raises a ValueError exception
-when `..` segments would otherwise go beyond the URL path root.

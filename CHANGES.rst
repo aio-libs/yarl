@@ -14,6 +14,34 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.0 (2023-04-19)
+==================
+
+Features
+--------
+
+- Added ``URL.joinpath(*elements)``, to create a new URL appending multiple path elements. (`#704 <https://github.com/aio-libs/yarl/issues/704>`_)
+- Made :py:meth:`URL.__truediv__` return ``NotImplemented`` if called with an unsupported type — by :user:`michaeljpeters`. (`#832 <https://github.com/aio-libs/yarl/issues/832>`_)
+
+
+Bugfixes
+--------
+
+- Path normalisation for absolute URLs no longer raises a ValueError exception
+  when `..` segments would otherwise go beyond the URL path root. (`#536 <https://github.com/aio-libs/yarl/issues/536>`_)
+- Fixed an issue with update_query() not getting rid of the query when argument is None. (`#792 <https://github.com/aio-libs/yarl/issues/792>`_)
+- Added some input restrictions on with_port() function to prevent invalid boolean inputs or out of valid port inputs; handled incorrect 0 port representation. (`#793 <https://github.com/aio-libs/yarl/issues/793>`_)
+- Made :py:meth:`URL.build` raise a :py:exc:`TypeError` if the ``host`` argument is :py:data:`None` — by :user:`paulpapacz`. (`#808 <https://github.com/aio-libs/yarl/issues/808>`_)
+- Fixed an issue with ``update_query()`` getting rid of the query when the argument
+  is empty but not ``None``. (`#845 <https://github.com/aio-libs/yarl/issues/845>`_)
+
+
+Misc
+----
+
+- `#220 <https://github.com/aio-libs/yarl/issues/220>`_
+
+
 1.8.2 (2022-12-03)
 ==================
 

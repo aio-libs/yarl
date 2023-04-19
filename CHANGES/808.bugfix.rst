@@ -1,1 +1,0 @@
-Made :py:meth:`URL.build` raise a :py:exc:`TypeError` if the ``host`` argument is :py:data:`None` — by :user:`paulpapacz`.
