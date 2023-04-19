@@ -431,7 +431,7 @@ def test_raw_parts_for_relative_path_starting_from_slash():
 
 def test_raw_parts_for_relative_double_path():
     url = URL("path/to")
-    assert url.raw_parts == url.raw_parts
+    assert ("path", "to") == url.raw_parts
 
 
 def test_parts_for_empty_url():

@@ -59,7 +59,7 @@ def test_with_query_list_of_pairs():
 def test_with_query_list_non_pairs():
     url = URL("http://example.com")
     with pytest.raises(ValueError):
-        url.with_query(["a=1", "b=2" "c=3"])
+        url.with_query(["a=1", "b=2", "c=3"])
 
 
 def test_with_query_kwargs():
