@@ -1,0 +1,2 @@
+Fixed an issue with ``update_query()`` getting rid of the query when the argument
+is empty but not ``None``.
