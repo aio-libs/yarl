@@ -1,36 +1,71 @@
+from typing import List, Tuple
 from urllib.parse import urlencode
 
+import pytest
 from multidict import MultiDict, MultiDictProxy
 
 from yarl import URL
 
-# query
+# ========================================
+# Basic chars in query values
+# ========================================
+
+URLS_WITH_BASIC_QUERY_VALUES: List[Tuple[URL, MultiDict]] = [
+    # Empty strings, keys and values
+    (
+        URL("http://example.com"),
+        MultiDict(),
+    ),
+    (
+        URL("http://example.com?a="),
+        MultiDict([("a", "")]),
+    ),
+    # ASCII chars
+    (
+        URL("http://example.com?a+b=c+d"),
+        MultiDict({"a b": "c d"}),
+    ),
+    (
+        URL("http://example.com?a=1&b=2"),
+        MultiDict([("a", "1"), ("b", "2")]),
+    ),
+    (
+        URL("http://example.com?a=1&b=2&a=3"),
+        MultiDict([("a", "1"), ("b", "2"), ("a", "3")]),
+    ),
+    # Non-ASCI BMP chars
+    (
+        URL("http://example.com?ключ=знач"),
+        MultiDict({"ключ": "знач"}),
+    ),
+    (
+        URL("http://example.com?foo=ᴜɴɪᴄᴏᴅᴇ"),
+        MultiDict({"foo": "ᴜɴɪᴄᴏᴅᴇ"}),
+    ),
+    # Non-BMP chars
+    (
+        URL("http://example.com?bar=𝕦𝕟𝕚𝕔𝕠𝕕𝕖"),
+        MultiDict({"bar": "𝕦𝕟𝕚𝕔𝕠𝕕𝕖"}),
+    ),
+]
 
 
-def test_query_spaces():
-    url = URL("http://example.com?a+b=c+d")
-    assert url.query == MultiDict({"a b": "c d"})
+@pytest.mark.parametrize(
+    "original_url, expected_query",
+    URLS_WITH_BASIC_QUERY_VALUES,
+)
+def test_query_basic_parsing(original_url, expected_query):
+    assert isinstance(original_url.query, MultiDictProxy)
+    assert original_url.query == expected_query
 
 
-def test_query_empty():
-    url = URL("http://example.com")
-    assert isinstance(url.query, MultiDictProxy)
-    assert url.query == MultiDict()
-
-
-def test_query():
-    url = URL("http://example.com?a=1&b=2")
-    assert url.query == MultiDict([("a", "1"), ("b", "2")])
-
-
-def test_query_repeated_args():
-    url = URL("http://example.com?a=1&b=2&a=3")
-    assert url.query == MultiDict([("a", "1"), ("b", "2"), ("a", "3")])
-
-
-def test_query_empty_arg():
-    url = URL("http://example.com?a")
-    assert url.query == MultiDict([("a", "")])
+@pytest.mark.parametrize(
+    "original_url, expected_query",
+    URLS_WITH_BASIC_QUERY_VALUES,
+)
+def test_query_basic_update_query(original_url, expected_query):
+    new_url = original_url.update_query({})
+    assert new_url == original_url
 
 
 def test_query_dont_unqoute_twice():
@@ -42,20 +77,82 @@ def test_query_dont_unqoute_twice():
     assert url.query["url"] == sample_url
 
 
-def test_query_nonascii():
-    url = URL("http://example.com?ключ=знач")
-    assert url.query == MultiDict({"ключ": "знач"})
+# ========================================
+# Reserved chars in query values
+# ========================================
+
+URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES = [
+    # Ampersand
+    (URL("http://127.0.0.1/?a=10&b=20"), 2, "10"),
+    (URL("http://127.0.0.1/?a=10%26b=20"), 1, "10&b=20"),
+    (URL("http://127.0.0.1/?a=10%3Bb=20"), 1, "10;b=20"),
+    # Semicolon
+    (URL("http://127.0.0.1/?a=10;b=20"), 1, "10;b=20"),
+    (URL("http://127.0.0.1/?a=10%26b=20"), 1, "10&b=20"),
+    (URL("http://127.0.0.1/?a=10%3Bb=20"), 1, "10;b=20"),
+]
 
 
-# query separators
+@pytest.mark.parametrize(
+    "original_url, expected_query_len, expected_value_a",
+    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
+)
+def test_query_separators_from_parsing(
+    original_url,
+    expected_query_len,
+    expected_value_a,
+):
+    assert len(original_url.query) == expected_query_len
+    assert original_url.query["a"] == expected_value_a
 
 
-def test_ampersand_as_separator():
-    u = URL("http://127.0.0.1/?a=1&b=2")
-    assert len(u.query) == 2
+@pytest.mark.parametrize(
+    "original_url, expected_query_len, expected_value_a",
+    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
+)
+def test_query_separators_from_update_query(
+    original_url,
+    expected_query_len,
+    expected_value_a,
+):
+    new_url = original_url.update_query(
+        {
+            "c": expected_value_a,
+        }
+    )
+    assert new_url.query["a"] == expected_value_a
+    assert new_url.query["c"] == expected_value_a
 
 
-def test_ampersand_as_value():
-    u = URL("http://127.0.0.1/?a=1%26b=2")
-    assert len(u.query) == 1
-    assert u.query["a"] == "1&b=2"
+@pytest.mark.parametrize(
+    "original_url, expected_query_len, expected_value_a",
+    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
+)
+def test_query_separators_from_with_query(
+    original_url,
+    expected_query_len,
+    expected_value_a,
+):
+    new_url = original_url.with_query(
+        {
+            "c": expected_value_a,
+        }
+    )
+    assert new_url.query["c"] == expected_value_a
+
+
+@pytest.mark.parametrize(
+    "original_url, expected_query_len, expected_value_a",
+    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
+)
+def test_query_from_empty_update_query(
+    original_url,
+    expected_query_len,
+    expected_value_a,
+):
+    new_url = original_url.update_query({})
+
+    assert new_url.query["a"] == original_url.query["a"]
+
+    if "b" in original_url.query:
+        assert new_url.query["b"] == original_url.query["b"]
