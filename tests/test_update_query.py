@@ -46,6 +46,11 @@ def test_update_query_with_none_arg():
     assert url.update_query(None) == expected_url
 
 
+def test_update_query_with_empty_dict():
+    url = URL("http://example.com/?foo=bar&baz=foo")
+    assert url.update_query({}) == url
+
+
 def test_with_query_list_of_pairs():
     url = URL("http://example.com")
     assert str(url.with_query([("a", "1")])) == "http://example.com/?a=1"
