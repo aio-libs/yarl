@@ -1,4 +1,4 @@
-from typing import List, Tuple  # noqa: F401
+from typing import List, Tuple
 from urllib.parse import urlencode
 
 import pytest
@@ -6,12 +6,11 @@ from multidict import MultiDict, MultiDictProxy
 
 from yarl import URL
 
-
 # ========================================
 # Basic chars in query values
 # ========================================
 
-URLS_WITH_BASIC_QUERY_VALUES = [
+URLS_WITH_BASIC_QUERY_VALUES: List[Tuple[URL, MultiDict]] = [
     # Empty strings, keys and values
     (
         URL("http://example.com"),
@@ -52,7 +51,7 @@ URLS_WITH_BASIC_QUERY_VALUES = [
         URL("http://example.com?bar=𝕦𝕟𝕚𝕔𝕠𝕕𝕖"),
         MultiDict({"bar": "𝕦𝕟𝕚𝕔𝕠𝕕𝕖"}),
     ),
-]  # type: List[Tuple[URL, MultiDict]]
+]
 
 
 @pytest.mark.parametrize(
