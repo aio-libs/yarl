@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode
 
 import pytest
 from multidict import MultiDict, MultiDictProxy
@@ -81,21 +81,44 @@ def test_query_dont_unqoute_twice():
 # Reserved chars in query values
 # ========================================
 
+# See https://github.com/python/cpython#87133, which introduced a new
+# `separator` keyword argument to `urllib.parse.parse_qs` (among others).
+# If the name doesn't exist as a variable in the function bytecode, the
+# test is expected to fail.
+_SEMICOLON_XFAIL = pytest.mark.xfail(
+    condition="separator" not in parse_qs.__code__.co_varnames,
+    reason=(
+        "Python versions < 3.7.10, < 3.8.8 and < 3.9.2 lack a fix for "
+        'CVE-2021-23336 dropping ";" as a valid query parameter separator, '
+        "making this test fail."
+    ),
+    strict=True,
+)
+
+
 URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES = [
     # Ampersand
     (URL("http://127.0.0.1/?a=10&b=20"), 2, "10"),
     (URL("http://127.0.0.1/?a=10%26b=20"), 1, "10&b=20"),
     (URL("http://127.0.0.1/?a=10%3Bb=20"), 1, "10;b=20"),
-    # Semicolon
+    # Semicolon, which is *not* a query parameter separator as of RFC3986
     (URL("http://127.0.0.1/?a=10;b=20"), 1, "10;b=20"),
     (URL("http://127.0.0.1/?a=10%26b=20"), 1, "10&b=20"),
     (URL("http://127.0.0.1/?a=10%3Bb=20"), 1, "10;b=20"),
+]
+URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES_W_XFAIL = [
+    # Ampersand
+    *URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES[:3],
+    # Semicolon, which is *not* a query parameter separator as of RFC3986
+    # Mark the first of these as expecting to fail on old Python patch releases.
+    pytest.param(*URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES[3], marks=_SEMICOLON_XFAIL),
+    *URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES[4:],
 ]
 
 
 @pytest.mark.parametrize(
     "original_url, expected_query_len, expected_value_a",
-    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
+    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES_W_XFAIL,
 )
 def test_query_separators_from_parsing(
     original_url,
@@ -108,18 +131,14 @@ def test_query_separators_from_parsing(
 
 @pytest.mark.parametrize(
     "original_url, expected_query_len, expected_value_a",
-    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
+    URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES_W_XFAIL,
 )
 def test_query_separators_from_update_query(
     original_url,
     expected_query_len,
     expected_value_a,
 ):
-    new_url = original_url.update_query(
-        {
-            "c": expected_value_a,
-        }
-    )
+    new_url = original_url.update_query({"c": expected_value_a})
     assert new_url.query["a"] == expected_value_a
     assert new_url.query["c"] == expected_value_a
 
@@ -133,11 +152,7 @@ def test_query_separators_from_with_query(
     expected_query_len,
     expected_value_a,
 ):
-    new_url = original_url.with_query(
-        {
-            "c": expected_value_a,
-        }
-    )
+    new_url = original_url.with_query({"c": expected_value_a})
     assert new_url.query["c"] == expected_value_a
 
 
