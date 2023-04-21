@@ -14,8 +14,19 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.1 (2023-04-21)
+==================
+
+Bugfixes
+--------
+
+- Marked tests that fail on older Python patch releases (< 3.7.10, < 3.8.8 and < 3.9.2) as expected to fail due to missing a security fix for CVE-2021-23336. (`#850 <https://github.com/aio-libs/yarl/issues/850>`_)
+
+
 1.9.0 (2023-04-19)
 ==================
+
+This release was never published to PyPI, due to issues with the build process.
 
 Features
 --------
