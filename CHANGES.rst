@@ -14,6 +14,15 @@ Changelog
 
 .. towncrier release notes start
 
+1.8.2 (2023-04-25)
+==================
+
+Bugfixes
+--------
+
+- Fix regression with truediv and absolute URLs with empty paths causing the raw path to lack the leading ``/``. (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
+
+
 1.9.1 (2023-04-21)
 ==================
 
