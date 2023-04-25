@@ -734,6 +734,10 @@ class URL:
             parsed = [*old_path.rstrip("/").split("/"), *parsed]
         if self.is_absolute():
             parsed = _normalize_path_segments(parsed)
+            if parsed and parsed[0] != "":
+                # inject a leading slash when adding a path to an absolute URL
+                # where there was none before
+                parsed = ["", *parsed]
         new_path = "/".join(parsed)
         return URL(
             self._val._replace(path=new_path, query="", fragment=""), encoded=True

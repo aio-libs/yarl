@@ -690,23 +690,27 @@ def test_clear_query_on_getting_parent_toplevel():
 
 
 def test_div_root():
-    url = URL("http://example.com")
-    assert str(url / "path" / "to") == "http://example.com/path/to"
+    url = URL("http://example.com") / "path" / "to"
+    assert str(url) == "http://example.com/path/to"
+    assert url.raw_path == "/path/to"
 
 
 def test_div_root_with_slash():
-    url = URL("http://example.com/")
-    assert str(url / "path" / "to") == "http://example.com/path/to"
+    url = URL("http://example.com/") / "path" / "to"
+    assert str(url) == "http://example.com/path/to"
+    assert url.raw_path == "/path/to"
 
 
 def test_div():
-    url = URL("http://example.com/path")
-    assert str(url / "to") == "http://example.com/path/to"
+    url = URL("http://example.com/path") / "to"
+    assert str(url) == "http://example.com/path/to"
+    assert url.raw_path == "/path/to"
 
 
 def test_div_with_slash():
-    url = URL("http://example.com/path/")
-    assert str(url / "to") == "http://example.com/path/to"
+    url = URL("http://example.com/path/") / "to"
+    assert str(url) == "http://example.com/path/to"
+    assert url.raw_path == "/path/to"
 
 
 def test_div_path_starting_from_slash_is_forbidden():
