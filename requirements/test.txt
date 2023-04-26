@@ -1,4 +1,5 @@
 -r cython.txt
+hypothesis >= 6.0
 idna==3.6
 multidict==6.0.4
 pytest==7.4.3
