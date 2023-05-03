@@ -713,7 +713,8 @@ class URL:
 
     def _make_child(self, segments, encoded=False):
         """add segments to self._val.path, accounting for absolute vs relative paths"""
-        parsed = []
+        # keep the trailing slash if the last segment ends with /
+        parsed = [""] if segments and segments[-1][-1:] == "/" else []
         for seg in reversed(segments):
             if not seg:
                 continue
