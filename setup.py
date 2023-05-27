@@ -70,6 +70,9 @@ args = dict(
     author="Andrew Svetlov",
     author_email="andrew.svetlov@gmail.com",
     url="https://github.com/aio-libs/yarl/",
+    project_urls={
+        "Changelog": "https://github.com/aio-libs/yarl/blob/master/CHANGES.rst",
+    },
     license="Apache-2.0",
     packages=["yarl"],
     install_requires=install_requires,
