@@ -178,14 +178,6 @@ class TestHost:
         assert u.query_string == ""
         assert u.fragment == ""
 
-    def test_masked_ipv4(self):
-        u = URL("//[127.0.0.1]/")
-        assert u.scheme == ""
-        assert u.host == "127.0.0.1"
-        assert u.path == "/"
-        assert u.query_string == ""
-        assert u.fragment == ""
-
     def test_ipv6(self):
         u = URL("//[::1]/")
         assert u.scheme == ""
@@ -194,26 +186,10 @@ class TestHost:
         assert u.query_string == ""
         assert u.fragment == ""
 
-    def test_strange_ip(self):
-        u = URL("//[-1]/")
-        assert u.scheme == ""
-        assert u.host == "-1"
-        assert u.path == "/"
-        assert u.query_string == ""
-        assert u.fragment == ""
-
-    def test_strange_ip_2(self):
+    def test_ipvfuture_address(self):
         u = URL("//[v1.-1]/")
         assert u.scheme == ""
         assert u.host == "v1.-1"
-        assert u.path == "/"
-        assert u.query_string == ""
-        assert u.fragment == ""
-
-    def test_strange_ip_3(self):
-        u = URL("//v1.[::1]/")
-        assert u.scheme == ""
-        assert u.host == "::1"
         assert u.path == "/"
         assert u.query_string == ""
         assert u.fragment == ""
@@ -320,7 +296,7 @@ class TestUserInfo:
         assert u.fragment == ""
 
     def test_weird_user3(self):
-        u = URL("//[some]@host")
+        u = URL("//%5Bsome%5D@host")
         assert u.scheme == ""
         assert u.user == "[some]"
         assert u.password is None

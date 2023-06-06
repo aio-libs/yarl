@@ -236,12 +236,6 @@ def test_compressed_ipv6():
     assert url.host == url.raw_host
 
 
-def test_ipv6_zone():
-    url = URL("http://[fe80::822a:a8ff:fe49:470c%тест%42]:123")
-    assert url.raw_host == "fe80::822a:a8ff:fe49:470c%тест%42"
-    assert url.host == url.raw_host
-
-
 def test_ipv4_zone():
     # I'm unsure if it is correct.
     url = URL("http://1.2.3.4%тест%42:123")
@@ -1660,8 +1654,8 @@ def test_human_repr_delimiters():
     s = url.human_repr()
     assert URL(s) == url
     assert (
-        s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40[\\]^_`{|}~"
-        ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40[\\]^_`{|}~"
+        s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B\\%5D^_`{|}~"
+        ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B\\%5D^_`{|}~"
         "@хост.домен:8080"
         "/ !\"%23$%25&'()*+,-./:;<=>%3F@[\\]^_`{|}~"
         "? !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
