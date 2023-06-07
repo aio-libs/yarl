@@ -1,0 +1,1 @@
+Support Python 3.12 (upgraded cython to 3.0.0b3, provided CI test coverage)
