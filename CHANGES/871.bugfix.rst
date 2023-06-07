@@ -1,0 +1,1 @@
+Accept string subclasses in truediv operations (``URL / segment``)

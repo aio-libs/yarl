@@ -1,3 +1,4 @@
+from enum import Enum
 from urllib.parse import SplitResult
 
 import pytest
@@ -717,6 +718,18 @@ def test_div_path_starting_from_slash_is_forbidden():
     url = URL("http://example.com/path/")
     with pytest.raises(ValueError):
         url / "/to/others"
+
+
+class StrEnum(str, Enum):
+    spam = "ham"
+
+    def __str__(self):
+        return self.value
+
+
+def test_div_path_srting_subclass():
+    url = URL("http://example.com/path/") / StrEnum.spam
+    assert str(url) == "http://example.com/path/ham"
 
 
 def test_div_bad_type():
