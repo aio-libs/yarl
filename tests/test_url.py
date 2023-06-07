@@ -810,6 +810,21 @@ def test_div_with_dots():
             "http://example.com/path/to",
             id="cleanup-query-and-fragment",
         ),
+        pytest.param("", ("path/",), "http://example.com/path/", id="trailing-slash"),
+        pytest.param(
+            "", ("path/", "to/"), "http://example.com/path/to/", id="duplicate-slash"
+        ),
+        pytest.param("", (), "http://example.com", id="empty-segments"),
+        pytest.param(
+            "/", ("path/",), "http://example.com/path/", id="base-slash-trailing-slash"
+        ),
+        pytest.param(
+            "/",
+            ("path/", "to/"),
+            "http://example.com/path/to/",
+            id="base-slash-duplicate-slash",
+        ),
+        pytest.param("/", (), "http://example.com", id="base-slash-empty-segments"),
     ],
 )
 def test_joinpath(base, to_join, expected):
@@ -824,6 +839,9 @@ def test_joinpath(base, to_join, expected):
         pytest.param(URL("a"), ("b",), ("a", "b"), id="relative-path"),
         pytest.param(URL("a"), ("b", "", "c"), ("a", "b", "c"), id="empty-element"),
         pytest.param(URL("/a"), ("b"), ("/", "a", "b"), id="absolute-path"),
+        pytest.param(URL(), ("a/",), ("a", ""), id="trailing-slash"),
+        pytest.param(URL(), ("a/", "b/"), ("a", "b", ""), id="duplicate-slash"),
+        pytest.param(URL(), (), ("",), id="empty-segments"),
     ],
 )
 def test_joinpath_relative(url, to_join, expected):
