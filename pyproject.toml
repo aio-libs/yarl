@@ -1,5 +1,6 @@
 [build-system]
 requires = ["setuptools>=40", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.towncrier]
 package = "yarl"
