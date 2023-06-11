@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools>=40", "wheel"]
+requires = [
+  "setuptools>=40",
+]
 build-backend = "setuptools.build_meta"
 
 [tool.towncrier]
