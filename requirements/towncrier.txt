@@ -1,1 +1,1 @@
-towncrier==22.12.0
+towncrier==23.6.0
