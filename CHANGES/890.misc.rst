@@ -1,0 +1,1 @@
+Converted most of the packaging setup into a declarative ``setup.cfg`` config.
