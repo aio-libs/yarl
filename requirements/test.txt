@@ -1,4 +1,3 @@
--e .
 idna==3.4
 multidict==6.0.4
 pytest==7.4.3
