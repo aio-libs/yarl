@@ -1,3 +1,5 @@
+from typing import cast
+
 import functools
 import math
 import warnings
@@ -298,7 +300,7 @@ class URL:
         return str(self).encode("ascii")
 
     def __eq__(self, other):
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
 
         val1 = self._val
@@ -321,22 +323,22 @@ class URL:
         return ret
 
     def __le__(self, other):
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val <= other._val
 
     def __lt__(self, other):
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val < other._val
 
     def __ge__(self, other):
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val >= other._val
 
     def __gt__(self, other):
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val > other._val
 
@@ -1022,6 +1024,16 @@ class URL:
         return URL(
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
+
+    def drop_query_keys(self, *keys: str) -> "URL":
+        """Remove some keys from query part and return new URL."""
+        valid_keys = set(keys) & set(self.query.keys())
+        if not valid_keys:
+            return self
+        editable_query = cast(MultiDict, self.query.copy())
+        for k in valid_keys:
+            editable_query.pop(k, None)
+        return self.with_query(editable_query)
 
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.

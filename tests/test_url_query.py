@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Sequence
 from urllib.parse import parse_qs, urlencode
 
 import pytest
@@ -171,3 +171,24 @@ def test_query_from_empty_update_query(
 
     if "b" in original_url.query:
         assert new_url.query["b"] == original_url.query["b"]
+
+
+@pytest.mark.parametrize(
+    "original_query_string, keys_to_drop, expected_query_string",
+    [
+        ("a=10&b=20", ["a"], "b=20"),
+        ("a=10&b=20", ["b"], "a=10"),
+        ("a=10&b=20&c=30", ["b"], "a=10&c=30"),
+        ("a=10&b=20&c=30", ["invalid_key"], "a=10&b=20&c=30"),
+        ("a=10&b=20", ["a", "b"], ""),
+        ("a=10&b=20", [], "a=10&b=20"),
+    ]
+)
+def test_drop_query_keys(
+        original_query_string: str,
+        keys_to_drop: Sequence[str],
+        expected_query_string: str
+    ):
+    url = URL(f"http://example.com?{original_query_string}")
+    new_url = url.drop_query_keys(*keys_to_drop)
+    assert new_url.query_string == expected_query_string
