@@ -1,11 +1,10 @@
-from typing import cast
-
 import functools
 import math
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
+from typing import cast
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
@@ -1025,7 +1024,7 @@ class URL:
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
 
-    def drop_query_keys(self, *keys: str) -> "URL":
+    def without_query_keys(self, *keys: str) -> "URL":
         """Remove some keys from query part and return new URL."""
         valid_keys = set(keys) & set(self.query.keys())
         if not valid_keys:
