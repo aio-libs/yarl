@@ -1,0 +1,1 @@
+Fix instagram download link signature by adding `/` to protected chars of `protected`
