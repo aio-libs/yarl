@@ -261,6 +261,12 @@ class URL:
         elif not user and not password and not host and not port:
             netloc = ""
         else:
+            if "@" in host and not user and not password:
+                user_pass, host = host.split("@", 1)
+                if ":" in user_pass:
+                    user, password = user_pass.split(":", 1)
+                else:
+                    user = user_pass
             netloc = cls._make_netloc(
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )

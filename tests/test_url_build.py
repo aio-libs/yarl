@@ -257,3 +257,14 @@ def test_build_with_none_query_string():
 def test_build_with_none_fragment():
     with pytest.raises(TypeError):
         URL.build(scheme="http", host="example.com", fragment=None)
+
+
+def test_build_with_case_sensitive_user_and_password():
+    url = URL.build(scheme='httPS', host='usER:passWORD@hostNAME', path='/paTH')
+    assert url.user == "usER"
+    assert url.password == "passWORD"
+
+
+def test_build_with_case_sensitive_user():
+    url = URL.build(scheme='httPS', host='usER@hostNAME', path='/paTH')
+    assert url.user == "usER"
