@@ -726,6 +726,12 @@ section generates a new :class:`URL` instance.
       Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
       as a query parameter value.
 
+.. method:: URL.without_query_keys(*keys)
+
+   Return a new URL whose *query* part does not contain specified keys.
+
+   It does nothing if none of specified keys are present in the query.
+
 .. method:: URL.with_fragment(fragment)
 
    Return a new URL with *fragment* replaced, auto-encode *fragment* if needed.
