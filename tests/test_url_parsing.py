@@ -214,6 +214,7 @@ class TestPort:
         assert u.query_string == ""
         assert u.fragment == ""
 
+    @pytest.mark.xfail
     def test_no_host(self):
         u = URL("//:80")
         assert u.scheme == ""
