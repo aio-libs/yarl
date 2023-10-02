@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 5
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup Python 3.8
       uses: actions/setup-python@v4
       with:
@@ -99,7 +99,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v4
       with:
@@ -164,7 +164,7 @@ jobs:
     needs: pre-deploy
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup Python
       uses: actions/setup-python@v4
     - name: Install cython
@@ -201,7 +201,7 @@ jobs:
           qemu: s390x
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up QEMU
       if: ${{ matrix.qemu }}
       uses: docker/setup-qemu-action@v2
@@ -249,7 +249,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Login
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
