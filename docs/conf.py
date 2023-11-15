@@ -51,10 +51,13 @@ with _version_path.open() as fp:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    # stdlib-party extensions:
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.viewcode",
+    # Third-party extensions:
     "alabaster",
 ]
 
@@ -88,9 +91,17 @@ source_suffix = ".rst"
 # The master toctree document.
 master_doc = "index"
 
-# General information about the project.
-project = "yarl"
-copyright = "2016-2018, Andrew Svetlov and aio-libs team"
+# -- Project information -----------------------------------------------------
+
+github_url = "https://github.com"
+github_repo_org = "aio-libs"
+github_repo_name = "yarl"
+github_repo_slug = f"{github_repo_org}/{github_repo_name}"
+github_repo_url = f"{github_url}/{github_repo_slug}"
+github_sponsors_url = f"{github_url}/sponsors"
+
+project = github_repo_name
+copyright = f"2016, Andrew Svetlov, {project} contributors and aio-libs team"
 author = "Andrew Svetlov and aio-libs team"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -153,6 +164,17 @@ pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+# -- Extension configuration -------------------------------------------------
+
+# -- Options for extlinks extension ---------------------------------------
+extlinks = {
+    "issue": (f"{github_repo_url}/issues/%s", "#%s"),
+    "pr": (f"{github_repo_url}/pull/%s", "PR #%s"),
+    "commit": (f"{github_repo_url}/commit/%s", "%s"),
+    "gh": (f"{github_url}/%s", "GitHub: %s"),
+    "user": (f"{github_sponsors_url}/%s", "@%s"),
+}
 
 
 # -- Options for HTML output ----------------------------------------------
