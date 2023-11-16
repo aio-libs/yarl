@@ -38,11 +38,9 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/lint.txt
-    - name: Install itself
+    - name: Self-install
       run: |
-        python setup.py install
-      env:
-        YARL_NO_EXTENSIONS: 1
+        pip install .
     - name: Run linters
       run: |
         make lint
@@ -55,10 +53,8 @@ jobs:
         make doc-spelling
     - name: Prepare twine checker
       run: |
-        pip install -U twine wheel
-        python setup.py sdist bdist_wheel
-      env:
-        YARL_NO_EXTENSIONS: 1
+        pip install -U build twine
+        python -m build --config-setting=--pure-python=true
     - name: Run twine checker
       run: |
         twine check dist/*
@@ -111,23 +107,25 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/cython.txt
-    - name: Cythonize
-      if: ${{ matrix.no-extensions == '' }}
-      run: |
-        make cythonize
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/ci.txt
-      env:
-        YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
+    - name: Self-install
+      run: >-
+        python -Im pip install -e .
+        --config-settings=--pure-python=${{
+          matrix.no-extensions != ''
+          && 'true'
+          || 'false'
+        }}
     - name: Run unittests
       env:
         COLOR: 'yes'
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: |
-        python -m pytest tests -vv
-        python -m coverage xml
+        python -Im pytest tests -vv
+        python -Im coverage xml
     - name: Upload coverage
       uses: codecov/codecov-action@v3.1.4
       with:
@@ -167,16 +165,12 @@ jobs:
       uses: actions/checkout@v4
     - name: Setup Python
       uses: actions/setup-python@v4
-    - name: Install cython
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/cython.txt
-    - name: Cythonize
+    - name: Install pypa/build
       run: |
-        make cythonize
+        python -Im pip install build
     - name: Make sdist
       run:
-        python setup.py sdist
+        python -Im build --sdist
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -222,9 +216,6 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/cython.txt
-    - name: Cythonize
-      run: |
-        make cythonize
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.16.2
       env:

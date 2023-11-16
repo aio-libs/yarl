@@ -1,3 +1,2 @@
--e .
 -r test.txt
 -r lint.txt

@@ -1,0 +1,24 @@
+Replaced the packaging is replaced from an old-fashioned :file:`setup.py` to an
+in-tree :pep:`517` build backend -- by :user:`webknjaz`.
+
+Whenever the end-users or downstream packagers need to build ``yarl`` from
+source (a Git checkout or an sdist), they may pass a ``config_settings``
+flag ``--pure-python``. If this flag is not set, a C-extension will be built
+and included into the distribution.
+
+Here is how this can be done with ``pip``:
+
+.. code-block:: console
+
+    $ python -m pip install . --config-settings=--pure-python=
+
+This will also work with ``-e | --editable``.
+
+The same can be achieved via ``pypa/build``:
+
+.. code-block:: console
+
+    $ python -m build --config-setting=--pure-python=
+
+Adding ``-w | --wheel`` can force ``pypa/build`` produce a wheel from source
+directly, as opposed to building an ``sdist`` and then building from it.
