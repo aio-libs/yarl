@@ -15,7 +15,7 @@ The module provides handy URL class for URL parsing and changing.
 
 
 .. image:: https://readthedocs.org/projects/yarl/badge/?version=latest
-    :target: https://yarl.readthedocs.io
+    :target: https://yarl.aio-libs.org
 
 
 .. image:: https://img.shields.io/pypi/pyversions/yarl.svg
@@ -92,7 +92,7 @@ Human readable representation of URL is available as ``.human_repr()``:
    >>> url.human_repr()
    'https://www.python.org/путь'
 
-For full documentation please read https://yarl.readthedocs.org.
+For full documentation please read https://yarl.aio-libs.org.
 
 
 Installation
@@ -131,7 +131,7 @@ YARL requires multidict_ library.
 API documentation
 ------------------
 
-The documentation is located at https://yarl.readthedocs.org
+The documentation is located at https://yarl.aio-libs.org.
 
 
 Why isn't boolean supported by the URL query API?
