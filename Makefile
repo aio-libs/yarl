@@ -1,5 +1,5 @@
 PYXS = $(wildcard yarl/*.pyx)
-SRC = yarl tests setup.py
+SRC = yarl tests
 
 all: test
 
