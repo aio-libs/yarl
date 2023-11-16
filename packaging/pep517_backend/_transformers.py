@@ -67,7 +67,7 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
     )
 
     role_regex = r"""(?x)
-        (?::\w+)?:\w+:`(?P<rendered_text>[^`]+)(?:\s+(.*))?`
+        (?::\w+)?:\w+:`(?P<rendered_text>[^`<]+)(?:\s+([^`]*))?`
     """
     substitution_pattern = r"``\g<rendered_text>``"
 
