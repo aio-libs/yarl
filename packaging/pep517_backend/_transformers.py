@@ -66,6 +66,11 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
         r"`GitHub: \g<gh_slug> <https://github.com/\g<gh_slug>>`__"
     )
 
+    meth_role_regex = r"""(?x)
+        (?::py)?:meth:`~?(?P<rendered_text>[^`<]+)(?:\s+([^`]*))?`
+    """
+    meth_substitution_pattern = r"``\g<rendered_text>()``"
+
     role_regex = r"""(?x)
         (?::\w+)?:\w+:`(?P<rendered_text>[^`<]+)(?:\s+([^`]*))?`
     """
@@ -77,6 +82,7 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
         (pr_role_regex, pr_substitution_pattern),
         (commit_role_regex, commit_substitution_pattern),
         (gh_role_regex, gh_substitution_pattern),
+        (meth_role_regex, meth_substitution_pattern),
         (role_regex, substitution_pattern),
     )
 
