@@ -73,6 +73,7 @@ issue_format = "`#{issue} <https://github.com/aio-libs/yarl/issues/{issue}>`_"
 
 [tool.cibuildwheel]
 build-frontend = "build"
+environment = { PIP_CONSTRAINT="requirements/cython.txt" }
 test-requires = "-r requirements/ci.txt"
 test-command = "pytest {project}/tests"
 # don't build PyPy wheels, install from source instead

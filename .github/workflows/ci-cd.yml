@@ -102,16 +102,13 @@ jobs:
         python-version: ${{ matrix.pyver }}
         cache: 'pip'
         cache-dependency-path: 'requirements/*.txt'
-    - name: Install cython
-      if: ${{ matrix.no-extensions == '' }}
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/cython.txt
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/ci.txt
     - name: Self-install
+      env:
+        PIP_CONSTRAINT: requirements/cython.txt
       run: >-
         python -Im pip install -e .
         --config-settings=--pure-python=${{
@@ -212,10 +209,6 @@ jobs:
       shell: bash
     - name: Setup Python
       uses: actions/setup-python@v4
-    - name: Install cython
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/cython.txt
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.16.2
       env:
