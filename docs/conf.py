@@ -26,10 +26,12 @@
 #
 # needs_sphinx = '1.0'
 
-import pathlib
 import re
+from pathlib import Path
 
-_docs_path = pathlib.Path(__file__).parent
+PROJECT_ROOT_DIR = Path(__file__).parents[1].resolve()
+
+_docs_path = Path(__file__).parent
 _version_path = _docs_path / "../yarl/__init__.py"
 
 
@@ -59,6 +61,7 @@ extensions = [
     "sphinx.ext.viewcode",
     # Third-party extensions:
     "alabaster",
+    "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
 ]
 
 
@@ -427,3 +430,10 @@ texinfo_documents = [
 
 default_role = "any"
 nitpicky = True
+
+# -- Options for towncrier_draft extension -----------------------------------
+
+towncrier_draft_autoversion_mode = "draft"  # or: 'sphinx-version', 'sphinx-release'
+towncrier_draft_include_empty = True
+towncrier_draft_working_directory = PROJECT_ROOT_DIR
+# Not yet supported: towncrier_draft_config_path = 'pyproject.toml'  # relative to cwd
