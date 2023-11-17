@@ -1,1 +1,1 @@
-Stopped dropping trailing slashes in ``URL.joinpath``.
+Stopped dropping trailing slashes in :py:meth:`~yarl.URL.joinpath`.
