@@ -64,11 +64,11 @@ profile = "True"
 #error_on_uninitialized = "True"
 
 [tool.towncrier]
-package = "yarl"
-filename = "CHANGES.rst"
-directory = "CHANGES/"
-title_format = "{version} ({project_date})"
-issue_format = "`#{issue} <https://github.com/aio-libs/yarl/issues/{issue}>`_"
+  package = "yarl"
+  filename = "CHANGES.rst"
+  directory = "CHANGES/"
+  title_format = "{version} ({project_date})"
+  issue_format = "`#{issue} <https://github.com/aio-libs/yarl/issues/{issue}>`_"
 
 
 [tool.cibuildwheel]
