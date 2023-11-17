@@ -1,1 +1,1 @@
-Accept string subclasses in truediv operations (``URL / segment``)
+Started accepting string subclasses in ``__truediv__()`` operations (``URL / segment``).
