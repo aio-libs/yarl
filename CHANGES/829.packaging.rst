@@ -1,1 +1,1 @@
-Integrated Cython 3 to enable building *yarl* under Python 3.12.
+Integrated Cython 3 to enable building *yarl* under Python 3.12 -- by :user:`mjpieters`.

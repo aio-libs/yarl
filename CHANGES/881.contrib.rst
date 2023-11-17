@@ -1,1 +1,1 @@
-Started testing *yarl* against Python 3.12 in CI.
+Started testing *yarl* against Python 3.12 in CI -- by :user:`mjpieters`.

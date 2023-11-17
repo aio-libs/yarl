@@ -1,2 +1,3 @@
-Updated type hints to include ``URL.missing_port()``, ``URL.__bytes__()`` and
-the ``encoding`` argument to :py:meth:`~yarl.URL.joinpath`.
+Updated type hints to include ``URL.missing_port()``, ``URL.__bytes__()``
+and the ``encoding`` argument to :py:meth:`~yarl.URL.joinpath`
+-- by :user:`mjpieters`.
