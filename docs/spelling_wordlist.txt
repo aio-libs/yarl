@@ -4,12 +4,15 @@ Cython
 IPv
 UTF
 aiohttp
+backend
 boolean
 booleans
 bools
+config
 de
 decodable
 dists
+downstreams
 facto
 glibc
 google
@@ -20,6 +23,7 @@ reencoding
 requote
 requoting
 runtimes
+sdist
 subclass
 subclasses
 svetlov
