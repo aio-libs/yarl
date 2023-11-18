@@ -1,17 +1,20 @@
+---
+
 name: CI
 
 on:
   push:
     branches:
-      - master
-      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
-    tags: [ 'v*' ]
+    - master
+    - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
+    tags:
+    - v*
   pull_request:
     branches:
-      - master
-      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
+    - master
+    - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
   schedule:
-    - cron:  '0 6 * * *'  # Daily 6AM UTC build
+  - cron: '0 6 * * *'  # Daily 6AM UTC build
 
 
 concurrency:
@@ -68,19 +71,19 @@ jobs:
         os: [ubuntu, macos, windows]
         experimental: [false]
         exclude:
-          - os: macos
-            no-extensions: 'Y'
-          - os: windows
-            no-extensions: 'Y'
+        - os: macos
+          no-extensions: 'Y'
+        - os: windows
+          no-extensions: 'Y'
         include:
-          - pyver: pypy-3.9
-            no-extensions: 'Y'
-            experimental: false
-            os: ubuntu
-          - pyver: pypy-3.8
-            no-extensions: 'Y'
-            experimental: false
-            os: ubuntu
+        - pyver: pypy-3.9
+          no-extensions: 'Y'
+          experimental: false
+          os: ubuntu
+        - pyver: pypy-3.8
+          no-extensions: 'Y'
+          experimental: false
+          os: ubuntu
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
     timeout-minutes: 15
@@ -141,9 +144,9 @@ jobs:
     # Run only on pushing a tag
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     steps:
-      - name: Dummy
-        run: |
-            echo "Predeploy step"
+    - name: Dummy
+      run: |
+        echo "Predeploy step"
 
   build-tarball:
     name: Tarball
@@ -175,7 +178,7 @@ jobs:
         os: [ubuntu, windows, macos]
         qemu: ['']
         include:
-          # Split ubuntu job for the sake of speed-up
+        # Split ubuntu job for the sake of speed-up
         - os: ubuntu
           qemu: aarch64
         - os: ubuntu
@@ -241,8 +244,10 @@ jobs:
         name: yarl
         version_file: yarl/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        fix_issue_regex: "`#(\\d+) <https://github.com/aio-libs/yarl/issues/\\1>`"
-        fix_issue_repl: "(#\\1)"
+        fix_issue_regex: >-
+          `#(\d+) <https://github.com/aio-libs/yarl/issues/\1>`
+        fix_issue_repl: >-
+          (#\1)
 
     - name: >-
         Publish 🐍📦 to PyPI
@@ -264,3 +269,5 @@ jobs:
         # dist/ contains the built packages, which smoketest-artifacts/
         # contains the signatures and certificates.
         files: dist/**
+
+...
