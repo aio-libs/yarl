@@ -1,0 +1,2 @@
+All Python 3.12 jobs are now marked as required to pass in CI
+-- by :user:`edgarrmondragon`.

@@ -1,0 +1,2 @@
+Declared Python 3.12 supported officially in the distribution package metadata
+-- by :user:`edgarrmondragon`.
