@@ -23,7 +23,43 @@ concurrency:
   cancel-in-progress: true
 
 
+env:
+  PYTHON_LATEST: "3.12"
+
+  # For re-actors/checkout-python-sdist
+  dists-artifact-name: python-package-distributions
+  sdist-name: yarl-*.tar.gz
+
+
 jobs:
+
+  build-sdist:
+    name: 📦 Build the source distribution
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_LATEST }}
+        cache: pip
+    - name: Install core libraries for build and install
+      run: python -Im pip install build
+    - name: Build sdist
+      env:
+        PIP_CONSTRAINT: requirements/cython.txt
+      run: python -Im build --sdist
+    - name: Upload built artifacts for testing
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.dists-artifact-name }}
+        # NOTE: Exact expected file names are specified here
+        # NOTE: as a safety measure — if anything weird ends
+        # NOTE: up being in this dir or not all dists will be
+        # NOTE: produced, this will fail the workflow.
+        path: dist/${{ env.sdist-name }}
+        retention-days: 15
 
   lint:
     name: Linter
@@ -65,6 +101,8 @@ jobs:
 
   test:
     name: Test
+    needs:
+    - build-sdist
     strategy:
       matrix:
         pyver: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
@@ -90,8 +128,12 @@ jobs:
     timeout-minutes: 15
     continue-on-error: ${{ matrix.experimental }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v1
+      with:
+        source-tarball-name: ${{ env.sdist-name }}
+        workflow-artifact-name: ${{ env.dists-artifact-name }}
+
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v4
       with:
@@ -149,31 +191,12 @@ jobs:
       run: |
         echo "Predeploy step"
 
-  build-tarball:
-    name: Tarball
-    runs-on: ubuntu-latest
-    needs: pre-deploy
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup Python
-      uses: actions/setup-python@v4
-    - name: Install pypa/build
-      run: |
-        python -Im pip install build
-    - name: Make sdist
-      run:
-        python -Im build --sdist
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist
-
   build-wheels:
     name: Build wheels on ${{ matrix.os }} ${{ matrix.qemu }}
     runs-on: ${{ matrix.os }}-latest
-    needs: pre-deploy
+    needs:
+    - build-sdist
+    - pre-deploy
     strategy:
       matrix:
         os: [ubuntu, windows, macos]
@@ -187,8 +210,12 @@ jobs:
         - os: ubuntu
           qemu: s390x
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v1
+      with:
+        source-tarball-name: ${{ env.sdist-name }}
+        workflow-artifact-name: ${{ env.dists-artifact-name }}
+
     - name: Set up QEMU
       if: ${{ matrix.qemu }}
       uses: docker/setup-qemu-action@v3
@@ -209,14 +236,17 @@ jobs:
       uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-    - uses: actions/upload-artifact@v3
+    - name: Upload built artifacts for testing
+      uses: actions/upload-artifact@v3
       with:
-        name: dist
+        name: ${{ env.dists-artifact-name }}
         path: ./wheelhouse/*.whl
 
   deploy:
     name: Deploy
-    needs: [build-tarball, build-wheels]
+    needs:
+    - build-sdist
+    - build-wheels
     runs-on: ubuntu-latest
 
     permissions:
@@ -228,15 +258,19 @@ jobs:
       url: https://pypi.org/p/yarl
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v1
+      with:
+        source-tarball-name: ${{ env.sdist-name }}
+        workflow-artifact-name: ${{ env.dists-artifact-name }}
+
     - name: Login
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
     - name: Download distributions
       uses: actions/download-artifact@v3
       with:
-        name: dist
+        name: ${{ env.dists-artifact-name }}
         path: dist
     - name: Make Release
       uses: aio-libs/create-release@v1.6.6
@@ -258,7 +292,7 @@ jobs:
       uses: sigstore/gh-action-sigstore-python@v2.1.0
       with:
         inputs: >-
-          ./dist/*.tar.gz
+          ./dist/${{ env.sdist-name }}
           ./dist/*.whl
 
     - name: Upload artifact signatures to GitHub Release
