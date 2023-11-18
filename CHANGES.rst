@@ -16,7 +16,8 @@
 Bugfixes
 --------
 
-- Fix regression with truediv and absolute URLs with empty paths causing the raw path to lack the leading ``/``. (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
+- Fix regression with ``__truediv__`` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
+  (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
 
 
 1.9.1 (2023-04-21)
