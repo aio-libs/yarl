@@ -11,7 +11,8 @@ on:
         type: string
       os:
         description: VM OS to use, without version suffix
-        required: true
+        default: ubuntu
+        required: false
         type: string
       qemu:
         description: Emulated QEMU architecture

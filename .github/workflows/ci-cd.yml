@@ -79,10 +79,26 @@ jobs:
   lint:
     uses: ./.github/workflows/reusable-linters.yml
 
+  build-wheels-for-tested-arches:
+    needs:
+    - build-sdist
+    - pre-setup  # transitive, for accessing settings
+    strategy:
+      matrix:
+        os:
+        - ubuntu
+        - windows
+        - macos
+    uses: ./.github/workflows/reusable-build-wheel.yml
+    with:
+      os: ${{ matrix.os }}
+      source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+      dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+
   test:
     name: Test
     needs:
-    - build-sdist
+    - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
@@ -173,30 +189,19 @@ jobs:
       run: |
         echo "Predeploy step"
 
-  build-wheels:
+  build-wheels-for-odd-archs:
     needs:
     - build-sdist
     - pre-deploy
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
-        os:
-        - ubuntu
-        - windows
-        - macos
         qemu:
-        - ''
-        include:
-        # Split ubuntu job for the sake of speed-up
-        - os: ubuntu
-          qemu: aarch64
-        - os: ubuntu
-          qemu: ppc64le
-        - os: ubuntu
-          qemu: s390x
+        - aarch64
+        - ppc64le
+        - s390x
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
-      os: ${{ matrix.os }}
       qemu: ${{ matrix.qemu }}
       source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
@@ -205,7 +210,8 @@ jobs:
     name: Deploy
     needs:
     - build-sdist
-    - build-wheels
+    - build-wheels-for-odd-archs
+    - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
 
