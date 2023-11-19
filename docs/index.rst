@@ -201,7 +201,16 @@ Contents:
    :maxdepth: 2
 
    api
+
+.. toctree::
+   :caption: What's new
+
    changes
+
+.. toctree::
+   :caption: Contributing
+
+   contributing/guidelines
 
 Indices and tables
 ==================
