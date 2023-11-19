@@ -62,42 +62,7 @@ jobs:
         retention-days: 15
 
   lint:
-    name: Linter
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup Python 3.8
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-        cache: 'pip'
-        cache-dependency-path: 'requirements/*.txt'
-    - name: Install dependencies
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/lint.txt
-    - name: Self-install
-      run: |
-        pip install .
-    - name: Run linters
-      run: |
-        make lint
-    - name: Install spell checker
-      run: |
-        sudo apt install libenchant-2-dev
-        pip install -r requirements/doc-spelling.txt
-    - name: Run docs spelling
-      run: |
-        make doc-spelling
-    - name: Prepare twine checker
-      run: |
-        pip install -U build twine
-        python -m build --config-setting=--pure-python=true
-    - name: Run twine checker
-      run: |
-        twine check dist/*
+    uses: ./.github/workflows/lint.yml
 
   test:
     name: Test
