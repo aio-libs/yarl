@@ -1,2 +1,2 @@
-sphinx==7.0.1
+sphinx==7.2.6
 sphinxcontrib-towncrier
