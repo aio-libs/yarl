@@ -33,9 +33,6 @@ jobs:
   build-wheel:
     name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
     runs-on: ${{ inputs.os }}-latest
-    needs:
-    - build-sdist
-    - pre-deploy
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
