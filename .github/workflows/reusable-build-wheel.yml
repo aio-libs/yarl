@@ -39,10 +39,6 @@ jobs:
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
-      dists-artifact-name:
-        description: Workflow artifact name containing dists
-        required: true
-        type: string
       with:
         source-tarball-name: ${{ inputs.source-tarball-name }}
         workflow-artifact-name: ${{ inputs.dists-artifact-name }}
