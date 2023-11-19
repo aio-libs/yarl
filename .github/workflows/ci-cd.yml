@@ -26,15 +26,30 @@ concurrency:
 env:
   PYTHON_LATEST: "3.12"
 
-  # For re-actors/checkout-python-sdist
-  dists-artifact-name: python-package-distributions
-  sdist-name: yarl-*.tar.gz
-
 
 jobs:
 
+  pre-setup:
+    name: ⚙️ Pre-set global build settings
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: python
+    outputs:
+      # NOTE: These aren't env vars because the `${{ env }}` context is
+      # NOTE: inaccessible when passing inputs to reusable workflows.
+      dists-artifact-name: python-package-distributions
+      sdist-name: yarl-*.tar.gz
+      wheel-name: yarl-*.whl
+    steps:
+    - run: >-
+        print('No-op')
+
+
   build-sdist:
     name: 📦 Build the source distribution
+    needs:
+    - pre-setup
     runs-on: ubuntu-latest
     steps:
     - name: Checkout project
@@ -53,12 +68,12 @@ jobs:
     - name: Upload built artifacts for testing
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ env.dists-artifact-name }}
+        name: ${{ needs.pre-setup.outputs.dists-artifact-name  }}
         # NOTE: Exact expected file names are specified here
         # NOTE: as a safety measure — if anything weird ends
         # NOTE: up being in this dir or not all dists will be
         # NOTE: produced, this will fail the workflow.
-        path: dist/${{ env.sdist-name }}
+        path: dist/${{ needs.pre-setup.outputs.sdist-name }}
         retention-days: 15
 
   lint:
@@ -68,6 +83,7 @@ jobs:
     name: Test
     needs:
     - build-sdist
+    - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
         pyver: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
@@ -96,8 +112,9 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ env.sdist-name }}
-        workflow-artifact-name: ${{ env.dists-artifact-name }}
+        source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+        workflow-artifact-name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v4
@@ -160,6 +177,7 @@ jobs:
     needs:
     - build-sdist
     - pre-deploy
+    - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
         os:
@@ -180,14 +198,15 @@ jobs:
     with:
       os: ${{ matrix.os }}
       qemu: ${{ matrix.qemu }}
-      source-tarball-name: ${{ env.sdist-name }}
-      workflow-artifact-name: ${{ env.dists-artifact-name }}
+      source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+      workflow-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   deploy:
     name: Deploy
     needs:
     - build-sdist
     - build-wheels
+    - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
 
     permissions:
@@ -202,8 +221,9 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ env.sdist-name }}
-        workflow-artifact-name: ${{ env.dists-artifact-name }}
+        source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+        workflow-artifact-name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
     - name: Login
       run: |
@@ -211,7 +231,7 @@ jobs:
     - name: Download distributions
       uses: actions/download-artifact@v3
       with:
-        name: ${{ env.dists-artifact-name }}
+        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
     - name: Make Release
       uses: aio-libs/create-release@v1.6.6
@@ -233,7 +253,7 @@ jobs:
       uses: sigstore/gh-action-sigstore-python@v2.1.0
       with:
         inputs: >-
-          ./dist/${{ env.sdist-name }}
+          ./dist/${{ needs.pre-setup.outputs.sdist-name }}
           ./dist/*.whl
 
     - name: Upload artifact signatures to GitHub Release
