@@ -199,7 +199,7 @@ jobs:
       os: ${{ matrix.os }}
       qemu: ${{ matrix.qemu }}
       source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
-      workflow-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   deploy:
     name: Deploy
