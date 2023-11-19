@@ -1,0 +1,78 @@
+---
+
+name: Build wheel
+
+on:
+  workflow_call:
+    inputs:
+      dists-artifact-name:
+        description: Workflow artifact name containing dists
+        required: true
+        type: string
+      os:
+        description: VM OS to use, without version suffix
+        required: true
+        type: string
+      qemu:
+        description: Emulated QEMU architecture
+        default: ''
+        required: false
+        type: string
+      source-tarball-name:
+        description: Sdist filename wildcard
+        required: true
+        type: string
+
+env:
+  FORCE_COLOR: "1"  # Make tools pretty.
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_PYTHON_VERSION_WARNING: "1"
+
+jobs:
+
+  build-wheel:
+    name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
+    runs-on: ${{ inputs.os }}-latest
+    needs:
+    - build-sdist
+    - pre-deploy
+    steps:
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v1
+      dists-artifact-name:
+        description: Workflow artifact name containing dists
+        required: true
+        type: string
+      with:
+        source-tarball-name: ${{ inputs.source-tarball-name }}
+        workflow-artifact-name: ${{ inputs.dists-artifact-name }}
+
+    - name: Set up QEMU
+      if: inputs.qemu
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: all
+      id: qemu
+    - name: Prepare emulation
+      if: inputs.qemu
+      run: |
+        # Build emulated architectures only if QEMU is set,
+        # use default "auto" otherwise
+        echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
+      shell: bash
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.16.2
+      env:
+        CIBW_ARCHS_MACOS: x86_64 arm64 universal2
+
+    - name: Upload built artifacts for testing and publishing
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.dists-artifact-name }}
+        path: ./wheelhouse/*.whl
+
+...

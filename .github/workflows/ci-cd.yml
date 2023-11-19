@@ -157,15 +157,17 @@ jobs:
         echo "Predeploy step"
 
   build-wheels:
-    name: Build wheels on ${{ matrix.os }} ${{ matrix.qemu }}
-    runs-on: ${{ matrix.os }}-latest
     needs:
     - build-sdist
     - pre-deploy
     strategy:
       matrix:
-        os: [ubuntu, windows, macos]
-        qemu: ['']
+        os:
+        - ubuntu
+        - windows
+        - macos
+        qemu:
+        - ''
         include:
         # Split ubuntu job for the sake of speed-up
         - os: ubuntu
@@ -174,38 +176,12 @@ jobs:
           qemu: ppc64le
         - os: ubuntu
           qemu: s390x
-    steps:
-    - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
-      with:
-        source-tarball-name: ${{ env.sdist-name }}
-        workflow-artifact-name: ${{ env.dists-artifact-name }}
-
-    - name: Set up QEMU
-      if: ${{ matrix.qemu }}
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: all
-      id: qemu
-    - name: Prepare emulation
-      run: |
-        if [[ -n "${{ matrix.qemu }}" ]]; then
-          # Build emulated architectures only if QEMU is set,
-          # use default "auto" otherwise
-          echo "CIBW_ARCHS_LINUX=${{ matrix.qemu }}" >> $GITHUB_ENV
-        fi
-      shell: bash
-    - name: Setup Python
-      uses: actions/setup-python@v4
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v2.16.2
-      env:
-        CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-    - name: Upload built artifacts for testing
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ env.dists-artifact-name }}
-        path: ./wheelhouse/*.whl
+    uses: ./.github/workflows/reusable-build-wheel.yml
+    with:
+      os: ${{ matrix.os }}
+      qemu: ${{ matrix.qemu }}
+      source-tarball-name: ${{ env.sdist-name }}
+      workflow-artifact-name: ${{ env.dists-artifact-name }}
 
   deploy:
     name: Deploy
