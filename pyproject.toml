@@ -79,5 +79,5 @@ skip = "pp*"
 
 [tool.cibuildwheel.windows]
 before-test = [
-  "$env:PIP_CONSTRAINT=''",  # https://github.com/pypa/cibuildwheel/issues/1666
+  "export PIP_CONSTRAINT=''",  # https://github.com/pypa/cibuildwheel/issues/1666
 ]
