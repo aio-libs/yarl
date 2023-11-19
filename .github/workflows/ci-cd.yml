@@ -62,7 +62,7 @@ jobs:
         retention-days: 15
 
   lint:
-    uses: ./.github/workflows/lint.yml
+    uses: ./.github/workflows/reusable-linters.yml
 
   test:
     name: Test
