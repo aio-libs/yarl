@@ -76,3 +76,8 @@ skip = "pp*"
 
 [tool.cibuildwheel.config-settings]
 --pure-python = "false"
+
+[tool.cibuildwheel.windows]
+before-test = [
+  "$env:PIP_CONSTRAINT=''",  # https://github.com/pypa/cibuildwheel/issues/1666
+]
