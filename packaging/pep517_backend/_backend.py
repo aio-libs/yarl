@@ -94,9 +94,9 @@ def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
         (os.environ, PURE_PYTHON_ENV_VAR, KeyError),
     )
     for src_mapping, src_key, lookup_errors in user_provided_setting_sources:
-        assert src_mapping is not None
         with suppress(lookup_errors):  # type: ignore[arg-type]
-            return src_mapping[src_key].lower() in truthy_values
+            candidate_val = src_mapping[src_key].lower()  # type: ignore[index]
+            return candidate_val in truthy_values
 
     return PURE_PYTHON_MODE_CLI_FALLBACK
 
