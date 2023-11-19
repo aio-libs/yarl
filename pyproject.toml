@@ -66,6 +66,9 @@ profile = "True"
 [tool.cibuildwheel]
 build-frontend = "build"
 environment = { PIP_CONSTRAINT="requirements/cython.txt" }
+before-test = [
+  "unset PIP_CONSTRAINT",  # https://github.com/pypa/cibuildwheel/issues/1666
+]
 test-requires = "-r requirements/ci.txt"
 test-command = "pytest {project}/tests"
 # don't build PyPy wheels, install from source instead
