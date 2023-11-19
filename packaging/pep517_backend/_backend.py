@@ -17,7 +17,7 @@ from warnings import warn as _warn_that
 try:
     from tomllib import loads as _load_toml_from_string
 except ImportError:
-    from tomli import loads as _load_toml_from_string
+    from tomli import loads as _load_toml_from_string  # type: ignore[no-redef]
 
 from expandvars import expandvars
 from setuptools.build_meta import build_sdist as _setuptools_build_sdist
@@ -32,7 +32,7 @@ from setuptools.build_meta import (
 try:
     from setuptools.build_meta import build_editable as _setuptools_build_editable
 except ImportError:
-    _setuptools_build_editable = None
+    _setuptools_build_editable = None  # type: ignore[assignment]
 
 
 # isort: split
@@ -94,7 +94,8 @@ def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
         (os.environ, PURE_PYTHON_ENV_VAR, KeyError),
     )
     for src_mapping, src_key, lookup_errors in user_provided_setting_sources:
-        with suppress(lookup_errors):
+        assert src_mapping is not None
+        with suppress(lookup_errors):  # type: ignore[arg-type]
             return src_mapping[src_key].lower() in truthy_values
 
     return PURE_PYTHON_MODE_CLI_FALLBACK

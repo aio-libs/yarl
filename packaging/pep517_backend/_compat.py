@@ -6,10 +6,10 @@ from contextlib import contextmanager
 from pathlib import Path
 
 try:
-    from contextlib import chdir as chdir_cm
+    from contextlib import chdir as chdir_cm  # type: ignore[attr-defined]
 except ImportError:
 
-    @contextmanager
+    @contextmanager  # type: ignore[no-redef]
     def chdir_cm(path: os.PathLike) -> t.Iterator[None]:
         """Temporarily change the current directory, recovering on exit."""
         original_wd = Path.cwd()

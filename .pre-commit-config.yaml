@@ -82,12 +82,15 @@ repos:
     - lxml  # requirement of `--txt-report`
     - multidict
     - pytest
+    - tomli  # requirement of packaging/pep517_backend/
+    - types-setuptools  # requirement of packaging/pep517_backend/
     args:
     - --show-error-codes
     - --install-types
     - --non-interactive
     - --python-version=3.12
     - --txt-report=.tox/.tmp/.mypy/python-3.12
+    - packaging/
     - tests/
     - yarl/
     pass_filenames: false
@@ -98,12 +101,15 @@ repos:
     - lxml  # requirement of `--txt-report`
     - multidict
     - pytest
+    - tomli  # requirement of packaging/pep517_backend/
+    - types-setuptools  # requirement of packaging/pep517_backend/
     args:
     - --show-error-codes
     - --install-types
     - --non-interactive
     - --python-version=3.10
     - --txt-report=.tox/.tmp/.mypy/python-3.10
+    - packaging/
     - tests/
     - yarl/
     pass_filenames: false
@@ -114,12 +120,15 @@ repos:
     - lxml  # requirement of `--txt-report`
     - multidict
     - pytest
+    - tomli  # requirement of packaging/pep517_backend/
+    - types-setuptools  # requirement of packaging/pep517_backend/
     args:
     - --show-error-codes
     - --install-types
     - --non-interactive
     - --python-version=3.8
     - --txt-report=.tox/.tmp/.mypy/python-3.8
+    - packaging/
     - tests/
     - yarl/
     pass_filenames: false
@@ -127,15 +136,19 @@ repos:
     alias: mypy-py37
     name: MyPy, for Python 3.7
     additional_dependencies:
+    # - importlib_metadata
     - lxml  # requirement of `--txt-report`
     - multidict
     - pytest
+    - tomli  # requirement of packaging/pep517_backend/
+    - types-setuptools  # requirement of packaging/pep517_backend/
     args:
     - --show-error-codes
     - --install-types
     - --non-interactive
     - --python-version=3.7
     - --txt-report=.tox/.tmp/.mypy/python-3.7
+    - packaging/
     - tests/
     - yarl/
     pass_filenames: false
