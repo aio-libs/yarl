@@ -82,3 +82,15 @@ skip = "pp*"
 
 [tool.cibuildwheel.config-settings]
 --pure-python = "false"
+
+[tool.cibuildwheel.windows]
+before-test = [
+  # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
+  # NOTE: constraints unset. The hope is that pip will cache that wheel
+  # NOTE: and the test env provisioning stage will pick up PyYAML from
+  # NOTE: said cache rather than attempting to build it with a conflicting.
+  # NOTE: Version of Cython.
+  # Ref: https://github.com/pypa/cibuildwheel/issues/1666
+  "set PIP_CONSTRAINT=",
+  "pip install PyYAML",
+]
