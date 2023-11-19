@@ -1,2 +1,3 @@
+myst-parser >= 0.10.0
 sphinx==7.0.1
 sphinxcontrib-towncrier

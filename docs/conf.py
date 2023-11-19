@@ -62,6 +62,7 @@ extensions = [
     # Third-party extensions:
     "alabaster",
     "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
+    "myst_parser",  # extended markdown; https://pypi.org/project/myst-parser/
 ]
 
 
@@ -85,7 +86,6 @@ intersphinx_mapping = {
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
 
 # The encoding of source files.
 #
