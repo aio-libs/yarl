@@ -37,7 +37,6 @@ else
 endif
 
 lint: fmt
-	mypy --show-error-codes yarl tests
 
 test: lint .develop
 	pytest ./tests ./yarl

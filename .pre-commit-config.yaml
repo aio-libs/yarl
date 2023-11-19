@@ -72,4 +72,72 @@ repos:
     files: >-
       ^[^/]+[.]rst$
 
+- repo: https://github.com/pre-commit/mirrors-mypy.git
+  rev: v1.4.1
+  hooks:
+  - id: mypy
+    alias: mypy-py312
+    name: MyPy, for Python 3.12
+    additional_dependencies:
+    - lxml  # requirement of `--txt-report`
+    - multidict
+    - pytest
+    args:
+    - --show-error-codes
+    - --install-types
+    - --non-interactive
+    - --python-version=3.12
+    - --txt-report=.tox/.tmp/.mypy/python-3.12
+    - tests/
+    - yarl/
+    pass_filenames: false
+  - id: mypy
+    alias: mypy-py310
+    name: MyPy, for Python 3.10
+    additional_dependencies:
+    - lxml  # requirement of `--txt-report`
+    - multidict
+    - pytest
+    args:
+    - --show-error-codes
+    - --install-types
+    - --non-interactive
+    - --python-version=3.10
+    - --txt-report=.tox/.tmp/.mypy/python-3.10
+    - tests/
+    - yarl/
+    pass_filenames: false
+  - id: mypy
+    alias: mypy-py38
+    name: MyPy, for Python 3.8
+    additional_dependencies:
+    - lxml  # requirement of `--txt-report`
+    - multidict
+    - pytest
+    args:
+    - --show-error-codes
+    - --install-types
+    - --non-interactive
+    - --python-version=3.8
+    - --txt-report=.tox/.tmp/.mypy/python-3.8
+    - tests/
+    - yarl/
+    pass_filenames: false
+  - id: mypy
+    alias: mypy-py37
+    name: MyPy, for Python 3.7
+    additional_dependencies:
+    - lxml  # requirement of `--txt-report`
+    - multidict
+    - pytest
+    args:
+    - --show-error-codes
+    - --install-types
+    - --non-interactive
+    - --python-version=3.7
+    - --txt-report=.tox/.tmp/.mypy/python-3.7
+    - tests/
+    - yarl/
+    pass_filenames: false
+
 ...
