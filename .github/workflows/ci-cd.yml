@@ -47,7 +47,7 @@ jobs:
 
 
   build-sdist:
-    name: 📦 Build the source distribution
+    name: 📦 Build distribution packages
     needs:
     - pre-setup
     runs-on: ubuntu-latest
@@ -59,12 +59,12 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_LATEST }}
         cache: pip
-    - name: Install core libraries for build and install
-      run: python -Im pip install build
-    - name: Build sdist
+    - name: Install core libraries for build
+      run: python -Im pip install build --config-setting=--pure-python=true
+    - name: Build sdists and pure-python wheel
       env:
         PIP_CONSTRAINT: requirements/cython.txt
-      run: python -Im build --sdist
+      run: python -Im build
     - name: Upload built artifacts for testing
       uses: actions/upload-artifact@v3
       with:
@@ -73,7 +73,9 @@ jobs:
         # NOTE: as a safety measure — if anything weird ends
         # NOTE: up being in this dir or not all dists will be
         # NOTE: produced, this will fail the workflow.
-        path: dist/${{ needs.pre-setup.outputs.sdist-name }}
+        path: |
+          dist/${{ needs.pre-setup.outputs.sdist-name }}
+          dist/${{ needs.pre-setup.outputs.wheel-name }}
         retention-days: 15
 
   lint:
