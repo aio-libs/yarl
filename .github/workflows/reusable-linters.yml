@@ -6,9 +6,17 @@ on:
   workflow_call:
 
 env:
-  FORCE_COLOR: "1"  # Make tools pretty.
-  PIP_DISABLE_PIP_VERSION_CHECK: "1"
-  PIP_NO_PYTHON_VERSION_WARNING: "1"
+  COLOR: >-  # Supposedly, pytest or coveragepy use this
+    yes
+  FORCE_COLOR: 1  # Request colored output from CLI tools supporting it
+  MYPY_FORCE_COLOR: 1  # MyPy's color enforcement
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  PIP_NO_PYTHON_VERSION_WARNING: 1
+  PIP_NO_WARN_SCRIPT_LOCATION: 1
+  PRE_COMMIT_COLOR: always
+  PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: 1
   PYTHON_LATEST: 3.8
 
 jobs:

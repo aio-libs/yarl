@@ -24,7 +24,18 @@ concurrency:
 
 
 env:
-  PYTHON_LATEST: "3.12"
+  COLOR: >-  # Supposedly, pytest or coveragepy use this
+    yes
+  FORCE_COLOR: 1  # Request colored output from CLI tools supporting it
+  MYPY_FORCE_COLOR: 1  # MyPy's color enforcement
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  PIP_NO_PYTHON_VERSION_WARNING: 1
+  PIP_NO_WARN_SCRIPT_LOCATION: 1
+  PRE_COMMIT_COLOR: always
+  PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: 1
+  PYTHON_LATEST: 3.12
 
 
 jobs:
@@ -150,8 +161,6 @@ jobs:
       with:
         path: requirements/test.txt
     - name: Determine pre-compiled compatible wheel
-      env:
-        PYTHONIOENCODING: utf-8
       id: wheel-file
       run: >
         echo -n path= | tee -a "${GITHUB_OUTPUT}"
@@ -176,7 +185,6 @@ jobs:
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
     - name: Run unittests
       env:
-        COLOR: 'yes'
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: |
         set -eEuo pipefail
