@@ -190,6 +190,7 @@ jobs:
         set -eEuo pipefail
         python -Im pytest tests -qq
         python -Im coverage xml
+      shell: bash
     - name: Re-run the failing tests with maximum verbosity
       if: >-
         !cancelled()
