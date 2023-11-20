@@ -2,12 +2,14 @@ Bugfixes
 Changelog
 Cython
 IPv
+Towncrier
 UTF
 aiohttp
 backend
 boolean
 booleans
 bools
+changelog
 config
 de
 decodable
@@ -19,6 +21,8 @@ google
 mailto
 manylinux
 multi
+pre
+reStructuredText
 reencoding
 requote
 requoting
