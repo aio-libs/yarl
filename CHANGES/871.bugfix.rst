@@ -1,1 +1,0 @@
-Started accepting string subclasses in ``__truediv__()`` operations (``URL / segment``) -- by :user:`mjpieters`.

@@ -1,4 +1,0 @@
-MyST is now integrated in Sphinx -- by :user:`webknjaz`.
-
-This allows the contributors to author new documents in Markdown
-when they have difficulties with going straight RST.
