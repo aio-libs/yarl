@@ -189,6 +189,7 @@ jobs:
         --find-links=./dist
         --no-index yarl
         --force-reinstall
+        --no-color
         --no-deps
         --only-binary=:all:
         --dry-run
