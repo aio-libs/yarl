@@ -1,5 +1,6 @@
 import functools
 import math
+import re
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
@@ -14,6 +15,22 @@ from ._quoting import _Quoter, _Unquoter
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
 sentinel = object()
+
+# reg-name: unreserved / pct-encoded / sub-delims
+# this pattern matches anything that is *not* in those classes. and is only used
+# on lower-cased ASCII values.
+_not_reg_name = re.compile(
+    r"""
+        # any character not in the unreserved or sub-delims sets, plus %
+        # (validated with the additional check for pct-encoded sequences below)
+        [^a-z0-9\-._~!$&'()*+,;=%]
+    |
+        # % only allowed if it is part of a pct-encoded
+        # sequence of 2 hex digits.
+        %(?![0-9a-f]{2})
+    """,
+    re.VERBOSE,
+)
 
 
 def rewrite_module(obj: object) -> object:
@@ -765,11 +782,27 @@ class URL:
             ip = ip_address(ip)
         except ValueError:
             host = host.lower()
-            # IDNA encoding is slow,
-            # skip it for ASCII-only strings
+            # skip it for humanized and ASCII-only strings
             # Don't move the check into _idna_encode() helper
             # to reduce the cache size
-            if human or host.isascii():
+            if human:
+                return host
+            if host.isascii():
+                # Check for invalid characters explicitly; _idna_encode() does this
+                # for non-ascii host names.
+                invalid = _not_reg_name.search(host)
+                if invalid is not None:
+                    value, pos, extra = invalid.group(), invalid.start(), ""
+                    if value == "@" or (value == ":" and "@" in host[pos:]):
+                        # this looks like an authority string
+                        extra = (
+                            ", if the value includes a username or password, "
+                            "use 'authority' instead of 'host'"
+                        )
+                    raise ValueError(
+                        f"Host {host!r} cannot contain {value!r} (at position "
+                        f"{pos}){extra}"
+                    ) from None
                 return host
             host = _idna_encode(host)
         else:
