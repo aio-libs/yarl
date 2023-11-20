@@ -148,13 +148,17 @@ jobs:
       with:
         path: requirements/test.txt
     - name: Determine pre-compiled compatible wheel
+      env:
+        PYTHONIOENCODING: utf-8
       id: wheel-file
       run: >
         echo -n path= | tee -a "${GITHUB_OUTPUT}"
 
 
-        python -uIm
-        pip install
+        python
+        -X utf8
+        -u -I
+        -m pip install
         --find-links=./dist
         --no-index yarl
         --force-reinstall
