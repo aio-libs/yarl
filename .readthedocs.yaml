@@ -18,7 +18,7 @@ python:
   - requirements: requirements/doc.txt
 
 sphinx:
-  builder: html
+  builder: dirhtml
   configuration: docs/conf.py
   fail_on_warning: true
 
