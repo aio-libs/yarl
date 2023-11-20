@@ -165,6 +165,7 @@ jobs:
         --quiet
         | jq --raw-output .install[].download_info.url
         | tee -a "${GITHUB_OUTPUT}"
+      shell: bash
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
     - name: Run unittests
