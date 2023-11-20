@@ -4,7 +4,9 @@ source =
   */lib/python*/site-packages/yarl
 
 [run]
-branch = True
+branch = true
+cover_pylib = false
+relative_files = true
 source =
   tests
 source_pkgs =
