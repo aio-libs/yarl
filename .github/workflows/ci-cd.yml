@@ -163,9 +163,13 @@ jobs:
     - name: Determine pre-compiled compatible wheel
       env:
         # NOTE: When `pip` is forced to colorize output piped into `jq`,
-        # NOTE: the latter can't parse it. So we're disabling it here to
-        # NOTE: override the value set in the workflow globally.
-        FORCE_COLOR: ~
+        # NOTE: the latter can't parse it. So we're overriding the color
+        # NOTE: preference here via https://no-color.org.
+        # NOTE: Setting `FORCE_COLOR` to any value (including 0, an empty
+        # NOTE: string, or a "YAML null" `~`) doesn't have any effect and
+        # NOTE: `pip` (through its verndored copy of `rich`) treats the presence
+        # NOTE: of the variable as "force-color" regardless.
+        NO_COLOR: 1
       id: wheel-file
       run: >
         echo -n path= | tee -a "${GITHUB_OUTPUT}"
