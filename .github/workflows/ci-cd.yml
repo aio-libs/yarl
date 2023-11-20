@@ -131,6 +131,13 @@ jobs:
         source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
+    - name: Delete the `yarl/` directory to prevent accidental imports
+      run: rm -rfv yarl
+    - name: Download distributions
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+        path: dist
 
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v4
@@ -142,16 +149,26 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/test.txt
+    - name: Determine pre-compiled compatible wheel
+      id: wheel-file
+      run: >
+        echo -n path= | tee -a "${GITHUB_OUTPUT}"
+
+
+        python -Im
+        pip install
+        --find-links=./dist
+        --no-index yarl
+        --force-reinstall
+        --no-deps
+        --only-binary=:all:
+        --dry-run
+        --report=-
+        --quiet
+        | jq --raw-output .install[].download_info.url
+        | tee -a "${GITHUB_OUTPUT}"
     - name: Self-install
-      env:
-        PIP_CONSTRAINT: requirements/cython.txt
-      run: >-
-        python -Im pip install -e .
-        --config-settings=--pure-python=${{
-          matrix.no-extensions != ''
-          && 'true'
-          || 'false'
-        }}
+      run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
     - name: Run unittests
       env:
         COLOR: 'yes'
