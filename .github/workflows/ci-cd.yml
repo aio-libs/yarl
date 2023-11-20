@@ -167,12 +167,19 @@ jobs:
         # NOTE: preference here via https://no-color.org.
         # NOTE: Setting `FORCE_COLOR` to any value (including 0, an empty
         # NOTE: string, or a "YAML null" `~`) doesn't have any effect and
-        # NOTE: `pip` (through its verndored copy of `rich`) treats the presence
-        # NOTE: of the variable as "force-color" regardless.
+        # NOTE: `pip` (through its verndored copy of `rich`) treats the
+        # NOTE: presence of the variable as "force-color" regardless.
+        #
+        # NOTE: This doesn't actually work either, so we'll resort to unsetting
+        # NOTE: in the Bash script.
+        # NOTE: Ref: https://github.com/Textualize/rich/issues/2622
         NO_COLOR: 1
       id: wheel-file
       run: >
         echo -n path= | tee -a "${GITHUB_OUTPUT}"
+
+
+        unset FORCE_COLOR
 
 
         python
