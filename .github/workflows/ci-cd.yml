@@ -179,9 +179,21 @@ jobs:
         COLOR: 'yes'
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: |
-        python -Im pytest tests -vv
+        set -eEuo pipefail
+        python -Im pytest tests -qq
         python -Im coverage xml
-    - name: Upload coverage
+    - name: Re-run the failing tests with maximum verbosity
+      if: >-
+        !cancelled()
+        && failure()
+      run: >-  # `exit 1` makes sure that the job remains red with flaky runs
+        python -Im
+        pytest --no-cov -vvvvv --lf
+        && exit 1
+      shell: bash
+    - name: Send coverage data to Codecov
+      if: >-
+        !cancelled()
       uses: codecov/codecov-action@v3.1.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
