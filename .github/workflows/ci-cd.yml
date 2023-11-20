@@ -289,7 +289,7 @@ jobs:
         version_file: yarl/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
         fix_issue_regex: >-
-          `#(\d+) <https://github.com/aio-libs/yarl/issues/\1>`
+          :issue:`\d+`
         fix_issue_repl: >-
           (#\1)
 
