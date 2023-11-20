@@ -131,9 +131,6 @@ jobs:
         source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
-    - name: Delete the `yarl/` directory to prevent accidental imports
-      run: rm -rfv yarl
-      shell: bash
     - name: Download distributions
       uses: actions/download-artifact@v3
       with:
