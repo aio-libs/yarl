@@ -165,7 +165,7 @@ jobs:
         # NOTE: When `pip` is forced to colorize output piped into `jq`,
         # NOTE: the latter can't parse it. So we're disabling it here to
         # NOTE: override the value set in the workflow globally.
-        FORCE_COLOR: 0
+        FORCE_COLOR: ~
       id: wheel-file
       run: >
         echo -n path= | tee -a "${GITHUB_OUTPUT}"
