@@ -1,6 +1,6 @@
 ---
 
-name: CI
+name: CI/CD
 
 on:
   merge_group:
