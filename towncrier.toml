@@ -2,7 +2,7 @@
   package = "yarl"
   filename = "CHANGES.rst"
   directory = "CHANGES/"
-  title_format = "v{version} ({project_date})"
+  title_format = "{version} ({project_date})"
   issue_format = ":issue:`{issue}`"
 
   # NOTE: The types are declared because:
