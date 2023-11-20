@@ -161,6 +161,11 @@ jobs:
       with:
         path: requirements/test.txt
     - name: Determine pre-compiled compatible wheel
+      env:
+        # NOTE: When `pip` is forced to colorize output piped into `jq`,
+        # NOTE: the latter can't parse it. So we're disabling it here to
+        # NOTE: override the value set in the workflow globally.
+        FORCE_COLOR: 0
       id: wheel-file
       run: >
         echo -n path= | tee -a "${GITHUB_OUTPUT}"
