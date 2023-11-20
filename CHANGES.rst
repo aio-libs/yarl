@@ -16,7 +16,7 @@
 Bug fixes
 ---------
 
-- Stopped dropping trailing slashes in :py:meth:`~yarl.URL.joinpath` -- by :user:`mjpieters`. (:issue:`862`, :issue:`866`)
+- Stopped dropping trailing slashes in :py:meth:`~yarl.URL.joinpath` -- by :user:`gmacon`. (:issue:`862`, :issue:`866`)
 - Started accepting string subclasses in ``__truediv__()`` operations (``URL / segment``) -- by :user:`mjpieters`. (:issue:`871`, :issue:`884`)
 - Fixed the human representation of URLs with square brackets in usernames and passwords -- by :user:`mjpieters`. (:issue:`876`, :issue:`882`)
 - Updated type hints to include ``URL.missing_port()``, ``URL.__bytes__()``
