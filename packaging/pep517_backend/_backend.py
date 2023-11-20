@@ -82,7 +82,7 @@ IS_PY3_12_PLUS = _python_version_tuple[:2] >= (3, 12)
 IS_CPYTHON = _system_implementation.name == "cpython"
 """A flag meaning that the current interpreter implementation is CPython."""
 
-PURE_PYTHON_MODE_CLI_FALLBACK = bool(IS_CPYTHON)
+PURE_PYTHON_MODE_CLI_FALLBACK = not IS_CPYTHON
 """A fallback for `--pure-python` is not set."""
 
 
