@@ -1,4 +1,11 @@
+[paths]
+source =
+  yarl
+  */lib/python*/site-packages/yarl
+
 [run]
 branch = True
-source = yarl, tests
-omit = site-packages
+source =
+  tests
+source_pkgs =
+  yarl
