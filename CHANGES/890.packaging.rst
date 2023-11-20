@@ -1,2 +1,0 @@
-Converted most of the packaging setup into a declarative :file:`setup.cfg`
-config -- by :user:`webknjaz`.

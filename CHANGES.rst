@@ -10,6 +10,70 @@
 
 .. towncrier release notes start
 
+1.9.3 (2023-11-20)
+==================
+
+Bug fixes
+---------
+
+- Stopped dropping trailing slashes in :py:meth:`~yarl.URL.joinpath` -- by :user:`mjpieters`. (:issue:`862`, :issue:`866`)
+- Started accepting string subclasses in ``__truediv__()`` operations (``URL / segment``) -- by :user:`mjpieters`. (:issue:`871`, :issue:`884`)
+- Fixed the human representation of URLs with square brackets in usernames and passwords -- by :user:`mjpieters`. (:issue:`876`, :issue:`882`)
+- Updated type hints to include ``URL.missing_port()``, ``URL.__bytes__()``
+  and the ``encoding`` argument to :py:meth:`~yarl.URL.joinpath`
+  -- by :user:`mjpieters`. (:issue:`891`)
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Integrated Cython 3 to enable building *yarl* under Python 3.12 -- by :user:`mjpieters`. (:issue:`829`, :issue:`881`)
+- Declared modern ``setuptools.build_meta`` as the :pep:`517` build
+  backend in :file:`pyproject.toml` explicitly -- by :user:`webknjaz`. (:issue:`886`)
+- Converted most of the packaging setup into a declarative :file:`setup.cfg`
+  config -- by :user:`webknjaz`. (:issue:`890`)
+- Replaced the packaging is replaced from an old-fashioned :file:`setup.py` to an
+  in-tree :pep:`517` build backend -- by :user:`webknjaz`.
+
+  Whenever the end-users or downstream packagers need to build ``yarl`` from
+  source (a Git checkout or an sdist), they may pass a ``config_settings``
+  flag ``--pure-python``. If this flag is not set, a C-extension will be built
+  and included into the distribution.
+
+  Here is how this can be done with ``pip``:
+
+  .. code-block:: console
+
+      $ python -m pip install . --config-settings=--pure-python=
+
+  This will also work with ``-e | --editable``.
+
+  The same can be achieved via ``pypa/build``:
+
+  .. code-block:: console
+
+      $ python -m build --config-setting=--pure-python=
+
+  Adding ``-w | --wheel`` can force ``pypa/build`` produce a wheel from source
+  directly, as opposed to building an ``sdist`` and then building from it. (:issue:`893`)
+- Declared Python 3.12 supported officially in the distribution package metadata
+  -- by :user:`edgarrmondragon`. (:issue:`942`)
+
+
+Contributor-facing changes
+--------------------------
+
+- A regression test for no-host URLs was added per :issue:`821`
+  and :rfc:`3986` -- by :user:`kenballus`. (:issue:`821`, :issue:`822`)
+- Started testing *yarl* against Python 3.12 in CI -- by :user:`mjpieters`. (:issue:`881`)
+- All Python 3.12 jobs are now marked as required to pass in CI
+  -- by :user:`edgarrmondragon`. (:issue:`942`)
+- MyST is now integrated in Sphinx -- by :user:`webknjaz`.
+
+  This allows the contributors to author new documents in Markdown
+  when they have difficulties with going straight RST. (:issue:`953`)
+
+
 1.9.2 (2023-04-25)
 ==================
 
