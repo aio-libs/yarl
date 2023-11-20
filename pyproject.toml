@@ -1,19 +1,87 @@
 [build-system]
 requires = [
-  "setuptools>=40",
+  # NOTE: The following build dependencies are necessary for initial
+  # NOTE: provisioning of the in-tree build backend located under
+  # NOTE: `packaging/pep517_backend/`.
+  "expandvars",
+  "setuptools >= 47",  # Minimum required for `version = attr:`
+  "tomli; python_version < '3.11'",
 ]
-build-backend = "setuptools.build_meta"
+backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
+build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
 
-[tool.towncrier]
-package = "yarl"
-filename = "CHANGES.rst"
-directory = "CHANGES/"
-title_format = "{version} ({project_date})"
-issue_format = "`#{issue} <https://github.com/aio-libs/yarl/issues/{issue}>`_"
+[tool.local.cythonize]
+# This attr can contain multiple globs
+src = ["yarl/*.pyx"]
 
+[tool.local.cythonize.env]
+# Env vars provisioned during cythonize call
+#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
+#LDFLAGS = "${LDFLAGS}"
+
+[tool.local.cythonize.flags]
+# This section can contain the following booleans:
+# * annotate — generate annotated HTML page for source files
+# * build — build extension modules using distutils
+# * inplace — build extension modules in place using distutils (implies -b)
+# * force — force recompilation
+# * quiet — be less verbose during compilation
+# * lenient — increase Python compat by ignoring some compile time errors
+# * keep-going — compile as much as possible, ignore compilation failures
+annotate = false
+build = false
+inplace = true
+force = true
+quiet = false
+lenient = false
+keep-going = false
+
+[tool.local.cythonize.kwargs]
+# This section can contain args that have values:
+# * exclude=PATTERN      exclude certain file patterns from the compilation
+# * parallel=N    run builds in N parallel jobs (default: calculated per system)
+# exclude = "**.py"
+# parallel = 12
+
+[tool.local.cythonize.kwargs.directive]
+# This section can contain compiler directives
+# Ref: https://github.com/cython/cython/blob/d6e6de9/Cython/Compiler/Options.py#L170-L242
+embedsignature = "True"
+emit_code_comments = "True"
+linetrace = "True"
+profile = "True"
+
+[tool.local.cythonize.kwargs.compile-time-env]
+# This section can contain compile time env vars
+
+[tool.local.cythonize.kwargs.option]
+# This section can contain cythonize options
+# Ref: https://github.com/cython/cython/blob/d6e6de9/Cython/Compiler/Options.py#L694-L730
+#docstrings = "True"
+#embed_pos_in_docstring = "True"
+#warning_errors = "True"
+#error_on_unknown_names = "True"
+#error_on_uninitialized = "True"
 
 [tool.cibuildwheel]
+build-frontend = "build"
+environment = { PIP_CONSTRAINT="requirements/cython.txt" }
+before-test = [
+  # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
+  # NOTE: constraints unset. The hope is that pip will cache that wheel
+  # NOTE: and the test env provisioning stage will pick up PyYAML from
+  # NOTE: said cache rather than attempting to build it with a conflicting.
+  # NOTE: Version of Cython.
+  # Ref: https://github.com/pypa/cibuildwheel/issues/1666
+  "PIP_CONSTRAINT= pip install PyYAML",
+]
 test-requires = "-r requirements/ci.txt"
 test-command = "pytest {project}/tests"
 # don't build PyPy wheels, install from source instead
 skip = "pp*"
+
+[tool.cibuildwheel.config-settings]
+--pure-python = "false"
+
+[tool.cibuildwheel.windows]
+before-test = []  # Windows cmd has different syntax and pip chooses wheels

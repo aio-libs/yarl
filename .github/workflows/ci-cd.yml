@@ -1,17 +1,21 @@
+---
+
 name: CI
 
 on:
+  merge_group:
   push:
     branches:
-      - master
-      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
-    tags: [ 'v*' ]
+    - master
+    - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
+    tags:
+    - v*
   pull_request:
     branches:
-      - master
-      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
+    - master
+    - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
   schedule:
-    - cron:  '0 6 * * *'  # Daily 6AM UTC build
+  - cron: '0 6 * * *'  # Daily 6AM UTC build
 
 
 concurrency:
@@ -19,115 +23,142 @@ concurrency:
   cancel-in-progress: true
 
 
+env:
+  PYTHON_LATEST: "3.12"
+
+
 jobs:
 
-  lint:
-    name: Linter
+  pre-setup:
+    name: ⚙️ Pre-set global build settings
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    defaults:
+      run:
+        shell: python
+    outputs:
+      # NOTE: These aren't env vars because the `${{ env }}` context is
+      # NOTE: inaccessible when passing inputs to reusable workflows.
+      dists-artifact-name: python-package-distributions
+      sdist-name: yarl-*.tar.gz
+      wheel-name: yarl-*.whl
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Setup Python 3.8
+    - run: >-
+        print('No-op')
+
+
+  build-sdist:
+    name: 📦 Build the source distribution
+    needs:
+    - pre-setup
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v4
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
-        cache: 'pip'
-        cache-dependency-path: 'requirements/*.txt'
-    - name: Install dependencies
-      uses: py-actions/py-dependency-install@v4
+        python-version: ${{ env.PYTHON_LATEST }}
+        cache: pip
+    - name: Install core libraries for build and install
+      run: python -Im pip install build
+    - name: Build sdist
+      env:
+        PIP_CONSTRAINT: requirements/cython.txt
+      run: python -Im build --sdist
+    - name: Upload built artifacts for testing
+      uses: actions/upload-artifact@v3
       with:
-        path: requirements/lint.txt
-    - name: Install itself
-      run: |
-        python setup.py install
-      env:
-        YARL_NO_EXTENSIONS: 1
-    - name: Run linters
-      run: |
-        make lint
-    - name: Install spell checker
-      run: |
-        sudo apt install libenchant-2-dev
-        pip install -r requirements/doc-spelling.txt
-    - name: Run docs spelling
-      run: |
-        make doc-spelling
-    - name: Prepare twine checker
-      run: |
-        pip install -U twine wheel
-        python setup.py sdist bdist_wheel
-      env:
-        YARL_NO_EXTENSIONS: 1
-    - name: Run twine checker
-      run: |
-        twine check dist/*
+        name: ${{ needs.pre-setup.outputs.dists-artifact-name  }}
+        # NOTE: Exact expected file names are specified here
+        # NOTE: as a safety measure — if anything weird ends
+        # NOTE: up being in this dir or not all dists will be
+        # NOTE: produced, this will fail the workflow.
+        path: dist/${{ needs.pre-setup.outputs.sdist-name }}
+        retention-days: 15
+
+  lint:
+    uses: ./.github/workflows/reusable-linters.yml
+
+  build-wheels-for-tested-arches:
+    needs:
+    - build-sdist
+    - pre-setup  # transitive, for accessing settings
+    strategy:
+      matrix:
+        os:
+        - ubuntu
+        - windows
+        - macos
+    uses: ./.github/workflows/reusable-build-wheel.yml
+    with:
+      os: ${{ matrix.os }}
+      source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+      dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   test:
     name: Test
+    needs:
+    - build-wheels-for-tested-arches
+    - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
-        pyver: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        pyver: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
         no-extensions: ['', 'Y']
         os: [ubuntu, macos, windows]
         experimental: [false]
         exclude:
-          - os: macos
-            no-extensions: 'Y'
-          - os: windows
-            no-extensions: 'Y'
+        - os: macos
+          no-extensions: 'Y'
+        - os: windows
+          no-extensions: 'Y'
         include:
-          - pyver: pypy-3.9
-            no-extensions: 'Y'
-            experimental: false
-            os: ubuntu
-          - pyver: pypy-3.8
-            no-extensions: 'Y'
-            experimental: false
-            os: ubuntu
-          - pyver: 3.12-dev
-            no-extensions: ''
-            experimental: true
-            os: ubuntu
-          - pyver: 3.12-dev
-            no-extensions: 'Y'
-            experimental: true
-            os: ubuntu
+        - pyver: pypy-3.9
+          no-extensions: 'Y'
+          experimental: false
+          os: ubuntu
+        - pyver: pypy-3.8
+          no-extensions: 'Y'
+          experimental: false
+          os: ubuntu
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
     timeout-minutes: 15
     continue-on-error: ${{ matrix.experimental }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v1
+      with:
+        source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+        workflow-artifact-name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
+
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.pyver }}
         cache: 'pip'
         cache-dependency-path: 'requirements/*.txt'
-    - name: Install cython
-      if: ${{ matrix.no-extensions == '' }}
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/cython.txt
-    - name: Cythonize
-      if: ${{ matrix.no-extensions == '' }}
-      run: |
-        make cythonize
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/ci.txt
+    - name: Self-install
       env:
-        YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
+        PIP_CONSTRAINT: requirements/cython.txt
+      run: >-
+        python -Im pip install -e .
+        --config-settings=--pure-python=${{
+          matrix.no-extensions != ''
+          && 'true'
+          || 'false'
+        }}
     - name: Run unittests
       env:
         COLOR: 'yes'
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: |
-        python -m pytest tests -vv
-        python -m coverage xml
+        python -Im pytest tests -vv
+        python -Im coverage xml
     - name: Upload coverage
       uses: codecov/codecov-action@v3.1.4
       with:
@@ -154,89 +185,34 @@ jobs:
     # Run only on pushing a tag
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     steps:
-      - name: Dummy
-        run: |
-            echo "Predeploy step"
-
-  build-tarball:
-    name: Tarball
-    runs-on: ubuntu-latest
-    needs: pre-deploy
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Setup Python
-      uses: actions/setup-python@v4
-    - name: Install cython
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/cython.txt
-    - name: Cythonize
+    - name: Dummy
       run: |
-        make cythonize
-    - name: Make sdist
-      run:
-        python setup.py sdist
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist
+        echo "Predeploy step"
 
-  build-wheels:
-    name: Build wheels on ${{ matrix.os }} ${{ matrix.qemu }}
-    runs-on: ${{ matrix.os }}-latest
-    needs: pre-deploy
+  build-wheels-for-odd-archs:
+    needs:
+    - build-sdist
+    - pre-deploy
+    - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
-        os: [ubuntu, windows, macos]
-        qemu: ['']
-        include:
-          # Split ubuntu job for the sake of speed-up
-        - os: ubuntu
-          qemu: aarch64
-        - os: ubuntu
-          qemu: ppc64le
-        - os: ubuntu
-          qemu: s390x
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Set up QEMU
-      if: ${{ matrix.qemu }}
-      uses: docker/setup-qemu-action@v2
-      with:
-        platforms: all
-      id: qemu
-    - name: Prepare emulation
-      run: |
-        if [[ -n "${{ matrix.qemu }}" ]]; then
-          # Build emulated architectures only if QEMU is set,
-          # use default "auto" otherwise
-          echo "CIBW_ARCHS_LINUX=${{ matrix.qemu }}" >> $GITHUB_ENV
-        fi
-      shell: bash
-    - name: Setup Python
-      uses: actions/setup-python@v4
-    - name: Install cython
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/cython.txt
-    - name: Cythonize
-      run: |
-        make cythonize
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v2.14.0
-      env:
-        CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-    - uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: ./wheelhouse/*.whl
+        qemu:
+        - aarch64
+        - ppc64le
+        - s390x
+    uses: ./.github/workflows/reusable-build-wheel.yml
+    with:
+      qemu: ${{ matrix.qemu }}
+      source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+      dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   deploy:
     name: Deploy
-    needs: [build-tarball, build-wheels]
+    needs:
+    - build-sdist
+    - build-wheels-for-odd-archs
+    - build-wheels-for-tested-arches
+    - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
 
     permissions:
@@ -248,15 +224,20 @@ jobs:
       url: https://pypi.org/p/yarl
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v1
+      with:
+        source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+        workflow-artifact-name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
+
     - name: Login
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-    - name: Download disctributions
+    - name: Download distributions
       uses: actions/download-artifact@v3
       with:
-        name: dist
+        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
     - name: Make Release
       uses: aio-libs/create-release@v1.6.6
@@ -265,18 +246,20 @@ jobs:
         name: yarl
         version_file: yarl/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        fix_issue_regex: "`#(\\d+) <https://github.com/aio-libs/yarl/issues/\\1>`"
-        fix_issue_repl: "(#\\1)"
+        fix_issue_regex: >-
+          `#(\d+) <https://github.com/aio-libs/yarl/issues/\1>`
+        fix_issue_repl: >-
+          (#\1)
 
     - name: >-
         Publish 🐍📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v1.2.3
+      uses: sigstore/gh-action-sigstore-python@v2.1.0
       with:
         inputs: >-
-          ./dist/*.tar.gz
+          ./dist/${{ needs.pre-setup.outputs.sdist-name }}
           ./dist/*.whl
 
     - name: Upload artifact signatures to GitHub Release
@@ -288,3 +271,5 @@ jobs:
         # dist/ contains the built packages, which smoketest-artifacts/
         # contains the signatures and certificates.
         files: dist/**
+
+...

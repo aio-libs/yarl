@@ -1,7 +1,3 @@
-=========
-Changelog
-=========
-
 ..
     You should *NOT* be adding new change log entries to this file, this
     file is managed by towncrier. You *may* edit previous change logs to
@@ -20,7 +16,8 @@ Changelog
 Bugfixes
 --------
 
-- Fix regression with truediv and absolute URLs with empty paths causing the raw path to lack the leading ``/``. (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
+- Fix regression with ``__truediv__`` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
+  (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
 
 
 1.9.1 (2023-04-21)
@@ -41,17 +38,20 @@ Features
 --------
 
 - Added ``URL.joinpath(*elements)``, to create a new URL appending multiple path elements. (`#704 <https://github.com/aio-libs/yarl/issues/704>`_)
-- Made :py:meth:`URL.__truediv__` return ``NotImplemented`` if called with an unsupported type — by :user:`michaeljpeters`. (`#832 <https://github.com/aio-libs/yarl/issues/832>`_)
+- Made ``URL.__truediv__()`` return ``NotImplemented`` if called with an
+  unsupported type — by :user:`michaeljpeters`.
+  (`#832 <https://github.com/aio-libs/yarl/issues/832>`_)
 
 
 Bugfixes
 --------
 
-- Path normalisation for absolute URLs no longer raises a ValueError exception
-  when `..` segments would otherwise go beyond the URL path root. (`#536 <https://github.com/aio-libs/yarl/issues/536>`_)
+- Path normalization for absolute URLs no longer raises a ValueError exception
+  when ``..`` segments would otherwise go beyond the URL path root.
+  (`#536 <https://github.com/aio-libs/yarl/issues/536>`_)
 - Fixed an issue with update_query() not getting rid of the query when argument is None. (`#792 <https://github.com/aio-libs/yarl/issues/792>`_)
 - Added some input restrictions on with_port() function to prevent invalid boolean inputs or out of valid port inputs; handled incorrect 0 port representation. (`#793 <https://github.com/aio-libs/yarl/issues/793>`_)
-- Made :py:meth:`URL.build` raise a :py:exc:`TypeError` if the ``host`` argument is :py:data:`None` — by :user:`paulpapacz`. (`#808 <https://github.com/aio-libs/yarl/issues/808>`_)
+- Made :py:meth:`~yarl.URL.build` raise a :py:exc:`TypeError` if the ``host`` argument is :py:data:`None` — by :user:`paulpapacz`. (`#808 <https://github.com/aio-libs/yarl/issues/808>`_)
 - Fixed an issue with ``update_query()`` getting rid of the query when the argument
   is empty but not ``None``. (`#845 <https://github.com/aio-libs/yarl/issues/845>`_)
 
@@ -89,7 +89,8 @@ Features
 Improved Documentation
 ----------------------
 
-- Fixed broken internal references to :meth:`~URL.human_repr`. (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
+- Fixed broken internal references to :meth:`~yarl.URL.human_repr`.
+  (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
 - Fixed broken external references to :doc:`multidict:index` docs. (`#665 <https://github.com/aio-libs/yarl/issues/665>`_)
 
 
@@ -128,7 +129,8 @@ Bugfixes
 Features
 --------
 
-- Add `__bytes__()` magic method so that `bytes(url)` will work and use optimal ASCII encoding. (`#582 <https://github.com/aio-libs/yarl/issues/582>`_)
+- Add ``__bytes__()`` magic method so that ``bytes(url)`` will work and use optimal ASCII encoding.
+  (`#582 <https://github.com/aio-libs/yarl/issues/582>`_)
 - Started shipping platform-specific arm64 wheels for Apple Silicon. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
 - Started shipping platform-specific wheels with the ``musl`` tag targeting typical Alpine Linux runtimes. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
 - Added support for Python 3.10. (`#622 <https://github.com/aio-libs/yarl/issues/622>`_)
@@ -243,7 +245,7 @@ Features
 
 - Convert host to lowercase on URL building.
   `#386 <https://github.com/aio-libs/yarl/issues/386>`_
-- Allow using ``mod`` operator (`%`) for updating query string (an alias for ``update_query()`` method).
+- Allow using ``mod`` operator (``%``) for updating query string (an alias for ``update_query()`` method).
   `#435 <https://github.com/aio-libs/yarl/issues/435>`_
 - Allow use of sequences such as ``list`` and ``tuple`` in the values
   of a mapping such as ``dict`` to represent that a key has many values::
@@ -252,7 +254,7 @@ Features
       assert url.with_query({"a": [1, 2]}) == URL("http://example.com/?a=1&a=2")
 
   `#443 <https://github.com/aio-libs/yarl/issues/443>`_
-- Support URL.build() with scheme and path (creates a relative URL).
+- Support ``URL.build()`` with scheme and path (creates a relative URL).
   `#464 <https://github.com/aio-libs/yarl/issues/464>`_
 - Cache slow IDNA encode/decode calls.
   `#476 <https://github.com/aio-libs/yarl/issues/476>`_
@@ -271,9 +273,9 @@ Bugfixes
   `#409 <https://github.com/aio-libs/yarl/issues/409>`_
 - Fix a bug where query component, passed in a form of mapping or sequence, is unquoted in unexpected way.
   `#426 <https://github.com/aio-libs/yarl/issues/426>`_
-- Hide `Query` and `QueryVariable` type aliases in `__init__.pyi`, now they are prefixed with underscore.
+- Hide ``Query`` and ``QueryVariable`` type aliases in ``__init__.pyi``, now they are prefixed with underscore.
   `#431 <https://github.com/aio-libs/yarl/issues/431>`_
-- Keep ipv6 brackets after updating port/user/password.
+- Keep IPv6 brackets after updating port/user/password.
   `#451 <https://github.com/aio-libs/yarl/issues/451>`_
 
 
@@ -286,7 +288,7 @@ Bugfixes
 Features
 --------
 
-- Workaround for missing `str.isascii()` in Python 3.6
+- Workaround for missing ``str.isascii()`` in Python 3.6
   `#389 <https://github.com/aio-libs/yarl/issues/389>`_
 
 
@@ -317,7 +319,7 @@ Features
 
 * Don't create a new URL if fragment is unchanged (#292)
 
-* Included in error msg the path that produces starting slash forbidden error (#376)
+* Included in error message the path that produces starting slash forbidden error (#376)
 
 * Skip slow IDNA encoding for ASCII-only strings (#387)
 
@@ -376,7 +378,7 @@ Features
 1.1.1 (2018-02-17)
 ==================
 
-* Fix performance regression: don't encode empty netloc (#170)
+* Fix performance regression: don't encode empty ``netloc`` (#170)
 
 1.1.0 (2018-01-21)
 ==================
@@ -438,16 +440,16 @@ Features
 
 * Drop strict mode (#123)
 
-* Fix ``"ValueError: Unallowed PCT %"`` when there's a ``"%"`` in the url (#124)
+* Fix ``"ValueError: Unallowed PCT %"`` when there's a ``"%"`` in the URL (#124)
 
 0.13.0 (2017-10-01)
 ===================
 
 * Document ``encoded`` parameter (#102)
 
-* Support relative urls like ``'?key=value'`` (#100)
+* Support relative URLs like ``'?key=value'`` (#100)
 
-* Unsafe encoding for QS fixed. Encode ``;`` char in value param (#104)
+* Unsafe encoding for QS fixed. Encode ``;`` character in value parameter (#104)
 
 * Process passwords without user names (#95)
 
@@ -468,18 +470,18 @@ Features
 0.10.3 (2017-06-13)
 ===================
 
-* Prevent double URL args unquoting (#83)
+* Prevent double URL arguments unquoting (#83)
 
 0.10.2 (2017-05-05)
 ===================
 
-* Unexpected hash behaviour (#75)
+* Unexpected hash behavior (#75)
 
 
 0.10.1 (2017-05-03)
 ===================
 
-* Unexpected compare behaviour (#73)
+* Unexpected compare behavior (#73)
 
 * Do not quote or unquote + if not a query string. (#74)
 
@@ -551,7 +553,7 @@ Features
 
 * Fix core dumps (#41)
 
-* tmpbuf - compiling error (#43)
+* ``tmpbuf`` - compiling error (#43)
 
 * Added ``URL.update_path()`` method
 
@@ -587,13 +589,13 @@ Features
 0.6.0 (2016-11-07)
 ==================
 
-* Explicitly use UTF8 encoding in setup.py (#20)
+* Explicitly use UTF8 encoding in :file:`setup.py` (#20)
 * Properly unquote non-UTF8 strings (#19)
 
 0.5.3 (2016-11-02)
 ==================
 
-* Don't use namedtuple fields but indexes on URL construction
+* Don't use :py:class:`typing.NamedTuple` fields but indexes on URL construction
 
 0.5.2 (2016-11-02)
 ==================
@@ -608,7 +610,7 @@ Features
 0.5.0 (2016-11-02)
 ==================
 
-* Add cython optimization for quoting/unquoting
+* Add Cython optimization for quoting/unquoting
 * Provide binary wheels
 
 0.4.3 (2016-09-29)
@@ -661,7 +663,7 @@ Features
 0.1.4 (2016-09-09)
 ==================
 
-* Add kwargs support for ``with_query()`` (#10)
+* Add ``kwargs`` support for ``with_query()`` (#10)
 
 0.1.3 (2016-09-07)
 ==================

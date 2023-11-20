@@ -36,6 +36,9 @@ telling the readers **what changed** in a specific version of
 the library *since the previous version*. You should also use
 reStructuredText syntax for highlighting code (inline or block),
 linking parts of the docs or external sites.
+If you wish to sign your change, feel free to add ``-- by
+:user:`github-username``` at the end (replace ``github-username``
+with your own!).
 
 Finally, name your file following the convention that Towncrier
 understands: it should start with the number of an issue or a
@@ -67,20 +70,27 @@ File :file:`CHANGES/603.removal.1.rst`:
 
 .. code-block:: rst
 
-    Dropped Python 3.5 support; Python 3.6 is the minimal supported Python version.
+    Dropped Python 3.5 support; Python 3.6 is the minimal supported Python
+    version -- by :user:`webknjaz`.
 
 File :file:`CHANGES/550.bugfix.rst`:
 
 .. code-block:: rst
 
-    Started shipping Windows wheels for the x86 architecture.
+    Started shipping Windows wheels for the x86 architecture
+    -- by :user:`Dreamsorcerer`.
 
 File :file:`CHANGES/553.feature.rst`:
 
 .. code-block:: rst
 
-    Added support for ``GenericAliases`` (``MultiDict[str]``) under Python 3.9 and higher.
+    Added support for ``GenericAliases`` (``MultiDict[str]``) under Python 3.9
+    and higher -- by :user:`mjpieters`.
 
+.. tip::
+
+   See :file:`pyproject.toml` for all available categories
+   (``tool.towncrier.type``).
 
 .. _Towncrier philosophy:
    https://towncrier.readthedocs.io/en/actual-freaking-docs/#philosophy

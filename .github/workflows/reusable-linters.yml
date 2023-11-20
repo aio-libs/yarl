@@ -1,0 +1,54 @@
+---
+
+name: Linters
+
+on:
+  workflow_call:
+
+env:
+  FORCE_COLOR: "1"  # Make tools pretty.
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_PYTHON_VERSION_WARNING: "1"
+  PYTHON_LATEST: 3.8
+
+jobs:
+
+  lint:
+    name: Linter
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Python ${{ env.PYTHON_LATEST }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_LATEST }}
+        cache: 'pip'
+        cache-dependency-path: 'requirements/*.txt'
+    - name: Install dependencies
+      uses: py-actions/py-dependency-install@v4
+      with:
+        path: requirements/lint.txt
+    - name: Self-install
+      run: |
+        pip install .
+    - name: Run linters
+      run: |
+        make lint
+    - name: Install spell checker
+      run: |
+        sudo apt install libenchant-2-dev
+        pip install -r requirements/doc-spelling.txt
+    - name: Run docs spelling
+      run: |
+        make doc-spelling
+    - name: Prepare twine checker
+      run: |
+        pip install -U build twine
+        python -m build --config-setting=--pure-python=true
+    - name: Run twine checker
+      run: |
+        twine check --strict dist/*
+
+...

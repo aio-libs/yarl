@@ -2,7 +2,9 @@ include LICENSE
 include CHANGES.rst
 include README.rst
 graft yarl
+graft packaging
 graft docs
+graft requirements
 graft tests
 include yarl/*.c
 global-exclude *.pyc
