@@ -141,7 +141,7 @@ jobs:
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
-        path: requirements/ci.txt
+        path: requirements/test.txt
     - name: Self-install
       env:
         PIP_CONSTRAINT: requirements/cython.txt
