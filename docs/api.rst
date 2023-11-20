@@ -533,7 +533,7 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com').with_scheme('https')
       URL('https://example.com')
 
-   Returned URL may have a *different* ``port`` 
+   Returned URL may have a *different* ``port``
    (:ref:`default-port-substitution`).
 
 .. method:: URL.with_user(user)
