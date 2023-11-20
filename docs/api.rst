@@ -534,7 +534,7 @@ section generates a new :class:`URL` instance.
       URL('https://example.com')
 
    Returned URL may have a *different* ``port``
-   (:ref:`default-port-substitution`).
+   (:ref:`default port substitution <yarl-api-default-ports>`).
 
 .. method:: URL.with_user(user)
 
