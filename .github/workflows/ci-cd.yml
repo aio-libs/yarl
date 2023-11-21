@@ -213,7 +213,9 @@ jobs:
     - name: Append coverage results to Job Summary
       if: >-
         !cancelled()
-      run: python -Im coverage report --markdown >> "${GITHUB_STEP_SUMMARY}"
+      run: >-
+        python -Im coverage report --format=markdown
+        >> "${GITHUB_STEP_SUMMARY}"
       shell: bash
     - name: Produce markdown test summary from JUnit
       if: >-
