@@ -212,6 +212,12 @@ Contents:
 
    contributing/guidelines
 
+.. toctree::
+   :caption: Maintenance
+
+   contributing/release_guide
+
+
 Indices and tables
 ==================
 
