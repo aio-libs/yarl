@@ -26,10 +26,12 @@
 #
 # needs_sphinx = '1.0'
 
-import pathlib
 import re
+from pathlib import Path
 
-_docs_path = pathlib.Path(__file__).parent
+PROJECT_ROOT_DIR = Path(__file__).parents[1].resolve()
+
+_docs_path = Path(__file__).parent
 _version_path = _docs_path / "../yarl/__init__.py"
 
 
@@ -51,11 +53,16 @@ with _version_path.open() as fp:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    # stdlib-party extensions:
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.viewcode",
+    # Third-party extensions:
     "alabaster",
+    "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
+    "myst_parser",  # extended markdown; https://pypi.org/project/myst-parser/
 ]
 
 
@@ -68,7 +75,7 @@ except ImportError:
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "multidict": ("https://multidict.readthedocs.io/en/stable", None),
+    "multidict": ("https://multidict.aio-libs.org/en/stable", None),
 }
 
 
@@ -79,7 +86,6 @@ intersphinx_mapping = {
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
 
 # The encoding of source files.
 #
@@ -88,9 +94,17 @@ source_suffix = ".rst"
 # The master toctree document.
 master_doc = "index"
 
-# General information about the project.
-project = "yarl"
-copyright = "2016-2018, Andrew Svetlov and aio-libs team"
+# -- Project information -----------------------------------------------------
+
+github_url = "https://github.com"
+github_repo_org = "aio-libs"
+github_repo_name = "yarl"
+github_repo_slug = f"{github_repo_org}/{github_repo_name}"
+github_repo_url = f"{github_url}/{github_repo_slug}"
+github_sponsors_url = f"{github_url}/sponsors"
+
+project = github_repo_name
+copyright = f"2016, Andrew Svetlov, {project} contributors and aio-libs team"
 author = "Andrew Svetlov and aio-libs team"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -153,6 +167,17 @@ pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+# -- Extension configuration -------------------------------------------------
+
+# -- Options for extlinks extension ---------------------------------------
+extlinks = {
+    "issue": (f"{github_repo_url}/issues/%s", "#%s"),
+    "pr": (f"{github_repo_url}/pull/%s", "PR #%s"),
+    "commit": (f"{github_repo_url}/commit/%s", "%s"),
+    "gh": (f"{github_url}/%s", "GitHub: %s"),
+    "user": (f"{github_sponsors_url}/%s", "@%s"),
+}
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -405,3 +430,10 @@ texinfo_documents = [
 
 default_role = "any"
 nitpicky = True
+
+# -- Options for towncrier_draft extension -----------------------------------
+
+towncrier_draft_autoversion_mode = "draft"  # or: 'sphinx-version', 'sphinx-release'
+towncrier_draft_include_empty = True
+towncrier_draft_working_directory = PROJECT_ROOT_DIR
+# Not yet supported: towncrier_draft_config_path = 'pyproject.toml'  # relative to cwd

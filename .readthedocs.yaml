@@ -1,15 +1,25 @@
+---
+
 version: 2
 
 build:
-   os: ubuntu-22.04
-   tools:
-      python: "3.11"
+  os: ubuntu-22.04
+  tools:
+    python: "3.11"
+
+  jobs:
+    post_create_environment:
+    - >-
+      pip install .
+      --config-settings=--pure-python=true
 
 python:
-   install:
-   - requirements: requirements/doc.txt
+  install:
+  - requirements: requirements/doc.txt
 
 sphinx:
-  builder: html
+  builder: dirhtml
   configuration: docs/conf.py
   fail_on_warning: true
+
+...

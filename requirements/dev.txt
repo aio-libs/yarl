@@ -1,2 +1,2 @@
--r ci.txt
-towncrier==23.6.0
+-r test.txt
+towncrier==23.11.0

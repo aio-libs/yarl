@@ -1,4 +1,15 @@
+[paths]
+source =
+  yarl
+  */lib/pypy*/site-packages/yarl
+  */lib/python*/site-packages/yarl
+  */Lib/site-packages/yarl
+
 [run]
-branch = True
-source = yarl, tests
-omit = site-packages
+branch = true
+cover_pylib = false
+relative_files = true
+source =
+  tests
+source_pkgs =
+  yarl

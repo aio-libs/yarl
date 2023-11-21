@@ -1,4 +1,8 @@
+---
+
+# yamllint disable rule:line-length
 # Ref: https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
+# yamllint enable rule:line-length
 blank_issues_enabled: false  # default: true
 contact_links:
 - name: 🔐 Security bug report 🔥
@@ -29,3 +33,5 @@ contact_links:
 - name: 📝 Code of Conduct
   url: https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md
   about: ❤ Be nice to other members of the community. ☮ Behave.
+
+...

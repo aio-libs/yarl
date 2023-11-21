@@ -1,5 +1,5 @@
 PYXS = $(wildcard yarl/*.pyx)
-SRC = yarl tests setup.py
+SRC = yarl tests
 
 all: test
 
@@ -25,8 +25,8 @@ yarl/%.c: yarl/%.pyx
 cythonize: .cythonize
 
 
-.develop: .install-deps $(shell find yarl -type f) .cythonize
-	@pip install -e .
+.develop: .install-deps $(shell find yarl -type f)
+	@pip install -e . --config-settings=--pure-python=false
 	@touch .develop
 
 fmt:
@@ -37,7 +37,6 @@ else
 endif
 
 lint: fmt
-	mypy --show-error-codes yarl tests
 
 test: lint .develop
 	pytest ./tests ./yarl

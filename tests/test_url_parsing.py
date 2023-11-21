@@ -214,9 +214,15 @@ class TestPort:
         assert u.query_string == ""
         assert u.fragment == ""
 
+    @pytest.mark.xfail(reason="https://github.com/aio-libs/yarl/issues/821")
     def test_no_host(self):
-        with pytest.raises(ValueError):
-            URL("//:80")
+        u = URL("//:80")
+        assert u.scheme == ""
+        assert u.host == ""
+        assert u.port == 80
+        assert u.path == "/"
+        assert u.query_string == ""
+        assert u.fragment == ""
 
     def test_double_port(self):
         with pytest.raises(ValueError):

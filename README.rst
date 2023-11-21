@@ -15,15 +15,19 @@ The module provides handy URL class for URL parsing and changing.
 
 
 .. image:: https://readthedocs.org/projects/yarl/badge/?version=latest
-    :target: https://yarl.readthedocs.io
+    :target: https://yarl.aio-libs.org
 
 
 .. image:: https://img.shields.io/pypi/pyversions/yarl.svg
     :target: https://pypi.python.org/pypi/yarl
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-    :target: https://gitter.im/aio-libs/Lobby
-    :alt: Chat on Gitter
+.. image:: https://img.shields.io/matrix/aio-libs:matrix.org?label=Discuss%20on%20Matrix%20at%20%23aio-libs%3Amatrix.org&logo=matrix&server_fqdn=matrix.org&style=flat
+   :target: https://matrix.to/#/%23aio-libs:matrix.org
+   :alt: Matrix Room — #aio-libs:matrix.org
+
+.. image:: https://img.shields.io/matrix/aio-libs-space:matrix.org?label=Discuss%20on%20Matrix%20at%20%23aio-libs-space%3Amatrix.org&logo=matrix&server_fqdn=matrix.org&style=flat
+   :target: https://matrix.to/#/%23aio-libs-space:matrix.org
+   :alt: Matrix Space — #aio-libs-space:matrix.org
 
 Introduction
 ------------
@@ -92,7 +96,7 @@ Human readable representation of URL is available as ``.human_repr()``:
    >>> url.human_repr()
    'https://www.python.org/путь'
 
-For full documentation please read https://yarl.readthedocs.org.
+For full documentation please read https://yarl.aio-libs.org.
 
 
 Installation
@@ -110,12 +114,13 @@ manylinux-compliant because of the missing glibc and therefore, cannot be
 used with our wheels) the the tarball will be used to compile the library from
 the source code. It requires a C compiler and and Python headers installed.
 
-To skip the compilation you must explicitly opt-in by setting the `YARL_NO_EXTENSIONS`
+To skip the compilation you must explicitly opt-in by using a PEP 517
+configuration setting ``--pure-python``, or setting the ``YARL_NO_EXTENSIONS``
 environment variable to a non-empty value, e.g.:
 
-.. code-block:: bash
+.. code-block:: console
 
-   $ YARL_NO_EXTENSIONS=1 pip install yarl
+   $ pip install yarl --config-settings=--pure-python=
 
 Please note that the pure-Python (uncompiled) version is much slower. However,
 PyPy always uses a pure-Python implementation, and, as such, it is unaffected
@@ -130,7 +135,7 @@ YARL requires multidict_ library.
 API documentation
 ------------------
 
-The documentation is located at https://yarl.readthedocs.org
+The documentation is located at https://yarl.aio-libs.org.
 
 
 Why isn't boolean supported by the URL query API?
