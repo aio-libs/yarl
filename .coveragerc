@@ -3,6 +3,7 @@ source =
   yarl
   */lib/pypy*/site-packages/yarl
   */lib/python*/site-packages/yarl
+  */Lib/site-packages/yarl
 
 [run]
 branch = true
