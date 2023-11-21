@@ -214,6 +214,30 @@ jobs:
       uses: test-summary/action@v2.0
       with:
         paths: .test-results/pytest/test.xml
+    - name: Check if Cobertura XML coverage files exist
+      if: >-
+        !cancelled()
+        && runner.os == 'Linux'
+      id: coverage-files
+      run: >-
+        compgen -G 'coverage.xml'
+        && ( echo 'present=true' >> ${GITHUB_OUTPUT} )
+        ;
+        exit 0
+      shell: bash
+    - name: Produce markdown test summary from Cobertura XML
+      if: steps.coverage-files.outputs.present == 'true'
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        badge: true
+        filename: coverage.xml
+        format: markdown
+        output: both
+    # Ref: https://github.com/irongut/CodeCoverageSummary/issues/66
+    - name: Append coverage results to Job Summary
+      if: steps.coverage-files.outputs.present == 'true'
+      run: >-
+        cat code-coverage-results.md >> "${GITHUB_STEP_SUMMARY}"
     - name: Re-run the failing tests with maximum verbosity
       if: >-
         !cancelled()
