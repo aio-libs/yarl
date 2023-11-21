@@ -210,6 +210,12 @@ jobs:
         python -Im pytest tests -qq --junitxml=.test-results/pytest/test.xml
         python -Im coverage xml
       shell: bash
+    - name: Produce markdown test summary from JUnit
+      if: >-
+        !cancelled()
+      uses: test-summary/action@v2.0
+      with:
+        paths: .test-results/pytest/test.xml
     - name: Append coverage results to Job Summary
       if: >-
         !cancelled()
@@ -217,12 +223,6 @@ jobs:
         python -Im coverage report --format=markdown
         >> "${GITHUB_STEP_SUMMARY}"
       shell: bash
-    - name: Produce markdown test summary from JUnit
-      if: >-
-        !cancelled()
-      uses: test-summary/action@v2.0
-      with:
-        paths: .test-results/pytest/test.xml
     - name: Re-run the failing tests with maximum verbosity
       if: >-
         !cancelled()
