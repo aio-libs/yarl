@@ -205,9 +205,15 @@ jobs:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: |
         set -eEuo pipefail
-        python -Im pytest tests -qq
+        python -Im pytest tests -qq --junitxml=.test-results/pytest/test.xml
         python -Im coverage xml
       shell: bash
+    - name: Produce markdown test summary from JUnit
+      if: >-
+        !cancelled()
+      uses: test-summary/action@v2.0
+      with:
+        paths: .test-results/pytest/test.xml
     - name: Re-run the failing tests with maximum verbosity
       if: >-
         !cancelled()
