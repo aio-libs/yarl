@@ -1,0 +1,3 @@
+Started rejecting ASCII hostnames with invalid characters. For host strings that
+look like authority strings, the exception message includes advice on what to do
+instead -- by :user:`mjpieters`.
