@@ -13,6 +13,7 @@ changelog
 config
 de
 decodable
+dev
 dists
 downstreams
 facto
