@@ -34,6 +34,8 @@ jobs:
   build-wheel:
     name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
     runs-on: ${{ inputs.os }}-latest
+    # Ref: https://github.com/python-jsonschema/check-jsonschema/issues/354
+    timeout-minutes: 60  # FIXME: ${{ inputs.qemu && '60' || '20' }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1

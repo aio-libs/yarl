@@ -43,6 +43,7 @@ jobs:
   pre-setup:
     name: ⚙️ Pre-set global build settings
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     defaults:
       run:
         shell: python
@@ -62,6 +63,7 @@ jobs:
     needs:
     - pre-setup
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
     - name: Checkout project
       uses: actions/checkout@v4
@@ -135,7 +137,7 @@ jobs:
           os: ubuntu
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
-    timeout-minutes: 15
+    timeout-minutes: 3
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
@@ -244,6 +246,7 @@ jobs:
     name: Tests status
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     needs: [lint, test]
     steps:
     - name: Decide whether the needed jobs succeeded or failed
@@ -254,6 +257,7 @@ jobs:
   pre-deploy:
     name: Pre-Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     needs: test-summary
     # Run only on pushing a tag
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
@@ -287,6 +291,7 @@ jobs:
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
+    timeout-minutes: 7
 
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases

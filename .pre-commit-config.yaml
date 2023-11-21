@@ -28,17 +28,15 @@ repos:
     files: ^\.github/workflows/[^/]+$
     types:
     - yaml
-  # yamllint disable rule:comments-indentation
-  # - id: check-jsonschema
-  #   alias: check-github-workflows-timeout
-  #   name: Check GitHub Workflows set timeout-minutes
-  #   args:
-  #   - --builtin-schema
-  #   - github-workflows-require-timeout
-  #   files: ^\.github/workflows/[^/]+$
-  #   types:
-  #   - yaml
-  # yamllint enable rule:comments-indentation
+  - id: check-jsonschema
+    alias: check-github-workflows-timeout
+    name: Check GitHub Workflows set timeout-minutes
+    args:
+    - --builtin-schema
+    - github-workflows-require-timeout
+    files: ^\.github/workflows/[^/]+$
+    types:
+    - yaml
   - id: check-readthedocs
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
