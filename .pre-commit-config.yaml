@@ -78,6 +78,11 @@ repos:
   - id: flake8
     exclude: "^docs/"
 
+- repo: https://github.com/codespell-project/codespell.git
+  rev: v2.2.6
+  hooks:
+  - id: codespell
+
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.33.0
   hooks:
