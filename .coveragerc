@@ -1,6 +1,7 @@
 [paths]
 source =
   yarl
+  */lib/pypy*/site-packages/yarl
   */lib/python*/site-packages/yarl
 
 [run]
