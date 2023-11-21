@@ -174,7 +174,7 @@ def test_query_from_empty_update_query(
 
 
 @pytest.mark.parametrize(
-    "original_query_string, keys_to_drop, expected_query_string",
+    ("original_query_string", "keys_to_drop", "expected_query_string"),
     [
         ("a=10&b=20", ["a"], "b=20"),
         ("a=10&b=20", ["b"], "a=10"),
@@ -184,9 +184,9 @@ def test_query_from_empty_update_query(
         ("a=10&b=20", [], "a=10&b=20"),
     ],
 )
-def test_without_query_keys(
+def test_without_query_params(
     original_query_string: str, keys_to_drop: Sequence[str], expected_query_string: str
 ):
     url = URL(f"http://example.com?{original_query_string}")
-    new_url = url.without_query_keys(*keys_to_drop)
+    new_url = url.without_query_params(*keys_to_drop)
     assert new_url.query_string == expected_query_string

@@ -1024,7 +1024,7 @@ class URL:
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
 
-    def without_query_keys(self, *keys: str) -> "URL":
+    def without_query_params(self, *keys: str) -> "URL":
         """Remove some keys from query part and return new URL."""
         valid_keys = set(keys) & set(self.query.keys())
         if not valid_keys:

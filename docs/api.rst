@@ -729,7 +729,7 @@ section generates a new :class:`URL` instance.
       Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
       as a query parameter value.
 
-.. method:: URL.without_query_keys(*keys)
+.. method:: URL.without_query_params(*keys)
 
    Return a new URL whose *query* part does not contain specified keys.
 

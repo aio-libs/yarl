@@ -1,1 +1,1 @@
-Add `without_query_keys` method.
+Added ``without_query_params`` method -- by :user:`hongquan`.
