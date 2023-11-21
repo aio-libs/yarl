@@ -233,6 +233,8 @@ class URL:
             raise ValueError(
                 'Can\'t mix "authority" with "user", "password", "host" or "port".'
             )
+        if isinstance(port, str) and port == "":
+            port = None
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:

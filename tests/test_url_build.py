@@ -39,6 +39,9 @@ def test_build_with_port():
     u = URL.build(scheme="http", host="127.0.0.1", port=8000)
     assert str(u) == "http://127.0.0.1:8000"
 
+    u = URL.build(scheme="http", host="127.0.0.1", port="", path="/v1")
+    assert str(u) == "http://127.0.0.1/v1", str(u)
+
 
 def test_build_with_user():
     u = URL.build(scheme="http", host="127.0.0.1", user="foo")
