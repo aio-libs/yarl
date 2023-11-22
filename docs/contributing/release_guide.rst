@@ -95,10 +95,10 @@ The release stage
    - a Git tag
    - a GitHub Releases page
 7. Tell everyone you released a new version of |project| :)
-   Depending on your burnout level, you are encouraged to post the
-   updates in issues asking for the next release, contributed PRs,
-   Bluesky, Twitter etc. You can also call out important
-   contributors and thank them!
+   Depending on your mental capacity and the burnout stage, you
+   are encouraged to post the updates in issues asking for the
+   next release, contributed PRs, Bluesky, Twitter etc. You can
+   also call out prominent contributors and thank them!
 
 
 .. _GitHub Actions CI/CD workflow:
