@@ -1,1 +1,3 @@
-Fix URL.build with port="" creating invalid URLs
+Started treating an empty-string ``port=""`` passed into :py:meth:`~yarl.URL.build` as unset -- :user:`commonism`.
+
+The logic has changed to create URL with no colon and port rendered in its string representation.
