@@ -230,8 +230,7 @@ def patched_env(env):
     if os.getenv('YARL_CYTHON_TRACING') == '1':
         os.environ['CFLAGS'] = ' '.join((
             os.getenv('CFLAGS', ''),
-            '-DCYTHON_TRACE=1',
-            '-DCYTHON_TRACE_NOGIL=1',
+            '-DCYTHON_TRACE_NOGIL=1',  # Implies CYTHON_TRACE=1
         )).strip()
     try:
         yield
