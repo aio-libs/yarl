@@ -233,7 +233,7 @@ class URL:
             raise ValueError(
                 'Can\'t mix "authority" with "user", "password", "host" or "port".'
             )
-        if not isinstance(port, (int, NoneType)):
+        if not isinstance(port, (int, None.__class__)):
             raise TypeError("port is required to be int")
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
