@@ -33,14 +33,14 @@ def test_build_with_scheme_and_host():
 
 
 @pytest.mark.parametrize(
-    "port,exc",
+    "port,exc,match",
     [
-        pytest.param(8000, ValueError, id="port-only"),
-        pytest.param("", TypeError, id="port-str"),
+        pytest.param(8000, ValueError, None, id="port-only"),
+        pytest.param("", TypeError, "port is required to be int", id="port-str"),
     ],
 )
-def test_build_with_port(port, exc):
-    with pytest.raises(exc):
+def test_build_with_port(port, exc, match):
+    with pytest.raises(exc, match=match):
         URL.build(port=port)
 
 
