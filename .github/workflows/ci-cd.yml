@@ -109,6 +109,15 @@ jobs:
       os: ${{ matrix.os }}
       source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      cython-tracing: >-  # Cython line tracing for coverage collection
+        ${{
+          (
+            github.event_name == 'push'
+            && contains(github.ref, 'refs/tags/')
+          )
+          && '0'
+          || '1'
+        }}
 
   test:
     name: Test
@@ -202,6 +211,34 @@ jobs:
       shell: bash
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
+    - name: Produce the C-files for the Coverage.py Cython plugin
+      if: >-  # Only works if the dists were built with line tracing
+        !matrix.no-extensions
+        && (
+          github.event_name != 'push'
+          || !contains(github.ref, 'refs/tags/')
+        )
+      run: >
+        set -eEuo pipefail
+
+
+        python -Im cython
+        -X linetrace=true
+        -X embedsignature=true
+        -X emit_code_comments=true
+        yarl/*.pyx
+      shell: bash
+    - name: Disable the Cython.Coverage Produce plugin
+      if: >-  # Only works if the dists were built with line tracing
+        matrix.no-extensions
+        || (
+          github.event_name == 'push'
+          && contains(github.ref, 'refs/tags/')
+        )
+      run: |
+        set -eEuo pipefail
+        sed -i 's/^plugins = .*//g' .coveragerc
+      shell: bash
     - name: Run unittests
       env:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}

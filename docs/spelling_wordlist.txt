@@ -1,10 +1,12 @@
 Bluesky
 Bugfixes
 Changelog
+Codecov
 Cython
 GPG
 IPv
 PRs
+PYX
 Towncrier
 Twitter
 UTF
