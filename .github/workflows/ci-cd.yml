@@ -244,7 +244,7 @@ jobs:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: >-
         python -Im
-        pytest tests
+        pytest
         -v
         --cov-report xml
         --junitxml=.test-results/pytest/test.xml
