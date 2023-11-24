@@ -88,6 +88,11 @@ repos:
     args:
     - --strict
 
+- repo: https://github.com/MarcoGorelli/cython-lint.git
+  rev: v0.15.0
+  hooks:
+  - id: cython-lint
+
 - repo: https://github.com/Lucas-C/pre-commit-hooks-markup
   rev: v1.0.1
   hooks:
