@@ -76,7 +76,7 @@ before-test = [
   "PIP_CONSTRAINT= pip install PyYAML",
 ]
 test-requires = "-r requirements/test.txt"
-test-command = "pytest {project}/tests"
+test-command = "pytest -v --no-cov {project}/tests"
 # don't build PyPy wheels, install from source instead
 skip = "pp*"
 

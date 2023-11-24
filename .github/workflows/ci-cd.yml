@@ -245,7 +245,7 @@ jobs:
       run: >-
         python -Im
         pytest tests
-        -qq
+        -v
         --cov-report xml
         --junitxml=.test-results/pytest/test.xml
       shell: bash
