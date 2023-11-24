@@ -270,7 +270,7 @@ jobs:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
       run: >-  # `exit 1` makes sure that the job remains red with flaky runs
         python -Im
-        pytest --no-cov -vvvvv --lf
+        pytest --no-cov -vvvvv --lf -rA
         && exit 1
       shell: bash
     - name: Send coverage data to Codecov
