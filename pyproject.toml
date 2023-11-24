@@ -44,12 +44,11 @@ keep-going = false
 # parallel = 12
 
 [tool.local.cythonize.kwargs.directive]
-# This section can contain compiler directives
-# Ref: https://github.com/cython/cython/blob/d6e6de9/Cython/Compiler/Options.py#L170-L242
+# This section can contain compiler directives. Ref:
+# https://cython.rtfd.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
 embedsignature = "True"
 emit_code_comments = "True"
-linetrace = "True"
-profile = "True"
+linetrace = "True"  # Implies `profile=True`
 
 [tool.local.cythonize.kwargs.compile-time-env]
 # This section can contain compile time env vars
