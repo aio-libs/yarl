@@ -1,3 +1,4 @@
-Started treating string ``port`` passed into :py:meth:`~yarl.URL.build` as TypeError -- :user:`commonism`.
+Started raising :py:exc:`TypeError` when a string value is passed into
+:py:meth:`~yarl.URL.build` as the ``port`` argument  -- :user:`commonism`.
 
 The logic has changed to create URL with no colon and port rendered in its string representation.
