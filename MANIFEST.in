@@ -1,5 +1,6 @@
 include .coveragerc
 include pyproject.toml
+include pytest.ini
 include towncrier.toml
 include LICENSE
 include NOTICE
