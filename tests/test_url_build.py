@@ -36,7 +36,7 @@ def test_build_with_scheme_and_host():
     ("port", "exc", "match"),
     [
         pytest.param(8000, ValueError, None, id="port-only"),
-        pytest.param("", TypeError, "port is required to be int", id="port-str"),
+        pytest.param("", TypeError, r"^port is required to be int$", id="port-str"),
     ],
 )
 def test_build_with_port(port, exc, match):
