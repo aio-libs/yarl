@@ -242,10 +242,12 @@ jobs:
     - name: Run unittests
       env:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
-      run: |
-        set -eEuo pipefail
-        python -Im pytest tests -qq --junitxml=.test-results/pytest/test.xml
-        python -Im coverage xml
+      run: >-
+        python -Im
+        pytest tests
+        -qq
+        --cov-report xml
+        --junitxml=.test-results/pytest/test.xml
       shell: bash
     - name: Produce markdown test summary from JUnit
       if: >-
