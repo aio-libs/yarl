@@ -493,7 +493,7 @@ def test_quote_unquote_parameter(
 
     text_quoted = quote(text_input)
     assume(qs and all(unsafe_char not in text_quoted for unsafe_char in unsafe))
-    note(f"{text_quoted=}")
+    note(f"text_quoted={text_quoted !r}")
     text_output = unquote(text_quoted)
     assume(qs or all(unsafe_char not in text_output for unsafe_char in unsafe))
     # assume(
