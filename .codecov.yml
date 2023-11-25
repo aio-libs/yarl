@@ -11,7 +11,7 @@ comment:
   require_changes: true
 
 coverage:
-  range: 97.83..100
+  range: 99.34..100
   status:
     project:
       default:
