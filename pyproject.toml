@@ -64,7 +64,6 @@ linetrace = "True"  # Implies `profile=True`
 
 [tool.cibuildwheel]
 build-frontend = "build"
-environment = { PIP_CONSTRAINT="requirements/cython.txt" }
 before-test = [
   # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
   # NOTE: constraints unset. The hope is that pip will cache that wheel
@@ -78,6 +77,14 @@ test-requires = "-r requirements/test.txt"
 test-command = "pytest -v --no-cov {project}/tests"
 # don't build PyPy wheels, install from source instead
 skip = "pp*"
+
+[tool.cibuildwheel.environment]
+COLOR = "yes"
+FORCE_COLOR = "1"
+MYPY_FORCE_COLOR = "1"
+PIP_CONSTRAINT = "requirements/cython.txt"
+PRE_COMMIT_COLOR = "always"
+PY_COLORS = "1"
 
 [tool.cibuildwheel.config-settings]
 --pure-python = "false"

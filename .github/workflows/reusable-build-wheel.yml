@@ -70,7 +70,12 @@ jobs:
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
         CIBW_ENVIRONMENT: >-  # Cython line tracing for coverage collection
+          COLOR="yes"
+          FORCE_COLOR="1"
+          MYPY_FORCE_COLOR="1"
           PIP_CONSTRAINT="requirements/cython.txt"
+          PRE_COMMIT_COLOR="always"
+          PY_COLORS="1"
           YARL_CYTHON_TRACING="${{ inputs.cython-tracing }}"
 
     - name: Upload built artifacts for testing and publishing
