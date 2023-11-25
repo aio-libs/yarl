@@ -146,7 +146,7 @@ jobs:
           os: ubuntu
       fail-fast: false
     runs-on: ${{ matrix.os }}-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
