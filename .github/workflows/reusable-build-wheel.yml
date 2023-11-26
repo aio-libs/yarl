@@ -69,14 +69,9 @@ jobs:
       uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-        CIBW_ENVIRONMENT: >-  # Cython line tracing for coverage collection
-          COLOR="yes"
-          FORCE_COLOR="1"
-          MYPY_FORCE_COLOR="1"
-          PIP_CONSTRAINT="requirements/cython.txt"
-          PRE_COMMIT_COLOR="always"
-          PY_COLORS="1"
-          YARL_CYTHON_TRACING="${{ inputs.cython-tracing }}"
+        CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
+          --pure-python=false
+          --with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v3

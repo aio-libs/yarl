@@ -70,6 +70,12 @@ __all__ = (  # noqa: WPS410
 )
 
 
+CYTHON_TRACING_CONFIG_SETTING = '--with-cython-tracing'
+"""Config setting name toggle to include line tracing to C-exts."""
+
+CYTHON_TRACING_ENV_VAR = 'YARL_CYTHON_TRACING'
+"""Environment variable name toggle used to opt out of making C-exts."""
+
 PURE_PYTHON_CONFIG_SETTING = '--pure-python'
 """Config setting name toggle that is used to opt out of making C-exts."""
 
@@ -86,19 +92,52 @@ PURE_PYTHON_MODE_CLI_FALLBACK = not IS_CPYTHON
 """A fallback for `--pure-python` is not set."""
 
 
-def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
+def _is_truthy_setting_value(setting_value) -> bool:
     truthy_values = {'', None, 'true', '1', 'on'}
+    return setting_value.lower() in truthy_values
 
+
+def _get_setting_value(
+        config_settings: dict[str, str] | None = None,
+        config_setting_name: str | None = None,
+        env_var_name: str | None = None,
+        *,
+        default: bool = False,
+) -> bool:
     user_provided_setting_sources = (
-        (config_settings, PURE_PYTHON_CONFIG_SETTING, (KeyError, TypeError)),
-        (os.environ, PURE_PYTHON_ENV_VAR, KeyError),
+        (config_settings, config_setting_name, (KeyError, TypeError)),
+        (os.environ, env_var_name, KeyError),
     )
     for src_mapping, src_key, lookup_errors in user_provided_setting_sources:
-        with suppress(lookup_errors):  # type: ignore[arg-type]
-            candidate_val = src_mapping[src_key].lower()  # type: ignore[index]
-            return candidate_val in truthy_values
+        if src_key is None:
+            continue
 
-    return PURE_PYTHON_MODE_CLI_FALLBACK
+        with suppress(lookup_errors):  # type: ignore[arg-type]
+            return _is_truthy_setting_value(src_mapping[src_key])  # type: ignore[index]
+
+    return default
+
+
+def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
+    return _get_setting_value(
+        config_settings,
+        PURE_PYTHON_CONFIG_SETTING,
+        PURE_PYTHON_ENV_VAR,
+        default=PURE_PYTHON_MODE_CLI_FALLBACK,
+    )
+
+
+def _include_cython_line_tracing(
+        config_settings: dict[str, str] | None = None,
+        *,
+        default=False,
+) -> bool:
+    return _get_setting_value(
+        config_settings,
+        CYTHON_TRACING_CONFIG_SETTING,
+        CYTHON_TRACING_ENV_VAR,
+        default=default,
+    )
 
 
 def _get_local_cython_config():
@@ -216,7 +255,7 @@ def patched_dist_get_long_description():
 
 
 @contextmanager
-def patched_env(env):
+def patched_env(env: dict[str, str], cython_line_tracing_requested: bool):
     """Temporary set given env vars.
 
     :param env: tmp env vars to set
@@ -227,7 +266,8 @@ def patched_env(env):
     orig_env = os.environ.copy()
     expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}
     os.environ.update(expanded_env)
-    if os.getenv('YARL_CYTHON_TRACING') == '1':
+
+    if cython_line_tracing_requested:
         os.environ['CFLAGS'] = ' '.join((
             os.getenv('CFLAGS', ''),
             '-DCYTHON_TRACE_NOGIL=1',  # Implies CYTHON_TRACE=1
@@ -248,6 +288,7 @@ def _run_in_temporary_directory() -> t.Iterator[Path]:
 
 @contextmanager
 def maybe_prebuild_c_extensions(  # noqa: WPS210
+        line_trace_cython_when_unset: bool = False,
         build_inplace: bool = False,
         config_settings: dict[str, str] | None = None,
 ) -> t.Generator[None, t.Any, t.Any]:
@@ -259,12 +300,27 @@ def maybe_prebuild_c_extensions(  # noqa: WPS210
     :param config_settings: :pep:`517` config settings mapping.
 
     """
+    cython_line_tracing_requested = _include_cython_line_tracing(
+        config_settings,
+        default=line_trace_cython_when_unset,
+    )
     is_pure_python_build = _make_pure_python(config_settings)
 
     if is_pure_python_build:
         print("*********************", file=_standard_error_stream)
         print("* Pure Python build *", file=_standard_error_stream)
         print("*********************", file=_standard_error_stream)
+
+        if cython_line_tracing_requested:
+            _warn_that(
+                f'The `{CYTHON_TRACING_CONFIG_SETTING !s}` setting requesting '
+                'Cython line tracing is set, but building C-extensions is not. '
+                'This option will not have any effect for in the pure-python '
+                'build mode.',
+                RuntimeWarning,
+                stacklevel=999,
+            )
+
         yield
         return
 
@@ -299,7 +355,7 @@ def maybe_prebuild_c_extensions(  # noqa: WPS210
         cli_kwargs = get_cli_kwargs_from_config(config['kwargs'])
 
         cythonize_args = cli_flags + [py_ver_arg] + cli_kwargs + config['src']
-        with patched_env(config['env']):
+        with patched_env(config['env'], cython_line_tracing_requested):
             _cythonize_cli_cmd(cythonize_args)
         with patched_distutils_cmd_install():
             with patched_dist_has_ext_modules():
@@ -322,6 +378,7 @@ def build_wheel(
 
     """
     with maybe_prebuild_c_extensions(
+            line_trace_cython_when_unset=False,
             build_inplace=False,
             config_settings=config_settings,
     ):
@@ -348,8 +405,9 @@ def build_editable(
 
     """
     with maybe_prebuild_c_extensions(
-        build_inplace=True,
-        config_settings=config_settings,
+            line_trace_cython_when_unset=True,
+            build_inplace=True,
+            config_settings=config_settings,
     ):
         return _setuptools_build_editable(
             wheel_directory=wheel_directory,
