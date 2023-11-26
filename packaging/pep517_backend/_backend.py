@@ -91,9 +91,6 @@ IS_CPYTHON = _system_implementation.name == "cpython"
 PURE_PYTHON_MODE_CLI_FALLBACK = not IS_CPYTHON
 """A fallback for `--pure-python` is not set."""
 
-CYTHON_TRACING_MODE_CLI_FALLBACK = False
-"""A fallback for `--with-cython-tracing` is not set."""
-
 
 def _is_truthy_setting_value(setting_value) -> bool:
     truthy_values = {'', None, 'true', '1', 'on'}
@@ -130,12 +127,16 @@ def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
     )
 
 
-def _include_cython_line_tracing(config_settings: dict[str, str] | None = None) -> bool:
+def _include_cython_line_tracing(
+        config_settings: dict[str, str] | None = None,
+        *,
+        default=False,
+) -> bool:
     return _get_setting_value(
         config_settings,
         CYTHON_TRACING_CONFIG_SETTING,
         CYTHON_TRACING_ENV_VAR,
-        default=CYTHON_TRACING_MODE_CLI_FALLBACK,
+        default=default,
     )
 
 
@@ -287,6 +288,7 @@ def _run_in_temporary_directory() -> t.Iterator[Path]:
 
 @contextmanager
 def maybe_prebuild_c_extensions(  # noqa: WPS210
+        line_trace_cython_when_unset: bool = False,
         build_inplace: bool = False,
         config_settings: dict[str, str] | None = None,
 ) -> t.Generator[None, t.Any, t.Any]:
@@ -298,7 +300,10 @@ def maybe_prebuild_c_extensions(  # noqa: WPS210
     :param config_settings: :pep:`517` config settings mapping.
 
     """
-    cython_line_tracing_requested = _include_cython_line_tracing(config_settings)
+    cython_line_tracing_requested = _include_cython_line_tracing(
+        config_settings,
+        default=line_trace_cython_when_unset,
+    )
     is_pure_python_build = _make_pure_python(config_settings)
 
     if is_pure_python_build:
@@ -373,6 +378,7 @@ def build_wheel(
 
     """
     with maybe_prebuild_c_extensions(
+            line_trace_cython_when_unset=False,
             build_inplace=False,
             config_settings=config_settings,
     ):
@@ -399,8 +405,9 @@ def build_editable(
 
     """
     with maybe_prebuild_c_extensions(
-        build_inplace=True,
-        config_settings=config_settings,
+            line_trace_cython_when_unset=True,
+            build_inplace=True,
+            config_settings=config_settings,
     ):
         return _setuptools_build_editable(
             wheel_directory=wheel_directory,
