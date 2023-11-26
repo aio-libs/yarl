@@ -77,7 +77,7 @@ jobs:
     - name: Build sdists and pure-python wheel
       env:
         PIP_CONSTRAINT: requirements/cython.txt
-      run: python -Im build --config-setting=--pure-python=true
+      run: python -Im build --config-setting=pure-python=true
     - name: Upload built artifacts for testing
       uses: actions/upload-artifact@v3
       with:

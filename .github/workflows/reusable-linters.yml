@@ -54,7 +54,7 @@ jobs:
     - name: Prepare twine checker
       run: |
         pip install -U build twine
-        python -m build --config-setting=--pure-python=true
+        python -m build --config-setting=pure-python=true
     - name: Run twine checker
       run: |
         twine check --strict dist/*

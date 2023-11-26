@@ -115,12 +115,12 @@ used with our wheels) the the tarball will be used to compile the library from
 the source code. It requires a C compiler and and Python headers installed.
 
 To skip the compilation you must explicitly opt-in by using a PEP 517
-configuration setting ``--pure-python``, or setting the ``YARL_NO_EXTENSIONS``
+configuration setting ``pure-python``, or setting the ``YARL_NO_EXTENSIONS``
 environment variable to a non-empty value, e.g.:
 
 .. code-block:: console
 
-   $ pip install yarl --config-settings=--pure-python=
+   $ pip install yarl --config-settings=pure-python=false
 
 Please note that the pure-Python (uncompiled) version is much slower. However,
 PyPy always uses a pure-Python implementation, and, as such, it is unaffected

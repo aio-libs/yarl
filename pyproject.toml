@@ -87,7 +87,7 @@ PRE_COMMIT_COLOR = "always"
 PY_COLORS = "1"
 
 [tool.cibuildwheel.config-settings]
---pure-python = "false"
+pure-python = "false"
 
 [tool.cibuildwheel.windows]
 before-test = []  # Windows cmd has different syntax and pip chooses wheels
