@@ -27,6 +27,13 @@ def get_enabled_cli_flags_from_config(flags_map):
 
 def sanitize_rst_roles(rst_source_text: str) -> str:
     """Replace RST roles with inline highlighting."""
+    pep_role_regex = r"""(?x)
+        :pep:`(?P<pep_number>\d+)`
+    """
+    pep_substitution_pattern = (
+        r"`PEP \g<pep_number> <https://peps.python.org/pep-\g<pep_number>>`__"
+    )
+
     user_role_regex = r"""(?x)
         :user:`(?P<github_username>[^`]+)(?:\s+(.*))?`
     """
@@ -77,6 +84,7 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
     substitution_pattern = r"``\g<rendered_text>``"
 
     substitutions = (
+        (pep_role_regex, pep_substitution_pattern),
         (user_role_regex, user_substitution_pattern),
         (issue_role_regex, issue_substitution_pattern),
         (pr_role_regex, pr_substitution_pattern),
