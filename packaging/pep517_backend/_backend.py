@@ -14,12 +14,6 @@ from sys import version_info as _python_version_tuple
 from tempfile import TemporaryDirectory
 from warnings import warn as _warn_that
 
-try:
-    from tomllib import loads as _load_toml_from_string
-except ImportError:
-    from tomli import loads as _load_toml_from_string  # type: ignore[no-redef]
-
-from expandvars import expandvars
 from setuptools.build_meta import build_sdist as _setuptools_build_sdist
 from setuptools.build_meta import build_wheel as _setuptools_build_wheel
 from setuptools.build_meta import (
@@ -48,11 +42,14 @@ with suppress(ImportError):
     from Cython.Build.Cythonize import main as _cythonize_cli_cmd
 
 from ._compat import chdir_cm
-from ._transformers import (  # noqa: WPS436
-    get_cli_kwargs_from_config,
-    get_enabled_cli_flags_from_config,
-    sanitize_rst_roles,
+from ._cython_configuration import (  # noqa: WPS436
+    get_local_cython_config as _get_local_cython_config,
 )
+from ._cython_configuration import (
+    make_cythonize_cli_args_from_config as _make_cythonize_cli_args_from_config,
+)
+from ._cython_configuration import patched_env as _patched_cython_env
+from ._transformers import sanitize_rst_roles  # noqa: WPS436
 
 __all__ = (  # noqa: WPS410
     'build_sdist',
@@ -140,63 +137,6 @@ def _include_cython_line_tracing(
     )
 
 
-def _get_local_cython_config():
-    """Grab optional build dependencies from pyproject.toml config.
-
-    :returns: config section from ``pyproject.toml``
-    :rtype: dict
-
-    This basically reads entries from::
-
-        [tool.local.cythonize]
-        # Env vars provisioned during cythonize call
-        src = ["src/**/*.pyx"]
-
-        [tool.local.cythonize.env]
-        # Env vars provisioned during cythonize call
-        LDFLAGS = "-lssh"
-
-        [tool.local.cythonize.flags]
-        # This section can contain the following booleans:
-        # * annotate — generate annotated HTML page for source files
-        # * build — build extension modules using distutils
-        # * inplace — build extension modules in place using distutils (implies -b)
-        # * force — force recompilation
-        # * quiet — be less verbose during compilation
-        # * lenient — increase Python compat by ignoring some compile time errors
-        # * keep-going — compile as much as possible, ignore compilation failures
-        annotate = false
-        build = false
-        inplace = true
-        force = true
-        quiet = false
-        lenient = false
-        keep-going = false
-
-        [tool.local.cythonize.kwargs]
-        # This section can contain args that have values:
-        # * exclude=PATTERN      exclude certain file patterns from the compilation
-        # * parallel=N    run builds in N parallel jobs (default: calculated per system)
-        exclude = "**.py"
-        parallel = 12
-
-        [tool.local.cythonize.kwargs.directives]
-        # This section can contain compiler directives
-        # NAME = "VALUE"
-
-        [tool.local.cythonize.kwargs.compile-time-env]
-        # This section can contain compile time env vars
-        # NAME = "VALUE"
-
-        [tool.local.cythonize.kwargs.options]
-        # This section can contain cythonize options
-        # NAME = "VALUE"
-    """
-    config_toml_txt = (Path.cwd().resolve() / 'pyproject.toml').read_text()
-    config_mapping = _load_toml_from_string(config_toml_txt)
-    return config_mapping['tool']['local']['cythonize']
-
-
 @contextmanager
 def patched_distutils_cmd_install():
     """Make `install_lib` of `install` cmd always use `platlib`.
@@ -252,40 +192,6 @@ def patched_dist_get_long_description():
         yield
     finally:
         _DistutilsDistributionMetadata.get_long_description = _orig_func
-
-
-@contextmanager
-def patched_env(env: dict[str, str], cython_line_tracing_requested: bool):
-    """Temporary set given env vars.
-
-    :param env: tmp env vars to set
-    :type env: dict
-
-    :yields: None
-    """
-    orig_env = os.environ.copy()
-    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}
-    os.environ.update(expanded_env)
-
-    if cython_line_tracing_requested:
-        os.environ['CFLAGS'] = ' '.join((
-            os.getenv('CFLAGS', ''),
-            '-DCYTHON_TRACE_NOGIL=1',  # Implies CYTHON_TRACE=1
-        )).strip()
-    try:
-        yield
-    finally:
-        os.environ.clear()
-        os.environ.update(orig_env)
-
-
-def _make_cythonize_cli_args_from_config(config) -> list[str]:
-    py_ver_arg = f'-{_python_version_tuple.major!s}'
-
-    cli_flags = get_enabled_cli_flags_from_config(config['flags'])
-    cli_kwargs = get_cli_kwargs_from_config(config['kwargs'])
-
-    return cli_flags + [py_ver_arg] + cli_kwargs + ['--'] + config['src']
 
 
 @contextmanager
@@ -356,7 +262,7 @@ def maybe_prebuild_c_extensions(
         config = _get_local_cython_config()
 
         cythonize_args = _make_cythonize_cli_args_from_config(config)
-        with patched_env(config['env'], cython_line_tracing_requested):
+        with _patched_cython_env(config['env'], cython_line_tracing_requested):
             _cythonize_cli_cmd(cythonize_args)
         with patched_distutils_cmd_install():
             with patched_dist_has_ext_modules():
