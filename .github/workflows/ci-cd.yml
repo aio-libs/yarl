@@ -64,6 +64,11 @@ jobs:
     - pre-setup
     runs-on: ubuntu-latest
     timeout-minutes: 1
+    outputs:
+      sdist-filename: >-
+        ${{ steps.dist-filenames-detection.outputs.sdist-filename }}
+      wheel-filename: >-
+        ${{ steps.dist-filenames-detection.outputs.wheel-filename }}
     steps:
     - name: Checkout project
       uses: actions/checkout@v4
@@ -78,17 +83,33 @@ jobs:
       env:
         PIP_CONSTRAINT: requirements/cython.txt
       run: python -Im build --config-setting=pure-python=true
+    - name: Determine actual created filenames
+      id: dist-filenames-detection
+      run: >
+        echo -n sdist-filename= >> "${GITHUB_OUTPUT}"
+
+
+        basename $(ls -1 dist/${{ needs.pre-setup.outputs.sdist-name }})
+        >> "${GITHUB_OUTPUT}"
+
+
+        echo -n wheel-filename= >> "${GITHUB_OUTPUT}"
+
+
+        basename $(ls -1 dist/${{ needs.pre-setup.outputs.wheel-name }})
+        >> "${GITHUB_OUTPUT}"
     - name: Upload built artifacts for testing
       uses: actions/upload-artifact@v3
       with:
+        if-no-files-found: error
         name: ${{ needs.pre-setup.outputs.dists-artifact-name  }}
         # NOTE: Exact expected file names are specified here
         # NOTE: as a safety measure — if anything weird ends
         # NOTE: up being in this dir or not all dists will be
         # NOTE: produced, this will fail the workflow.
         path: |
-          dist/${{ needs.pre-setup.outputs.sdist-name }}
-          dist/${{ needs.pre-setup.outputs.wheel-name }}
+          dist/${{ steps.dist-filenames-detection.outputs.sdist-filename }}
+          dist/${{ steps.dist-filenames-detection.outputs.wheel-filename }}
         retention-days: 15
 
   lint:
@@ -107,7 +128,7 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
-      source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+      source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
       cython-tracing: >-  # Cython line tracing for coverage collection
         ${{
@@ -122,6 +143,7 @@ jobs:
   test:
     name: Test
     needs:
+    - build-sdist  # transitive, for accessing settings
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     strategy:
@@ -152,7 +174,7 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+        source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
@@ -324,7 +346,7 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
-      source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+      source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   deploy:
@@ -349,7 +371,7 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ needs.pre-setup.outputs.sdist-name }}
+        source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
@@ -381,7 +403,7 @@ jobs:
       uses: sigstore/gh-action-sigstore-python@v2.1.0
       with:
         inputs: >-
-          ./dist/${{ needs.pre-setup.outputs.sdist-name }}
+          ./dist/${{ needs.build-sdist.outputs.sdist-filename }}
           ./dist/*.whl
 
     - name: Upload artifact signatures to GitHub Release
