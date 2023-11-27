@@ -279,6 +279,15 @@ def patched_env(env: dict[str, str], cython_line_tracing_requested: bool):
         os.environ.update(orig_env)
 
 
+def _make_cythonize_cli_args_from_config(config) -> list[str]:
+    py_ver_arg = f'-{_python_version_tuple.major!s}'
+
+    cli_flags = get_enabled_cli_flags_from_config(config['flags'])
+    cli_kwargs = get_cli_kwargs_from_config(config['kwargs'])
+
+    return cli_flags + [py_ver_arg] + cli_kwargs + ['--'] + config['src']
+
+
 @contextmanager
 def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
@@ -290,7 +299,7 @@ def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
 
 
 @contextmanager
-def maybe_prebuild_c_extensions(  # noqa: WPS210
+def maybe_prebuild_c_extensions(
         line_trace_cython_when_unset: bool = False,
         build_inplace: bool = False,
         config_settings: dict[str, str] | None = None,
@@ -346,12 +355,7 @@ def maybe_prebuild_c_extensions(  # noqa: WPS210
     with build_dir_ctx:
         config = _get_local_cython_config()
 
-        py_ver_arg = f'-{_python_version_tuple.major!s}'
-
-        cli_flags = get_enabled_cli_flags_from_config(config['flags'])
-        cli_kwargs = get_cli_kwargs_from_config(config['kwargs'])
-
-        cythonize_args = cli_flags + [py_ver_arg] + cli_kwargs + config['src']
+        cythonize_args = _make_cythonize_cli_args_from_config(config)
         with patched_env(config['env'], cython_line_tracing_requested):
             _cythonize_cli_cmd(cythonize_args)
         with patched_distutils_cmd_install():
