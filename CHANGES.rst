@@ -32,7 +32,7 @@ Packaging updates and notes for downstreams
   backend in :file:`pyproject.toml` explicitly -- by :user:`webknjaz`. (:issue:`886`)
 - Converted most of the packaging setup into a declarative :file:`setup.cfg`
   config -- by :user:`webknjaz`. (:issue:`890`)
-- Replaced the packaging is replaced from an old-fashioned :file:`setup.py` to an
+- The packaging is replaced from an old-fashioned :file:`setup.py` to an
   in-tree :pep:`517` build backend -- by :user:`webknjaz`.
 
   Whenever the end-users or downstream packagers need to build ``yarl`` from
