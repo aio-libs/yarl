@@ -11,7 +11,7 @@ build:
     post_create_environment:
     - >-
       pip install .
-      --config-settings=--pure-python=true
+      --config-settings=pure-python=true
 
 python:
   install:

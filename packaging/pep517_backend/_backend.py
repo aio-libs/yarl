@@ -43,7 +43,7 @@ from distutils.dist import DistributionMetadata as _DistutilsDistributionMetadat
 with suppress(ImportError):
     # NOTE: Only available for wheel builds that bundle C-extensions. Declared
     # NOTE: by `get_requires_for_build_wheel()` and
-    # NOTE: `get_requires_for_build_editable()`, when `--pure-python`
+    # NOTE: `get_requires_for_build_editable()`, when `pure-python`
     # NOTE: is not passed.
     from Cython.Build.Cythonize import main as _cythonize_cli_cmd
 
@@ -70,13 +70,13 @@ __all__ = (  # noqa: WPS410
 )
 
 
-CYTHON_TRACING_CONFIG_SETTING = '--with-cython-tracing'
+CYTHON_TRACING_CONFIG_SETTING = 'with-cython-tracing'
 """Config setting name toggle to include line tracing to C-exts."""
 
 CYTHON_TRACING_ENV_VAR = 'YARL_CYTHON_TRACING'
 """Environment variable name toggle used to opt out of making C-exts."""
 
-PURE_PYTHON_CONFIG_SETTING = '--pure-python'
+PURE_PYTHON_CONFIG_SETTING = 'pure-python'
 """Config setting name toggle that is used to opt out of making C-exts."""
 
 PURE_PYTHON_ENV_VAR = 'YARL_NO_EXTENSIONS'
@@ -89,7 +89,7 @@ IS_CPYTHON = _system_implementation.name == "cpython"
 """A flag meaning that the current interpreter implementation is CPython."""
 
 PURE_PYTHON_MODE_CLI_FALLBACK = not IS_CPYTHON
-"""A fallback for `--pure-python` is not set."""
+"""A fallback for ``pure-python`` is not set."""
 
 
 def _is_truthy_setting_value(setting_value) -> bool:

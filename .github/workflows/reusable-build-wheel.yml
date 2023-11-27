@@ -70,8 +70,8 @@ jobs:
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
         CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
-          --pure-python=false
-          --with-cython-tracing=${{ inputs.cython-tracing }}
+          pure-python=false
+          with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v3
