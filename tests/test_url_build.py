@@ -38,10 +38,12 @@ def test_build_with_scheme_and_host():
         pytest.param(
             8000,
             ValueError,
-            r'^Can\'t build URL with "port" but without "host".$',
+            r'^Can\'t build URL with "port" but without "host"\.$',
             id="port-only",
         ),
-        pytest.param("", TypeError, r"^port is required to be int$", id="port-str"),
+        pytest.param(
+            "", TypeError, r"^The port is required to be int\.$", id="port-str"
+        ),
     ],
 )
 def test_build_with_port(port, exc, match):
