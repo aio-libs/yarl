@@ -42,11 +42,11 @@ jobs:
     # Ref: https://github.com/python-jsonschema/check-jsonschema/issues/354
     timeout-minutes: 60  # FIXME: ${{ inputs.qemu && '60' || '20' }}
     steps:
-    - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+    - name: Download distributions
+      uses: actions/download-artifact@v3
       with:
-        source-tarball-name: ${{ inputs.source-tarball-name }}
-        workflow-artifact-name: ${{ inputs.dists-artifact-name }}
+        name: ${{ inputs.dists-artifact-name }}
+        path: .tmp-dists
 
     - name: Set up QEMU
       if: inputs.qemu
@@ -69,6 +69,8 @@ jobs:
         CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
           pure-python=false
           with-cython-tracing=${{ inputs.cython-tracing }}
+      with:
+        package-dir: .tmp-dists/${{ inputs.source-tarball-name }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v3
