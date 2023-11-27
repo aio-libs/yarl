@@ -38,7 +38,11 @@ def test_build_with_scheme_and_host():
         pytest.param(
             8000,
             ValueError,
-            r'^Can\'t build URL with "port" but without "host"\.$',
+            r"""(?x)
+            ^
+            Can't build URL with "port" but without "host"\.
+            $
+            """,
             id="port-only",
         ),
         pytest.param(
