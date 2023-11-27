@@ -280,10 +280,13 @@ def patched_env(env: dict[str, str], cython_line_tracing_requested: bool):
 
 
 @contextmanager
-def _run_in_temporary_directory() -> t.Iterator[Path]:
+def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
         with chdir_cm(tmp_dir):
-            yield Path(tmp_dir)
+            tmp_src_dir = Path(tmp_dir) / 'src'
+            copytree(src_dir, tmp_src_dir, symlinks=True)
+            os.chdir(tmp_src_dir)
+            yield
 
 
 @contextmanager
@@ -336,17 +339,11 @@ def maybe_prebuild_c_extensions(  # noqa: WPS210
             stacklevel=999,
         )
 
-    original_src_dir = Path.cwd().resolve()
     build_dir_ctx = (
-        nullcontext(original_src_dir) if build_inplace
-        else _run_in_temporary_directory()
+        nullcontext() if build_inplace
+        else _in_temporary_directory(src_dir=Path.cwd().resolve())
     )
-    with build_dir_ctx as tmp_dir:
-        if not build_inplace:
-            tmp_src_dir = Path(tmp_dir) / 'src'
-            copytree(original_src_dir, tmp_src_dir, symlinks=True)
-            os.chdir(tmp_src_dir)
-
+    with build_dir_ctx:
         config = _get_local_cython_config()
 
         py_ver_arg = f'-{_python_version_tuple.major!s}'
