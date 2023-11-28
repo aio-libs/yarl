@@ -20,4 +20,10 @@ except ImportError:
             os.chdir(original_wd)
 
 
-__all__ = ("chdir_cm",)  # noqa: WPS410
+try:
+    from tomllib import loads as load_toml_from_string
+except ImportError:
+    from tomli import loads as load_toml_from_string  # type: ignore[no-redef]
+
+
+__all__ = ("chdir_cm", "load_toml_from_string")  # noqa: WPS410
