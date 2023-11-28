@@ -32,12 +32,28 @@ def test_build_with_scheme_and_host():
     assert u == URL("http://127.0.0.1")
 
 
-def test_build_with_port():
-    with pytest.raises(ValueError):
-        URL.build(port=8000)
-
-    u = URL.build(scheme="http", host="127.0.0.1", port=8000)
-    assert str(u) == "http://127.0.0.1:8000"
+@pytest.mark.parametrize(
+    ("port", "exc", "match"),
+    [
+        pytest.param(
+            8000,
+            ValueError,
+            r"""(?x)
+            ^
+            Can't\ build\ URL\ with\ "port"\ but\ without\ "host"\.
+            $
+            """,
+            id="port-only",
+        ),
+        pytest.param(
+            "", TypeError, r"^The port is required to be int\.$", id="port-str"
+        ),
+    ],
+)
+def test_build_with_port(port, exc, match):
+    print(match)
+    with pytest.raises(exc, match=match):
+        URL.build(port=port)
 
 
 def test_build_with_user():
