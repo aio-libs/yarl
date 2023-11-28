@@ -40,7 +40,7 @@ def test_build_with_scheme_and_host():
             ValueError,
             r"""(?x)
             ^
-            Can't build URL with "port" but without "host"\.
+            Can't\ build\ URL\ with\ "port"\ but\ without\ "host"\.
             $
             """,
             id="port-only",
@@ -51,6 +51,7 @@ def test_build_with_scheme_and_host():
     ],
 )
 def test_build_with_port(port, exc, match):
+    print(match)
     with pytest.raises(exc, match=match):
         URL.build(port=port)
 
