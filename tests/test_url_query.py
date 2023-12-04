@@ -190,3 +190,4 @@ def test_without_query_params(
     url = URL(f"http://example.com?{original_query_string}")
     new_url = url.without_query_params(*keys_to_drop)
     assert new_url.query_string == expected_query_string
+    assert new_url is not url
