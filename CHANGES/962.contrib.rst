@@ -1,0 +1,16 @@
+It is now possible to request line tracing in Cython builds using the
+``with-cython-tracing`` :pep:`517` config setting
+-- :user:`webknjaz`.
+
+This can be used in CI and development environment to measure coverage
+on Cython modules, but is not normally useful to the end-users or
+downstream packagers.
+
+Here's a usage example:
+
+.. code-block:: console
+
+    $ python -Im pip install . --config-settings=with-cython-tracing=true
+
+For editable installs, this setting is on by default. Otherwise, it's
+off unless requested explicitly.

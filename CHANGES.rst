@@ -32,7 +32,7 @@ Packaging updates and notes for downstreams
   backend in :file:`pyproject.toml` explicitly -- by :user:`webknjaz`. (:issue:`886`)
 - Converted most of the packaging setup into a declarative :file:`setup.cfg`
   config -- by :user:`webknjaz`. (:issue:`890`)
-- Replaced the packaging is replaced from an old-fashioned :file:`setup.py` to an
+- The packaging is replaced from an old-fashioned :file:`setup.py` to an
   in-tree :pep:`517` build backend -- by :user:`webknjaz`.
 
   Whenever the end-users or downstream packagers need to build ``yarl`` from
@@ -44,7 +44,7 @@ Packaging updates and notes for downstreams
 
   .. code-block:: console
 
-      $ python -m pip install . --config-settings=--pure-python=
+      $ python -m pip install . --config-settings=--pure-python=false
 
   This will also work with ``-e | --editable``.
 
@@ -52,10 +52,16 @@ Packaging updates and notes for downstreams
 
   .. code-block:: console
 
-      $ python -m build --config-setting=--pure-python=
+      $ python -m build --config-setting=--pure-python=false
 
   Adding ``-w | --wheel`` can force ``pypa/build`` produce a wheel from source
   directly, as opposed to building an ``sdist`` and then building from it. (:issue:`893`)
+
+  .. attention::
+
+     v1.9.3 was the only version using the ``--pure-python`` setting name.
+     Later versions dropped the ``--`` prefix, making it just ``pure-python``.
+
 - Declared Python 3.12 supported officially in the distribution package metadata
   -- by :user:`edgarrmondragon`. (:issue:`942`)
 

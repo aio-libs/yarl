@@ -1,4 +1,6 @@
-idna==3.4
+-r cython.txt
+idna==3.6
 multidict==6.0.4
 pytest==7.4.3
 pytest-cov>=2.3.1
+pytest-xdist

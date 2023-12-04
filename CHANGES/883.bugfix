@@ -1,0 +1,4 @@
+Started raising :py:exc:`TypeError` when a string value is passed into
+:py:meth:`~yarl.URL.build` as the ``port`` argument  -- by :user:`commonism`.
+
+Previously the empty string as port would create malformed URLs when rendered as string representations.

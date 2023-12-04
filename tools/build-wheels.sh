@@ -50,7 +50,7 @@ for PYTHON in ${PYTHON_VERSIONS}; do
     /opt/python/${PYTHON}/bin/python -m pip install -r "${WORKDIR_PATH}/requirements/wheel.txt"
     PIP_CONSTRAINT="${WORKDIR_PATH}/requirements/cython.txt" \
       /opt/python/${PYTHON}/bin/python -m pip wheel "${SRC_DIR}/" \
-      --config-settings=--pure-python=false \
+      --config-settings=pure-python=false \
       --no-deps \
       -w "${ORIG_WHEEL_DIR}/${PYTHON}"
 done

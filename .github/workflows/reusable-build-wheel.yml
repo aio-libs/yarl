@@ -9,6 +9,11 @@ on:
         description: Workflow artifact name containing dists
         required: true
         type: string
+      cython-tracing:
+        description: Whether to build Cython modules with line tracing
+        default: '0'
+        required: false
+        type: string
       os:
         description: VM OS to use, without version suffix
         default: ubuntu
@@ -57,13 +62,13 @@ jobs:
         echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
       shell: bash
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
+        CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
+          pure-python=false
+          with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v3

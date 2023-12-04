@@ -1,0 +1,4 @@
+A step-by-step :doc:`Release Guide <contributing/release_guide>` guide has
+been added, describing how to release *yarl* -- by :user:`webknjaz`.
+
+This is primarily targeting maintainers.

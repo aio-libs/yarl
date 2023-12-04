@@ -1,8 +1,14 @@
+Bluesky
 Bugfixes
 Changelog
+Codecov
 Cython
+GPG
 IPv
+PRs
+PYX
 Towncrier
+Twitter
 UTF
 aiohttp
 backend
@@ -10,6 +16,7 @@ boolean
 booleans
 bools
 changelog
+changelogs
 config
 de
 decodable
@@ -19,9 +26,11 @@ downstreams
 facto
 glibc
 google
+hardcoded
 mailto
 manylinux
 multi
+nightlies
 pre
 reStructuredText
 reencoding
@@ -33,4 +42,5 @@ subclass
 subclasses
 svetlov
 uncompiled
+v1
 yarl

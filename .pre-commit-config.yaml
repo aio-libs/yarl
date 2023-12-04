@@ -1,5 +1,8 @@
 ---
 
+ci:
+  autoupdate_schedule: quarterly
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: 'v4.5.0'
@@ -87,6 +90,11 @@ repos:
   - id: yamllint
     args:
     - --strict
+
+- repo: https://github.com/MarcoGorelli/cython-lint.git
+  rev: v0.15.0
+  hooks:
+  - id: cython-lint
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks-markup
   rev: v1.0.1

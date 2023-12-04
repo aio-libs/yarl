@@ -5,9 +5,15 @@ source =
   */lib/python*/site-packages/yarl
   */Lib/site-packages/yarl
 
+[report]
+show_missing = true
+skip_covered = true
+skip_empty = true
+
 [run]
 branch = true
 cover_pylib = false
+plugins = Cython.Coverage
 relative_files = true
 source =
   tests

@@ -1,0 +1,15 @@
+Coverage collection has been implemented for the Cython modules
+-- by :user:`webknjaz`.
+
+It will also be reported to Codecov from any non-release CI jobs.
+
+To measure coverage in a development environment, *yarl* can be
+installed in editable mode, which requires an environment variable
+``YARL_CYTHON_TRACING=1`` to be set:
+
+.. code-block:: console
+
+    $ YARL_CYTHON_TRACING=1 python -Im pip install -e .
+
+Editable install produces C-files required for the Cython coverage
+plugin to map the measurements back to the PYX-files.

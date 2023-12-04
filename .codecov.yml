@@ -1,0 +1,28 @@
+---
+
+codecov:
+  notify:
+    after_n_builds: 26  # The number of test matrix jobs uploading coverage
+    wait_for_ci: false
+
+  require_ci_to_pass: false
+
+comment:
+  require_changes: true
+
+coverage:
+  range: 99.34..100
+  status:
+    project:
+      default:
+        target: 100%
+      lib:
+        paths:
+        - yarl/
+        target: 97.83%
+      tests:
+        paths:
+        - tests/
+        target: 100%
+
+...
