@@ -101,8 +101,10 @@ def test_build_with_authority_and_host():
 
 
 def test_build_with_authority():
-    url = URL.build(scheme="http", authority="ваня:bar@host.com:8000", path="path")
-    assert str(url) == "http://%D0%B2%D0%B0%D0%BD%D1%8F:bar@host.com:8000/path"
+    url = URL.build(scheme="http", authority="степан:bar@host.com:8000", path="path")
+    assert (
+        str(url) == "http://%D1%81%D1%82%D0%B5%D0%BF%D0%B0%D0%BD:bar@host.com:8000/path"
+    )
 
 
 def test_build_with_authority_without_encoding():
@@ -125,23 +127,33 @@ def test_query_dict():
 
 def test_build_path_quoting():
     u = URL.build(
-        scheme="http", host="127.0.0.1", path="/файл.jpg", query=dict(arg="Привет")
+        scheme="http",
+        host="127.0.0.1",
+        path="/фотографія.jpg",
+        query=dict(arg="Привіт"),
     )
 
-    assert u == URL("http://127.0.0.1/файл.jpg?arg=Привет")
+    assert u == URL("http://127.0.0.1/фотографія.jpg?arg=Привіт")
     assert str(u) == (
-        "http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?"
-        "arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
+        "http://127.0.0.1/"
+        "%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D1%96%D1%8F.jpg?"
+        "arg=%D0%9F%D1%80%D0%B8%D0%B2%D1%96%D1%82"
     )
 
 
 def test_build_query_quoting():
-    u = URL.build(scheme="http", host="127.0.0.1", path="/файл.jpg", query="arg=Привет")
+    u = URL.build(
+        scheme="http",
+        host="127.0.0.1",
+        path="/фотографія.jpg",
+        query="arg=Привіт",
+    )
 
-    assert u == URL("http://127.0.0.1/файл.jpg?arg=Привет")
+    assert u == URL("http://127.0.0.1/фотографія.jpg?arg=Привіт")
     assert str(u) == (
-        "http://127.0.0.1/%D1%84%D0%B0%D0%B9%D0%BB.jpg?"
-        "arg=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82"
+        "http://127.0.0.1/"
+        "%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D1%96%D1%8F.jpg?"
+        "arg=%D0%9F%D1%80%D0%B8%D0%B2%D1%96%D1%82"
     )
 
 
@@ -159,14 +171,14 @@ def test_build_drop_dots():
 def test_build_encode():
     u = URL.build(
         scheme="http",
-        host="историк.рф",
-        path="/путь/файл",
+        host="оун-упа.укр",
+        path="/шлях/криївка",
         query_string="ключ=знач",
         fragment="фраг",
     )
     expected = (
-        "http://xn--h1aagokeh.xn--p1ai"
-        "/%D0%BF%D1%83%D1%82%D1%8C/%D1%84%D0%B0%D0%B9%D0%BB"
+        "http://xn----8sb1bdhvc.xn--j1amh"
+        "/%D1%88%D0%BB%D1%8F%D1%85/%D0%BA%D1%80%D0%B8%D1%97%D0%B2%D0%BA%D0%B0"
         "?%D0%BA%D0%BB%D1%8E%D1%87=%D0%B7%D0%BD%D0%B0%D1%87"
         "#%D1%84%D1%80%D0%B0%D0%B3"
     )
@@ -177,13 +189,13 @@ def test_build_already_encoded():
     # resulting URL is invalid but not encoded
     u = URL.build(
         scheme="http",
-        host="историк.рф",
-        path="/путь/файл",
+        host="оун-упа.укр",
+        path="/шлях/криївка",
         query_string="ключ=знач",
         fragment="фраг",
         encoded=True,
     )
-    assert str(u) == "http://историк.рф/путь/файл?ключ=знач#фраг"
+    assert str(u) == "http://оун-упа.укр/шлях/криївка?ключ=знач#фраг"
 
 
 def test_build_percent_encoded():
