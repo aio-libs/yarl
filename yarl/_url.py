@@ -328,17 +328,17 @@ class URL:
         return self._val <= other._val
 
     def __lt__(self, other):
-        if type(other) is not URL:
+        if not type(other) is URL:
             return NotImplemented
         return self._val < other._val
 
     def __ge__(self, other):
-        if type(other) is not URL:
+        if not type(other) is URL:
             return NotImplemented
         return self._val >= other._val
 
     def __gt__(self, other):
-        if type(other) is not URL:
+        if not type(other) is URL:
             return NotImplemented
         return self._val > other._val
 
