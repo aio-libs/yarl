@@ -4,7 +4,6 @@ import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
-from typing import cast
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
@@ -1031,10 +1030,13 @@ class URL:
         params_to_remove = set(query_params) & set(self.query.keys())
         if not params_to_remove:
             return URL(self._val._replace(query=self.query_string), encoded=True)
-        editable_query = cast(MultiDict, self.query.copy())
-        for k in params_to_remove:
-            editable_query.pop(k, None)
-        return self.with_query(editable_query)
+        return self.with_query(
+            tuple(
+                (name, value)
+                for name, value in self.query.items()
+                if name not in params_to_remove
+            )
+        )
 
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.
