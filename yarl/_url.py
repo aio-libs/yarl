@@ -301,7 +301,7 @@ class URL:
         return str(self).encode("ascii")
 
     def __eq__(self, other):
-        if type(other) is not URL:
+        if not type(other) is URL:
             return NotImplemented
 
         val1 = self._val
@@ -324,7 +324,7 @@ class URL:
         return ret
 
     def __le__(self, other):
-        if type(other) is not URL:
+        if not type(other) is URL:
             return NotImplemented
         return self._val <= other._val
 
