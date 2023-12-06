@@ -258,7 +258,7 @@ jobs:
         )
       run: |
         set -eEuo pipefail
-        sed -i 's/^plugins = .*//g' .coveragerc
+        sed -i.bak 's/^plugins = .*//g' .coveragerc
       shell: bash
     - name: Run unittests
       env:
