@@ -3,6 +3,7 @@
   filename = "CHANGES.rst"
   directory = "CHANGES/"
   title_format = "{version} ({project_date})"
+  template = "CHANGES/.TEMPLATE.rst"
   issue_format = ":issue:`{issue}`"
 
   # NOTE: The types are declared because:
