@@ -53,15 +53,17 @@ Contributor-facing changes
   It will also be reported to Codecov from any non-release CI jobs.
 
   To measure coverage in a development environment, *yarl* can be
-  installed in editable mode, which requires an environment variable
-  ``YARL_CYTHON_TRACING=1`` to be set:
+  installed in editable mode:
 
   .. code-block:: console
 
-      $ YARL_CYTHON_TRACING=1 python -Im pip install -e .
+      $ python -Im pip install -e .
 
   Editable install produces C-files required for the Cython coverage
-  plugin to map the measurements back to the PYX-files. (:issue:`961`)
+  plugin to map the measurements back to the PYX-files.
+
+  :issue:`961`
+
 - It is now possible to request line tracing in Cython builds using the
   ``with-cython-tracing`` :pep:`517` config setting
   -- :user:`webknjaz`.
@@ -77,7 +79,19 @@ Contributor-facing changes
       $ python -Im pip install . --config-settings=with-cython-tracing=true
 
   For editable installs, this setting is on by default. Otherwise, it's
-  off unless requested explicitly. (:issue:`962`)
+  off unless requested explicitly.
+
+  The following produces C-files required for the Cython coverage
+  plugin to map the measurements back to the PYX-files:
+
+  .. code-block:: console
+
+      $ python -Im pip install -e .
+
+  Alternatively, the ``YARL_CYTHON_TRACING=1`` environment variable
+  can be set to do the same as the :pep:`517` config setting.
+
+  :issue:`962`
 
 
 1.9.3 (2023-11-20)
