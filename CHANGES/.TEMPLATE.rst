@@ -15,7 +15,7 @@
 - {{ text + '\n' }}
 
   *Related issues and pull requests on GitHub:*
-  {{ pr_issue_numbers | join(',\n  ') + '\n' }}.
+  {{ pr_issue_numbers | join(', ') }}.
 
 {% endfor %}
 {% else %}
