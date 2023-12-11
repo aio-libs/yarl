@@ -14,8 +14,8 @@
 {% for text, values in sections[section][category].items() %}
 - {{ text + '\n' }}
   {{ values|join(',\n  ') + '\n' }}
-{% endfor %}
 
+{% endfor %}
 {% else %}
 - {{ sections[section][category]['']|join(', ') }}
 
