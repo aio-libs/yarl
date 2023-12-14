@@ -2,6 +2,8 @@
 
 ci:
   autoupdate_schedule: quarterly
+  skip:
+  - actionlint-docker
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -184,5 +186,15 @@ repos:
     - tests/
     - yarl/
     pass_filenames: false
+
+- repo: https://github.com/rhysd/actionlint.git
+  rev: v1.6.26
+  hooks:
+  - id: actionlint-docker
+    args:
+    - -ignore
+    - >-  # https://github.com/rhysd/actionlint/issues/384
+      ^type of expression at "float number value" must be number
+      but found type string$
 
 ...

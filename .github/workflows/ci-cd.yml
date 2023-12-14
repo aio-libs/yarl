@@ -85,18 +85,17 @@ jobs:
       run: python -Im build --config-setting=pure-python=true
     - name: Determine actual created filenames
       id: dist-filenames-detection
-      run: >
-        echo -n sdist-filename= >> "${GITHUB_OUTPUT}"
-
-
-        basename $(ls -1 dist/${{ needs.pre-setup.outputs.sdist-name }})
-        >> "${GITHUB_OUTPUT}"
-
-
-        echo -n wheel-filename= >> "${GITHUB_OUTPUT}"
-
-
-        basename $(ls -1 dist/${{ needs.pre-setup.outputs.wheel-name }})
+      run: >-
+        {
+        echo -n sdist-filename=
+        ;
+        basename "$(ls -1 dist/${{ needs.pre-setup.outputs.sdist-name }})"
+        ;
+        echo -n wheel-filename=
+        ;
+        basename "$(ls -1 dist/${{ needs.pre-setup.outputs.wheel-name }})"
+        ;
+        }
         >> "${GITHUB_OUTPUT}"
     - name: Upload built artifacts for testing
       uses: actions/upload-artifact@v3
