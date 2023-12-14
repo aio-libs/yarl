@@ -13,3 +13,4 @@ Released versions
 ^^^^^^^^^^^^^^^^^
 
 .. include:: ../CHANGES.rst
+   :start-after: .. towncrier release notes start
