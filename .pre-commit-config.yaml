@@ -25,7 +25,7 @@ repos:
     language_version: python3  # Should be a command that runs python3.7+
 
 - repo: https://github.com/python-jsonschema/check-jsonschema.git
-  rev: 0.27.1
+  rev: 0.27.3
   hooks:
   - id: check-github-workflows
     files: ^\.github/workflows/[^/]+$
