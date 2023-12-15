@@ -222,7 +222,8 @@ jobs:
         -u -I
         -m pip install
         --find-links=./dist
-        --no-index yarl
+        --no-index
+        yarl
         --force-reinstall
         --no-color
         --no-deps
