@@ -34,6 +34,7 @@ env:
   PIP_NO_PYTHON_VERSION_WARNING: 1
   PIP_NO_WARN_SCRIPT_LOCATION: 1
   PRE_COMMIT_COLOR: always
+  PROJECT_NAME: yarl
   PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
@@ -53,8 +54,8 @@ jobs:
       # NOTE: These aren't env vars because the `${{ env }}` context is
       # NOTE: inaccessible when passing inputs to reusable workflows.
       dists-artifact-name: python-package-distributions
-      sdist-name: yarl-*.tar.gz
-      wheel-name: yarl-*.whl
+      sdist-name: ${{ env.PROJECT_NAME }}-*.tar.gz
+      wheel-name: ${{ env.PROJECT_NAME }}-*.whl
     steps:
     - run: >-
         print('No-op')
@@ -238,7 +239,7 @@ jobs:
         -m pip install
         --find-links=./dist
         --no-index
-        yarl
+        '${{ env.PROJECT_NAME }}'
         --force-reinstall
         --no-color
         --no-deps
@@ -382,7 +383,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/p/yarl
+      url: https://pypi.org/p/${{ env.PROJECT_NAME }}
 
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
@@ -407,8 +408,7 @@ jobs:
       uses: aio-libs/create-release@v1.6.6
       with:
         changes_file: CHANGES.rst
-        name: yarl
-        version_file: yarl/__init__.py
+        version_file: ${{ env.PROJECT_NAME }}/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
         fix_issue_regex: >-
           :issue:`(\d+)`
