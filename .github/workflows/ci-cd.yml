@@ -167,6 +167,10 @@ jobs:
         - os: windows
           no-extensions: Y
         include:
+        - pyver: pypy-3.10
+          no-extensions: Y
+          experimental: false
+          os: ubuntu
         - pyver: pypy-3.9
           no-extensions: Y
           experimental: false
