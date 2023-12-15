@@ -136,7 +136,7 @@ jobs:
         ${{
         (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
         && '*_i686
-        *-macosx_x86_64
+        *-macosx_universal2
         *-musllinux_*
         *-win32
         *_arm64
