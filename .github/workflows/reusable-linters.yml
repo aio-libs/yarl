@@ -34,6 +34,16 @@ jobs:
         python-version: ${{ env.PYTHON_LATEST }}
         cache: pip
         cache-dependency-path: requirements/*.txt
+    - name: Cache pre-commit.com virtualenvs
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: >-
+          ${{
+            runner.os
+          }}-pre-commit-${{
+            hashFiles('.pre-commit-config.yaml')
+          }}
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
