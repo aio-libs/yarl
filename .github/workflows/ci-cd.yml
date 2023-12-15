@@ -79,6 +79,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_LATEST }}
         cache: pip
+        cache-dependency-path:
+          requirements/*.txt
     - name: Install core libraries for build
       run: python -Im pip install build
     - name: Build sdists and pure-python wheel
