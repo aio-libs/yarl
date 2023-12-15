@@ -58,7 +58,7 @@ jobs:
         print('No-op')
 
 
-  build-sdist:
+  build-pure-python-dists:
     name: 📦 Build distribution packages
     needs:
     - pre-setup
@@ -116,7 +116,7 @@ jobs:
 
   build-wheels-for-tested-arches:
     needs:
-    - build-sdist
+    - build-pure-python-dists
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
@@ -127,7 +127,8 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
-      source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+      source-tarball-name: >-
+        ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
       cython-tracing: >-  # Cython line tracing for coverage collection
         ${{
@@ -142,7 +143,7 @@ jobs:
   test:
     name: Test
     needs:
-    - build-sdist  # transitive, for accessing settings
+    - build-pure-python-dists  # transitive, for accessing settings
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     strategy:
@@ -173,7 +174,8 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+        source-tarball-name: >-
+          ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
@@ -333,7 +335,7 @@ jobs:
 
   build-wheels-for-odd-archs:
     needs:
-    - build-sdist
+    - build-pure-python-dists
     - pre-deploy
     - pre-setup  # transitive, for accessing settings
     strategy:
@@ -345,13 +347,14 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
-      source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+      source-tarball-name: >-
+        ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   deploy:
     name: Deploy
     needs:
-    - build-sdist
+    - build-pure-python-dists
     - build-wheels-for-odd-archs
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
@@ -370,7 +373,8 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+        source-tarball-name: >-
+          ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
@@ -402,7 +406,7 @@ jobs:
       uses: sigstore/gh-action-sigstore-python@v2.1.1
       with:
         inputs: >-
-          ./dist/${{ needs.build-sdist.outputs.sdist-filename }}
+          ./dist/${{ needs.build-pure-python-dists.outputs.sdist-filename }}
           ./dist/*.whl
 
     - name: Upload artifact signatures to GitHub Release
