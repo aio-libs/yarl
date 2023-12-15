@@ -337,7 +337,7 @@ jobs:
         fail_ci_if_error: false
 
   test-summary:
-    name: Tests status
+    name: Test matrix status
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 1
