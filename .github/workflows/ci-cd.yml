@@ -150,7 +150,14 @@ jobs:
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
-        pyver: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        pyver:
+        - 3.12
+        - 3.11
+        - >-
+          3.10
+        - 3.9
+        - 3.8
+        - 3.7
         no-extensions: ['', 'Y']
         os: [ubuntu, macos, windows]
         experimental: [false]
