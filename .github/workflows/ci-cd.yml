@@ -270,7 +270,6 @@ jobs:
         -v
         --cov-report xml
         --junitxml=.test-results/pytest/test.xml
-      shell: bash
     - name: Produce markdown test summary from JUnit
       if: >-
         !cancelled()
