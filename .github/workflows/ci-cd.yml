@@ -132,6 +132,17 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
+      wheel-tags-to-skip: >-
+        ${{
+        (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+        && '*_i686
+        *-macosx_x86_64
+        *-musllinux_*
+        *-win32
+        *_arm64
+        pp*'
+        || ''
+        }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}

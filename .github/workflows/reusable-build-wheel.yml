@@ -28,6 +28,11 @@ on:
         description: Sdist filename wildcard
         required: true
         type: string
+      wheel-tags-to-skip:
+        description: Wheel tags to skip building
+        default: ''
+        required: false
+        type: string
 
 env:
   FORCE_COLOR: "1"  # Make tools pretty.
@@ -59,6 +64,12 @@ jobs:
         # Build emulated architectures only if QEMU is set,
         # use default "auto" otherwise
         echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
+      shell: bash
+
+    - name: Skip building some wheel tags
+      if: inputs.wheel-tags-to-skip
+      run: |
+        echo "CIBW_SKIP=${{ inputs.wheel-tags-to-skip }}" >> "${GITHUB_ENV}"
       shell: bash
 
     - name: Build wheels
