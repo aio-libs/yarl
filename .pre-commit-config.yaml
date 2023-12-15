@@ -143,9 +143,6 @@ repos:
     - --non-interactive
     - --python-version=3.10
     - --txt-report=.tox/.tmp/.mypy/python-3.10
-    - packaging/
-    - tests/
-    - yarl/
     pass_filenames: false
   - id: mypy
     alias: mypy-py38
@@ -162,9 +159,6 @@ repos:
     - --non-interactive
     - --python-version=3.8
     - --txt-report=.tox/.tmp/.mypy/python-3.8
-    - packaging/
-    - tests/
-    - yarl/
     pass_filenames: false
   - id: mypy
     alias: mypy-py37
@@ -182,9 +176,6 @@ repos:
     - --non-interactive
     - --python-version=3.7
     - --txt-report=.tox/.tmp/.mypy/python-3.7
-    - packaging/
-    - tests/
-    - yarl/
     pass_filenames: false
 
 - repo: https://github.com/rhysd/actionlint.git
