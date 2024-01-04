@@ -32,7 +32,7 @@ do
     [ $arch == "i686" ] && dock_ext_args="linux32"
 
     echo Building wheel for $arch arch
-    docker run --rm -v $(pwd):/io "${manylinux1_image_prefix}${arch}" $dock_ext_args /io/tools/build-wheels.sh "$package_name"
+    docker run --rm -v "$(pwd):/io" "${manylinux1_image_prefix}${arch}" $dock_ext_args /io/tools/build-wheels.sh "$package_name"
 
     dock_ext_args=""  # Reset docker args, just in case
 done

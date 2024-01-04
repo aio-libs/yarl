@@ -58,7 +58,7 @@ done
 echo
 echo
 echo "Bundle external shared libraries into the wheels"
-for whl in ${ORIG_WHEEL_DIR}/*/${package_name}-*-linux_${arch}.whl; do
+for whl in "${ORIG_WHEEL_DIR}"/*/"${package_name}"-*-linux_"${arch}".whl; do
     echo "Repairing $whl..."
     auditwheel repair "$whl" -w "${WHEELHOUSE_DIR}"
 done
