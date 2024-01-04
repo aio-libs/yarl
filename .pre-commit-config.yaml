@@ -188,4 +188,9 @@ repos:
       ^input "attestations" is not defined in action
       "pypa/gh-action-pypi-publish@release/v1". available inputs are ".*"$
 
+- repo: https://github.com/koalaman/shellcheck-precommit
+  rev: v0.9.0
+  hooks:
+  - id: shellcheck
+
 ...
