@@ -13,7 +13,7 @@ fi
 
 export WORKDIR_PATH="${GITHUB_WORKSPACE:-/io}"
 
-BUILD_DIR=`mktemp -d "/tmp/${package_name}-manylinux2010-build.XXXXXXXXXX"`
+BUILD_DIR=$(mktemp -d "/tmp/${package_name}-manylinux2010-build.XXXXXXXXXX")
 ORIG_WHEEL_DIR="${BUILD_DIR}/original-wheelhouse"
 SRC_DIR="${BUILD_DIR}/src"
 WHEELHOUSE_DIR="${WORKDIR_PATH}/dist"
@@ -26,7 +26,7 @@ PYTHON_VERSIONS="cp36-cp36m cp37-cp37m"
 # Avoid creation of __pycache__/*.py[c|o]
 export PYTHONDONTWRITEBYTECODE=1
 
-arch=`uname -m`
+arch=$(uname -m)
 
 echo
 echo
@@ -46,10 +46,10 @@ echo
 echo
 echo "Compile wheels"
 for PYTHON in ${PYTHON_VERSIONS}; do
-    /opt/python/${PYTHON}/bin/python -m pip install -U pip
-    /opt/python/${PYTHON}/bin/python -m pip install -r "${WORKDIR_PATH}/requirements/wheel.txt"
+    /opt/python/"${PYTHON}"/bin/python -m pip install -U pip
+    /opt/python/"${PYTHON}"/bin/python -m pip install -r "${WORKDIR_PATH}/requirements/wheel.txt"
     PIP_CONSTRAINT="${WORKDIR_PATH}/requirements/cython.txt" \
-      /opt/python/${PYTHON}/bin/python -m pip wheel "${SRC_DIR}/" \
+      /opt/python/"${PYTHON}"/bin/python -m pip wheel "${SRC_DIR}/" \
       --config-settings=pure-python=false \
       --no-deps \
       -w "${ORIG_WHEEL_DIR}/${PYTHON}"
@@ -66,7 +66,7 @@ done
 echo
 echo
 echo "Cleanup OS specific wheels"
-rm -fv ${WHEELHOUSE_DIR}/*-linux_*.whl
+rm -fv "${WHEELHOUSE_DIR}"/*-linux_*.whl
 
 echo
 echo
@@ -77,7 +77,7 @@ echo
 echo
 echo "Install packages and test"
 echo "dist directory:"
-ls ${WHEELHOUSE_DIR}
+ls "${WHEELHOUSE_DIR}"
 
 for PYTHON in ${PYTHON_VERSIONS}; do
     # clear python cache
@@ -85,8 +85,8 @@ for PYTHON in ${PYTHON_VERSIONS}; do
 
     echo
     echo -n "Test $PYTHON: "
-    /opt/python/${PYTHON}/bin/python -c "import platform; print('Building wheel for {platform} platform.'.format(platform=platform.platform()))"
-    /opt/python/${PYTHON}/bin/pip install -r ${WORKDIR_PATH}/requirements/ci-wheel.txt
-    /opt/python/${PYTHON}/bin/pip install "$package_name" --no-index -f "file://${WHEELHOUSE_DIR}"
-    /opt/python/${PYTHON}/bin/py.test ${WORKDIR_PATH}/tests
+    /opt/python/"${PYTHON}"/bin/python -c "import platform; print('Building wheel for {platform} platform.'.format(platform=platform.platform()))"
+    /opt/python/"${PYTHON}"/bin/pip install -r "${WORKDIR_PATH}"/requirements/ci-wheel.txt
+    /opt/python/"${PYTHON}"/bin/pip install "$package_name" --no-index -f "file://${WHEELHOUSE_DIR}"
+    /opt/python/"${PYTHON}"/bin/py.test "${WORKDIR_PATH}"/tests
 done
