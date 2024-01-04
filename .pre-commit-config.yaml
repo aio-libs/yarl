@@ -185,4 +185,9 @@ repos:
       ^type of expression at "float number value" must be number
       but found type string$
 
+- repo: https://github.com/koalaman/shellcheck-precommit
+  rev: v0.9.0
+  hooks:
+  - id: shellcheck
+
 ...
