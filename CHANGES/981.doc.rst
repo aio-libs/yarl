@@ -1,0 +1,2 @@
+On the :doc:`Contributing docs <contributing/guidelines>` page,
+a link to the ``Towncrier philosophy`` has been fixed.
