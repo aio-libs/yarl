@@ -28,6 +28,11 @@ on:
         description: Sdist filename wildcard
         required: true
         type: string
+      wheel-tags-to-skip:
+        description: Wheel tags to skip building
+        default: ''
+        required: false
+        type: string
 
 env:
   FORCE_COLOR: "1"  # Make tools pretty.
@@ -39,8 +44,7 @@ jobs:
   build-wheel:
     name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
     runs-on: ${{ inputs.os }}-latest
-    # Ref: https://github.com/python-jsonschema/check-jsonschema/issues/354
-    timeout-minutes: 60  # FIXME: ${{ inputs.qemu && '60' || '20' }}
+    timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
@@ -60,6 +64,12 @@ jobs:
         # Build emulated architectures only if QEMU is set,
         # use default "auto" otherwise
         echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
+      shell: bash
+
+    - name: Skip building some wheel tags
+      if: inputs.wheel-tags-to-skip
+      run: |
+        echo "CIBW_SKIP=${{ inputs.wheel-tags-to-skip }}" >> "${GITHUB_ENV}"
       shell: bash
 
     - name: Build wheels

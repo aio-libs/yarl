@@ -29,11 +29,21 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Setup Python ${{ env.PYTHON_LATEST }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_LATEST }}
-        cache: 'pip'
-        cache-dependency-path: 'requirements/*.txt'
+        cache: pip
+        cache-dependency-path: requirements/*.txt
+    - name: Cache pre-commit.com virtualenvs
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: >-
+          ${{
+            runner.os
+          }}-pre-commit-${{
+            hashFiles('.pre-commit-config.yaml')
+          }}
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
@@ -44,6 +54,18 @@ jobs:
     - name: Run linters
       run: |
         make lint
+    - name: Send coverage data to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: >-
+          .tox/.tmp/.mypy/python-3.12/cobertura.xml,
+          .tox/.tmp/.mypy/python-3.10/cobertura.xml,
+          .tox/.tmp/.mypy/python-3.8/cobertura.xml
+        flags: >-
+          CI-GHA,
+          MyPy
+        fail_ci_if_error: false
     - name: Install spell checker
       run: |
         sudo apt install libenchant-2-dev

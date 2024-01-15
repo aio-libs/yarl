@@ -509,7 +509,7 @@ class URL:
             return None
         if "%" in raw:
             # Hack for scoped IPv6 addresses like
-            # fe80::2%Проверка
+            # fe80::2%Перевірка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
         return _idna_decode(raw)

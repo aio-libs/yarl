@@ -7,15 +7,17 @@ on:
   push:
     branches:
     - master
-    - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
+    - >-
+      [0-9].[0-9]+
     tags:
     - v*
   pull_request:
     branches:
     - master
-    - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.9
+    - >-
+      [0-9].[0-9]+
   schedule:
-  - cron: '0 6 * * *'  # Daily 6AM UTC build
+  - cron: 0 6 * * *  # Daily 6AM UTC build
 
 
 concurrency:
@@ -32,6 +34,7 @@ env:
   PIP_NO_PYTHON_VERSION_WARNING: 1
   PIP_NO_WARN_SCRIPT_LOCATION: 1
   PRE_COMMIT_COLOR: always
+  PROJECT_NAME: yarl
   PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
@@ -51,14 +54,14 @@ jobs:
       # NOTE: These aren't env vars because the `${{ env }}` context is
       # NOTE: inaccessible when passing inputs to reusable workflows.
       dists-artifact-name: python-package-distributions
-      sdist-name: yarl-*.tar.gz
-      wheel-name: yarl-*.whl
+      sdist-name: ${{ env.PROJECT_NAME }}-*.tar.gz
+      wheel-name: ${{ env.PROJECT_NAME }}-*.whl
     steps:
     - run: >-
         print('No-op')
 
 
-  build-sdist:
+  build-pure-python-dists:
     name: 📦 Build distribution packages
     needs:
     - pre-setup
@@ -73,10 +76,12 @@ jobs:
     - name: Checkout project
       uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_LATEST }}
         cache: pip
+        cache-dependency-path:
+          requirements/*.txt
     - name: Install core libraries for build
       run: python -Im pip install build
     - name: Build sdists and pure-python wheel
@@ -85,18 +90,17 @@ jobs:
       run: python -Im build --config-setting=pure-python=true
     - name: Determine actual created filenames
       id: dist-filenames-detection
-      run: >
-        echo -n sdist-filename= >> "${GITHUB_OUTPUT}"
-
-
-        basename $(ls -1 dist/${{ needs.pre-setup.outputs.sdist-name }})
-        >> "${GITHUB_OUTPUT}"
-
-
-        echo -n wheel-filename= >> "${GITHUB_OUTPUT}"
-
-
-        basename $(ls -1 dist/${{ needs.pre-setup.outputs.wheel-name }})
+      run: >-
+        {
+        echo -n sdist-filename=
+        ;
+        basename "$(ls -1 dist/${{ needs.pre-setup.outputs.sdist-name }})"
+        ;
+        echo -n wheel-filename=
+        ;
+        basename "$(ls -1 dist/${{ needs.pre-setup.outputs.wheel-name }})"
+        ;
+        }
         >> "${GITHUB_OUTPUT}"
     - name: Upload built artifacts for testing
       uses: actions/upload-artifact@v3
@@ -117,7 +121,7 @@ jobs:
 
   build-wheels-for-tested-arches:
     needs:
-    - build-sdist
+    - build-pure-python-dists
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
@@ -128,7 +132,19 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
-      source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+      wheel-tags-to-skip: >-
+        ${{
+        (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+        && '*_i686
+        *-macosx_universal2
+        *-musllinux_*
+        *-win32
+        *_arm64
+        pp*'
+        || ''
+        }}
+      source-tarball-name: >-
+        ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
       cython-tracing: >-  # Cython line tracing for coverage collection
         ${{
@@ -143,27 +159,38 @@ jobs:
   test:
     name: Test
     needs:
-    - build-sdist  # transitive, for accessing settings
+    - build-pure-python-dists  # transitive, for accessing settings
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
-        pyver: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        pyver:
+        - 3.12
+        - 3.11
+        - >-
+          3.10
+        - 3.9
+        - 3.8
+        - 3.7
         no-extensions: ['', 'Y']
         os: [ubuntu, macos, windows]
         experimental: [false]
         exclude:
         - os: macos
-          no-extensions: 'Y'
+          no-extensions: Y
         - os: windows
-          no-extensions: 'Y'
+          no-extensions: Y
         include:
+        - pyver: pypy-3.10
+          no-extensions: Y
+          experimental: false
+          os: ubuntu
         - pyver: pypy-3.9
-          no-extensions: 'Y'
+          no-extensions: Y
           experimental: false
           os: ubuntu
         - pyver: pypy-3.8
-          no-extensions: 'Y'
+          no-extensions: Y
           experimental: false
           os: ubuntu
       fail-fast: false
@@ -174,7 +201,8 @@ jobs:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+        source-tarball-name: >-
+          ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
@@ -185,11 +213,11 @@ jobs:
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.pyver }}
-        cache: 'pip'
-        cache-dependency-path: 'requirements/*.txt'
+        cache: pip
+        cache-dependency-path: requirements/*.txt
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
@@ -221,7 +249,8 @@ jobs:
         -u -I
         -m pip install
         --find-links=./dist
-        --no-index yarl
+        --no-index
+        '${{ env.PROJECT_NAME }}'
         --force-reinstall
         --no-color
         --no-deps
@@ -258,7 +287,7 @@ jobs:
         )
       run: |
         set -eEuo pipefail
-        sed -i 's/^plugins = .*//g' .coveragerc
+        sed -i.bak 's/^plugins = .*//g' .coveragerc
       shell: bash
     - name: Run unittests
       env:
@@ -269,11 +298,10 @@ jobs:
         -v
         --cov-report xml
         --junitxml=.test-results/pytest/test.xml
-      shell: bash
     - name: Produce markdown test summary from JUnit
       if: >-
         !cancelled()
-      uses: test-summary/action@v2.1
+      uses: test-summary/action@v2.2
       with:
         paths: .test-results/pytest/test.xml
     - name: Append coverage results to Job Summary
@@ -309,7 +337,7 @@ jobs:
         fail_ci_if_error: false
 
   test-summary:
-    name: Tests status
+    name: Test matrix status
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -334,7 +362,7 @@ jobs:
 
   build-wheels-for-odd-archs:
     needs:
-    - build-sdist
+    - build-pure-python-dists
     - pre-deploy
     - pre-setup  # transitive, for accessing settings
     strategy:
@@ -346,13 +374,14 @@ jobs:
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
-      source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+      source-tarball-name: >-
+        ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   deploy:
     name: Deploy
     needs:
-    - build-sdist
+    - build-pure-python-dists
     - build-wheels-for-odd-archs
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
@@ -365,30 +394,32 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/p/yarl
+      url: https://pypi.org/p/${{ env.PROJECT_NAME }}
 
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
       with:
-        source-tarball-name: ${{ needs.build-sdist.outputs.sdist-filename }}
+        source-tarball-name: >-
+          ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
-    - name: Login
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
     - name: Download distributions
       uses: actions/download-artifact@v3
       with:
         name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+    - run: |
+        tree
+    - name: Login
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
     - name: Make Release
       uses: aio-libs/create-release@v1.6.6
       with:
         changes_file: CHANGES.rst
-        name: yarl
-        version_file: yarl/__init__.py
+        version_file: ${{ env.PROJECT_NAME }}/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
         fix_issue_regex: >-
           :issue:`(\d+)`
@@ -400,10 +431,10 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v2.1.0
+      uses: sigstore/gh-action-sigstore-python@v2.1.1
       with:
         inputs: >-
-          ./dist/${{ needs.build-sdist.outputs.sdist-filename }}
+          ./dist/${{ needs.build-pure-python-dists.outputs.sdist-filename }}
           ./dist/*.whl
 
     - name: Upload artifact signatures to GitHub Release

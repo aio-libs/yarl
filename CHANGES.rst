@@ -1,3 +1,7 @@
+=========
+Changelog
+=========
+
 ..
     You should *NOT* be adding new change log entries to this file, this
     file is managed by towncrier. You *may* edit previous change logs to
@@ -9,6 +13,90 @@
     WARNING: Don't drop the next directive!
 
 .. towncrier release notes start
+
+1.9.4 (2023-12-06)
+==================
+
+Bug fixes
+---------
+
+- Started raising :py:exc:`TypeError` when a string value is passed into
+  :py:meth:`~yarl.URL.build` as the ``port`` argument  -- by :user:`commonism`.
+
+  Previously the empty string as port would create malformed URLs when rendered as string representations. (:issue:`883`)
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- The leading ``--`` has been dropped from the :pep:`517` in-tree build
+  backend config setting names. ``--pure-python`` is now just ``pure-python``
+  -- by :user:`webknjaz`.
+
+  The usage now looks as follows:
+
+  .. code-block:: console
+
+      $ python -m build \
+          --config-setting=pure-python=true \
+          --config-setting=with-cython-tracing=true
+
+  (:issue:`963`)
+
+
+Contributor-facing changes
+--------------------------
+
+- A step-by-step :doc:`Release Guide <contributing/release_guide>` guide has
+  been added, describing how to release *yarl* -- by :user:`webknjaz`.
+
+  This is primarily targeting maintainers. (:issue:`960`)
+- Coverage collection has been implemented for the Cython modules
+  -- by :user:`webknjaz`.
+
+  It will also be reported to Codecov from any non-release CI jobs.
+
+  To measure coverage in a development environment, *yarl* can be
+  installed in editable mode:
+
+  .. code-block:: console
+
+      $ python -Im pip install -e .
+
+  Editable install produces C-files required for the Cython coverage
+  plugin to map the measurements back to the PYX-files.
+
+  :issue:`961`
+
+- It is now possible to request line tracing in Cython builds using the
+  ``with-cython-tracing`` :pep:`517` config setting
+  -- :user:`webknjaz`.
+
+  This can be used in CI and development environment to measure coverage
+  on Cython modules, but is not normally useful to the end-users or
+  downstream packagers.
+
+  Here's a usage example:
+
+  .. code-block:: console
+
+      $ python -Im pip install . --config-settings=with-cython-tracing=true
+
+  For editable installs, this setting is on by default. Otherwise, it's
+  off unless requested explicitly.
+
+  The following produces C-files required for the Cython coverage
+  plugin to map the measurements back to the PYX-files:
+
+  .. code-block:: console
+
+      $ python -Im pip install -e .
+
+  Alternatively, the ``YARL_CYTHON_TRACING=1`` environment variable
+  can be set to do the same as the :pep:`517` config setting.
+
+  :issue:`962`
+
 
 1.9.3 (2023-11-20)
 ==================
