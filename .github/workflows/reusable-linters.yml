@@ -35,7 +35,7 @@ jobs:
         cache: pip
         cache-dependency-path: requirements/*.txt
     - name: Cache pre-commit.com virtualenvs
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pre-commit
         key: >-
