@@ -81,7 +81,7 @@ jobs:
           with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.dists-artifact-name }}
         path: ./wheelhouse/*.whl
