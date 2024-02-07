@@ -580,3 +580,34 @@ class TestStripEmptyParts:
         assert u.path == ""
         assert u.query_string == ""
         assert u.fragment == ""
+
+    def test_truncated_utf_sequence(self):
+        raw_path = b"/P\xc3\xbcnktchen\xa0\xef\xb7#"
+        abspath, _hash_separator, frag = raw_path.decode(
+            "utf-8", "surrogateescape"
+        ).partition("#")
+        u = URL.build(path=abspath, query_string="", fragment=frag, encoded=True)
+        u2 = URL("/P%C3%BCnktchen\udca0\udcef\udcb7")
+        assert u.scheme == ""
+        assert u.user is None
+        assert u.password is None
+        assert u.path == "/Pünktchen\udca0\udcef\udcb7"
+        assert u.query_string == ""
+        assert u.fragment == ""
+        assert u.path == u2.path
+
+    def test_truncated_utf_sequence_frag(self):
+        raw_path = b"/P\xc3\xbcnktchen\xa0\xef\xb7#P\xc3\xbcnktelchen\xa0\xef\xb6"
+        abspath, _hash_separator, frag = raw_path.decode(
+            "utf-8", "surrogateescape"
+        ).partition("#")
+        u = URL.build(path=abspath, query_string="", fragment=frag, encoded=True)
+        u2 = URL("/P%C3%BCnktchen\udca0\udcef\udcb7#Pünktelchen\udca0\udcef\udcb6")
+        assert u.scheme == ""
+        assert u.user is None
+        assert u.password is None
+        assert u.path == "/Pünktchen\udca0\udcef\udcb7"
+        assert u.query_string == ""
+        assert u.fragment == "Pünktelchen\udca0\udcef\udcb6"
+        assert u.path == u2.path
+        # assert u.fragment == u2.fragment
