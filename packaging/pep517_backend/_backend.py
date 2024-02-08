@@ -199,7 +199,17 @@ def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
         with chdir_cm(tmp_dir):
             tmp_src_dir = Path(tmp_dir) / 'src'
-            copytree(src_dir, tmp_src_dir, symlinks=True)
+
+            def _ignore(d, _):
+                """
+                Prevent temporary directory to be copied into self
+                recursively forever.
+                Fixes https://github.com/aio-libs/yarl/issues/992
+                """
+                if Path(d) == tmp_src_dir.parent:
+                    return [tmp_src_dir.name]
+                return []
+            copytree(src_dir, tmp_src_dir, symlinks=True, ignore=_ignore)
             os.chdir(tmp_src_dir)
             yield
 
