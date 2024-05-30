@@ -139,7 +139,6 @@ jobs:
         *-macosx_universal2
         *-musllinux_*
         *-win32
-        *_arm64
         pp*'
         || ''
         }}
