@@ -2,7 +2,7 @@
   package = "yarl"
   filename = "CHANGES.rst"
   directory = "CHANGES/"
-  title_format = "{version} ({project_date})"
+  title_format = "v{version}"
   template = "CHANGES/.TEMPLATE.rst"
   issue_format = ":issue:`{issue}`"
 
