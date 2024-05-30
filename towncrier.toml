@@ -4,7 +4,7 @@
   directory = "CHANGES/"
   title_format = "v{version}"
   template = "CHANGES/.TEMPLATE.rst"
-  issue_format = ":issue:`{issue}`"
+  issue_format = "{issue}"
 
   # NOTE: The types are declared because:
   # NOTE: - there is no mechanism to override just the value of
