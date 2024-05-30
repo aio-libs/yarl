@@ -120,6 +120,8 @@ jobs:
     uses: ./.github/workflows/reusable-linters.yml
 
   build-wheels-for-tested-arches:
+    name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
+      📦 Build wheels for tested arches${{ '' }}
     needs:
     - build-pure-python-dists
     - pre-setup  # transitive, for accessing settings
@@ -361,6 +363,8 @@ jobs:
         echo "Predeploy step"
 
   build-wheels-for-odd-archs:
+    name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
+      📦 Build wheels for odd arches${{ '' }}
     needs:
     - build-pure-python-dists
     - pre-deploy
