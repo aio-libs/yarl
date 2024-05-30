@@ -1,0 +1,9 @@
+A flaw in the logic for copying the project directory into a
+temporary folder that led to infinite recursion when :envvar:`TMPDIR`
+was set to a project subdirectory path. This was happening in Fedora
+and its downstream due to the use of `pyproject-rpm-macros
+<https://src.fedoraproject.org/rpms/pyproject-rpm-macros>`__. It was
+only reproducible with ``pip wheel`` and was not affecting the
+``pyproject-build`` users.
+
+-- by :user:`hroncok` and :user:`webknjaz`
