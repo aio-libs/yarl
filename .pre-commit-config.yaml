@@ -170,7 +170,7 @@ repos:
     # - importlib_metadata
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
-    - pytest
+    - pytest < 8
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
     args:
