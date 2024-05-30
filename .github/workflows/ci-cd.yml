@@ -172,28 +172,41 @@ jobs:
         - 3.8
         - 3.7
         no-extensions: ['', 'Y']
-        os: [ubuntu, macos, windows]
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
         experimental: [false]
         exclude:
-        - os: macos
+        - os: macos-latest
           no-extensions: Y
-        - os: windows
+        - os: windows-latest
           no-extensions: Y
+        - os: macos-latest
+          pyver: 3.7  # Python < v3.8 does not support Apple Silicon ARM64
         include:
         - pyver: pypy-3.10
           no-extensions: Y
           experimental: false
-          os: ubuntu
+          os: ubuntu-latest
         - pyver: pypy-3.9
           no-extensions: Y
           experimental: false
-          os: ubuntu
+          os: ubuntu-latest
         - pyver: pypy-3.8
           no-extensions: Y
           experimental: false
-          os: ubuntu
+          os: ubuntu-latest
+        - os: macos-13  # run legacy versions on Intel CPUs
+          pyver: 3.7
+          no-extensions: ''
+          experimental: false
+        - os: macos-13  # run legacy versions on Intel CPUs
+          pyver: 3.7
+          no-extensions: Y
+          experimental: false
       fail-fast: false
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     continue-on-error: ${{ matrix.experimental }}
     steps:
