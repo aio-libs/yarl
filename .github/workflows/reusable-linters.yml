@@ -24,7 +24,7 @@ jobs:
   lint:
     name: Linter
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 15
     steps:
     - name: Checkout
       uses: actions/checkout@v4
