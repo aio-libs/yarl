@@ -1,5 +1,17 @@
 from functools import _CacheInfo
-from typing import Any, Final, Mapping, Optional, Sequence, Tuple, Type, TypedDict, Union, final, overload
+from typing import (
+    Any,
+    Final,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypedDict,
+    Union,
+    final,
+    overload,
+)
 
 import multidict
 
