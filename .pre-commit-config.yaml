@@ -163,25 +163,6 @@ repos:
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.8
     - --html-report=.tox/.tmp/.mypy/python-3.8
     pass_filenames: false
-  - id: mypy
-    alias: mypy-py38
-    name: MyPy
-    additional_dependencies:
-    # - importlib_metadata
-    - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
-    - multidict
-    - pytest < 8
-    - tomli  # requirement of packaging/pep517_backend/
-    - types-setuptools  # requirement of packaging/pep517_backend/
-    args:
-    - --show-error-codes
-    - --install-types
-    - --non-interactive
-    - --python-version=3.8
-    - --txt-report=.tox/.tmp/.mypy/python-3.8
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.8
-    - --html-report=.tox/.tmp/.mypy/python-3.8
-    pass_filenames: false
 
 - repo: https://github.com/rhysd/actionlint.git
   rev: v1.6.26
