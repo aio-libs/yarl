@@ -24,7 +24,7 @@ repos:
   rev: '23.12.1'
   hooks:
   - id: black
-    language_version: python3  # Should be a command that runs python3.7+
+    language_version: python3  # Should be a command that runs python
 
 - repo: https://github.com/python-jsonschema/check-jsonschema.git
   rev: 0.27.3
@@ -74,7 +74,7 @@ repos:
   rev: 'v3.15.0'
   hooks:
   - id: pyupgrade
-    args: ['--py37-plus']
+    args: ['--py38-plus']
 - repo: https://github.com/PyCQA/flake8
   rev: '6.1.0'
   hooks:
@@ -164,8 +164,8 @@ repos:
     - --html-report=.tox/.tmp/.mypy/python-3.8
     pass_filenames: false
   - id: mypy
-    alias: mypy-py37
-    name: MyPy, for Python 3.7
+    alias: mypy-py38
+    name: MyPy
     additional_dependencies:
     # - importlib_metadata
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
@@ -177,10 +177,10 @@ repos:
     - --show-error-codes
     - --install-types
     - --non-interactive
-    - --python-version=3.7
-    - --txt-report=.tox/.tmp/.mypy/python-3.7
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.7
-    - --html-report=.tox/.tmp/.mypy/python-3.7
+    - --python-version=3.8
+    - --txt-report=.tox/.tmp/.mypy/python-3.8
+    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.8
+    - --html-report=.tox/.tmp/.mypy/python-3.8
     pass_filenames: false
 
 - repo: https://github.com/rhysd/actionlint.git
