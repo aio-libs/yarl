@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import typing as t
 from contextlib import contextmanager, nullcontext, suppress
+from functools import partial
 from pathlib import Path
 from shutil import copytree
 from sys import implementation as _system_implementation
@@ -194,12 +195,44 @@ def patched_dist_get_long_description():
         _DistutilsDistributionMetadata.get_long_description = _orig_func
 
 
+def _exclude_dir_path(
+    excluded_dir_path: Path,
+    visited_directory: str,
+    _visited_dir_contents: list[str],
+) -> list[str]:
+    """Prevent recursive directory traversal."""
+    # This stops the temporary directory from being copied
+    # into self recursively forever.
+    # Ref: https://github.com/aio-libs/yarl/issues/992
+    visited_directory_subdirs_to_ignore = [
+        subdir
+        for subdir in _visited_dir_contents
+        if excluded_dir_path == Path(visited_directory) / subdir
+    ]
+    if visited_directory_subdirs_to_ignore:
+        print(
+            f'Preventing `{excluded_dir_path !s}` from being '
+            'copied into itself recursively...',
+            file=_standard_error_stream,
+        )
+    return visited_directory_subdirs_to_ignore
+
+
 @contextmanager
 def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        root_tmp_dir_path = tmp_dir_path.parent
+        _exclude_tmpdir_parent = partial(_exclude_dir_path, root_tmp_dir_path)
+
         with chdir_cm(tmp_dir):
-            tmp_src_dir = Path(tmp_dir) / 'src'
-            copytree(src_dir, tmp_src_dir, symlinks=True)
+            tmp_src_dir = tmp_dir_path / 'src'
+            copytree(
+                src_dir,
+                tmp_src_dir,
+                ignore=_exclude_tmpdir_parent,
+                symlinks=True,
+            )
             os.chdir(tmp_src_dir)
             yield
 

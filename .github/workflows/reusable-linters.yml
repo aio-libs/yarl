@@ -17,14 +17,14 @@ env:
   PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
-  PYTHON_LATEST: 3.8
+  PYTHON_LATEST: 3.12
 
 jobs:
 
   lint:
     name: Linter
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 15
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
       run: |
         make lint
     - name: Send coverage data to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: >-
