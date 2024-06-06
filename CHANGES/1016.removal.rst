@@ -1,1 +1,1 @@
-Drop support for Python 3.7 -- by :user:`Dreamsorcerer`.
+Dropped support for Python 3.7 -- by :user:`Dreamsorcerer`.
