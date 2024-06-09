@@ -807,6 +807,15 @@ def test_div_with_dots():
         ),
         pytest.param("", ("path/",), "http://example.com/path/", id="trailing-slash"),
         pytest.param(
+            "",
+            (
+                "path",
+                "",
+            ),
+            "http://example.com/path/",
+            id="trailing-slash-empty-string",
+        ),
+        pytest.param(
             "", ("path/", "to/"), "http://example.com/path/to/", id="duplicate-slash"
         ),
         pytest.param("", (), "http://example.com", id="empty-segments"),
