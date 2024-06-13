@@ -840,6 +840,27 @@ def test_joinpath(base, to_join, expected):
 
 
 @pytest.mark.parametrize(
+    "base,to_join,expected",
+    [
+        pytest.param("path", "a", "path/a", id="default_default"),
+        pytest.param("path", "./a", "path/a", id="default_relative"),
+        pytest.param("path/", "a", "path/a", id="empty-segment_default"),
+        pytest.param("path/", "./a", "path/a", id="empty-segment_relative"),
+        pytest.param("path", ".//a", "path//a", id="default_empty-segment"),
+        pytest.param("path/", ".//a", "path//a", id="empty-segment_empty_segment"),
+        pytest.param("path//", "a", "path//a", id="empty-segments_default"),
+        pytest.param("path//", "./a", "path//a", id="empty-segments_relative"),
+        pytest.param("path//", ".//a", "path///a", id="empty-segments_empty-segment"),
+        pytest.param("path", "a//", "path/a//", id="default_trailing-empty-segment"),
+        pytest.param("path", "a//b", "path/a//b", id="default_embedded-empty-segment"),
+    ],
+)
+def test_joinpath_empty_segments(base, to_join, expected):
+    url = URL(f"http://example.com/{base}")
+    assert str(url.joinpath(to_join)) == f"http://example.com/{expected}"
+
+
+@pytest.mark.parametrize(
     "url,to_join,expected",
     [
         pytest.param(URL(), ("a",), ("a",), id="empty-url"),

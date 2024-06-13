@@ -715,24 +715,24 @@ class URL:
 
     def _make_child(self, segments, encoded=False):
         """add segments to self._val.path, accounting for absolute vs relative paths"""
-        # keep the trailing slash if the last segment ends with /
-        parsed = [""] if segments and segments[-1][-1:] == "/" else []
+        parsed = []
         for seg in reversed(segments):
+            last = id(seg) == id(segments[-1])
             if seg and seg[0] == "/":
                 raise ValueError(
                     f"Appending path {seg!r} starting from slash is forbidden"
                 )
             seg = seg if encoded else self._PATH_QUOTER(seg)
-            if "/" in seg:
-                parsed += (
-                    sub for sub in reversed(seg.split("/")) if sub and sub != "."
-                )
-            elif seg != ".":
-                parsed.append(seg)
+            if not (subs := [sub for sub in reversed(seg.split("/")) if sub != "."]):
+                continue
+            parsed += subs[1:] if not last and subs[0] == "" else subs
         parsed.reverse()
         old_path = self._val.path
         if old_path:
-            parsed = [*old_path.rstrip("/").split("/"), *parsed]
+            old = old_path.split("/")
+            if old[-1] == "":
+                del old[-1]
+            parsed = [*old, *parsed]
         if self.is_absolute():
             parsed = _normalize_path_segments(parsed)
             if parsed and parsed[0] != "":
