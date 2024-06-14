@@ -713,26 +713,36 @@ class URL:
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
 
-    def _make_child(self, segments, encoded=False):
-        """add segments to self._val.path, accounting for absolute vs relative paths"""
+    def _make_child(self, paths, encoded=False):
+        """
+        add paths to self._val.path, accounting for absolute vs relative paths,
+        keep existing, but do not create new, empty segments
+        """
         parsed = []
-        for seg in reversed(segments):
-            last = id(seg) == id(segments[-1])
-            if seg and seg[0] == "/":
+        for idx, path in enumerate(reversed(paths)):
+            # empty segment of last is not removed
+            last = idx == 0
+            if path and path[0] == "/":
                 raise ValueError(
-                    f"Appending path {seg!r} starting from slash is forbidden"
+                    f"Appending path {path!r} starting from slash is forbidden"
                 )
-            seg = seg if encoded else self._PATH_QUOTER(seg)
-            if not (subs := [sub for sub in reversed(seg.split("/")) if sub != "."]):
+            path = path if encoded else self._PATH_QUOTER(path)
+            if not (
+                segments := [
+                    segment for segment in reversed(path.split("/")) if segment != "."
+                ]
+            ):
                 continue
-            parsed += subs[1:] if not last and subs[0] == "" else subs
+            # remove trailing empty segment for all but the last path
+            parsed += segments[1:] if not last and segments[0] == "" else segments
         parsed.reverse()
-        old_path = self._val.path
-        if old_path:
-            old = old_path.split("/")
-            if old[-1] == "":
+
+        if self._val.path:
+            # remove trailing empty segment
+            if (old := self._val.path.split("/"))[-1] == "":
                 del old[-1]
             parsed = [*old, *parsed]
+
         if self.is_absolute():
             parsed = _normalize_path_segments(parsed)
             if parsed and parsed[0] != "":
