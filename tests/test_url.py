@@ -851,13 +851,22 @@ def test_joinpath(base, to_join, expected):
         pytest.param("path//", "a", "path//a", id="empty-segments_default"),
         pytest.param("path//", "./a", "path//a", id="empty-segments_relative"),
         pytest.param("path//", ".//a", "path///a", id="empty-segments_empty-segment"),
-        pytest.param("path", "a//", "path/a//", id="default_trailing-empty-segment"),
+        pytest.param("path", "a/", "path/a/", id="default_trailing-empty-segment"),
+        pytest.param("path", "a//", "path/a//", id="default_trailing-empty-segments"),
         pytest.param("path", "a//b", "path/a//b", id="default_embedded-empty-segment"),
     ],
 )
 def test_joinpath_empty_segments(base, to_join, expected):
     url = URL(f"http://example.com/{base}")
     assert str(url.joinpath(to_join)) == f"http://example.com/{expected}"
+
+
+def test_joinpath_single_empty_segments():
+    """joining standalone empty segments does not create empty segments"""
+    a = URL("/1//2///3")
+    assert a.parts == ("/", "1", "", "2", "", "", "3")
+    b = URL("scheme://host").joinpath(*a.parts[1:])
+    assert b.path == "/1/2/3"
 
 
 @pytest.mark.parametrize(
