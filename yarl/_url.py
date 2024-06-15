@@ -929,13 +929,13 @@ class URL:
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
     @classmethod
-    def _query_seq_pairs(cls, quoter, pairs):
+    def _query_seq_pairs(cls, pairs):
         for key, val in pairs:
             if isinstance(val, (list, tuple)):
                 for v in val:
-                    yield quoter(key) + "=" + quoter(cls._query_var(v))
+                    yield key, v
             else:
-                yield quoter(key) + "=" + quoter(cls._query_var(val))
+                yield key, val
 
     @staticmethod
     def _query_var(v):
@@ -956,6 +956,15 @@ class URL:
             "of type {}".format(v, cls)
         )
 
+    def _get_str_param(self, k, v, q=None):
+        if q:
+            k = q(k)
+            v = q(self._query_var(v))
+        if v:
+            return f"{k}={v}"
+        else:
+            return k
+
     def _get_str_query(self, *args, **kwargs):
         if kwargs:
             if len(args) > 0:
@@ -972,7 +981,10 @@ class URL:
             query = None
         elif isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
-            query = "&".join(self._query_seq_pairs(quoter, query.items()))
+            query = "&".join(
+                self._get_str_param(k, v, quoter)
+                for k, v in self._query_seq_pairs(query.items())
+            )
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
@@ -985,9 +997,7 @@ class URL:
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
-            query = "&".join(
-                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
-            )
+            query = "&".join(self._get_str_param(k, v, quoter) for k, v in query)
         else:
             raise TypeError(
                 "Invalid query type: only str, mapping or "
@@ -1116,7 +1126,47 @@ class URL:
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)), encoded=True)
+        other: URL = url
+        scheme = other.scheme or self.scheme
+        parts = {
+            k: getattr(self, k) for k in ["authority", "path", "query", "fragment"]
+        }
+        parts["scheme"] = scheme
+        from urllib.parse import uses_netloc as uses_authority
+        from urllib.parse import uses_relative
+
+        if scheme != self.scheme or scheme not in uses_relative:
+            return URL(str(other))
+
+        if scheme in uses_authority:
+            if other.authority:
+                parts.update(
+                    {
+                        k: getattr(other, k)
+                        for k in ["authority", "path", "query", "fragment"]
+                    }
+                )
+                return URL.build(**parts)
+
+        if other.path or other.fragment:
+            parts["fragment"] = other.fragment
+        if other.path or other.query:
+            parts["query"] = other.query
+
+        if not other.path and not other.query:
+            return URL.build(**parts)
+
+        if other.path:
+            if other.path[0] == "/":
+                parts["path"] = other.path
+                return URL.build(**parts)
+            else:
+                if self.path[-1] != "/":
+                    parts["path"] = URL(self.path).joinpath("..", other.path).path
+                    return URL.build(**parts)
+                else:
+                    return URL.build(**parts).joinpath(other.path)
+        return URL.build(**parts)
 
     def joinpath(self, *other, encoded=False):
         """Return a new URL with the elements in other appended to the path."""
@@ -1130,9 +1180,12 @@ class URL:
         if host:
             host = self._encode_host(self.host, human=True)
         path = _human_quote(self.path, "#?")
+
+        def query_quote(x):
+            return _human_quote(x, "#&+;=")
+
         query_string = "&".join(
-            "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
-            for k, v in self.query.items()
+            self._get_str_param(k, v, query_quote) for k, v in self.query.items()
         )
         fragment = _human_quote(self.fragment, "")
         return urlunsplit(
