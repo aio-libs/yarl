@@ -1,5 +1,6 @@
 import functools
 import math
+import socket
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
@@ -291,6 +292,16 @@ class URL:
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
+        if (port := self._get_port()) is None:
+            val = val._replace(
+                netloc=self._make_netloc(
+                    self.raw_user,
+                    self.raw_password,
+                    self.raw_host,
+                    port,
+                    encode_host=False,
+                )
+            )
         return urlunsplit(val)
 
     def __repr__(self):
@@ -435,6 +446,20 @@ class URL:
         """
         return self._val.netloc
 
+    def _get_port(self):
+        """Port or None if default port"""
+        port = self.port
+        if self.scheme:
+            p = DEFAULT_PORTS.get(self.scheme)
+            if p == self.port:
+                port = None
+            elif p is None:
+                with suppress(OSError):
+                    p = socket.getservbyname(self.scheme)
+                    if p == self.port:
+                        port = None
+        return port
+
     @cached_property
     def authority(self):
         """Decoded authority part of URL.
@@ -443,7 +468,7 @@ class URL:
 
         """
         return self._make_netloc(
-            self.user, self.password, self.host, self.port, encode_host=False
+            self.user, self.password, self.host, self._get_port(), encode_host=False
         )
 
     @property
@@ -727,9 +752,7 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
-            segments = [
-                segment for segment in reversed(path.split("/")) if segment != "."
-            ]
+            segments = list(reversed(path.split("/")))
             if not segments:
                 continue
             # remove trailing empty segment for all but the last path

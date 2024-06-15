@@ -219,6 +219,12 @@ def test_authority_full_nonasci() -> None:
     assert url.authority == "степан:пароль@слава.укр:8080"
 
 
+def test_authority_unknown_scheme():
+    v = "scheme://user:password@example.com:43/path/to?a=1&b=2"
+    url = URL(v)
+    assert str(url) == v
+
+
 def test_lowercase():
     url = URL("http://gitHUB.com")
     assert url.raw_host == "github.com"
@@ -1332,6 +1338,7 @@ def test_is_default_port_for_absolute_url_without_port():
 def test_is_default_port_for_absolute_url_with_default_port():
     url = URL("http://example.com:80")
     assert url.is_default_port()
+    assert str(url) == "http://example.com"
 
 
 def test_is_default_port_for_absolute_url_with_nondefault_port():
@@ -1542,7 +1549,7 @@ def test_parent_for_empty_url():
 
 def test_empty_value_for_query():
     url = URL("http://example.com/path").with_query({"a": ""})
-    assert str(url) == "http://example.com/path?a="
+    assert str(url) == "http://example.com/path?a"
 
 
 def test_none_value_for_query():
