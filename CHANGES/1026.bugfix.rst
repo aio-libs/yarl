@@ -1,0 +1,2 @@
+Joining urls with empty segments has been changed
+to match RFC3986 -- by :user:`commonism` and :user:`youtux`
