@@ -858,7 +858,11 @@ def test_joinpath(base, to_join, expected):
 )
 def test_joinpath_empty_segments(base, to_join, expected):
     url = URL(f"http://example.com/{base}")
-    assert str(url.joinpath(to_join)) == str(url / to_join) == f"http://example.com/{expected}"
+    assert (
+        str(url.joinpath(to_join))
+        == str(url / to_join)
+        == f"http://example.com/{expected}"
+    )
 
 
 def test_joinpath_single_empty_segments():
