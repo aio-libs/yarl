@@ -727,11 +727,10 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
-            if not (
-                segments := [
-                    segment for segment in reversed(path.split("/")) if segment != "."
-                ]
-            ):
+            segments = [
+                segment for segment in reversed(path.split("/")) if segment != "."
+            ]
+            if not segments:
                 continue
             # remove trailing empty segment for all but the last path
             parsed += segments[1:] if not last and segments[0] == "" else segments
