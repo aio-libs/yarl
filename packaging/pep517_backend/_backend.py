@@ -241,7 +241,7 @@ def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
 def maybe_prebuild_c_extensions(
         line_trace_cython_when_unset: bool = False,
         build_inplace: bool = False,
-        config_settings: dict[str, str] | None = None,
+        config_settings: dict[str, str | list[str] | None] | None = None,
 ) -> t.Generator[None, t.Any, t.Any]:
     """Pre-build C-extensions in a temporary directory, when needed.
 
@@ -305,7 +305,7 @@ def maybe_prebuild_c_extensions(
 @patched_dist_get_long_description()
 def build_wheel(
         wheel_directory: str,
-        config_settings: dict[str, str | list[str]] | None = None,
+        config_settings: dict[str, str | list[str] | None] | None = None,
         metadata_directory: str | None = None,
 ) -> str:
     """Produce a built wheel.
@@ -332,7 +332,7 @@ def build_wheel(
 @patched_dist_get_long_description()
 def build_editable(
         wheel_directory: str,
-        config_settings: dict[str, str | list[str]] | None = None,
+        config_settings: dict[str, str | list[str] | None] | None = None,
         metadata_directory: str | None = None,
 ) -> str:
     """Produce a built wheel for editable installs.
