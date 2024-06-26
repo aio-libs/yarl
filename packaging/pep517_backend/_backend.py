@@ -67,7 +67,7 @@ __all__ = (  # noqa: WPS410
     ),
 )
 
-_ConfigDict = t.Dict[str, t.Union[str | t.List[str] | None]]
+_ConfigDict = t.Dict[str, t.Union[str, t.List[str], None]]
 
 
 CYTHON_TRACING_CONFIG_SETTING = 'with-cython-tracing'
