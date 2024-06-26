@@ -357,7 +357,7 @@ def build_editable(
 
 
 def get_requires_for_build_wheel(
-        config_settings: dict[str, str] | None = None,
+        config_settings: dict[str, str | list[str] | None] | None = None,
 ) -> list[str]:
     """Determine additional requirements for building wheels.
 
