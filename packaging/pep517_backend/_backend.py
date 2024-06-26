@@ -67,6 +67,8 @@ __all__ = (  # noqa: WPS410
     ),
 )
 
+_ConfigDict = dict[str, str | list[str] | None]
+
 
 CYTHON_TRACING_CONFIG_SETTING = 'with-cython-tracing'
 """Config setting name toggle to include line tracing to C-exts."""
@@ -96,7 +98,7 @@ def _is_truthy_setting_value(setting_value) -> bool:
 
 
 def _get_setting_value(
-        config_settings: dict[str, str | list[str] | None] | None = None,
+        config_settings: _ConfigDict | None = None,
         config_setting_name: str | None = None,
         env_var_name: str | None = None,
         *,
@@ -116,7 +118,7 @@ def _get_setting_value(
     return default
 
 
-def _make_pure_python(config_settings: dict[str, str | list[str] | None] | None = None) -> bool:
+def _make_pure_python(config_settings: _ConfigDict | None = None) -> bool:
     return _get_setting_value(
         config_settings,
         PURE_PYTHON_CONFIG_SETTING,
@@ -126,7 +128,7 @@ def _make_pure_python(config_settings: dict[str, str | list[str] | None] | None 
 
 
 def _include_cython_line_tracing(
-        config_settings: dict[str, str | list[str] | None] | None = None,
+        config_settings: _ConfigDict | None = None,
         *,
         default=False,
 ) -> bool:
@@ -241,7 +243,7 @@ def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
 def maybe_prebuild_c_extensions(
         line_trace_cython_when_unset: bool = False,
         build_inplace: bool = False,
-        config_settings: dict[str, str | list[str] | None] | None = None,
+        config_settings: _ConfigDict | None = None,
 ) -> t.Generator[None, t.Any, t.Any]:
     """Pre-build C-extensions in a temporary directory, when needed.
 
@@ -305,7 +307,7 @@ def maybe_prebuild_c_extensions(
 @patched_dist_get_long_description()
 def build_wheel(
         wheel_directory: str,
-        config_settings: dict[str, str | list[str] | None] | None = None,
+        config_settings: _ConfigDict | None = None,
         metadata_directory: str | None = None,
 ) -> str:
     """Produce a built wheel.
@@ -332,7 +334,7 @@ def build_wheel(
 @patched_dist_get_long_description()
 def build_editable(
         wheel_directory: str,
-        config_settings: dict[str, str | list[str] | None] | None = None,
+        config_settings: _ConfigDict | None = None,
         metadata_directory: str | None = None,
 ) -> str:
     """Produce a built wheel for editable installs.
@@ -357,7 +359,7 @@ def build_editable(
 
 
 def get_requires_for_build_wheel(
-        config_settings: dict[str, str | list[str] | None] | None = None,
+        config_settings: _ConfigDict | None = None,
 ) -> list[str]:
     """Determine additional requirements for building wheels.
 
