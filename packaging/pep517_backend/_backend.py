@@ -96,7 +96,7 @@ def _is_truthy_setting_value(setting_value) -> bool:
 
 
 def _get_setting_value(
-        config_settings: dict[str, str] | None = None,
+        config_settings: dict[str, str | list[str] | None] | None = None,
         config_setting_name: str | None = None,
         env_var_name: str | None = None,
         *,
@@ -116,7 +116,7 @@ def _get_setting_value(
     return default
 
 
-def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
+def _make_pure_python(config_settings: dict[str, str | list[str] | None] | None = None) -> bool:
     return _get_setting_value(
         config_settings,
         PURE_PYTHON_CONFIG_SETTING,
@@ -126,7 +126,7 @@ def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
 
 
 def _include_cython_line_tracing(
-        config_settings: dict[str, str] | None = None,
+        config_settings: dict[str, str | list[str] | None] | None = None,
         *,
         default=False,
 ) -> bool:
