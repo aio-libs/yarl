@@ -718,9 +718,7 @@ class URL:
         # keep the trailing slash if the last segment ends with /
         parsed = [""] if segments and segments[-1][-1:] == "/" else []
         for seg in reversed(segments):
-            if not seg:
-                continue
-            if seg[0] == "/":
+            if seg and seg[0] == "/":
                 raise ValueError(
                     f"Appending path {seg!r} starting from slash is forbidden"
                 )

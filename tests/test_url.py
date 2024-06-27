@@ -800,12 +800,24 @@ def test_div_with_dots():
             "/path/", ("to",), "http://example.com/path/to", id="path-with-slash"
         ),
         pytest.param(
+            "/path", ("",), "http://example.com/path/", id="path-add-trailing-slash"
+        ),
+        pytest.param(
             "/path?a=1#frag",
             ("to",),
             "http://example.com/path/to",
             id="cleanup-query-and-fragment",
         ),
         pytest.param("", ("path/",), "http://example.com/path/", id="trailing-slash"),
+        pytest.param(
+            "",
+            (
+                "path",
+                "",
+            ),
+            "http://example.com/path/",
+            id="trailing-slash-empty-string",
+        ),
         pytest.param(
             "", ("path/", "to/"), "http://example.com/path/to/", id="duplicate-slash"
         ),
