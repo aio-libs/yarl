@@ -14,7 +14,7 @@ show_missing = true
 branch = true
 cover_pylib = false
 plugins = Cython.Coverage
-relative_files = true
+relative_files = false
 source =
   tests
 source_pkgs =
