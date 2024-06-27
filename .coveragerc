@@ -12,4 +12,10 @@ show_missing = true
 
 [run]
 branch = true
+cover_pylib = false
 plugins = Cython.Coverage
+relative_files = true
+source =
+  tests
+source_pkgs =
+  yarl
