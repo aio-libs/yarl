@@ -330,7 +330,7 @@ jobs:
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v3.1.4
       with:
         token: 26f4a393-24a9-48d9-8fa4-f1344d930846
         file: ./coverage.xml
@@ -339,7 +339,7 @@ jobs:
           OS-${{ runner.os }},
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
-        fail_ci_if_error: false
+        fail_ci_if_error: true
 
   test-summary:
     name: Test matrix status
