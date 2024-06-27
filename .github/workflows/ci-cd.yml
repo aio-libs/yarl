@@ -118,6 +118,8 @@ jobs:
 
   lint:
     uses: ./.github/workflows/reusable-linters.yml
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   build-wheels-for-tested-arches:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category

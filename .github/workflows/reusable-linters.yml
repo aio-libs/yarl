@@ -4,6 +4,10 @@ name: Linters
 
 on:
   workflow_call:
+    secrets:
+      codecov-token:
+        description: Mandatory token for uploading to Codecov
+        required: true
 
 env:
   COLOR: >-  # Supposedly, pytest or coveragepy use this
@@ -57,7 +61,7 @@ jobs:
     - name: Send coverage data to Codecov
       uses: codecov/codecov-action@v4
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.codecov-token }}
         files: >-
           .tox/.tmp/.mypy/python-3.12/cobertura.xml,
           .tox/.tmp/.mypy/python-3.10/cobertura.xml,
