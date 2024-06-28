@@ -339,7 +339,7 @@ jobs:
           OS-${{ runner.os }},
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
   test-summary:
     name: Test matrix status
