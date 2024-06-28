@@ -736,11 +736,9 @@ class URL:
             parsed += segments[1:] if not last and segments[0] == "" else segments
         parsed.reverse()
 
-        if self._val.path:
-            # remove trailing empty segment
-            if (old := self._val.path.split("/"))[-1] == "":
-                del old[-1]
-            parsed = [*old, *parsed]
+        if self._val.path and (old_path_segments := self._val.path.split("/")):
+            old_path_cutoff = -1 if old_path_segments[-1] == "" else None
+            parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
         if self.is_absolute():
             parsed = _normalize_path_segments(parsed)
