@@ -330,7 +330,7 @@ jobs:
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v3.1.4
+      uses: codecov/codecov-action@v4
       with:
         token: 26f4a393-24a9-48d9-8fa4-f1344d930846
         file: ./coverage.xml
