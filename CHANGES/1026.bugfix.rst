@@ -1,11 +1,20 @@
 Joining URLs with empty segments has been changed
-to match :rfs:`3986`.
+to match :rfc:`3986`.
+
 Previously empty segments would be removed from path,
 breaking use-cases such as
-URL("https://web.archive.org/web/") / "https://github.com/"
-Now "/" and joinpath() operation keep empty segments,
+
+.. code-block:: python
+
+  URL("https://web.archive.org/web/") / "https://github.com/"
+
+Now "/" and :spelling:ignore:`joinpath()` operation keep empty segments,
 but do not introduce new empty segments.
 e.g.
-URL("https://example.org/") / ""
+
+.. code-block:: python
+
+  URL("https://example.org/") / ""
+
 does not introduce an empty segment.
 -- by :user:`commonism` and :user:`youtux`.
