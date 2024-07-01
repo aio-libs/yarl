@@ -174,7 +174,7 @@ Contributor-facing changes
 Bugfixes
 --------
 
-- Fix regression with :meth:`__truediv__ <yarl.URL.__truediv__>` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
+- Fix regression with :meth:`~yarl.URL.__truediv__` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
   (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
 
 
