@@ -8,8 +8,8 @@ breaking use-cases such as
 
    URL("https://web.archive.org/web/") / "https://github.com/"
 
-Now "/" and :spelling:ignore:`joinpath()` operation keep empty segments,
-but do not introduce new empty segments.
+Now :meth:`URL.__truediv__` and :meth:`joinpath` operation keep empty
+segments, but do not introduce new empty segments.
 e.g.
 
 .. code-block:: python
