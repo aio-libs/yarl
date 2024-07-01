@@ -1,2 +1,2 @@
-The pre-existing :meth:`/ <yarl.URL.__truediv__>` magic method
+The pre-existing :meth:`/ magic method <yarl.URL.__truediv__>`
 has been documented in the API reference -- by :user:`commonism`.
