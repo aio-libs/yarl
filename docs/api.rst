@@ -884,8 +884,6 @@ The path is encoded if needed.
          >>> base.join(URL('//python.org/page.html'))
          URL('http://python.org/page.html')
 
-
-
 Human readable representation
 -----------------------------
 
