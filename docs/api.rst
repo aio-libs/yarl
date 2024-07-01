@@ -846,7 +846,7 @@ The path is encoded if needed.
 
 .. method:: URL.__truediv__(url)
 
-   Shortcut for :meth:`URL.joinpath` with a single element and ``encoded==False``.
+   Shortcut for :meth:`URL.joinpath` with a single element and ``encoded=False``.
 
    .. doctest::
 
