@@ -17,4 +17,5 @@ e.g.
    URL("https://example.org/") / ""
 
 does not introduce an empty segment.
--- by :user:`commonism` and :user:`youtux`.
+
+-- by :user:`commonism` and :user:`youtux`
