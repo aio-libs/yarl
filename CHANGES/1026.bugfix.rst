@@ -8,7 +8,7 @@ breaking use-cases such as
 
    URL("https://web.archive.org/web/") / "https://github.com/"
 
-Now :meth:`/ <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>` operation
+Now :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
 keep empty segments, but do not introduce new empty segments.
 e.g.
 
