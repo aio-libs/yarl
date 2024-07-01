@@ -733,7 +733,8 @@ class URL:
             if not segments:
                 continue
             # remove trailing empty segment for all but the last path
-            parsed += segments[1:] if not last and segments[0] == "" else segments
+            segment_slice_start = int(not last and segments[0] == "")
+            parsed += segments[segment_slice_start:]
         parsed.reverse()
 
         if self._val.path and (old_path_segments := self._val.path.split("/")):
