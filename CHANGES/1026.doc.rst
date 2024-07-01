@@ -1,3 +1,2 @@
-Add documentation for :meth:`/ <yarl.URL.__truediv__>`
-
--- by :user:`commonism`
+The pre-existing :meth:`/ <yarl.URL.__truediv__>` magic method
+has been documented in the API reference -- by :user:`commonism`.
