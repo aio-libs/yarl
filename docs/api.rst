@@ -844,6 +844,20 @@ The path is encoded if needed.
 
    .. versionadded:: 1.9
 
+.. method:: URL.__truediv__(url)
+
+   Shortcut for :meth:`URL.joinpath` with a single element and ``encoded=False``.
+
+   .. doctest::
+
+      >>> url = URL('http://example.com/path?arg#frag') / 'to'
+      >>> url
+      URL('http://example.com/path/to')
+      >>> url.parts
+      ('/', 'path', 'to')
+
+   .. versionadded:: 0.9
+
 .. method:: URL.join(url)
 
    Construct a full (“absolute”) URL by combining a “base URL”

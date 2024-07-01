@@ -105,7 +105,7 @@ Bug fixes
 ---------
 
 - Stopped dropping trailing slashes in :py:meth:`~yarl.URL.joinpath` -- by :user:`gmacon`. (:issue:`862`, :issue:`866`)
-- Started accepting string subclasses in ``__truediv__()`` operations (``URL / segment``) -- by :user:`mjpieters`. (:issue:`871`, :issue:`884`)
+- Started accepting string subclasses in :meth:`~yarl.URL.__truediv__` operations (``URL / segment``) -- by :user:`mjpieters`. (:issue:`871`, :issue:`884`)
 - Fixed the human representation of URLs with square brackets in usernames and passwords -- by :user:`mjpieters`. (:issue:`876`, :issue:`882`)
 - Updated type hints to include ``URL.missing_port()``, ``URL.__bytes__()``
   and the ``encoding`` argument to :py:meth:`~yarl.URL.joinpath`
@@ -174,7 +174,7 @@ Contributor-facing changes
 Bugfixes
 --------
 
-- Fix regression with ``__truediv__`` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
+- Fix regression with :meth:`~yarl.URL.__truediv__` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
   (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
 
 
@@ -196,7 +196,7 @@ Features
 --------
 
 - Added ``URL.joinpath(*elements)``, to create a new URL appending multiple path elements. (`#704 <https://github.com/aio-libs/yarl/issues/704>`_)
-- Made ``URL.__truediv__()`` return ``NotImplemented`` if called with an
+- Made :meth:`URL.__truediv__() <yarl.URL.__truediv__>` return ``NotImplemented`` if called with an
   unsupported type — by :user:`michaeljpeters`.
   (`#832 <https://github.com/aio-libs/yarl/issues/832>`_)
 

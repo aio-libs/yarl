@@ -1,0 +1,21 @@
+Joining URLs with empty segments has been changed
+to match :rfc:`3986`.
+
+Previously empty segments would be removed from path,
+breaking use-cases such as
+
+.. code-block:: python
+
+   URL("https://web.archive.org/web/") / "https://github.com/"
+
+Now :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+keep empty segments, but do not introduce new empty segments.
+e.g.
+
+.. code-block:: python
+
+   URL("https://example.org/") / ""
+
+does not introduce an empty segment.
+
+-- by :user:`commonism` and :user:`youtux`
