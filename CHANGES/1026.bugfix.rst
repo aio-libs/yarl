@@ -6,7 +6,7 @@ breaking use-cases such as
 
 .. code-block:: python
 
-  URL("https://web.archive.org/web/") / "https://github.com/"
+   URL("https://web.archive.org/web/") / "https://github.com/"
 
 Now "/" and :spelling:ignore:`joinpath()` operation keep empty segments,
 but do not introduce new empty segments.
