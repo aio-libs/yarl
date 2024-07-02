@@ -6,7 +6,9 @@ from contextlib import contextmanager
 from pathlib import Path
 
 try:
-    from contextlib import chdir as chdir_cm  # type: ignore[attr-defined, unused-ignore]
+    from contextlib import (
+        chdir as chdir_cm,  # type: ignore[attr-defined, unused-ignore]
+    )
 except ImportError:
 
     @contextmanager  # type: ignore[no-redef, unused-ignore]
