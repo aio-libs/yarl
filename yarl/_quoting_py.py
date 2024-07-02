@@ -40,7 +40,7 @@ class _Quoter:
             raise TypeError("Argument should be str")
         if not val:
             return ""
-        bval = cast(str, val).encode("utf8", errors="ignore")
+        bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
         safe = self._safe
