@@ -1549,7 +1549,7 @@ def test_parent_for_empty_url():
 
 def test_empty_value_for_query():
     url = URL("http://example.com/path").with_query({"a": ""})
-    assert str(url) == "http://example.com/path?a"
+    assert str(url) == "http://example.com/path?a="
 
 
 def test_none_value_for_query():

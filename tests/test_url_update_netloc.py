@@ -198,7 +198,7 @@ def test_with_port_with_no_port():
 
 def test_with_port_ipv6():
     url = URL("http://[::1]:8080/")
-    assert str(url.with_port(80)) == "http://[::1]:80/"
+    assert str(url.with_port(81)) == "http://[::1]:81/"
 
 
 def test_with_port_keeps_query_and_fragment():

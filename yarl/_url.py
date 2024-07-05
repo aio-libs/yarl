@@ -468,7 +468,7 @@ class URL:
 
         """
         return self._make_netloc(
-            self.user, self.password, self.host, self._get_port(), encode_host=False
+            self.user, self.password, self.host, self.port, encode_host=False
         )
 
     @property
