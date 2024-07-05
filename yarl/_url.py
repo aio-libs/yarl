@@ -396,7 +396,7 @@ class URL:
         """
         if self.port is None:
             return False
-        default = DEFAULT_PORTS.get(self.scheme)
+        default = self._get_default_port()
         if default is None:
             return False
         return self.port == default
@@ -446,19 +446,20 @@ class URL:
         """
         return self._val.netloc
 
+    def _get_default_port(self):
+        port = None
+        if self.scheme:
+            port = DEFAULT_PORTS.get(self.scheme)
+            if port is None:
+                with suppress(OSError):
+                    port = socket.getservbyname(self.scheme)
+        return port
+
     def _get_port(self):
         """Port or None if default port"""
-        port = self.port
-        if self.scheme:
-            p = DEFAULT_PORTS.get(self.scheme)
-            if p == self.port:
-                port = None
-            elif p is None:
-                with suppress(OSError):
-                    p = socket.getservbyname(self.scheme)
-                    if p == self.port:
-                        port = None
-        return port
+        if self._get_default_port() == self.port:
+            return None
+        return self.port
 
     @cached_property
     def authority(self):
