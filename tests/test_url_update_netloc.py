@@ -191,6 +191,24 @@ def test_with_port():
     assert str(url.with_port(8888)) == "http://example.com:8888"
 
 
+def test_with_port_normalization():
+    url = URL("http://example.com")
+
+    assert str(url.with_scheme("https")) == "https://example.com"
+    assert str(url.with_scheme("https").with_port(443)) == "https://example.com"
+    assert str(url.with_port(443).with_scheme("https")) == "https://example.com"
+
+    u88 = url.with_port(88)
+    assert str(u88) == "http://example.com:88"
+    assert str(u88.with_port(80)) == "http://example.com"
+    assert str(u88.with_scheme("https")) == "https://example.com:88"
+
+    u80 = url.with_port(80)
+    assert str(u80) == "http://example.com"
+    assert str(u80.with_port(81)) == "http://example.com:81"
+    assert str(u80.with_scheme("https")) == "https://example.com:80"
+
+
 def test_with_port_with_no_port():
     url = URL("http://example.com")
     assert str(url.with_port(None)) == "http://example.com"
