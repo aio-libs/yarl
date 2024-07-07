@@ -397,9 +397,7 @@ class URL:
 
         """
         if self.explicit_port is None:
-            """
-            a relative URL does not have an implicit port / default port
-            """
+            # A relative URL does not have an implicit port / default port
             return self.port is not None
         default = self._get_default_port()
         if default is None:
