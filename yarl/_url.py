@@ -552,7 +552,7 @@ class URL:
         scheme without default port substitution.
 
         """
-        return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
+        return self._val.port or self._get_default_port()
 
     @property
     def explicit_port(self):
