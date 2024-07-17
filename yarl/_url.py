@@ -451,13 +451,16 @@ class URL:
         return self._val.netloc
 
     def _get_default_port(self) -> Optional[int]:
-        port = None
-        if self.scheme:
-            port = DEFAULT_PORTS.get(self.scheme)
-            if port is None:
-                with suppress(OSError):
-                    port = socket.getservbyname(self.scheme)
-        return port
+        if not self.scheme:
+            return None
+
+        with suppress(KeyError):
+            return DEFAULT_PORTS[self.scheme]
+
+        with suppress(OSError):
+            return socket.getservbyname(self.scheme)
+
+        return None
 
     def _get_port(self):
         """Port or None if default port"""
