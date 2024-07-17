@@ -394,7 +394,7 @@ class URL:
         e.g. 'http://python.org' or 'http://python.org:80', False
         otherwise.
 
-        Return False for relative URLs
+        Return False for relative URLs.
 
         """
         if self.explicit_port is None:
