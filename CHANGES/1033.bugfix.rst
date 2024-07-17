@@ -1,4 +1,4 @@
 Normalize default ports according to :rfc:`3986`.
 
-Specified ports are removed from the str representation of an URL if the port matches
-the schemes default port -- by :user:`commonism`.
+Specified ports are removed from the :class:`str` representation of a :class:`~yarl.URL`
+if the port matches the scheme's default port -- by :user:`commonism`.
