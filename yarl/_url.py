@@ -5,6 +5,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
+from typing import Union
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
