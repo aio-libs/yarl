@@ -450,7 +450,7 @@ class URL:
         """
         return self._val.netloc
 
-    def _get_default_port(self) -> Optional[int]:
+    def _get_default_port(self) -> Union[int, None]:
         if not self.scheme:
             return None
 
