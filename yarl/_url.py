@@ -294,6 +294,7 @@ class URL:
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
         if (port := self._get_port()) is None:
+            # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             val = val._replace(
                 netloc=self._make_netloc(
