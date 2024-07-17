@@ -219,7 +219,7 @@ def test_authority_full_nonasci() -> None:
     assert url.authority == "степан:пароль@слава.укр:8080"
 
 
-def test_authority_unknown_scheme():
+def test_authority_unknown_scheme() -> None:
     v = "scheme://user:password@example.com:43/path/to?a=1&b=2"
     url = URL(v)
     assert str(url) == v

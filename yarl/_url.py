@@ -464,7 +464,7 @@ class URL:
 
         return None
 
-    def _get_port(self):
+    def _get_port(self) -> Union[int, None]:
         """Port or None if default port"""
         if self._get_default_port() == self.port:
             return None
