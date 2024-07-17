@@ -1,0 +1,6 @@
+The default protocol ports of well-known URI schemes are now taken into account
+during the normalization of the URL string representation in accordance with
+:rfc:`3986#section-3.2.3`.
+
+Specified ports are removed from the :class:`str` representation of a :class:`~yarl.URL`
+if the port matches the scheme's default port -- by :user:`commonism`.

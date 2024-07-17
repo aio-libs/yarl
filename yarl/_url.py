@@ -1,9 +1,11 @@
 import functools
 import math
+import socket
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
+from typing import Union
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
@@ -291,6 +293,18 @@ class URL:
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
+        if (port := self._get_port()) is None:
+            # port normalization - using None for default ports to remove from rendering
+            # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
+            val = val._replace(
+                netloc=self._make_netloc(
+                    self.raw_user,
+                    self.raw_password,
+                    self.raw_host,
+                    port,
+                    encode_host=False,
+                )
+            )
         return urlunsplit(val)
 
     def __repr__(self):
@@ -382,10 +396,13 @@ class URL:
         e.g. 'http://python.org' or 'http://python.org:80', False
         otherwise.
 
+        Return False for relative URLs.
+
         """
-        if self.port is None:
-            return False
-        default = DEFAULT_PORTS.get(self.scheme)
+        if self.explicit_port is None:
+            # A relative URL does not have an implicit port / default port
+            return self.port is not None
+        default = self._get_default_port()
         if default is None:
             return False
         return self.port == default
@@ -434,6 +451,24 @@ class URL:
 
         """
         return self._val.netloc
+
+    def _get_default_port(self) -> Union[int, None]:
+        if not self.scheme:
+            return None
+
+        with suppress(KeyError):
+            return DEFAULT_PORTS[self.scheme]
+
+        with suppress(OSError):
+            return socket.getservbyname(self.scheme)
+
+        return None
+
+    def _get_port(self) -> Union[int, None]:
+        """Port or None if default port"""
+        if self._get_default_port() == self.port:
+            return None
+        return self.port
 
     @cached_property
     def authority(self):
@@ -522,7 +557,7 @@ class URL:
         scheme without default port substitution.
 
         """
-        return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
+        return self._val.port or self._get_default_port()
 
     @property
     def explicit_port(self):
