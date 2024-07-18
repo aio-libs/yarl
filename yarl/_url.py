@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
 from typing import Union
-from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
+from urllib.parse import SplitResult, parse_qsl, quote, urlsplit, urlunsplit
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -259,12 +259,14 @@ class URL:
                 netloc = authority
             else:
                 tmp = SplitResult("", authority, "", "", "")
+                port = None if tmp.port == cls._default_port(scheme) else tmp.port
                 netloc = cls._make_netloc(
-                    tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
+                    tmp.username, tmp.password, tmp.hostname, port, encode=True
                 )
         elif not user and not password and not host and not port:
             netloc = ""
         else:
+            port = None if port == cls._default_port(scheme) else port
             netloc = cls._make_netloc(
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )
@@ -455,12 +457,15 @@ class URL:
     def _get_default_port(self) -> Union[int, None]:
         if not self.scheme:
             return None
+        return self._default_port(self.scheme)
 
+    @staticmethod
+    def _default_port(scheme: str) -> Union[int, None]:
         with suppress(KeyError):
-            return DEFAULT_PORTS[self.scheme]
+            return DEFAULT_PORTS[scheme]
 
         with suppress(OSError):
-            return socket.getservbyname(self.scheme)
+            return socket.getservbyname(scheme)
 
         return None
 
@@ -762,9 +767,7 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
-            segments = [
-                segment for segment in reversed(path.split("/")) if segment != "."
-            ]
+            segments = list(reversed(path.split("/")))
             if not segments:
                 continue
             # remove trailing empty segment for all but the last path
