@@ -1657,6 +1657,29 @@ def test_join_from_rfc_3986_abnormal(url, expected):
     assert base.join(url) == expected
 
 
+EMPTY_SEGMENTS = [
+    (
+        "https://web.archive.org/web/",
+        "./https://github.com/aio-libs/yarl",
+        "https://web.archive.org/web/https://github.com/aio-libs/yarl",
+    ),
+    (
+        "https://web.archive.org/web/https://github.com/",
+        "aio-libs/yarl",
+        "https://web.archive.org/web/https://github.com/aio-libs/yarl",
+    ),
+]
+
+
+@pytest.mark.parametrize("base,url,expected", EMPTY_SEGMENTS)
+def test_join_empty_segments(base, url, expected):
+    base = URL(base)
+    url = URL(url)
+    expected = URL(expected)
+    joined = base.join(url)
+    assert joined == expected
+
+
 def test_split_result_non_decoded():
     with pytest.raises(ValueError):
         URL(SplitResult("http", "example.com", "path", "qs", "frag"))
