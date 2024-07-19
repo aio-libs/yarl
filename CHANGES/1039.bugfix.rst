@@ -1,0 +1,41 @@
+:meth:`URL.join <yarl.URL.join>` has been changed to match
+:rfc:`3986` and align with
+:meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+when joining URLs with empty segments.
+Previously :external:python:doc:method:`urllib.parse.urljoin` was used,
+which has known issues with empty segments
+(`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`).
+
+Due to the semantics of :meth:`URL.join <yarl.URL.join>`, joining an
+URL with scheme requires making it relative, prefixing with ./.
+
+.. code-block:: python
+
+   URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+
+
+Empty segments are honored in the base as well as the joined part.
+
+.. code-block:: python
+
+   URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+
+The required changes for URL.join affect the rendering of empty URL
+parameters.
+Previously empty URL parameters been presented as an assignment
+without value.
+
+e.g. :
+
+.. code-block:: text
+
+    http://b/p?a=
+
+Now empty parameters are presented without assignment.
+
+.. code-block:: text
+
+    http://b/p?a
+
+
+-- by :user:`commonism`
