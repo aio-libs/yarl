@@ -2,9 +2,9 @@
 :rfc:`3986` and align with
 :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
 when joining URLs with empty segments.
-Previously :external:python:doc:method:`urllib.parse.urljoin` was used,
+Previously :meth:`~python.urllib.parse.urljoin` was used,
 which has known issues with empty segments
-(`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`).
+(`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
 
 Due to the semantics of :meth:`URL.join <yarl.URL.join>`, joining an
 URL with scheme requires making it relative, prefixing with ./.
