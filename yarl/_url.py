@@ -1159,19 +1159,21 @@ class URL:
         if other.path or other.query:
             parts["query"] = other.query
 
-        if not other.path and not other.query:
+        if not other.path:
             return URL.build(**parts)
 
-        if other.path:
-            if other.path[0] == "/":
-                parts["path"] = other.path
-                return URL.build(**parts)
-            else:
-                if self.path[-1] != "/":
-                    parts["path"] = URL(self.path).joinpath("..", other.path).path
-                    return URL.build(**parts)
-                else:
-                    return URL.build(**parts).joinpath(other.path)
+        if other.path[0] == "/":
+            parts["path"] = other.path
+            return URL.build(**parts)
+
+        if self.path[-1] == "/":
+            # using an intermediate to avoid URL.joinpath dropping query & fragment
+            parts["path"] = URL(self.path).joinpath(other.path).path
+        else:
+            # …
+            # and relativizing ".."
+            parts["path"] = URL(self.path).joinpath("..", other.path).path
+
         return URL.build(**parts)
 
     def joinpath(self, *other, encoded=False):
