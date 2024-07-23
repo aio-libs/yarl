@@ -7,6 +7,8 @@ from contextlib import suppress
 from ipaddress import ip_address
 from typing import Union
 from urllib.parse import SplitResult, parse_qsl, quote, urlsplit, urlunsplit
+from urllib.parse import uses_netloc as uses_authority
+from urllib.parse import uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -1172,8 +1174,6 @@ class URL:
             k: getattr(self, k) for k in ["authority", "path", "query", "fragment"]
         }
         parts["scheme"] = scheme
-        from urllib.parse import uses_netloc as uses_authority
-        from urllib.parse import uses_relative
 
         if scheme != self.scheme or scheme not in uses_relative:
             return URL(str(other))
