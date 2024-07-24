@@ -1556,7 +1556,7 @@ def test_parent_for_empty_url():
 
 def test_empty_value_for_query():
     url = URL("http://example.com/path").with_query({"a": ""})
-    assert str(url) == "http://example.com/path?a"
+    assert str(url) == "http://example.com/path?a="
 
 
 def test_none_value_for_query():
@@ -1604,15 +1604,15 @@ NORMAL = [
     ("g/", "http://a/b/c/g/"),
     ("/g", "http://a/g"),
     ("//g", "http://g"),
-    ("?y", "http://a/b/c/d;p?y"),
-    ("g?y", "http://a/b/c/g?y"),
-    ("#s", "http://a/b/c/d;p?q#s"),
+    ("?y", "http://a/b/c/d;p?y="),
+    ("g?y", "http://a/b/c/g?y="),
+    ("#s", "http://a/b/c/d;p?q=#s"),
     ("g#s", "http://a/b/c/g#s"),
-    ("g?y#s", "http://a/b/c/g?y#s"),
+    ("g?y#s", "http://a/b/c/g?y=#s"),
     (";x", "http://a/b/c/;x"),
     ("g;x", "http://a/b/c/g;x"),
-    ("g;x?y#s", "http://a/b/c/g;x?y#s"),
-    ("", "http://a/b/c/d;p?q"),
+    ("g;x?y#s", "http://a/b/c/g;x?y=#s"),
+    ("", "http://a/b/c/d;p?q="),
     (".", "http://a/b/c/"),
     ("./", "http://a/b/c/"),
     ("..", "http://a/b/"),
@@ -1648,8 +1648,8 @@ ABNORMAL = [
     ("g/../h", "http://a/b/c/h"),
     ("g;x=1/./y", "http://a/b/c/g;x=1/y"),
     ("g;x=1/../y", "http://a/b/c/y"),
-    ("g?y/./x", "http://a/b/c/g?y/./x"),
-    ("g?y/../x", "http://a/b/c/g?y/../x"),
+    ("g?y/./x", "http://a/b/c/g?y/./x="),
+    ("g?y/../x", "http://a/b/c/g?y/../x="),
     ("g#s/./x", "http://a/b/c/g#s/./x"),
     ("g#s/../x", "http://a/b/c/g#s/../x"),
 ]
