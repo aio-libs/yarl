@@ -20,22 +20,6 @@ Empty segments are honored in the base as well as the joined part.
 
    URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
 
-The required changes for URL.join affect the rendering of empty URL
-parameters.
-Previously empty URL parameters been presented as an assignment
-without value.
-
-e.g. :
-
-.. code-block:: text
-
-    http://b/p?a=
-
-Now empty parameters are presented without assignment.
-
-.. code-block:: text
-
-    http://b/p?a
 
 
 -- by :user:`commonism`
