@@ -971,13 +971,13 @@ class URL:
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
     @classmethod
-    def _query_seq_pairs(cls, pairs):
+    def _query_seq_pairs(cls, quoter, pairs):
         for key, val in pairs:
             if isinstance(val, (list, tuple)):
                 for v in val:
-                    yield key, v
+                    yield quoter(key) + "=" + quoter(cls._query_var(v))
             else:
-                yield key, val
+                yield quoter(key) + "=" + quoter(cls._query_var(val))
 
     @staticmethod
     def _query_var(v):
@@ -998,15 +998,6 @@ class URL:
             "of type {}".format(v, cls)
         )
 
-    def _get_str_param(self, k, v, q=None):
-        if q:
-            k = q(k)
-            v = q(self._query_var(v))
-        if v:
-            return f"{k}={v}"
-        else:
-            return k
-
     def _get_str_query(self, *args, **kwargs):
         if kwargs:
             if len(args) > 0:
@@ -1023,10 +1014,7 @@ class URL:
             query = None
         elif isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
-            query = "&".join(
-                self._get_str_param(k, v, quoter)
-                for k, v in self._query_seq_pairs(query.items())
-            )
+            query = "&".join(self._query_seq_pairs(quoter, query.items()))
         elif isinstance(query, str):
             query = self._QUERY_QUOTER(query)
         elif isinstance(query, (bytes, bytearray, memoryview)):
@@ -1039,7 +1027,9 @@ class URL:
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
-            query = "&".join(self._get_str_param(k, v, quoter) for k, v in query)
+            query = "&".join(
+                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
+            )
         else:
             raise TypeError(
                 "Invalid query type: only str, mapping or "
@@ -1222,12 +1212,9 @@ class URL:
         if host:
             host = self._encode_host(self.host, human=True)
         path = _human_quote(self.path, "#?")
-
-        def query_quote(x):
-            return _human_quote(x, "#&+;=")
-
         query_string = "&".join(
-            self._get_str_param(k, v, query_quote) for k, v in self.query.items()
+            "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
+            for k, v in self.query.items()
         )
         fragment = _human_quote(self.fragment, "")
         return urlunsplit(

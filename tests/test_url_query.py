@@ -17,7 +17,7 @@ URLS_WITH_BASIC_QUERY_VALUES: List[Tuple[URL, MultiDict]] = [
         MultiDict(),
     ),
     (
-        URL("http://example.com?a"),
+        URL("http://example.com?a="),
         MultiDict([("a", "")]),
     ),
     # ASCII chars

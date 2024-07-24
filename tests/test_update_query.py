@@ -97,7 +97,7 @@ def test_with_query_empty_str():
 
 def test_with_query_empty_value():
     url = URL("http://example.com/")
-    assert str(url.with_query({"a": ""})) == "http://example.com/?a"
+    assert str(url.with_query({"a": ""})) == "http://example.com/?a="
 
 
 def test_with_query_str():
