@@ -1127,7 +1127,8 @@ class URL:
         other: URL = url
         scheme = other.scheme or self.scheme
         parts = {
-            k: getattr(self, k) for k in ["authority", "path", "query", "fragment"]
+            k: getattr(self, k)
+            for k in ["authority", "path", "query_string", "fragment"]
         }
         parts["scheme"] = scheme
 
@@ -1139,7 +1140,7 @@ class URL:
                 parts.update(
                     {
                         k: getattr(other, k)
-                        for k in ["authority", "path", "query", "fragment"]
+                        for k in ["authority", "path", "query_string", "fragment"]
                     }
                 )
                 return URL.build(**parts)
@@ -1147,7 +1148,7 @@ class URL:
         if other.path or other.fragment:
             parts["fragment"] = other.fragment
         if other.path or other.query:
-            parts["query"] = other.query
+            parts["query_string"] = other.query_string
 
         if not other.path:
             return URL.build(**parts)
