@@ -6,7 +6,7 @@ Previously :py:func:`urllib.parse.urljoin` was used,
 which has known issues with empty segments
 (`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
 
-Due to the semantics of :meth:`URL.join <yarl.URL.join>`, joining an
+Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
 URL with scheme requires making it relative, prefixing with ./.
 
 .. code-block:: python
