@@ -1712,21 +1712,33 @@ def test_join_cpython_urljoin(base, url, expected):
 
 
 URLLIB_URLJOIN_FAIL = [
-    # FIXME? - host is None
-    ("http:///", "..", "http:///"),
-    # issue 23703: don't duplicate filename
-    # FIXME? path without schema is not normalized
-    ("a", "b", "b"),
+    (
+        "http:///",
+        "..",
+        "http:///",
+        TypeError,
+        "unsupported operand type\\(s\\) for \\+: 'NoneType' and 'str'",
+    ),
+    (
+        "a",
+        "b",
+        "b",
+        TypeError,
+        'NoneType is illegal for "scheme", "authority", "host", "path",'
+        '"query_string", and "fragment" args, use empty string instead.',
+    ),
 ]
 
 
-@pytest.mark.xfail(strict=True)
-@pytest.mark.parametrize("base,url,expected", URLLIB_URLJOIN_FAIL)
-def test_join_cpython_urljoin_fail(base, url, expected):
+@pytest.mark.xfail(raises=TypeError, strict=True)
+@pytest.mark.parametrize("base,url,expected,exc,match", URLLIB_URLJOIN_FAIL)
+def test_join_cpython_urljoin_fail(base, url, expected, exc, match):
     # non portable tests from cpython urljoin
     base = URL(base)
     url = URL(url)
-    base.join(url)
+    with pytest.raises(exc, match=match) as e:
+        base.join(url)
+    raise e.value
 
 
 def test_split_result_non_decoded():
