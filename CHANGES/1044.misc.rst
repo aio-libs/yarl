@@ -1,4 +1,4 @@
-Make raw_host and port cached_property -- by :user:`bdraco`.
+Make ``raw_host`` and ``port`` ``cached_property`` -- by :user:`bdraco`.
 
 ``aiohttp`` accesses these properties quite often, which cause
 ``urllib`` to build the ``_hostinfo`` property every time.
