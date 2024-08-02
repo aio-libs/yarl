@@ -1066,6 +1066,19 @@ class URL:
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
 
+    def without_query_params(self, *query_params: str) -> "URL":
+        """Remove some keys from query part and return new URL."""
+        params_to_remove = set(query_params) & set(self.query.keys())
+        if not params_to_remove:
+            return URL(self._val._replace(query=self.query_string), encoded=True)
+        return self.with_query(
+            tuple(
+                (name, value)
+                for name, value in self.query.items()
+                if name not in params_to_remove
+            )
+        )
+
     def with_fragment(self, fragment):
         """Return a new URL with fragment replaced.
 
