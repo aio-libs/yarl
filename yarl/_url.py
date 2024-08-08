@@ -1161,7 +1161,7 @@ class URL:
         other: URL = url
         scheme = other.scheme or self.scheme
         parts = {
-            k: getattr(self, k)
+            k: getattr(self, k) or ""
             for k in ["authority", "path", "query_string", "fragment"]
         }
         parts["scheme"] = scheme
@@ -1173,16 +1173,16 @@ class URL:
             if other.authority:
                 parts.update(
                     {
-                        k: getattr(other, k)
+                        k: getattr(other, k) or ""
                         for k in ["authority", "path", "query_string", "fragment"]
                     }
                 )
                 return URL.build(**parts)
 
         if other.path or other.fragment:
-            parts["fragment"] = other.fragment
+            parts["fragment"] = other.fragment or ""
         if other.path or other.query:
-            parts["query_string"] = other.query_string
+            parts["query_string"] = other.query_string or ""
 
         if not other.path:
             return URL.build(**parts)
@@ -1197,7 +1197,11 @@ class URL:
         else:
             # …
             # and relativizing ".."
-            parts["path"] = URL(self.path).joinpath("..", other.path).path
+            path = URL("/".join([*self.parts[1:-1], ""])).joinpath(other.path).path
+            if parts["authority"]:
+                parts["path"] = "/" + path
+            else:
+                parts["path"] = path
 
         return URL.build(**parts)
 

@@ -1698,6 +1698,7 @@ URLLIB_URLJOIN = [
     ("http://a/b/c/d/e", "/../../f/g/", "http://a/f/g/"),
     ("http://a/b/c/d/e/", "../../f/g", "http://a/b/c/f/g"),
     ("http://a/b/", "../../f/g/", "http://a/f/g/"),
+    ("a", "b", "b"),
 ]
 
 
@@ -1718,14 +1719,6 @@ URLLIB_URLJOIN_FAIL = [
         "http:///",
         TypeError,
         "unsupported operand type\\(s\\) for \\+: 'NoneType' and 'str'",
-    ),
-    (
-        "a",
-        "b",
-        "b",
-        TypeError,
-        'NoneType is illegal for "scheme", "authority", "host", "path",'
-        '"query_string", and "fragment" args, use empty string instead.',
     ),
 ]
 
