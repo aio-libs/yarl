@@ -306,7 +306,7 @@ jobs:
     - name: Produce markdown test summary from JUnit
       if: >-
         !cancelled()
-      uses: test-summary/action@v2.3
+      uses: test-summary/action@v2.4
       with:
         paths: .test-results/pytest/test.xml
     - name: Append coverage results to Job Summary
