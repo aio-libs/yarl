@@ -1133,15 +1133,15 @@ class URL:
         if scheme != self.scheme or scheme not in uses_relative:
             return URL(str(other))
 
-        if scheme in uses_authority:
-            if other.authority:
-                parts.update(
-                    {
-                        k: getattr(other, k) or ""
-                        for k in ["authority", "path", "query_string", "fragment"]
-                    }
-                )
-                return URL.build(**parts)
+        # scheme is in uses_authority as uses_authority is a superset of uses_relative
+        if scheme in uses_authority and other.authority:
+            parts.update(
+                {
+                    k: getattr(other, k) or ""
+                    for k in ["authority", "path", "query_string", "fragment"]
+                }
+            )
+            return URL.build(**parts)
 
         if other.path or other.fragment:
             parts["fragment"] = other.fragment or ""
