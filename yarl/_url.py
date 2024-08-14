@@ -770,8 +770,6 @@ class URL:
                 )
             path = path if encoded else self._PATH_QUOTER(path)
             segments = list(reversed(path.split("/")))
-            if not segments:
-                continue
             # remove trailing empty segment for all but the last path
             segment_slice_start = int(not last and segments[0] == "")
             parsed += segments[segment_slice_start:]
