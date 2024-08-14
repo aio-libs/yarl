@@ -219,6 +219,12 @@ def test_authority_full_nonasci() -> None:
     assert url.authority == "степан:пароль@слава.укр:8080"
 
 
+def test_authority_unknown_scheme() -> None:
+    v = "scheme://user:password@example.com:43/path/to?a=1&b=2"
+    url = URL(v)
+    assert str(url) == v
+
+
 def test_lowercase():
     url = URL("http://gitHUB.com")
     assert url.raw_host == "github.com"
@@ -800,12 +806,24 @@ def test_div_with_dots():
             "/path/", ("to",), "http://example.com/path/to", id="path-with-slash"
         ),
         pytest.param(
+            "/path", ("",), "http://example.com/path/", id="path-add-trailing-slash"
+        ),
+        pytest.param(
             "/path?a=1#frag",
             ("to",),
             "http://example.com/path/to",
             id="cleanup-query-and-fragment",
         ),
         pytest.param("", ("path/",), "http://example.com/path/", id="trailing-slash"),
+        pytest.param(
+            "",
+            (
+                "path",
+                "",
+            ),
+            "http://example.com/path/",
+            id="trailing-slash-empty-string",
+        ),
         pytest.param(
             "", ("path/", "to/"), "http://example.com/path/to/", id="duplicate-slash"
         ),
@@ -825,6 +843,39 @@ def test_div_with_dots():
 def test_joinpath(base, to_join, expected):
     url = URL(f"http://example.com{base}")
     assert str(url.joinpath(*to_join)) == expected
+
+
+@pytest.mark.parametrize(
+    "base,to_join,expected",
+    [
+        pytest.param("path", "a", "path/a", id="default_default"),
+        pytest.param("path", "./a", "path/a", id="default_relative"),
+        pytest.param("path/", "a", "path/a", id="empty-segment_default"),
+        pytest.param("path/", "./a", "path/a", id="empty-segment_relative"),
+        pytest.param("path", ".//a", "path//a", id="default_empty-segment"),
+        pytest.param("path/", ".//a", "path//a", id="empty-segment_empty_segment"),
+        pytest.param("path//", "a", "path//a", id="empty-segments_default"),
+        pytest.param("path//", "./a", "path//a", id="empty-segments_relative"),
+        pytest.param("path//", ".//a", "path///a", id="empty-segments_empty-segment"),
+        pytest.param("path", "a/", "path/a/", id="default_trailing-empty-segment"),
+        pytest.param("path", "a//", "path/a//", id="default_trailing-empty-segments"),
+        pytest.param("path", "a//b", "path/a//b", id="default_embedded-empty-segment"),
+    ],
+)
+def test_joinpath_empty_segments(base, to_join, expected):
+    url = URL(f"http://example.com/{base}")
+    assert (
+        f"http://example.com/{expected}" == str(url.joinpath(to_join))
+        and str(url / to_join) == f"http://example.com/{expected}"
+    )
+
+
+def test_joinpath_single_empty_segments():
+    """joining standalone empty segments does not create empty segments"""
+    a = URL("/1//2///3")
+    assert a.parts == ("/", "1", "", "2", "", "", "3")
+    b = URL("scheme://host").joinpath(*a.parts[1:])
+    assert b.path == "/1/2/3"
 
 
 @pytest.mark.parametrize(
@@ -1287,6 +1338,7 @@ def test_is_default_port_for_absolute_url_without_port():
 def test_is_default_port_for_absolute_url_with_default_port():
     url = URL("http://example.com:80")
     assert url.is_default_port()
+    assert str(url) == "http://example.com"
 
 
 def test_is_default_port_for_absolute_url_with_nondefault_port():
