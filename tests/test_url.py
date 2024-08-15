@@ -1722,7 +1722,7 @@ def test_join_cpython_urljoin(base, url, expected):
 @pytest.mark.xfail(raises=TypeError, strict=True, reason="empty host name")
 def test_join_cpython_urljoin_fail():
     with pytest.raises(
-        TypeError, match="unsupported operand type\\(s\\) for \\+: 'NoneType' and 'str'"
+        TypeError, match=r"unsupported operand type\(s\) for \+: 'NoneType' and 'str'"
     ) as e:
         URL("http:///").join(URL(".."))
     raise e.value
