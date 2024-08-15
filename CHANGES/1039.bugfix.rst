@@ -9,16 +9,16 @@ which has known issues with empty segments
 Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
 URL with scheme requires making it relative, prefixing with ``./``.
 
-.. code-block:: python
+.. code-block:: pycon
 
-   URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+   >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
 
 
 Empty segments are honored in the base as well as the joined part.
 
-.. code-block:: python
+.. code-block:: pycon
 
-   URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+   >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
 
 
 
