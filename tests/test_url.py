@@ -1712,25 +1712,12 @@ def test_join_cpython_urljoin(base, url, expected):
     assert joined == expected
 
 
-URLLIB_URLJOIN_FAIL = [
-    (
-        "http:///",
-        "..",
-        "http:///",
-        TypeError,
-        "unsupported operand type\\(s\\) for \\+: 'NoneType' and 'str'",
-    ),
-]
-
-
-@pytest.mark.xfail(raises=TypeError, strict=True)
-@pytest.mark.parametrize("base,url,expected,exc,match", URLLIB_URLJOIN_FAIL)
-def test_join_cpython_urljoin_fail(base, url, expected, exc, match):
-    # non portable tests from cpython urljoin
-    base = URL(base)
-    url = URL(url)
-    with pytest.raises(exc, match=match) as e:
-        base.join(url)
+@pytest.mark.xfail(raises=TypeError, strict=True, reason="empty host name")
+def test_join_cpython_urljoin_fail():
+    with pytest.raises(
+        TypeError, match="unsupported operand type\\(s\\) for \\+: 'NoneType' and 'str'"
+    ) as e:
+        URL("http:///").join(URL(".."))
     raise e.value
 
 
