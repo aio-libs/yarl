@@ -1160,7 +1160,7 @@ class URL:
         scheme = other.scheme or self.scheme
         parts = {
             k: getattr(self, k) or ""
-            for k in ["authority", "path", "query_string", "fragment"]
+            for k in ("authority", "path", "query_string", "fragment")
         }
         parts["scheme"] = scheme
 
