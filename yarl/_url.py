@@ -1138,7 +1138,7 @@ class URL:
             parts.update(
                 {
                     k: getattr(other, k) or ""
-                    for k in ["authority", "path", "query_string", "fragment"]
+                    for k in ("authority", "path", "query_string", "fragment")
                 }
             )
             return URL.build(**parts)
