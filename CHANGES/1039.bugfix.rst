@@ -12,6 +12,7 @@ URL with scheme requires making it relative, prefixing with ``./``.
 .. code-block:: pycon
 
    >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+   URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
 
 
 Empty segments are honored in the base as well as the joined part.
@@ -19,6 +20,7 @@ Empty segments are honored in the base as well as the joined part.
 .. code-block:: pycon
 
    >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+   URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
 
 
 
