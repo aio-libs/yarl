@@ -521,7 +521,7 @@ class URL:
         """
         return self._UNQUOTER(self.raw_password)
 
-    @property
+    @cached_property
     def raw_host(self):
         """Encoded host part of URL.
 
@@ -549,7 +549,7 @@ class URL:
             return raw
         return _idna_decode(raw)
 
-    @property
+    @cached_property
     def port(self):
         """Port part of URL, with scheme-based fallback.
 
