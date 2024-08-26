@@ -170,21 +170,17 @@ cdef class _Quoter:
     cdef bint _qs
     cdef bint _requote
 
-    cdef uint8_t _ignore_table[16]
     cdef uint8_t _safe_table[16]
     cdef uint8_t _protected_table[16]
 
     def __init__(
-            self, *, str ignore="", str safe="", str protected="", bint qs=False, bint requote=True,
+            self, *, str safe='', str protected='', bint qs=False, bint requote=True,
     ):
         cdef Py_UCS4 ch
 
         self._qs = qs
         self._requote = requote
 
-        memcpy(self._ignore_table,
-               ALLOWED_TABLE,
-               sizeof(self._ignore_table))
         if not self._qs:
             memcpy(self._safe_table,
                    ALLOWED_NOTQS_TABLE,
@@ -193,10 +189,6 @@ cdef class _Quoter:
             memcpy(self._safe_table,
                    ALLOWED_TABLE,
                    sizeof(self._safe_table))
-        for ch in ignore:
-            if ord(ch) > 127:
-                raise ValueError("Only safe symbols with ORD < 128 are allowed")
-            set_bit(self._ignore_table, ch)
         for ch in safe:
             if ord(ch) > 127:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
@@ -244,7 +236,7 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                        if bit_at(self._safe_table, ch) or bit_at(self._ignore_table, ch):
+                        if bit_at(self._safe_table, ch):
                             if _write_char(writer, ch, True) < 0:
                                 raise
                             continue
@@ -282,7 +274,8 @@ cdef class _Unquoter:
     cdef _Quoter _quoter
     cdef _Quoter _qs_quoter
 
-    def __init__(self, *, unsafe='', qs=False):
+    def __init__(self, *, ignore="", unsafe="", qs=False):
+        self._ignore = ignore
         self._unsafe = unsafe
         self._qs = qs
         self._quoter = _Quoter()
@@ -344,7 +337,7 @@ cdef class _Unquoter:
                     buflen = 0
                     if self._qs and unquoted in '+=&;':
                         ret.append(self._qs_quoter(unquoted))
-                    elif unquoted in self._unsafe:
+                    elif unquoted in self._unsafe or unquoted in self._ignore:
                         ret.append(self._quoter(unquoted))
                     else:
                         ret.append(unquoted)
