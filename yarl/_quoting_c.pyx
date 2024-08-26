@@ -269,6 +269,7 @@ cdef class _Quoter:
 
 
 cdef class _Unquoter:
+    cdef str _ignore
     cdef str _unsafe
     cdef bint _qs
     cdef _Quoter _quoter
