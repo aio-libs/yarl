@@ -170,17 +170,21 @@ cdef class _Quoter:
     cdef bint _qs
     cdef bint _requote
 
+    cdef uint8_t _ignore_table[16]
     cdef uint8_t _safe_table[16]
     cdef uint8_t _protected_table[16]
 
     def __init__(
-            self, *, str safe='', str protected='', bint qs=False, bint requote=True,
+            self, *, str ignore="", str safe="", str protected="", bint qs=False, bint requote=True,
     ):
         cdef Py_UCS4 ch
 
         self._qs = qs
         self._requote = requote
 
+        memcpy(self._ignore_table,
+               ALLOWED_TABLE,
+               sizeof(self._ignore_table))
         if not self._qs:
             memcpy(self._safe_table,
                    ALLOWED_NOTQS_TABLE,
@@ -189,6 +193,10 @@ cdef class _Quoter:
             memcpy(self._safe_table,
                    ALLOWED_TABLE,
                    sizeof(self._safe_table))
+        for ch in ignore:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+            set_bit(self._ignore_table, ch)
         for ch in safe:
             if ord(ch) > 127:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
@@ -236,7 +244,7 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                        if bit_at(self._safe_table, ch):
+                        if bit_at(self._safe_table, ch) or bit_at(self._ignore_table, ch):
                             if _write_char(writer, ch, True) < 0:
                                 raise
                             continue
