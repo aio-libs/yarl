@@ -138,6 +138,7 @@ repos:
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
+    - types-Pygments
     args:
     - --install-types
     - --non-interactive
@@ -155,6 +156,7 @@ repos:
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
+    - types-Pygments
     args:
     - --install-types
     - --non-interactive
