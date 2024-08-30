@@ -164,7 +164,7 @@ class URL:
     _FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
-    _PATH_UNQUOTER = _Unquoter(unsafe="+")
+    _PATH_UNQUOTER = _Unquoter(ignore="/", unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
     def __new__(cls, val="", *, encoded=False, strict=None):
@@ -528,7 +528,7 @@ class URL:
         """
         return self._UNQUOTER(self.raw_password)
 
-    @property
+    @cached_property
     def raw_host(self):
         """Encoded host part of URL.
 
@@ -556,7 +556,7 @@ class URL:
             return raw
         return _idna_decode(raw)
 
-    @property
+    @cached_property
     def port(self):
         """Port part of URL, with scheme-based fallback.
 
