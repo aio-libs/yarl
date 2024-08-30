@@ -1,1 +1,1 @@
-Update mypy, remove unused ignores and casts
+Updated mypy and removed unused ignores and casts -- by :user:`hauntsaninja`.
