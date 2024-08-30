@@ -14,6 +14,157 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.5 (2024-08-30)
+==================
+
+Bug fixes
+---------
+
+- Joining URLs with empty segments has been changed
+  to match :rfc:`3986`.
+
+  Previously empty segments would be removed from path,
+  breaking use-cases such as
+
+  .. code-block:: python
+
+     URL("https://web.archive.org/web/") / "https://github.com/"
+
+  Now :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  keep empty segments, but do not introduce new empty segments.
+  e.g.
+
+  .. code-block:: python
+
+     URL("https://example.org/") / ""
+
+  does not introduce an empty segment.
+
+  -- by :user:`commonism` and :user:`youtux`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1026`.
+
+- The default protocol ports of well-known URI schemes are now taken into account
+  during the normalization of the URL string representation in accordance with
+  :rfc:`3986#section-3.2.3`.
+
+  Specified ports are removed from the :class:`str` representation of a :class:`~yarl.URL`
+  if the port matches the scheme's default port -- by :user:`commonism`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1033`.
+
+- :meth:`URL.join() <yarl.URL.join>` has been changed to match
+  :rfc:`3986` and align with
+  :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  when joining URLs with empty segments.
+  Previously :py:func:`urllib.parse.urljoin` was used,
+  which has known issues with empty segments
+  (`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
+
+  Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
+  URL with scheme requires making it relative, prefixing with ``./``.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+  Empty segments are honored in the base as well as the joined part.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+
+  -- by :user:`commonism`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1039`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Stopped decoding ``%2F`` (``/``) in ``URL.path``, as this could lead to code incorrectly treating it as a path separator
+  -- by :user:`Dreamsorcerer`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1057`.
+
+
+Improved documentation
+----------------------
+
+- On the :doc:`Contributing docs <contributing/guidelines>` page,
+  a link to the ``Towncrier philosophy`` has been fixed.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`981`.
+
+- The pre-existing :meth:`/ magic method <yarl.URL.__truediv__>`
+  has been documented in the API reference -- by :user:`commonism`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1026`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- A flaw in the logic for copying the project directory into a
+  temporary folder that led to infinite recursion when :envvar:`TMPDIR`
+  was set to a project subdirectory path. This was happening in Fedora
+  and its downstream due to the use of `pyproject-rpm-macros
+  <https://src.fedoraproject.org/rpms/pyproject-rpm-macros>`__. It was
+  only reproducible with ``pip wheel`` and was not affecting the
+  ``pyproject-build`` users.
+
+  -- by :user:`hroncok` and :user:`webknjaz`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`992`, :issue:`1014`.
+
+- Support Python 3.13 and publish non-free-threaded wheels
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1054`.
+
+
+Contributor-facing changes
+--------------------------
+
+- The CI/CD setup has been updated to test ``arm64`` wheels
+  under macOS 14, except for Python 3.7 that is unsupported
+  in that environment -- by :user:`webknjaz`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1015`.
+
+- Removed unused type ignores and casts -- by :user:`hauntsaninja`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1031`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- ``port``, ``scheme``, and ``raw_host`` are now ``cached_property`` -- by :user:`bdraco`.
+
+  ``aiohttp`` accesses these properties quite often, which cause :mod:`urllib` to build the ``_hostinfo`` property every time. ``port``, ``scheme``, and ``raw_host`` are now cached properties, which will improve performance.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1044`, :issue:`1058`.
+
+
+----
+
+
 1.9.4 (2023-12-06)
 ==================
 
