@@ -121,8 +121,6 @@ repos:
     args:
     - --install-types
     - --non-interactive
-    - --warn-unused-ignores
-    - --warn-redundant-casts
     - --python-version=3.12
     - --txt-report=.tox/.tmp/.mypy/python-3.12
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.12
@@ -143,8 +141,6 @@ repos:
     args:
     - --install-types
     - --non-interactive
-    - --warn-unused-ignores
-    - --warn-redundant-casts
     - --python-version=3.10
     - --txt-report=.tox/.tmp/.mypy/python-3.10
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.10
@@ -162,8 +158,6 @@ repos:
     args:
     - --install-types
     - --non-interactive
-    - --warn-unused-ignores
-    - --warn-redundant-casts
     - --python-version=3.8
     - --txt-report=.tox/.tmp/.mypy/python-3.8
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.8
