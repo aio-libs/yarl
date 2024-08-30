@@ -434,7 +434,7 @@ class URL:
         val = self._val._replace(scheme="", netloc="")
         return URL(val, encoded=True)
 
-    @property
+    @cached_property
     def scheme(self):
         """Scheme for absolute URLs.
 
