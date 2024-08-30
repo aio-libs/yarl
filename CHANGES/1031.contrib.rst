@@ -1,1 +1,1 @@
-Updated MyPy and removed unused ignores and casts -- by :user:`hauntsaninja`.
+Removed unused type ignores and casts -- by :user:`hauntsaninja`.
