@@ -1,1 +1,0 @@
-Removed unused type ignores and casts -- by :user:`hauntsaninja`.

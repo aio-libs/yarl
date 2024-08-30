@@ -1,2 +1,0 @@
-Stopped decoding ``%2F`` (``/``) in ``URL.path``, as this could lead to code incorrectly treating it as a path separator
--- by :user:`Dreamsorcerer`.

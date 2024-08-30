@@ -1,3 +1,0 @@
-``port``, ``scheme``, and ``raw_host`` are now ``cached_property`` -- by :user:`bdraco`.
-
-``aiohttp`` accesses these properties quite often, which cause :mod:`urllib` to build the ``_hostinfo`` property every time. ``port``, ``scheme``, and ``raw_host`` are now cached properties, which will improve performance.
