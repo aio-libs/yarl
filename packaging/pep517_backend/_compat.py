@@ -5,10 +5,9 @@ import typing as t
 from contextlib import contextmanager
 from pathlib import Path
 
+# isort: off
 try:
-    from contextlib import (
-        chdir as chdir_cm,  # type: ignore[attr-defined, unused-ignore]
-    )
+    from contextlib import chdir as chdir_cm  # type: ignore[attr-defined, unused-ignore] # noqa: E501
 except ImportError:
 
     @contextmanager  # type: ignore[no-redef, unused-ignore]
@@ -20,6 +19,9 @@ except ImportError:
             yield
         finally:
             os.chdir(original_wd)
+
+
+# isort: on
 
 
 try:
