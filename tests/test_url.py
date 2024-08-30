@@ -1712,13 +1712,12 @@ def test_join_cpython_urljoin(base, url, expected):
     assert joined == expected
 
 
-@pytest.mark.xfail(raises=TypeError, strict=True, reason="empty host name")
 def test_join_cpython_urljoin_fail():
     with pytest.raises(
         TypeError, match=r"unsupported operand type\(s\) for \+: 'NoneType' and 'str'"
     ) as e:
         URL("http:///").join(URL(".."))
-    raise e.value
+    pytest.xfail("Shouldn't raise TypeError on empty host name")
 
 
 def test_split_result_non_decoded():
