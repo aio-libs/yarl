@@ -6,7 +6,9 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
 from typing import Union
-from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
+from urllib.parse import SplitResult, parse_qsl, quote, urlsplit, urlunsplit
+from urllib.parse import uses_netloc as uses_authority
+from urllib.parse import uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -259,12 +261,14 @@ class URL:
                 netloc = authority
             else:
                 tmp = SplitResult("", authority, "", "", "")
+                port = None if tmp.port == cls._default_port(scheme) else tmp.port
                 netloc = cls._make_netloc(
-                    tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
+                    tmp.username, tmp.password, tmp.hostname, port, encode=True
                 )
         elif not user and not password and not host and not port:
             netloc = ""
         else:
+            port = None if port == cls._default_port(scheme) else port
             netloc = cls._make_netloc(
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )
@@ -455,12 +459,15 @@ class URL:
     def _get_default_port(self) -> Union[int, None]:
         if not self.scheme:
             return None
+        return self._default_port(self.scheme)
 
+    @staticmethod
+    def _default_port(scheme: str) -> Union[int, None]:
         with suppress(KeyError):
-            return DEFAULT_PORTS[self.scheme]
+            return DEFAULT_PORTS[scheme]
 
         with suppress(OSError):
-            return socket.getservbyname(self.scheme)
+            return socket.getservbyname(scheme)
 
         return None
 
@@ -762,11 +769,7 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
-            segments = [
-                segment for segment in reversed(path.split("/")) if segment != "."
-            ]
-            if not segments:
-                continue
+            segments = list(reversed(path.split("/")))
             # remove trailing empty segment for all but the last path
             segment_slice_start = int(not last and segments[0] == "")
             parsed += segments[segment_slice_start:]
@@ -1153,7 +1156,52 @@ class URL:
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)), encoded=True)
+        other: URL = url
+        scheme = other.scheme or self.scheme
+        parts = {
+            k: getattr(self, k) or ""
+            for k in ("authority", "path", "query_string", "fragment")
+        }
+        parts["scheme"] = scheme
+
+        if scheme != self.scheme or scheme not in uses_relative:
+            return URL(str(other))
+
+        # scheme is in uses_authority as uses_authority is a superset of uses_relative
+        if scheme in uses_authority and other.authority:
+            parts.update(
+                {
+                    k: getattr(other, k) or ""
+                    for k in ("authority", "path", "query_string", "fragment")
+                }
+            )
+            return URL.build(**parts)
+
+        if other.path or other.fragment:
+            parts["fragment"] = other.fragment or ""
+        if other.path or other.query:
+            parts["query_string"] = other.query_string or ""
+
+        if not other.path:
+            return URL.build(**parts)
+
+        if other.path[0] == "/":
+            parts["path"] = other.path
+            return URL.build(**parts)
+
+        if self.path[-1] == "/":
+            # using an intermediate to avoid URL.joinpath dropping query & fragment
+            parts["path"] = URL(self.path).joinpath(other.path).path
+        else:
+            # …
+            # and relativizing ".."
+            path = URL("/".join([*self.parts[1:-1], ""])).joinpath(other.path).path
+            if parts["authority"]:
+                parts["path"] = "/" + path
+            else:
+                parts["path"] = path
+
+        return URL.build(**parts)
 
     def joinpath(self, *other, encoded=False):
         """Return a new URL with the elements in other appended to the path."""
