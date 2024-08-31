@@ -20,7 +20,7 @@ class CachedPropertyMixin:
                 return 1
 
         a = A()
-        assert 1 == a.prop
+        assert a.prop == 1
 
     def test_cached_property_class(self) -> None:
         class A:
@@ -33,7 +33,7 @@ class CachedPropertyMixin:
                 return 1
 
         assert isinstance(A.prop, self.cached_property)
-        assert "Docstring." == A.prop.__doc__
+        assert A.prop.__doc__ == "Docstring."
 
     def test_cached_property_assignment(self) -> None:
         class A:
@@ -74,7 +74,7 @@ class CachedPropertyMixin:
 
         a = A()
         with pytest.raises(AttributeError):
-            assert 1 == a.prop
+            assert a.prop == 1
 
 
 class TestPyCachedProperty(CachedPropertyMixin):
