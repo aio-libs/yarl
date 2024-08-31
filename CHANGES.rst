@@ -14,8 +14,11 @@ Changelog
 
 .. towncrier release notes start
 
-1.9.5 (2024-08-30)
-==================
+1.9.5
+=====
+
+*(2024-08-30)*
+
 
 Bug fixes
 ---------
