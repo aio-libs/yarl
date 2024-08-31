@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 cdef class cached_property:
     """Use as a class method decorator.  It operates almost exactly like
     the Python `@property` decorator, but it puts the result of the
