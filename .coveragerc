@@ -20,3 +20,4 @@ source =
   tests
 source_pkgs =
   yarl
+debug = pathmap
