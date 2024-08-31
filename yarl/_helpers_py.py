@@ -1,15 +1,8 @@
 """Various helper functions."""
 
-import os
-import sys
 from typing import Any, Callable, Dict, Generic, Optional, Protocol, Type, TypeVar
 
 _T = TypeVar("_T")
-
-
-NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))
-if sys.implementation.name != "cpython":
-    NO_EXTENSIONS = True
 
 
 class _TSelf(Protocol, Generic[_T]):
@@ -46,14 +39,3 @@ class cached_property(Generic[_T]):
 
     def __set__(self, inst: _TSelf[_T], value: _T) -> None:
         raise AttributeError("cached property is read-only")
-
-
-cached_property_py = cached_property
-
-try:
-    from ._helpers import cached_property as cached_property_c
-
-    if not NO_EXTENSIONS:
-        cached_property = cached_property_c  # type: ignore[misc,assignment]
-except ImportError:
-    pass

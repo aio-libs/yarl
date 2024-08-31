@@ -2,7 +2,7 @@ import platform
 
 import pytest
 
-from yarl import helpers
+from yarl import _helpers
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 
@@ -78,10 +78,14 @@ class CachedPropertyMixin:
 
 
 class TestPyCachedProperty(CachedPropertyMixin):
-    cached_property = helpers.cached_property_py  # type: ignore[assignment]
+    cached_property = _helpers.cached_property_py
 
 
-if not helpers.NO_EXTENSIONS and not IS_PYPY and hasattr(helpers, "cached_property_c"):
+if (
+    not _helpers.NO_EXTENSIONS
+    and not IS_PYPY
+    and hasattr(_helpers, "cached_property_c")
+):
 
     class TestCCachedProperty(CachedPropertyMixin):
-        cached_property = helpers.cached_property_c  # type: ignore[assignment]
+        cached_property = _helpers.cached_property_c  # type: ignore[attr-defined]

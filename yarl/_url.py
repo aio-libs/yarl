@@ -11,8 +11,8 @@ from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlun
 import idna
 from multidict import MultiDict, MultiDictProxy
 
+from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
-from .helpers import cached_property
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
