@@ -119,8 +119,6 @@ repos:
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
     args:
-    - --install-types
-    - --non-interactive
     - --python-version=3.12
     - --txt-report=.tox/.tmp/.mypy/python-3.12
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.12
@@ -141,8 +139,6 @@ repos:
     - types-Pygments
     - types-colorama
     args:
-    - --install-types
-    - --non-interactive
     - --python-version=3.10
     - --txt-report=.tox/.tmp/.mypy/python-3.10
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.10
@@ -160,8 +156,6 @@ repos:
     - types-Pygments
     - types-colorama
     args:
-    - --install-types
-    - --non-interactive
     - --python-version=3.8
     - --txt-report=.tox/.tmp/.mypy/python-3.8
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.8
