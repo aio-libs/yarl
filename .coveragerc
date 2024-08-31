@@ -13,8 +13,7 @@ show_missing = true
 branch = true
 cover_pylib = false
 plugins = Cython.Coverage
-source =
-  tests
 source_pkgs =
+  tests
   yarl
 debug = pathmap
