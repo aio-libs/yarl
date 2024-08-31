@@ -304,6 +304,7 @@ jobs:
         pytest
         -v
         --cov-report xml
+        --cov-report term
         --junitxml=.test-results/pytest/test.xml
     - name: Produce markdown test summary from JUnit
       if: >-
