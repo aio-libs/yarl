@@ -14,6 +14,26 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.6
+=====
+
+*(2024-08-30)*
+
+
+Bug fixes
+---------
+
+- Reverted :rfc:`3986` compatible :meth:`URL.join() <yarl.URL.join>` honoring empty segments which was introduced in :issue:`1039`.
+
+  This change introduced a regression handling query string parameters with joined URLs. The change was reverted to maintain compatibility with the previous behavior.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1067`.
+
+
+----
+
+
 1.9.5
 =====
 
@@ -98,6 +118,11 @@ Removals and backward incompatible breaking changes
 
   *Related issues and pull requests on GitHub:*
   :issue:`1057`.
+
+- Dropped support for Python 3.7 -- by :user:`Dreamsorcerer`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1016`.
 
 
 Improved documentation
