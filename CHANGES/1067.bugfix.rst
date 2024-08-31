@@ -1,0 +1,3 @@
+Reverted RFC3986 compatible URL.join honoring empty segments which was introduced in :issue:`1039`.
+
+This change introduced a regression handling query string parameters with joined URLs. The change was reverted to maintain compatibility with the previous behavior.
