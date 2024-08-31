@@ -431,7 +431,7 @@ jobs:
         version_file: ${{ env.PROJECT_NAME }}/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
         head_line: >-
-          v{version}\n{'=' * (len(version) + 1)}\n\n\*\({date}\)\*\n
+          {version}\n=+\n\n\*\({date}\)\*\n
         fix_issue_regex: >-
           :issue:`(\d+)`
         fix_issue_repl: >-
