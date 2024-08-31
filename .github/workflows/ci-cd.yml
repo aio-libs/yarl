@@ -303,7 +303,6 @@ jobs:
         python -Im
         pytest
         -v
-        --cov-report xml
         --cov-report term
         --junitxml=.test-results/pytest/test.xml
     - name: Produce markdown test summary from JUnit
@@ -330,6 +329,14 @@ jobs:
         pytest --no-cov -vvvvv --lf -rA
         && exit 1
       shell: bash
+    - name: Turn coverage into xml
+      if: >-
+        !cancelled()
+      env:
+        COLOR: 'yes'
+        PIP_USER: 1
+      run: |
+        python -m coverage xml
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
@@ -343,6 +350,7 @@ jobs:
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: false
+        verbose: true
 
   test-summary:
     name: Test matrix status
