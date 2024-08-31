@@ -45,7 +45,7 @@ class cached_property(Generic[_T]):
             raise
 
     def __set__(self, inst: _TSelf[_T], value: _T) -> None:
-        raise AttributeError("reified property is read-only")
+        raise AttributeError("cached property is read-only")
 
 
 cached_property_py = cached_property
