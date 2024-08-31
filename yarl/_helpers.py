@@ -9,16 +9,18 @@ if sys.implementation.name != "cpython":
     NO_EXTENSIONS = True
 
 
+# isort: off
 if not NO_EXTENSIONS:  # pragma: no branch
     try:
-        from ._helpers_c import cached_property
+        from ._helpers_c import cached_property_c  # type: ignore[attr-defined, unused-ignore] # noqa: E501
 
-        cached_property_c = cached_property
+        cached_property = cached_property_c
     except ImportError:  # pragma: no cover
-        from ._helpers_py import cached_property  # type: ignore[assignment]
+        from ._helpers_py import cached_property as cached_property_py
 
-        cached_property_py = cached_property
+        cached_property = cached_property_py
 else:
-    from ._helpers_py import cached_property  # type: ignore[assignment]
+    from ._helpers_py import cached_property as cached_property_py
 
-    cached_property_py = cached_property
+    cached_property = cached_property_py
+# isort: on

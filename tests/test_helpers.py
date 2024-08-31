@@ -78,7 +78,7 @@ class CachedPropertyMixin:
 
 
 class TestPyCachedProperty(CachedPropertyMixin):
-    cached_property = _helpers.cached_property_py
+    cached_property = _helpers.cached_property_py  # type: ignore[assignment]
 
 
 if (
@@ -88,4 +88,4 @@ if (
 ):
 
     class TestCCachedProperty(CachedPropertyMixin):
-        cached_property = _helpers.cached_property_c  # type: ignore[attr-defined]
+        cached_property = _helpers.cached_property_c  # type: ignore[attr-defined, unused-ignore] # noqa: E501
