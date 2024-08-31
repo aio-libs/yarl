@@ -1,12 +1,15 @@
 """Various helper functions"""
 
 import os
+import sys
 from typing import Any, Callable, Dict, Generic, Optional, Protocol, Type, TypeVar
 
 _T = TypeVar("_T")
 
 
 NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))
+if sys.implementation.name != "cpython":
+    NO_EXTENSIONS = True
 
 
 class _TSelf(Protocol, Generic[_T]):
