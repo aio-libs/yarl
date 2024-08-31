@@ -163,7 +163,7 @@ jobs:
     name: Test
     needs:
     - build-pure-python-dists  # transitive, for accessing settings
-    - build-wheels-for-tested-arches
+    #    - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
