@@ -1790,3 +1790,35 @@ def test_requoting():
     u = URL("http://127.0.0.1/?next=http%3A//example.com/")
     assert u.raw_query_string == "next=http://example.com/"
     assert str(u) == "http://127.0.0.1/?next=http://example.com/"
+
+
+def test_join_query_string():
+    """Test that query strings are correctly joined."""
+    original = URL("http://127.0.0.1:62869")
+    path_url = URL(
+        "/api?start=2022-03-27T14:05:00%2B03:00&end=2022-03-27T16:05:00%2B03:00"
+    )
+    assert path_url.query.get("start") == "2022-03-27T14:05:00+03:00"
+    assert path_url.query.get("end") == "2022-03-27T16:05:00+03:00"
+    new = original.join(path_url)
+    assert new.query.get("start") == "2022-03-27T14:05:00+03:00"
+    assert new.query.get("end") == "2022-03-27T16:05:00+03:00"
+
+
+def test_join_query_string_with_special_chars():
+    """Test url joining when the query string has non-ascii params."""
+    original = URL("http://127.0.0.1")
+    path_url = URL("/api?text=%D1%82%D0%B5%D0%BA%D1%81%D1%82")
+    assert path_url.query.get("text") == "текст"
+    new = original.join(path_url)
+    assert new.query.get("text") == "текст"
+
+
+def test_join_encoded_url():
+    """Test that url encoded urls are correctly joined."""
+    original = URL("http://127.0.0.1:62869")
+    path_url = URL("/api/%34")
+    assert original.path == "/"
+    assert path_url.path == "/api/4"
+    new = original.join(path_url)
+    assert new.path == "/api/4"
