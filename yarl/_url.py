@@ -32,24 +32,27 @@ class cached_property:
     effectively replacing the function it decorates with an instance
     variable.  It is, in Python parlance, a data descriptor.
 
+    This is trimmed down version of the `cached_property` decorator from
+    the standard library which does not have the undocumented locking
+    behavior that was removed in Python 3.12.
     """
+
+    # When support for Python 3.11 is dropped, this can be replaced with
+    # functools.cached_property.
 
     def __init__(self, wrapped):
         self.wrapped = wrapped
-        try:
-            self.__doc__ = wrapped.__doc__
-        except AttributeError:  # pragma: no cover
-            self.__doc__ = ""
+        self.__doc__ = wrapped.__doc__
         self.name = wrapped.__name__
 
     def __get__(self, inst, owner, _sentinel=sentinel):
         if inst is None:
             return self
-        val = inst._cache.get(self.name, _sentinel)
-        if val is not _sentinel:
-            return val
-        val = self.wrapped(inst)
-        inst._cache[self.name] = val
+        cache = inst.__dict__
+        val = cache.get(self.name, _sentinel)
+        if val is _sentinel:
+            val = self.wrapped(inst)
+            cache[self.name] = val
         return val
 
     def __set__(self, inst, value):
@@ -151,8 +154,6 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ("_cache", "_val")
-
     _QUOTER = _Quoter(requote=False)
     _REQUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
