@@ -1,4 +1,4 @@
-"""Various helper functions"""
+"""Various helper functions."""
 
 import os
 import sys
