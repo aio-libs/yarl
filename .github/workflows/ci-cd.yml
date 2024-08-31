@@ -264,7 +264,7 @@ jobs:
         --only-binary=:all:
         --dry-run
         --report=-
-        --quiet
+        -vvv
         | jq --raw-output .install[].download_info.url
         | tee -a "${GITHUB_OUTPUT}"
       shell: bash
