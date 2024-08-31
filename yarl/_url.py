@@ -12,6 +12,7 @@ import idna
 from multidict import MultiDict, MultiDictProxy
 
 from ._quoting import _Quoter, _Unquoter
+from .helpers import cached_property
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
@@ -21,37 +22,6 @@ sentinel = object()
 def rewrite_module(obj: object) -> object:
     obj.__module__ = "yarl"
     return obj
-
-
-class cached_property:
-    """Use as a class method decorator.  It operates almost exactly like
-    the Python `@property` decorator, but it puts the result of the
-    method it decorates into the instance dict after the first call,
-    effectively replacing the function it decorates with an instance
-    variable.  It is, in Python parlance, a data descriptor.
-
-    """
-
-    def __init__(self, wrapped):
-        self.wrapped = wrapped
-        try:
-            self.__doc__ = wrapped.__doc__
-        except AttributeError:  # pragma: no cover
-            self.__doc__ = ""
-        self.name = wrapped.__name__
-
-    def __get__(self, inst, owner, _sentinel=sentinel):
-        if inst is None:
-            return self
-        val = inst._cache.get(self.name, _sentinel)
-        if val is not _sentinel:
-            return val
-        val = self.wrapped(inst)
-        inst._cache[self.name] = val
-        return val
-
-    def __set__(self, inst, value):
-        raise AttributeError("cached property is read-only")
 
 
 def _normalize_path_segments(segments):
