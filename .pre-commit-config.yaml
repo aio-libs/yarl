@@ -123,9 +123,6 @@ repos:
     - --txt-report=.tox/.tmp/.mypy/python-3.12
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.12
     - --html-report=.tox/.tmp/.mypy/python-3.12
-    - packaging/
-    - tests/
-    - yarl/
     pass_filenames: false
   - id: mypy
     alias: mypy-py310
