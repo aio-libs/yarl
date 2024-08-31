@@ -269,7 +269,7 @@ jobs:
         | tee -a "${GITHUB_OUTPUT}"
       shell: bash
     - name: Self-install
-      run: python -Im pip install -vvv '${{ steps.wheel-file.outputs.path }}'
+      run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
     - name: Produce the C-files for the Coverage.py Cython plugin
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
@@ -350,7 +350,6 @@ jobs:
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: false
-        verbose: true
 
   test-summary:
     name: Test matrix status
