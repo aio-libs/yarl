@@ -49,6 +49,33 @@ class CachedPropertyMixin:
         with pytest.raises(AttributeError):
             a.prop = 123
 
+    def test_cached_property_without_cache(self) -> None:
+        class A:
+            def __init__(self):
+                pass
+
+            @self.cached_property  # type: ignore[misc]
+            def prop(self):
+                return 1
+
+        a = A()
+
+        with pytest.raises(AttributeError):
+            a.prop = 123
+
+    def test_cached_property_check_without_cache(self) -> None:
+        class A:
+            def __init__(self):
+                pass
+
+            @self.cached_property  # type: ignore[misc]
+            def prop(self):
+                return 1
+
+        a = A()
+        with pytest.raises(AttributeError):
+            assert 1 == a.prop
+
 
 class TestPyCachedProperty(CachedPropertyMixin):
     cached_property = helpers.cached_property_py  # type: ignore[assignment]
