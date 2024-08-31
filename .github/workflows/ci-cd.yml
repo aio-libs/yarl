@@ -316,7 +316,6 @@ jobs:
         !cancelled()
       run: >-
         python -Im coverage report --format=markdown
-        --debug=plugin,self,sys,trace,process,pid,lock,multiop
         >> "${GITHUB_STEP_SUMMARY}"
       shell: bash
     - name: Re-run the failing tests with maximum verbosity
