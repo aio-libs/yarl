@@ -88,4 +88,4 @@ if (
 ):
 
     class TestCCachedProperty(CachedPropertyMixin):
-        cached_property = _helpers.cached_property_c  # type: ignore[attr-defined, unused-ignore] # noqa: E501
+        cached_property = _helpers.cached_property_c  # type: ignore[assignment, attr-defined, unused-ignore] # noqa: E501
