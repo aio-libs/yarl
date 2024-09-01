@@ -26,7 +26,7 @@ cythonize: .cythonize
 
 
 .develop: .install-deps $(shell find yarl -type f)
-	@pip install -e . --config-settings=--pure-python=false
+	@pip install -e .
 	@touch .develop
 
 fmt:

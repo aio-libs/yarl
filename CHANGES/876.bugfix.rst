@@ -1,1 +1,0 @@
-Fixed the human representation of URLs with square brackets in usernames and passwords -- by :user:`mjpieters`.

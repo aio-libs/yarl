@@ -40,7 +40,7 @@ class _Quoter:
             raise TypeError("Argument should be str")
         if not val:
             return ""
-        bval = cast(str, val).encode("utf8", errors="ignore")
+        bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
         safe = self._safe
@@ -116,7 +116,8 @@ class _Quoter:
 
 
 class _Unquoter:
-    def __init__(self, *, unsafe: str = "", qs: bool = False) -> None:
+    def __init__(self, *, ignore: str = "", unsafe: str = "", qs: bool = False) -> None:
+        self._ignore = ignore
         self._unsafe = unsafe
         self._qs = qs
         self._quoter = _Quoter()
@@ -158,7 +159,7 @@ class _Unquoter:
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
                         ret.append(to_add)
-                    elif unquoted in self._unsafe:
+                    elif unquoted in self._unsafe or unquoted in self._ignore:
                         to_add = self._quoter(unquoted)
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")

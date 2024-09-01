@@ -61,9 +61,9 @@ automatically encoded giving canonical representation as result:
 
 .. doctest::
 
-   >>> url = URL('https://www.python.org/путь')
+   >>> url = URL('https://www.python.org/шлях')
    >>> url
-   URL('https://www.python.org/%D0%BF%D1%83%D1%82%D1%8C')
+   URL('https://www.python.org/%D1%88%D0%BB%D1%8F%D1%85')
 
 Regular properties are *percent-decoded*, use ``raw_`` versions for
 getting *encoded* strings:
@@ -71,17 +71,17 @@ getting *encoded* strings:
 .. doctest::
 
    >>> url.path
-   '/путь'
+   '/шлях'
 
    >>> url.raw_path
-   '/%D0%BF%D1%83%D1%82%D1%8C'
+   '/%D1%88%D0%BB%D1%8F%D1%85'
 
 Human readable representation of URL is available as :meth:`~yarl.URL.human_repr`:
 
 .. doctest::
 
    >>> url.human_repr()
-   'https://www.python.org/путь'
+   'https://www.python.org/шлях'
 
 For full documentation please read :ref:`yarl-api` section.
 
@@ -102,12 +102,12 @@ used with our wheels) the the tarball will be used to compile the library from
 the source code. It requires a C compiler and and Python headers installed.
 
 To skip the compilation you must explicitly opt-in by using a PEP 517
-configuration setting ``--pure-python``, or setting the ``YARL_NO_EXTENSIONS``
+configuration setting ``pure-python``, or setting the ``YARL_NO_EXTENSIONS``
 environment variable to a non-empty value, e.g.:
 
 .. code-block:: console
 
-   $ pip install yarl --config-settings=--pure-python=
+   $ pip install yarl --config-settings=pure-python=false
 
 Please note that the pure-Python (uncompiled) version is much slower. However,
 PyPy always uses a pure-Python implementation, and, as such, it is unaffected
@@ -175,9 +175,6 @@ Please file an issue on the `bug tracker
 <https://github.com/aio-libs/yarl/issues>`_ if you have found a bug
 or have some suggestion in order to improve the library.
 
-The library uses `Azure Pipelines <https://dev.azure.com/aio-libs/yarl>`_ for
-Continuous Integration.
-
 Discussion list
 ---------------
 
@@ -211,6 +208,12 @@ Contents:
    :caption: Contributing
 
    contributing/guidelines
+
+.. toctree::
+   :caption: Maintenance
+
+   contributing/release_guide
+
 
 Indices and tables
 ==================

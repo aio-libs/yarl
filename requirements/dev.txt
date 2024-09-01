@@ -1,2 +1,2 @@
--r text.txt
-towncrier==23.11.0
+-r test.txt
+-r towncrier.txt

@@ -1,15 +1,18 @@
 import functools
 import math
 import re
+import socket
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
+from typing import Union
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
 from multidict import MultiDict, MultiDictProxy
 
+from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
@@ -36,37 +39,6 @@ _not_reg_name = re.compile(
 def rewrite_module(obj: object) -> object:
     obj.__module__ = "yarl"
     return obj
-
-
-class cached_property:
-    """Use as a class method decorator.  It operates almost exactly like
-    the Python `@property` decorator, but it puts the result of the
-    method it decorates into the instance dict after the first call,
-    effectively replacing the function it decorates with an instance
-    variable.  It is, in Python parlance, a data descriptor.
-
-    """
-
-    def __init__(self, wrapped):
-        self.wrapped = wrapped
-        try:
-            self.__doc__ = wrapped.__doc__
-        except AttributeError:  # pragma: no cover
-            self.__doc__ = ""
-        self.name = wrapped.__name__
-
-    def __get__(self, inst, owner, _sentinel=sentinel):
-        if inst is None:
-            return self
-        val = inst._cache.get(self.name, _sentinel)
-        if val is not _sentinel:
-            return val
-        val = self.wrapped(inst)
-        inst._cache[self.name] = val
-        return val
-
-    def __set__(self, inst, value):
-        raise AttributeError("cached property is read-only")
 
 
 def _normalize_path_segments(segments):
@@ -177,7 +149,7 @@ class URL:
     _FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
-    _PATH_UNQUOTER = _Unquoter(unsafe="+")
+    _PATH_UNQUOTER = _Unquoter(ignore="/", unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
     def __new__(cls, val="", *, encoded=False, strict=None):
@@ -250,6 +222,8 @@ class URL:
             raise ValueError(
                 'Can\'t mix "authority" with "user", "password", "host" or "port".'
             )
+        if not isinstance(port, (int, type(None))):
+            raise TypeError("The port is required to be int.")
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
@@ -306,6 +280,18 @@ class URL:
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
+        if (port := self._get_port()) is None:
+            # port normalization - using None for default ports to remove from rendering
+            # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
+            val = val._replace(
+                netloc=self._make_netloc(
+                    self.raw_user,
+                    self.raw_password,
+                    self.raw_host,
+                    port,
+                    encode_host=False,
+                )
+            )
         return urlunsplit(val)
 
     def __repr__(self):
@@ -397,10 +383,13 @@ class URL:
         e.g. 'http://python.org' or 'http://python.org:80', False
         otherwise.
 
+        Return False for relative URLs.
+
         """
-        if self.port is None:
-            return False
-        default = DEFAULT_PORTS.get(self.scheme)
+        if self.explicit_port is None:
+            # A relative URL does not have an implicit port / default port
+            return self.port is not None
+        default = self._get_default_port()
         if default is None:
             return False
         return self.port == default
@@ -432,7 +421,7 @@ class URL:
         val = self._val._replace(scheme="", netloc="")
         return URL(val, encoded=True)
 
-    @property
+    @cached_property
     def scheme(self):
         """Scheme for absolute URLs.
 
@@ -449,6 +438,24 @@ class URL:
 
         """
         return self._val.netloc
+
+    def _get_default_port(self) -> Union[int, None]:
+        if not self.scheme:
+            return None
+
+        with suppress(KeyError):
+            return DEFAULT_PORTS[self.scheme]
+
+        with suppress(OSError):
+            return socket.getservbyname(self.scheme)
+
+        return None
+
+    def _get_port(self) -> Union[int, None]:
+        """Port or None if default port"""
+        if self._get_default_port() == self.port:
+            return None
+        return self.port
 
     @cached_property
     def authority(self):
@@ -501,7 +508,7 @@ class URL:
         """
         return self._UNQUOTER(self.raw_password)
 
-    @property
+    @cached_property
     def raw_host(self):
         """Encoded host part of URL.
 
@@ -524,12 +531,12 @@ class URL:
             return None
         if "%" in raw:
             # Hack for scoped IPv6 addresses like
-            # fe80::2%Проверка
+            # fe80::2%Перевірка
             # presence of '%' sign means only IPv6 address, so idna is useless.
             return raw
         return _idna_decode(raw)
 
-    @property
+    @cached_property
     def port(self):
         """Port part of URL, with scheme-based fallback.
 
@@ -537,7 +544,7 @@ class URL:
         scheme without default port substitution.
 
         """
-        return self._val.port or DEFAULT_PORTS.get(self._val.scheme)
+        return self._val.port or self._get_default_port()
 
     @property
     def explicit_port(self):
@@ -728,28 +735,34 @@ class URL:
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
 
-    def _make_child(self, segments, encoded=False):
-        """add segments to self._val.path, accounting for absolute vs relative paths"""
-        # keep the trailing slash if the last segment ends with /
-        parsed = [""] if segments and segments[-1][-1:] == "/" else []
-        for seg in reversed(segments):
-            if not seg:
-                continue
-            if seg[0] == "/":
+    def _make_child(self, paths, encoded=False):
+        """
+        add paths to self._val.path, accounting for absolute vs relative paths,
+        keep existing, but do not create new, empty segments
+        """
+        parsed = []
+        for idx, path in enumerate(reversed(paths)):
+            # empty segment of last is not removed
+            last = idx == 0
+            if path and path[0] == "/":
                 raise ValueError(
-                    f"Appending path {seg!r} starting from slash is forbidden"
+                    f"Appending path {path!r} starting from slash is forbidden"
                 )
-            seg = seg if encoded else self._PATH_QUOTER(seg)
-            if "/" in seg:
-                parsed += (
-                    sub for sub in reversed(seg.split("/")) if sub and sub != "."
-                )
-            elif seg != ".":
-                parsed.append(seg)
+            path = path if encoded else self._PATH_QUOTER(path)
+            segments = [
+                segment for segment in reversed(path.split("/")) if segment != "."
+            ]
+            if not segments:
+                continue
+            # remove trailing empty segment for all but the last path
+            segment_slice_start = int(not last and segments[0] == "")
+            parsed += segments[segment_slice_start:]
         parsed.reverse()
-        old_path = self._val.path
-        if old_path:
-            parsed = [*old_path.rstrip("/").split("/"), *parsed]
+
+        if self._val.path and (old_path_segments := self._val.path.split("/")):
+            old_path_cutoff = -1 if old_path_segments[-1] == "" else None
+            parsed = [*old_path_segments[:old_path_cutoff], *parsed]
+
         if self.is_absolute():
             parsed = _normalize_path_segments(parsed)
             if parsed and parsed[0] != "":

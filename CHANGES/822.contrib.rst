@@ -1,2 +1,0 @@
-A regression test for no-host URLs was added per :issue:`821`
-and :rfc:`3986` -- by :user:`kenballus`.

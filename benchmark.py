@@ -41,14 +41,14 @@ print(
 
 print(
     "Cython quote: {:.3f} sec".format(
-        timeit.timeit("q(s)", cython_setup + "s='/путь/файл';q=Quoter()")
+        timeit.timeit("q(s)", cython_setup + "s='/шлях/файл';q=Quoter()")
     )
 )
 
 
 print(
     "Python quote: {:.3f} sec".format(
-        timeit.timeit("q(s)", python_setup + "s='/путь/файл';q=Quoter()")
+        timeit.timeit("q(s)", python_setup + "s='/шлях/файл';q=Quoter()")
     )
 )
 

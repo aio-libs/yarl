@@ -27,6 +27,13 @@ def get_enabled_cli_flags_from_config(flags_map):
 
 def sanitize_rst_roles(rst_source_text: str) -> str:
     """Replace RST roles with inline highlighting."""
+    pep_role_regex = r"""(?x)
+        :pep:`(?P<pep_number>\d+)`
+    """
+    pep_substitution_pattern = (
+        r"`PEP \g<pep_number> <https://peps.python.org/pep-\g<pep_number>>`__"
+    )
+
     user_role_regex = r"""(?x)
         :user:`(?P<github_username>[^`]+)(?:\s+(.*))?`
     """
@@ -60,11 +67,9 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
     )
 
     gh_role_regex = r"""(?x)
-        :gh:`(?P<gh_slug>[^`]+)(?:\s+(.*))?`
+        :gh:`(?P<gh_slug>[^`<]+)(?:\s+([^`]*))?`
     """
-    gh_substitution_pattern = (
-        r"`GitHub: \g<gh_slug> <https://github.com/\g<gh_slug>>`__"
-    )
+    gh_substitution_pattern = r"GitHub: ``\g<gh_slug>``"
 
     meth_role_regex = r"""(?x)
         (?::py)?:meth:`~?(?P<rendered_text>[^`<]+)(?:\s+([^`]*))?`
@@ -76,7 +81,11 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
     """
     substitution_pattern = r"``\g<rendered_text>``"
 
+    project_substitution_regex = r"\|project\|"
+    project_substitution_pattern = "yarl"
+
     substitutions = (
+        (pep_role_regex, pep_substitution_pattern),
         (user_role_regex, user_substitution_pattern),
         (issue_role_regex, issue_substitution_pattern),
         (pr_role_regex, pr_substitution_pattern),
@@ -84,6 +93,7 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
         (gh_role_regex, gh_substitution_pattern),
         (meth_role_regex, meth_substitution_pattern),
         (role_regex, substitution_pattern),
+        (project_substitution_regex, project_substitution_pattern),
     )
 
     rst_source_normalized_text = rst_source_text

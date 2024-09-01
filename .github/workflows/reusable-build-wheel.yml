@@ -9,6 +9,11 @@ on:
         description: Workflow artifact name containing dists
         required: true
         type: string
+      cython-tracing:
+        description: Whether to build Cython modules with line tracing
+        default: '0'
+        required: false
+        type: string
       os:
         description: VM OS to use, without version suffix
         default: ubuntu
@@ -23,6 +28,11 @@ on:
         description: Sdist filename wildcard
         required: true
         type: string
+      wheel-tags-to-skip:
+        description: Wheel tags to skip building
+        default: ''
+        required: false
+        type: string
 
 env:
   FORCE_COLOR: "1"  # Make tools pretty.
@@ -34,6 +44,7 @@ jobs:
   build-wheel:
     name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
     runs-on: ${{ inputs.os }}-latest
+    timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v1
@@ -55,13 +66,19 @@ jobs:
         echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
       shell: bash
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - name: Skip building some wheel tags
+      if: inputs.wheel-tags-to-skip
+      run: |
+        echo "CIBW_SKIP=${{ inputs.wheel-tags-to-skip }}" >> "${GITHUB_ENV}"
+      shell: bash
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.16.2
+      uses: pypa/cibuildwheel@v2.20.0
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
+        CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
+          pure-python=false
+          with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v3

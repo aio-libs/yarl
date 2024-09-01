@@ -1,2 +1,0 @@
-Declared modern ``setuptools.build_meta`` as the :pep:`517` build
-backend in :file:`pyproject.toml` explicitly -- by :user:`webknjaz`.
