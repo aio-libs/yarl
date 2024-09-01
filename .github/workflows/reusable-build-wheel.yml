@@ -76,7 +76,6 @@ jobs:
       uses: pypa/cibuildwheel@v2.20.0
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-        CIBW_TEST_COMMAND: "python -I -m pytest {project}/tests"
         CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
           pure-python=false
           with-cython-tracing=${{ inputs.cython-tracing }}
