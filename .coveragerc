@@ -1,7 +1,6 @@
 [paths]
 source =
   yarl
-  tests
   */lib/pypy*/site-packages/yarl
   */lib/python*/site-packages/yarl
   */Lib/site-packages/yarl
@@ -15,6 +14,8 @@ show_missing = true
 branch = true
 cover_pylib = false
 plugins = Cython.Coverage
-source_pkgs =
+relative_files = true
+source =
   tests
+source_pkgs =
   yarl
