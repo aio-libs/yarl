@@ -1,7 +1,6 @@
 [paths]
 source =
   yarl
-  tests
   */lib/pypy*/site-packages/yarl
   */lib/python*/site-packages/yarl
   */Lib/site-packages/yarl
