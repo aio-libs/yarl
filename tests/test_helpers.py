@@ -25,12 +25,12 @@ class CachedPropertyMixin:
     def test_cached_property_class(self) -> None:
         class A:
             def __init__(self):
-                self._cache = {}
+                """Init."""
+                # self._cache not set because its never accessed in this test
 
             @self.cached_property  # type: ignore[misc]
             def prop(self):
                 """Docstring."""
-                return 1
 
         assert isinstance(A.prop, self.cached_property)
         assert A.prop.__doc__ == "Docstring."
@@ -42,7 +42,7 @@ class CachedPropertyMixin:
 
             @self.cached_property  # type: ignore[misc]
             def prop(self):
-                return 1
+                """Mock property."""
 
         a = A()
 
@@ -56,7 +56,7 @@ class CachedPropertyMixin:
 
             @self.cached_property  # type: ignore[misc]
             def prop(self):
-                return 1
+                """Mock property."""
 
         a = A()
 
@@ -70,7 +70,7 @@ class CachedPropertyMixin:
 
             @self.cached_property  # type: ignore[misc]
             def prop(self):
-                return 1
+                """Mock property."""
 
         a = A()
         with pytest.raises(AttributeError):
