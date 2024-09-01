@@ -14,6 +14,37 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.7
+=====
+
+*(2024-09-01)*
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Removed support :rfc:`3986#section-3.2.3` port normalization when the scheme is not one of ``http``, ``https``, ``wss``, or ``ws`` -- by :user:`bdraco`.
+
+  Support for port normalization was recently added in :issue:`1033` and contained code that would do blocking I/O if the scheme was not one of the four listed above. The code has been removed because this library is intended to be safe for usage with ``asyncio``.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1076`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of property caching -- by :user:`bdraco`.
+
+  The ``reify`` implementation from ``aiohttp`` was adapted to replace the internal ``cached_property`` implementation.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1070`.
+
+
+----
+
+
 1.9.6
 =====
 
