@@ -25,7 +25,7 @@ Removals and backward incompatible breaking changes
 
 - Removed support :rfc:`3986#section-3.2.3` port normalization when the scheme is not one of ``http``, ``https``, ``wss``, or ``ws`` -- by :user:`bdraco`.
 
-  Support for port normalization was recently added in :issue:`1033` and contained code that would do blocking I/O if the scheme was not one of the four listed above. The code has been removed because this library is intended to be safe for usage with ``asyncio``.
+  Support for port normalization was recently added in :issue:`1033` and contained code that would do blocking I/O if the scheme was not one of the four listed above. The code has been removed because this library is intended to be safe for usage with :mod:`asyncio`.
 
   *Related issues and pull requests on GitHub:*
   :issue:`1076`.
