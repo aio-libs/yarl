@@ -14,7 +14,7 @@ def test_inheritance():
 
     assert (
         "Inheriting a class "
-        "<class 'test_url.test_inheritance.<locals>.MyURL'> "
+        "<class 'tests.test_url.test_inheritance.<locals>.MyURL'> "
         "from URL is forbidden" == str(ctx.value)
     )
 
