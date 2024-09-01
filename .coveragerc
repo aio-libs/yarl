@@ -1,10 +1,10 @@
 [paths]
 source =
   yarl
-  tests
   */lib/pypy*/site-packages/yarl
   */lib/python*/site-packages/yarl
   */Lib/site-packages/yarl
+  tests
 
 [report]
 skip_covered = true
@@ -15,6 +15,6 @@ show_missing = true
 branch = true
 cover_pylib = false
 plugins = Cython.Coverage
-source_pkgs =
-  tests
+source =
   yarl
+  tests
