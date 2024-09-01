@@ -2,7 +2,7 @@ import platform
 
 import pytest
 
-from yarl import _helpers
+from yarl import _helpers, _helpers_py
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 
@@ -78,7 +78,7 @@ class CachedPropertyMixin:
 
 
 class TestPyCachedProperty(CachedPropertyMixin):
-    cached_property = _helpers.cached_property_py  # type: ignore[assignment]
+    cached_property = _helpers_py.cached_property  # type: ignore[assignment]
 
 
 if (
