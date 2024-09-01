@@ -26,8 +26,8 @@ downstreams
 facto
 glibc
 google
-hostnames
 hardcoded
+hostnames
 macOS
 mailto
 manylinux
