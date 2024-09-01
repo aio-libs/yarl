@@ -422,9 +422,10 @@ class URL:
         return self._val.netloc
 
     def _get_default_port(self) -> Union[int, None]:
-        if not self.scheme:
+        scheme = self.scheme
+        if not scheme:
             return None
-        return DEFAULT_PORTS.get(self.scheme)
+        return DEFAULT_PORTS.get(scheme)
 
     def _get_port(self) -> Union[int, None]:
         """Port or None if default port"""
