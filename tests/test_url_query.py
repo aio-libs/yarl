@@ -88,7 +88,7 @@ def test_query_dont_unqoute_twice():
 _SEMICOLON_XFAIL = pytest.mark.xfail(
     condition="separator" not in parse_qs.__code__.co_varnames,
     reason=(
-        "Python versions < 3.7.10, < 3.8.8 and < 3.9.2 lack a fix for "
+        "Python versions < 3.8.8 and < 3.9.2 lack a fix for "
         'CVE-2021-23336 dropping ";" as a valid query parameter separator, '
         "making this test fail."
     ),
