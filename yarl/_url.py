@@ -1,6 +1,5 @@
 import functools
 import math
-import socket
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
@@ -425,14 +424,7 @@ class URL:
     def _get_default_port(self) -> Union[int, None]:
         if not self.scheme:
             return None
-
-        with suppress(KeyError):
-            return DEFAULT_PORTS[self.scheme]
-
-        with suppress(OSError):
-            return socket.getservbyname(self.scheme)
-
-        return None
+        return DEFAULT_PORTS.get(self.scheme)
 
     def _get_port(self) -> Union[int, None]:
         """Port or None if default port"""
