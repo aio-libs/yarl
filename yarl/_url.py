@@ -1125,8 +1125,8 @@ class URL:
         other: URL = url
         scheme = other.scheme or self.scheme
         parts = {
-            k: getattr(self, k) or ""
-            for k in ("authority", "path", "query_string", "fragment")
+            k[len("raw_") :]: getattr(self, k) or ""
+            for k in ("raw_authority", "raw_path", "raw_query_string", "raw_fragment")
         }
         parts["scheme"] = scheme
 
@@ -1137,27 +1137,34 @@ class URL:
         if scheme in uses_authority and other.authority:
             parts.update(
                 {
-                    k: getattr(other, k) or ""
-                    for k in ("authority", "path", "query_string", "fragment")
+                    k[len("raw_") :]: getattr(other, k) or ""
+                    for k in (
+                        "raw_authority",
+                        "raw_path",
+                        "raw_query_string",
+                        "raw_fragment",
+                    )
                 }
             )
-            return URL.build(**parts)
+            return URL.build(**parts, encoded=True)
 
         if other.path or other.fragment:
-            parts["fragment"] = other.fragment or ""
+            parts["fragment"] = other.raw_fragment or ""
         if other.path or other.query:
-            parts["query_string"] = other.query_string or ""
+            parts["query_string"] = other.raw_query_string or ""
 
         if not other.path:
-            return URL.build(**parts)
+            return URL.build(**parts, encoded=True)
 
         if other.path[0] == "/":
-            parts["path"] = other.path
-            return URL.build(**parts)
+            parts["path"] = self._normalize_path(other.path)
+            return URL.build(**parts, encoded=True)
 
         if self.path[-1] == "/":
             # using an intermediate to avoid URL.joinpath dropping query & fragment
-            parts["path"] = URL(self.path).joinpath(other.path).path
+            parts["path"] = self._normalize_path(
+                URL(self.path).joinpath(other.path).path
+            )
         else:
             # …
             # and relativizing ".."
@@ -1166,8 +1173,8 @@ class URL:
                 parts["path"] = "/" + path
             else:
                 parts["path"] = path
-
-        return URL.build(**parts)
+        parts["path"] = self._normalize_path(parts["path"])
+        return URL.build(**parts, encoded=True)
 
     def joinpath(self, *other, encoded=False):
         """Return a new URL with the elements in other appended to the path."""

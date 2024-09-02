@@ -1706,6 +1706,7 @@ URLLIB_URLJOIN = [
     ("http://a/b/c/d/e/", "../../f/g", "http://a/b/c/f/g"),
     ("http://a/b/", "../../f/g/", "http://a/f/g/"),
     ("a", "b", "b"),
+    ("http:///", "..", "http:///"),
 ]
 
 
@@ -1719,11 +1720,11 @@ def test_join_cpython_urljoin(base, url, expected):
     assert joined == expected
 
 
-def test_join_cpython_urljoin_fail():
+def test_empty_authority():
     with pytest.raises(
         TypeError, match=r"unsupported operand type\(s\) for \+: 'NoneType' and 'str'"
     ):
-        URL("http:///").join(URL(".."))
+        URL("http:///").authority
     pytest.xfail("Shouldn't raise TypeError on empty host name")
 
 
