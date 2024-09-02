@@ -22,7 +22,9 @@ cover_pylib = false
 # https://coverage.rtfd.io/en/latest/contexts.html#dynamic-contexts
 # dynamic_context = test_function  # conflicts with `pytest-cov` if set here
 parallel = true
-plugins = Cython.Coverage
+plugins =
+  covdefaults
+  Cython.Coverage
 relative_files = true
 source =
   .
