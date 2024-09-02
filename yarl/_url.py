@@ -172,7 +172,7 @@ class URL:
                 username = val.username
                 password = val.password
                 self._cache["raw_host"] = host
-                self._cache["raw_port"] = port
+                self._cache["explicit_port"] = port
                 self._cache["raw_user"] = username or None
                 self._cache["raw_password"] = password
                 netloc = cls._make_netloc(
