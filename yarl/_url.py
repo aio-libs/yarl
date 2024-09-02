@@ -789,7 +789,7 @@ class URL:
         if sep:
             host += "%" + zone
         if version == 6:
-            host = f"[{host}]"
+            return f"[{host}]"
         return host
 
     @classmethod
@@ -1199,22 +1199,35 @@ def _ip_address_compressed_version(raw_ip: str) -> Optional[Tuple[str, int]]:
 
 
 @rewrite_module
-def cache_clear():
+def cache_clear() -> None:
+    """Clear all LRU caches."""
     _idna_decode.cache_clear()
     _idna_encode.cache_clear()
+    _ip_address_compressed_version.cache_clear()
 
 
 @rewrite_module
 def cache_info():
+    """Report cache statistics."""
     return {
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
+        "ip_address": _ip_address_compressed_version.cache_info(),
     }
 
 
 @rewrite_module
-def cache_configure(*, idna_encode_size=_MAXCACHE, idna_decode_size=_MAXCACHE):
-    global _idna_decode, _idna_encode
+def cache_configure(
+    *,
+    idna_encode_size: int = _MAXCACHE,
+    idna_decode_size: int = _MAXCACHE,
+    ip_address_size: int = _MAXCACHE,
+) -> None:
+    """Configure LRU cache sizes."""
+    global _idna_decode, _idna_encode, _ip_address_compressed_version
 
     _idna_encode = functools.lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
     _idna_decode = functools.lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
+    _ip_address_compressed_version = functools.lru_cache(ip_address_size)(
+        _ip_address_compressed_version.__wrapped__
+    )
