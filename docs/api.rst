@@ -947,9 +947,9 @@ Default port substitution
 Cache control
 -------------
 
-IDNA conversion and IP Address parising used for host encoding are quite expensive
-operations, that's why the ``yarl`` library caches IP Address parsing and
-IDNA encoding/decoding calls by storing last ``256`` results in the global LRU cache.
+IDNA conversion and IP Address parsing used for host encoding are quite expensive
+operations, that's why the ``yarl`` library caches these calls by storing
+last ``256`` results in the global LRU cache.
 
 .. function:: cache_clear()
 
@@ -969,12 +969,12 @@ IDNA encoding/decoding calls by storing last ``256`` results in the global LRU c
       >>> yarl.cache_info()
       {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=256, currsize=5),
        'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15),
-       'ip_address': CacheInfo(hits=4693223, misses=84, maxsize=256, currsize=101)}
+       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=256, currsize=101)}
 
 
 .. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, ip_address_size=256)
 
-   Set IP Address and IDNA encode and decode cache sizes (``256`` for each by default).
+   Set the IP Address and IDNA encode and decode cache sizes (``256`` for each by default).
 
    Pass ``None`` to make the corresponding cache unbounded (may speed up host encoding
    operation a little but the memory footprint can be very high,
