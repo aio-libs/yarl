@@ -157,6 +157,7 @@ class URL:
             if not val[1]:  # netloc
                 netloc = ""
                 host = ""
+                self._cache = {}
             else:
                 host = val.hostname
                 if host is None:
@@ -171,10 +172,12 @@ class URL:
 
                 username = val.username
                 password = val.password
-                self._cache["raw_host"] = host
-                self._cache["explicit_port"] = port
-                self._cache["raw_user"] = username or None
-                self._cache["raw_password"] = password
+                self._cache = {
+                    "raw_host": host,
+                    "explicit_port": port,
+                    "raw_user": username or None,
+                    "raw_password": password,
+                }
                 netloc = cls._make_netloc(
                     username, password, host, port, encode=True, requote=True
                 )
