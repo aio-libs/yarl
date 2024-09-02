@@ -237,7 +237,7 @@ class URL:
         elif not user and not password and not host and not port:
             netloc = ""
         else:
-            port = None if port == cls._default_port(scheme) else port
+            port = None if port == DEFAULT_PORTS.get(scheme) else port
             netloc = cls._make_netloc(
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )
