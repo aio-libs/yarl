@@ -771,6 +771,7 @@ class URL:
     @classmethod
     def _encode_host(cls, host: str, human: bool = False) -> str:
         raw_ip, sep, zone = host.partition("%")
+        # IP parsing is slow, so its wrapped in an LRU
         ip_compressed_version = _ip_address_compressed_version(raw_ip)
         if ip_compressed_version is None:
             host = host.lower()
@@ -780,13 +781,15 @@ class URL:
             # to reduce the cache size
             if human or host.isascii():
                 return host
-            host = _idna_encode(host)
-        else:
-            host, version = ip_compressed_version
-            if sep:
-                host += "%" + zone
-            if version == 6:
-                host = "[" + host + "]"
+            return _idna_encode(host)
+
+        # These checks should not happen in the
+        # LRU to keep the cache size small
+        host, version = ip_compressed_version
+        if sep:
+            host += "%" + zone
+        if version == 6:
+            host = f"[{host}]"
         return host
 
     @classmethod
