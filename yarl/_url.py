@@ -1124,28 +1124,25 @@ class URL:
             raise TypeError("url should be URL")
         other: URL = url
         scheme = other.scheme or self.scheme
-        parts = {
-            k[4:]: getattr(self, k) or ""
-            for k in ("raw_authority", "raw_path", "raw_query_string", "raw_fragment")
-        }
-        parts["scheme"] = scheme
 
         if scheme != self.scheme or scheme not in uses_relative:
-            return URL(str(other))
+            return URL(other._val._replace(), encoded=True)
+
+        def raw(uo: URL):
+            attrs = (
+                "raw_authority",
+                "raw_path",
+                "raw_query_string",
+                "raw_fragment",
+            )
+            return {k[4:]: getattr(uo, k) or "" for k in attrs}
+
+        parts = raw(self)
+        parts["scheme"] = scheme
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
         if scheme in uses_authority and other.authority:
-            parts.update(
-                {
-                    k[4:]: getattr(other, k) or ""
-                    for k in (
-                        "raw_authority",
-                        "raw_path",
-                        "raw_query_string",
-                        "raw_fragment",
-                    )
-                }
-            )
+            parts.update(raw(other))
             return URL.build(**parts, encoded=True)
 
         if other.path or other.fragment:
