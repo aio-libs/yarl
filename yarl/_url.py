@@ -431,14 +431,11 @@ class URL:
         scheme = self.scheme
         if not scheme:
             return None
-        return self._default_port(self.scheme)
+        return DEFAULT_PORTS.get(scheme)
 
     @staticmethod
     def _default_port(scheme: str) -> Union[int, None]:
-        with suppress(KeyError):
-            return DEFAULT_PORTS[scheme]
-
-        return None
+        return DEFAULT_PORTS.get(scheme)
 
     @cached_property
     def _port_not_default(self) -> Union[int, None]:
