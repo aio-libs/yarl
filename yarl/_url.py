@@ -4,7 +4,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from ipaddress import ip_address
-from typing import Union
+from typing import Optional, Tuple, Union
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
@@ -769,11 +769,10 @@ class URL:
         return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
-    def _encode_host(cls, host, human=False):
-        try:
-            ip, sep, zone = host.partition("%")
-            ip = ip_address(ip)
-        except ValueError:
+    def _encode_host(cls, host: str, human: bool = False) -> str:
+        raw_ip, sep, zone = host.partition("%")
+        ip_compressed_version = _ip_address_compressed_version(raw_ip)
+        if ip_compressed_version is None:
             host = host.lower()
             # IDNA encoding is slow,
             # skip it for ASCII-only strings
@@ -783,10 +782,10 @@ class URL:
                 return host
             host = _idna_encode(host)
         else:
-            host = ip.compressed
+            host, version = ip_compressed_version
             if sep:
                 host += "%" + zone
-            if ip.version == 6:
+            if version == 6:
                 host = "[" + host + "]"
         return host
 
@@ -1184,6 +1183,16 @@ def _idna_encode(host):
         return idna.encode(host, uts46=True).decode("ascii")
     except UnicodeError:
         return host.encode("idna").decode("ascii")
+
+
+@functools.lru_cache(_MAXCACHE)
+def _ip_address_compressed_version(raw_ip: str) -> Optional[Tuple[str, int]]:
+    """Return compressed version of IP address and its version."""
+    try:
+        ip = ip_address(raw_ip)
+    except ValueError:
+        return None
+    return ip.compressed, ip.version
 
 
 @rewrite_module
