@@ -297,7 +297,7 @@ class URL:
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
-        if (port := self._get_port()) is None:
+        if (port := self._port_not_default) is None:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             val = val._replace(
@@ -406,7 +406,7 @@ class URL:
         if self.explicit_port is None:
             # A relative URL does not have an implicit port / default port
             return self.port is not None
-        default = self._get_default_port()
+        default = self._default_port
         if default is None:
             return False
         return self.port == default
@@ -456,17 +456,21 @@ class URL:
         """
         return self._val.netloc
 
-    def _get_default_port(self) -> Union[int, None]:
+    @cached_property
+    def _default_port(self) -> Union[int, None]:
+        """Default port for the scheme or None if not known."""
         scheme = self.scheme
         if not scheme:
             return None
         return DEFAULT_PORTS.get(scheme)
 
-    def _get_port(self) -> Union[int, None]:
-        """Port or None if default port"""
-        if self._get_default_port() == self.port:
+    @cached_property
+    def _port_not_default(self) -> Union[int, None]:
+        """The port part of URL normalized to None if its the default port."""
+        port = self.port
+        if self._default_port == port:
             return None
-        return self.port
+        return port
 
     @cached_property
     def authority(self) -> str:
@@ -558,9 +562,9 @@ class URL:
         scheme without default port substitution.
 
         """
-        return self._val.port or self._get_default_port()
+        return self.explicit_port or self._default_port
 
-    @property
+    @cached_property
     def explicit_port(self) -> Optional[int]:
         """Port part of URL, without scheme-based fallback.
 
@@ -1214,7 +1218,7 @@ class URL:
                     user,
                     password,
                     host,
-                    self._val.port,
+                    self.explicit_port,
                     encode_host=False,
                 ),
                 path,
