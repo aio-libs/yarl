@@ -134,8 +134,6 @@ class URL:
     _PATH_UNQUOTER = _Unquoter(ignore="/", unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
-    _val: SplitResult
-
     def __new__(cls, val="", *, encoded=False, strict=None):
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
