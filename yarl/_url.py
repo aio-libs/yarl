@@ -1125,7 +1125,7 @@ class URL:
         other: URL = url
         scheme = other.scheme or self.scheme
         parts = {
-            k[len("raw_") :]: getattr(self, k) or ""
+            k[4:]: getattr(self, k) or ""
             for k in ("raw_authority", "raw_path", "raw_query_string", "raw_fragment")
         }
         parts["scheme"] = scheme
@@ -1137,7 +1137,7 @@ class URL:
         if scheme in uses_authority and other.authority:
             parts.update(
                 {
-                    k[len("raw_") :]: getattr(other, k) or ""
+                    k[4:]: getattr(other, k) or ""
                     for k in (
                         "raw_authority",
                         "raw_path",
