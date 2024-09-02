@@ -15,6 +15,11 @@ comment:
 coverage:
   range: 99.34..100
   status:
+    patch:
+      default:
+        target: 100%
+        flags:
+        - pytest
     project:
       default:
         target: 100%
