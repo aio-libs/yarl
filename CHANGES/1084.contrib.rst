@@ -1,1 +1,1 @@
-Add typing to the ``URL`` object -- by :user:`bdraco`.
+Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
