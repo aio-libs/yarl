@@ -1148,7 +1148,7 @@ class URL:
                     user,
                     password,
                     host,
-                    self.explicit_port,
+                    self._val.port,
                     encode_host=False,
                 ),
                 path,
