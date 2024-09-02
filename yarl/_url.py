@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from functools import lru_cache
 from ipaddress import ip_address
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
@@ -772,8 +772,9 @@ class URL:
     def _encode_host(cls, host: str, human: bool = False) -> str:
         raw_ip, sep, zone = host.partition("%")
         # IP parsing is slow, so its wrapped in an LRU
-        ip_compressed_version = _ip_compressed_version(raw_ip)
-        if ip_compressed_version is None:
+        try:
+            ip_compressed_version = _ip_compressed_version(raw_ip)
+        except ValueError:
             host = host.lower()
             # IDNA encoding is slow,
             # skip it for ASCII-only strings
@@ -1189,12 +1190,9 @@ def _idna_encode(host):
 
 
 @lru_cache(_MAXCACHE)
-def _ip_compressed_version(raw_ip: str) -> Optional[Tuple[str, int]]:
+def _ip_compressed_version(raw_ip: str) -> Tuple[str, int]:
     """Return compressed version of IP address and its version."""
-    try:
-        ip = ip_address(raw_ip)
-    except ValueError:
-        return None
+    ip = ip_address(raw_ip)
     return ip.compressed, ip.version
 
 
