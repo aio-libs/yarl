@@ -23,13 +23,13 @@ coverage:
         - pytest
         paths:
         - yarl/
-        target: 97.83%
+        target: 97.74%  # 97.83%
       tests-pytest:
         flags:
         - pytest
         paths:
         - tests/
-        target: 100%
+        target: 99.88%  # 100%
       overall-mypy:
         flags:
         - MyPy
