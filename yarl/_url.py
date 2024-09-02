@@ -151,6 +151,8 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
+        self = object.__new__(cls)
+        self._cache = {}
         if not encoded:
             if not val[1]:  # netloc
                 netloc = ""
@@ -167,8 +169,14 @@ class URL:
                         "Invalid URL: port can't be converted to integer"
                     ) from e
 
+                username = val.username
+                password = val.password
+                self._cache["raw_host"] = host
+                self._cache["raw_port"] = port
+                self._cache["raw_user"] = username or None
+                self._cache["raw_password"] = password
                 netloc = cls._make_netloc(
-                    val.username, val.password, host, port, encode=True, requote=True
+                    username, password, host, port, encode=True, requote=True
                 )
             path = cls._PATH_REQUOTER(val[2])
             if netloc:
@@ -179,9 +187,7 @@ class URL:
             fragment = cls._FRAGMENT_REQUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
 
-        self = object.__new__(cls)
         self._val = val
-        self._cache = {}
         return self
 
     @classmethod
@@ -458,10 +464,7 @@ class URL:
 
         """
         # not .username
-        ret = self._val.username
-        if not ret:
-            return None
-        return ret
+        return self._val.username or None
 
     @cached_property
     def user(self):
