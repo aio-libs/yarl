@@ -314,6 +314,7 @@ jobs:
     - name: Append coverage results to Job Summary
       if: >-
         !cancelled()
+      continue-on-error: true
       run: >-
         python -Im coverage report --format=markdown
         >> "${GITHUB_STEP_SUMMARY}"
