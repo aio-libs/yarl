@@ -31,9 +31,9 @@ DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 sentinel = object()
 
 _SimpleQuery = Union[str, int, float]
-_QueryVariable = Union[_SimpleQuery, Sequence[_SimpleQuery]]
+_QueryVariable = Union[_SimpleQuery, "Sequence[_SimpleQuery]"]
 _Query = Union[
-    None, str, Mapping[str, _QueryVariable], Sequence[Tuple[str, _QueryVariable]]
+    None, str, "Mapping[str, _QueryVariable]", "Sequence[Tuple[str, _QueryVariable]]"
 ]
 
 if sys.version_info >= (3, 11):
@@ -47,7 +47,7 @@ def rewrite_module(obj: object) -> object:
     return obj
 
 
-def _normalize_path_segments(segments: Sequence[str]) -> List[str]:
+def _normalize_path_segments(segments: "Sequence[str]") -> List[str]:
     """Drop '.' and '..' from a sequence of str segments"""
 
     resolved_path: List[str] = []
@@ -749,7 +749,7 @@ class URL:
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
 
-    def _make_child(self, paths: Sequence[str], encoded: bool = False) -> "URL":
+    def _make_child(self, paths: "Sequence[str]", encoded: bool = False) -> "URL":
         """
         add paths to self._val.path, accounting for absolute vs relative paths,
         keep existing, but do not create new, empty segments
