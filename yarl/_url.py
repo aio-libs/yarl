@@ -772,7 +772,7 @@ class URL:
     def _encode_host(cls, host: str, human: bool = False) -> str:
         raw_ip, sep, zone = host.partition("%")
         # IP parsing is slow, so its wrapped in an LRU
-        ip_compressed_version = _ip_address_compressed_version(raw_ip)
+        ip_compressed_version = _ip_compressed_version(raw_ip)
         if ip_compressed_version is None:
             host = host.lower()
             # IDNA encoding is slow,
@@ -1189,7 +1189,7 @@ def _idna_encode(host):
 
 
 @functools.lru_cache(_MAXCACHE)
-def _ip_address_compressed_version(raw_ip: str) -> Optional[Tuple[str, int]]:
+def _ip_compressed_version(raw_ip: str) -> Optional[Tuple[str, int]]:
     """Return compressed version of IP address and its version."""
     try:
         ip = ip_address(raw_ip)
@@ -1203,7 +1203,7 @@ def cache_clear() -> None:
     """Clear all LRU caches."""
     _idna_decode.cache_clear()
     _idna_encode.cache_clear()
-    _ip_address_compressed_version.cache_clear()
+    _ip_compressed_version.cache_clear()
 
 
 @rewrite_module
@@ -1212,7 +1212,7 @@ def cache_info():
     return {
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
-        "ip_address": _ip_address_compressed_version.cache_info(),
+        "ip_address": _ip_compressed_version.cache_info(),
     }
 
 
@@ -1224,10 +1224,10 @@ def cache_configure(
     ip_address_size: int = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
-    global _idna_decode, _idna_encode, _ip_address_compressed_version
+    global _idna_decode, _idna_encode, _ip_compressed_version
 
     _idna_encode = functools.lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
     _idna_decode = functools.lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
-    _ip_address_compressed_version = functools.lru_cache(ip_address_size)(
-        _ip_address_compressed_version.__wrapped__
+    _ip_compressed_version = functools.lru_cache(ip_address_size)(
+        _ip_compressed_version.__wrapped__
     )
