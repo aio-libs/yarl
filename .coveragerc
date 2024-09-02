@@ -1,3 +1,7 @@
+[html]
+show_contexts = true
+skip_covered = false
+
 [paths]
 source =
   yarl
