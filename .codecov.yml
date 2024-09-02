@@ -18,13 +18,21 @@ coverage:
     project:
       default:
         target: 100%
-      lib:
+      lib-pytest:
+        flags:
+        - pytest
         paths:
         - yarl/
         target: 97.83%
-      tests:
+      tests-pytest:
+        flags:
+        - pytest
         paths:
         - tests/
+        target: 100%
+      overall-mypy:
+        flags:
+        - MyPy
         target: 100%
 
 ...
