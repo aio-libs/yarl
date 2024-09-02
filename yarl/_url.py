@@ -433,10 +433,6 @@ class URL:
             return None
         return DEFAULT_PORTS.get(scheme)
 
-    @staticmethod
-    def _default_port(scheme: str) -> Union[int, None]:
-        return DEFAULT_PORTS.get(scheme)
-
     @cached_property
     def _port_not_default(self) -> Union[int, None]:
         """The port part of URL normalized to None if its the default port."""
