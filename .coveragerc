@@ -1,3 +1,7 @@
+[html]
+show_contexts = true
+skip_covered = false
+
 [paths]
 source =
   yarl
@@ -10,13 +14,17 @@ skip_covered = true
 skip_empty = true
 show_missing = true
 exclude_also =
-    if TYPE_CHECKING    # never executes at runtime
-    : \.\.\.(\s*#.*)?$  # coverage.py will never report ... as covered
-    ^ +\.\.\.$          # coverage.py will never report ... as covered
+  if TYPE_CHECKING    # never executes at runtime
+  : \.\.\.(\s*#.*)?$  # coverage.py will never report ... as covered
+  ^ +\.\.\.$          # coverage.py will never report ... as covered
+  ^\s*@pytest\.mark\.xfail
 
 [run]
 branch = true
 cover_pylib = false
+# https://coverage.rtfd.io/en/latest/contexts.html#dynamic-contexts
+# dynamic_context = test_function  # conflicts with `pytest-cov` if set here
+parallel = true
 plugins = Cython.Coverage
 relative_files = true
 source =
