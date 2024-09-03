@@ -327,7 +327,7 @@ class URL:
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not type(other) is URL:
             return NotImplemented
 
@@ -341,7 +341,7 @@ class URL:
 
         return val1 == val2
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         ret = self._cache.get("hash")
         if ret is None:
             val = self._val
@@ -350,32 +350,32 @@ class URL:
             ret = self._cache["hash"] = hash(val)
         return ret
 
-    def __le__(self, other):
+    def __le__(self, other: Any) -> bool:
         if not type(other) is URL:
             return NotImplemented
         return self._val <= other._val
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         if not type(other) is URL:
             return NotImplemented
         return self._val < other._val
 
-    def __ge__(self, other):
+    def __ge__(self, other: Any) -> bool:
         if not type(other) is URL:
             return NotImplemented
         return self._val >= other._val
 
-    def __gt__(self, other):
+    def __gt__(self, other: Any) -> bool:
         if not type(other) is URL:
             return NotImplemented
         return self._val > other._val
 
-    def __truediv__(self, name):
+    def __truediv__(self, name: str) -> "URL":
         if not isinstance(name, str):
             return NotImplemented
         return self._make_child((str(name),))
 
-    def __mod__(self, query):
+    def __mod__(self, query: _Query) -> "URL":
         return self.update_query(query)
 
     def __bool__(self) -> bool:
@@ -383,7 +383,7 @@ class URL:
             self._val.netloc or self._val.path or self._val.query or self._val.fragment
         )
 
-    def __getstate__(self):
+    def __getstate__(self) -> Tuple[SplitResult]:
         return (self._val,)
 
     def __setstate__(self, state):
@@ -394,7 +394,7 @@ class URL:
             self._val, *unused = state
         self._cache = {}
 
-    def is_absolute(self):
+    def is_absolute(self) -> bool:
         """A check for absolute URLs.
 
         Return True for absolute ones (having scheme or starting
@@ -403,7 +403,7 @@ class URL:
         """
         return self.raw_host is not None
 
-    def is_default_port(self):
+    def is_default_port(self) -> bool:
         """A check for default port.
 
         Return True if port is default for specified scheme,
@@ -421,7 +421,7 @@ class URL:
             return False
         return self.port == default
 
-    def origin(self):
+    def origin(self) -> "URL":
         """Return an URL with scheme, host and port parts only.
 
         user, password, path, query and fragment are removed.
@@ -433,6 +433,8 @@ class URL:
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
         v = self._val
+        if TYPE_CHECKING:
+            assert v.hostname is not None
         netloc = self._make_netloc(None, None, v.hostname, v.port)
         val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
