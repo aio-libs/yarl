@@ -3,18 +3,19 @@ import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
-from functools import lru_cache
+from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Generator,
     Iterable,
     List,
     Optional,
     Tuple,
+    TypedDict,
+    TypeVar,
     Union,
     overload,
 )
@@ -35,6 +36,7 @@ _QueryVariable = Union[_SimpleQuery, "Sequence[_SimpleQuery]"]
 _Query = Union[
     None, str, "Mapping[str, _QueryVariable]", "Sequence[Tuple[str, _QueryVariable]]"
 ]
+_T = TypeVar("_T")
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -42,7 +44,15 @@ else:
     Self = Any
 
 
-def rewrite_module(obj: object) -> object:
+class CacheInfo(TypedDict):
+    """Host encoding cache."""
+
+    idna_encode: _CacheInfo
+    idna_decode: _CacheInfo
+    ip_address: _CacheInfo
+
+
+def rewrite_module(obj: _T) -> _T:
     obj.__module__ = "yarl"
     return obj
 
@@ -808,9 +818,10 @@ class URL:
 
     @classmethod
     def _encode_host(cls, host: str, human: bool = False) -> str:
+        raw_ip, sep, zone = host.partition("%")
+        # IP parsing is slow, so its wrapped in an LRU
         try:
-            raw_ip, sep, zone = host.partition("%")
-            ip = ip_address(raw_ip)
+            ip_compressed_version = _ip_compressed_version(raw_ip)
         except ValueError:
             host = host.lower()
             # IDNA encoding is slow,
@@ -1276,21 +1287,22 @@ def cache_clear() -> None:
 
 
 @rewrite_module
-def cache_info() -> Dict[str, Any]:
+def cache_info() -> CacheInfo:
     """Report cache statistics."""
-    return {
+    cache_info: CacheInfo = {
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
         "ip_address": _ip_compressed_version.cache_info(),
     }
+    return cache_info
 
 
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: int = _MAXCACHE,
-    idna_decode_size: int = _MAXCACHE,
-    ip_address_size: int = _MAXCACHE,
+    idna_encode_size: Optional[int] = _MAXCACHE,
+    idna_decode_size: Optional[int] = _MAXCACHE,
+    ip_address_size: Optional[int] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _ip_compressed_version
