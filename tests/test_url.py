@@ -1721,11 +1721,7 @@ def test_join_cpython_urljoin(base, url, expected):
 
 
 def test_empty_authority():
-    with pytest.raises(
-        TypeError, match=r"unsupported operand type\(s\) for \+: 'NoneType' and 'str'"
-    ):
-        URL("http:///").authority
-    pytest.xfail("Shouldn't raise TypeError on empty host name")
+    assert URL("http:///").authority == ""
 
 
 def test_split_result_non_decoded():
