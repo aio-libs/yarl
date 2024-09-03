@@ -326,7 +326,7 @@ class URL:
         return str(self).encode("ascii")
 
     def __eq__(self, other: Any) -> bool:
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
 
         val1 = self._val
@@ -349,22 +349,22 @@ class URL:
         return ret
 
     def __le__(self, other: Any) -> bool:
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val <= other._val
 
     def __lt__(self, other: Any) -> bool:
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val < other._val
 
     def __ge__(self, other: Any) -> bool:
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val >= other._val
 
     def __gt__(self, other: Any) -> bool:
-        if not type(other) is URL:
+        if type(other) is not URL:
             return NotImplemented
         return self._val > other._val
 
