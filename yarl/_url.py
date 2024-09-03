@@ -4,12 +4,10 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from functools import lru_cache
 from ipaddress import ip_address
-from typing import Union
+from typing import Tuple, Union
 from urllib.parse import SplitResult, parse_qsl, quote, urlsplit, urlunsplit
 from urllib.parse import uses_netloc as uses_authority
 from urllib.parse import uses_relative
-from typing import Tuple, Union
-from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
 from multidict import MultiDict, MultiDictProxy
