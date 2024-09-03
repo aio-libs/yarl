@@ -15,9 +15,6 @@ skip_covered = true
 skip_empty = true
 show_missing = true
 exclude_also =
-  if TYPE_CHECKING    # never executes at runtime
-  : \.\.\.(\s*#.*)?$  # coverage.py will never report ... as covered
-  ^ +\.\.\.$          # coverage.py will never report ... as covered
   ^\s*@pytest\.mark\.xfail
 
 [run]
