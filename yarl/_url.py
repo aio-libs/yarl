@@ -1,10 +1,24 @@
 import math
+import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
-from functools import lru_cache
+from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
-from typing import Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    Union,
+    overload,
+)
 from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
 
 import idna
@@ -17,16 +31,36 @@ DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
 sentinel = object()
 
+_SimpleQuery = Union[str, int, float]
+_QueryVariable = Union[_SimpleQuery, "Sequence[_SimpleQuery]"]
+_Query = Union[
+    None, str, "Mapping[str, _QueryVariable]", "Sequence[Tuple[str, _QueryVariable]]"
+]
+_T = TypeVar("_T")
 
-def rewrite_module(obj: object) -> object:
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    Self = Any
+
+
+class CacheInfo(TypedDict):
+    """Host encoding cache."""
+
+    idna_encode: _CacheInfo
+    idna_decode: _CacheInfo
+    ip_address: _CacheInfo
+
+
+def rewrite_module(obj: _T) -> _T:
     obj.__module__ = "yarl"
     return obj
 
 
-def _normalize_path_segments(segments):
+def _normalize_path_segments(segments: "Sequence[str]") -> List[str]:
     """Drop '.' and '..' from a sequence of str segments"""
 
-    resolved_path = []
+    resolved_path: List[str] = []
 
     for seg in segments:
         if seg == "..":
@@ -134,7 +168,15 @@ class URL:
     _PATH_UNQUOTER = _Unquoter(ignore="/", unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
-    def __new__(cls, val="", *, encoded=False, strict=None):
+    _val: SplitResult
+
+    def __new__(
+        cls,
+        val: Union[str, SplitResult, "URL"] = "",
+        *,
+        encoded: bool = False,
+        strict: Optional[bool] = None,
+    ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is cls:
@@ -150,6 +192,7 @@ class URL:
             raise TypeError("Constructor parameter should be str")
 
         if not encoded:
+            host: Optional[str]
             if not val[1]:  # netloc
                 netloc = ""
                 host = ""
@@ -186,18 +229,18 @@ class URL:
     def build(
         cls,
         *,
-        scheme="",
-        authority="",
-        user=None,
-        password=None,
-        host="",
-        port=None,
-        path="",
-        query=None,
-        query_string="",
-        fragment="",
-        encoded=False,
-    ):
+        scheme: str = "",
+        authority: str = "",
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        host: str = "",
+        port: Optional[int] = None,
+        path: str = "",
+        query: Optional[_Query] = None,
+        query_string: str = "",
+        fragment: str = "",
+        encoded: bool = False,
+    ) -> "URL":
         """Creates and returns a new URL"""
 
         if authority and (user or password or host or port):
@@ -258,7 +301,7 @@ class URL:
     def __init_subclass__(cls):
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
-    def __str__(self):
+    def __str__(self) -> str:
         val = self._val
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
@@ -276,14 +319,14 @@ class URL:
             )
         return urlunsplit(val)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
 
-    def __eq__(self, other):
-        if not type(other) is URL:
+    def __eq__(self, other: object) -> bool:
+        if type(other) is not URL:
             return NotImplemented
 
         val1 = self._val
@@ -296,7 +339,7 @@ class URL:
 
         return val1 == val2
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         ret = self._cache.get("hash")
         if ret is None:
             val = self._val
@@ -305,32 +348,32 @@ class URL:
             ret = self._cache["hash"] = hash(val)
         return ret
 
-    def __le__(self, other):
-        if not type(other) is URL:
+    def __le__(self, other: object) -> bool:
+        if type(other) is not URL:
             return NotImplemented
         return self._val <= other._val
 
-    def __lt__(self, other):
-        if not type(other) is URL:
+    def __lt__(self, other: object) -> bool:
+        if type(other) is not URL:
             return NotImplemented
         return self._val < other._val
 
-    def __ge__(self, other):
-        if not type(other) is URL:
+    def __ge__(self, other: object) -> bool:
+        if type(other) is not URL:
             return NotImplemented
         return self._val >= other._val
 
-    def __gt__(self, other):
-        if not type(other) is URL:
+    def __gt__(self, other: object) -> bool:
+        if type(other) is not URL:
             return NotImplemented
         return self._val > other._val
 
-    def __truediv__(self, name):
+    def __truediv__(self, name: str) -> "URL":
         if not isinstance(name, str):
             return NotImplemented
         return self._make_child((str(name),))
 
-    def __mod__(self, query):
+    def __mod__(self, query: _Query) -> "URL":
         return self.update_query(query)
 
     def __bool__(self) -> bool:
@@ -338,7 +381,7 @@ class URL:
             self._val.netloc or self._val.path or self._val.query or self._val.fragment
         )
 
-    def __getstate__(self):
+    def __getstate__(self) -> Tuple[SplitResult]:
         return (self._val,)
 
     def __setstate__(self, state):
@@ -349,7 +392,7 @@ class URL:
             self._val, *unused = state
         self._cache = {}
 
-    def is_absolute(self):
+    def is_absolute(self) -> bool:
         """A check for absolute URLs.
 
         Return True for absolute ones (having scheme or starting
@@ -358,7 +401,7 @@ class URL:
         """
         return self.raw_host is not None
 
-    def is_default_port(self):
+    def is_default_port(self) -> bool:
         """A check for default port.
 
         Return True if port is default for specified scheme,
@@ -376,7 +419,7 @@ class URL:
             return False
         return self.port == default
 
-    def origin(self):
+    def origin(self) -> "URL":
         """Return an URL with scheme, host and port parts only.
 
         user, password, path, query and fragment are removed.
@@ -392,7 +435,7 @@ class URL:
         val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
 
-    def relative(self):
+    def relative(self) -> "URL":
         """Return a relative part of the URL.
 
         scheme, user, password, host and port are removed.
@@ -404,7 +447,7 @@ class URL:
         return URL(val, encoded=True)
 
     @cached_property
-    def scheme(self):
+    def scheme(self) -> str:
         """Scheme for absolute URLs.
 
         Empty string for relative URLs or URLs starting with //
@@ -413,7 +456,7 @@ class URL:
         return self._val.scheme
 
     @property
-    def raw_authority(self):
+    def raw_authority(self) -> str:
         """Encoded authority part of URL.
 
         Empty string for relative URLs.
@@ -438,7 +481,7 @@ class URL:
         return port
 
     @cached_property
-    def authority(self):
+    def authority(self) -> str:
         """Decoded authority part of URL.
 
         Empty string for relative URLs.
@@ -449,29 +492,29 @@ class URL:
         )
 
     @property
-    def raw_user(self):
+    def raw_user(self) -> Optional[str]:
         """Encoded user part of URL.
 
         None if user is missing.
 
         """
         # not .username
-        ret = self._val.username
-        if not ret:
-            return None
-        return ret
+        return self._val.username or None
 
     @cached_property
-    def user(self):
+    def user(self) -> Optional[str]:
         """Decoded user part of URL.
 
         None if user is missing.
 
         """
-        return self._UNQUOTER(self.raw_user)
+        raw_user = self.raw_user
+        if raw_user is None:
+            return None
+        return self._UNQUOTER(raw_user)
 
     @property
-    def raw_password(self):
+    def raw_password(self) -> Optional[str]:
         """Encoded password part of URL.
 
         None if password is missing.
@@ -480,16 +523,19 @@ class URL:
         return self._val.password
 
     @cached_property
-    def password(self):
+    def password(self) -> Optional[str]:
         """Decoded password part of URL.
 
         None if password is missing.
 
         """
-        return self._UNQUOTER(self.raw_password)
+        raw_password = self.raw_password
+        if raw_password is None:
+            return None
+        return self._UNQUOTER(raw_password)
 
     @cached_property
-    def raw_host(self):
+    def raw_host(self) -> Optional[str]:
         """Encoded host part of URL.
 
         None for relative URLs.
@@ -500,7 +546,7 @@ class URL:
         return self._val.hostname
 
     @cached_property
-    def host(self):
+    def host(self) -> Optional[str]:
         """Decoded host part of URL.
 
         None for relative URLs.
@@ -527,7 +573,7 @@ class URL:
         return self.explicit_port or self._default_port
 
     @cached_property
-    def explicit_port(self):
+    def explicit_port(self) -> Optional[int]:
         """Port part of URL, without scheme-based fallback.
 
         None for relative URLs or URLs without explicit port.
@@ -536,7 +582,7 @@ class URL:
         return self._val.port
 
     @property
-    def raw_path(self):
+    def raw_path(self) -> str:
         """Encoded path of URL.
 
         / for absolute URLs without path part.
@@ -548,7 +594,7 @@ class URL:
         return ret
 
     @cached_property
-    def path(self):
+    def path(self) -> str:
         """Decoded path of URL.
 
         / for absolute URLs without path part.
@@ -557,7 +603,7 @@ class URL:
         return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
-    def query(self):
+    def query(self) -> MultiDictProxy[str]:
         """A MultiDictProxy representing parsed query parameters in decoded
         representation.
 
@@ -568,7 +614,7 @@ class URL:
         return MultiDictProxy(ret)
 
     @property
-    def raw_query_string(self):
+    def raw_query_string(self) -> str:
         """Encoded query part of URL.
 
         Empty string if query is missing.
@@ -577,7 +623,7 @@ class URL:
         return self._val.query
 
     @cached_property
-    def query_string(self):
+    def query_string(self) -> str:
         """Decoded query part of URL.
 
         Empty string if query is missing.
@@ -586,21 +632,21 @@ class URL:
         return self._QS_UNQUOTER(self.raw_query_string)
 
     @cached_property
-    def path_qs(self):
+    def path_qs(self) -> str:
         """Decoded path of URL with query."""
         if not self.query_string:
             return self.path
         return f"{self.path}?{self.query_string}"
 
     @cached_property
-    def raw_path_qs(self):
+    def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
         if not self.raw_query_string:
             return self.raw_path
         return f"{self.raw_path}?{self.raw_query_string}"
 
     @property
-    def raw_fragment(self):
+    def raw_fragment(self) -> str:
         """Encoded fragment part of URL.
 
         Empty string if fragment is missing.
@@ -609,7 +655,7 @@ class URL:
         return self._val.fragment
 
     @cached_property
-    def fragment(self):
+    def fragment(self) -> str:
         """Decoded fragment part of URL.
 
         Empty string if fragment is missing.
@@ -618,7 +664,7 @@ class URL:
         return self._UNQUOTER(self.raw_fragment)
 
     @cached_property
-    def raw_parts(self):
+    def raw_parts(self) -> Tuple[str, ...]:
         """A tuple containing encoded *path* parts.
 
         ('/',) for absolute URLs if *path* is missing.
@@ -638,7 +684,7 @@ class URL:
         return tuple(parts)
 
     @cached_property
-    def parts(self):
+    def parts(self) -> Tuple[str, ...]:
         """A tuple containing decoded *path* parts.
 
         ('/',) for absolute URLs if *path* is missing.
@@ -647,7 +693,7 @@ class URL:
         return tuple(self._UNQUOTER(part) for part in self.raw_parts)
 
     @cached_property
-    def parent(self):
+    def parent(self) -> "URL":
         """A new URL with last part of path removed and cleaned up query and
         fragment.
 
@@ -662,7 +708,7 @@ class URL:
         return URL(val, encoded=True)
 
     @cached_property
-    def raw_name(self):
+    def raw_name(self) -> str:
         """The last part of raw_parts."""
         parts = self.raw_parts
         if self.is_absolute():
@@ -675,12 +721,12 @@ class URL:
             return parts[-1]
 
     @cached_property
-    def name(self):
+    def name(self) -> str:
         """The last part of parts."""
         return self._UNQUOTER(self.raw_name)
 
     @cached_property
-    def raw_suffix(self):
+    def raw_suffix(self) -> str:
         name = self.raw_name
         i = name.rfind(".")
         if 0 < i < len(name) - 1:
@@ -689,11 +735,11 @@ class URL:
             return ""
 
     @cached_property
-    def suffix(self):
+    def suffix(self) -> str:
         return self._UNQUOTER(self.raw_suffix)
 
     @cached_property
-    def raw_suffixes(self):
+    def raw_suffixes(self) -> Tuple[str, ...]:
         name = self.raw_name
         if name.endswith("."):
             return ()
@@ -701,11 +747,11 @@ class URL:
         return tuple("." + suffix for suffix in name.split(".")[1:])
 
     @cached_property
-    def suffixes(self):
+    def suffixes(self) -> Tuple[str, ...]:
         return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
     @staticmethod
-    def _validate_authority_uri_abs_path(host, path):
+    def _validate_authority_uri_abs_path(host: str, path: str) -> None:
         """Ensure that path in URL with authority starts with a leading slash.
 
         Raise ValueError if not.
@@ -715,7 +761,7 @@ class URL:
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
 
-    def _make_child(self, paths, encoded=False):
+    def _make_child(self, paths: "Sequence[str]", encoded: bool = False) -> "URL":
         """
         add paths to self._val.path, accounting for absolute vs relative paths,
         keep existing, but do not create new, empty segments
@@ -755,7 +801,7 @@ class URL:
         )
 
     @classmethod
-    def _normalize_path(cls, path):
+    def _normalize_path(cls, path: str) -> str:
         # Drop '.' and '..' from str path
 
         prefix = ""
@@ -795,15 +841,24 @@ class URL:
 
     @classmethod
     def _make_netloc(
-        cls, user, password, host, port, encode=False, encode_host=True, requote=False
-    ):
+        cls,
+        user: Optional[str],
+        password: Optional[str],
+        host: Optional[str],
+        port: Optional[int],
+        encode: bool = False,
+        encode_host: bool = True,
+        requote: bool = False,
+    ) -> str:
+        if host is None:
+            return ""
         quoter = cls._REQUOTER if requote else cls._QUOTER
         if encode_host:
             ret = cls._encode_host(host)
         else:
             ret = host
         if port is not None:
-            ret = ret + ":" + str(port)
+            ret = f"{ret}:{port}"
         if password is not None:
             if not user:
                 user = ""
@@ -819,7 +874,7 @@ class URL:
             ret = user + "@" + ret
         return ret
 
-    def with_scheme(self, scheme):
+    def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
@@ -828,7 +883,7 @@ class URL:
             raise ValueError("scheme replacement is not allowed for relative URLs")
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
-    def with_user(self, user):
+    def with_user(self, user: Optional[str]) -> "URL":
         """Return a new URL with user replaced.
 
         Autoencode user if needed.
@@ -854,7 +909,7 @@ class URL:
             encoded=True,
         )
 
-    def with_password(self, password):
+    def with_password(self, password: Optional[str]) -> "URL":
         """Return a new URL with password replaced.
 
         Autoencode password if needed.
@@ -879,7 +934,7 @@ class URL:
             encoded=True,
         )
 
-    def with_host(self, host):
+    def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
 
         Autoencode host if needed.
@@ -903,7 +958,7 @@ class URL:
             encoded=True,
         )
 
-    def with_port(self, port):
+    def with_port(self, port: Optional[int]) -> "URL":
         """Return a new URL with port replaced.
 
         Clear port to default if None is passed.
@@ -925,7 +980,7 @@ class URL:
             encoded=True,
         )
 
-    def with_path(self, path, *, encoded=False):
+    def with_path(self, path: str, *, encoded: bool = False) -> "URL":
         """Return a new URL with path replaced."""
         if not encoded:
             path = self._PATH_QUOTER(path)
@@ -936,7 +991,9 @@ class URL:
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
     @classmethod
-    def _query_seq_pairs(cls, quoter, pairs):
+    def _query_seq_pairs(
+        cls, quoter: Callable[[str], str], pairs: Iterable[Tuple[str, _QueryVariable]]
+    ) -> Iterator[str]:
         for key, val in pairs:
             if isinstance(val, (list, tuple)):
                 for v in val:
@@ -945,17 +1002,23 @@ class URL:
                 yield quoter(key) + "=" + quoter(cls._query_var(val))
 
     @staticmethod
-    def _query_var(v):
+    def _query_var(v: _QueryVariable) -> str:
         cls = type(v)
         if issubclass(cls, str):
+            if TYPE_CHECKING:
+                assert isinstance(v, str)
             return v
         if issubclass(cls, float):
+            if TYPE_CHECKING:
+                assert isinstance(v, float)
             if math.isinf(v):
                 raise ValueError("float('inf') is not supported")
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
         if issubclass(cls, int) and cls is not bool:
+            if TYPE_CHECKING:
+                assert isinstance(v, int)
             return str(int(v))
         raise TypeError(
             "Invalid variable type: value "
@@ -963,7 +1026,8 @@ class URL:
             "of type {}".format(v, cls)
         )
 
-    def _get_str_query(self, *args, **kwargs):
+    def _get_str_query(self, *args: Any, **kwargs: Any) -> Optional[str]:
+        query: Optional[Union[str, Mapping[str, _QueryVariable]]]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
@@ -1003,7 +1067,13 @@ class URL:
 
         return query
 
-    def with_query(self, *args, **kwargs):
+    @overload
+    def with_query(self, query: _Query) -> "URL": ...
+
+    @overload
+    def with_query(self, **kwargs: _QueryVariable) -> "URL": ...
+
+    def with_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part replaced.
 
         Accepts any Mapping (e.g. dict, multidict.MultiDict instances)
@@ -1023,7 +1093,13 @@ class URL:
             self._val._replace(path=self._val.path, query=new_query), encoded=True
         )
 
-    def update_query(self, *args, **kwargs):
+    @overload
+    def update_query(self, query: _Query) -> "URL": ...
+
+    @overload
+    def update_query(self, **kwargs: _QueryVariable) -> "URL": ...
+
+    def update_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part updated."""
         s = self._get_str_query(*args, **kwargs)
         query = None
@@ -1036,7 +1112,7 @@ class URL:
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
 
-    def with_fragment(self, fragment):
+    def with_fragment(self, fragment: Optional[str]) -> "URL":
         """Return a new URL with fragment replaced.
 
         Autoencode fragment if needed.
@@ -1055,7 +1131,7 @@ class URL:
             return self
         return URL(self._val._replace(fragment=raw_fragment), encoded=True)
 
-    def with_name(self, name):
+    def with_name(self, name: str) -> "URL":
         """Return a new URL with name (last part of path) replaced.
 
         Query and fragment parts are cleaned up.
@@ -1087,7 +1163,7 @@ class URL:
             encoded=True,
         )
 
-    def with_suffix(self, suffix):
+    def with_suffix(self, suffix: str) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
 
         Query and fragment parts are cleaned up.
@@ -1108,7 +1184,7 @@ class URL:
             name = name[: -len(old_suffix)] + suffix
         return self.with_name(name)
 
-    def join(self, url):
+    def join(self, url: "URL") -> "URL":
         """Join URLs
 
         Construct a full (“absolute”) URL by combining a “base URL”
@@ -1125,41 +1201,35 @@ class URL:
             raise TypeError("url should be URL")
         return URL(urljoin(str(self), str(url)), encoded=True)
 
-    def joinpath(self, *other, encoded=False):
+    def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
         return self._make_child(other, encoded=encoded)
 
-    def human_repr(self):
+    def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
         user = _human_quote(self.user, "#/:?@[]")
         password = _human_quote(self.password, "#/:?@[]")
         host = self.host
         if host:
-            host = self._encode_host(self.host, human=True)
+            host = self._encode_host(host, human=True)
         path = _human_quote(self.path, "#?")
+        if TYPE_CHECKING:
+            assert path is not None
         query_string = "&".join(
             "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
             for k, v in self.query.items()
         )
         fragment = _human_quote(self.fragment, "")
-        return urlunsplit(
-            SplitResult(
-                self.scheme,
-                self._make_netloc(
-                    user,
-                    password,
-                    host,
-                    self.explicit_port,
-                    encode_host=False,
-                ),
-                path,
-                query_string,
-                fragment,
-            )
+        if TYPE_CHECKING:
+            assert fragment is not None
+        netloc = self._make_netloc(
+            user, password, host, self.explicit_port, encode_host=False
         )
+        val = SplitResult(self.scheme, netloc, path, query_string, fragment)
+        return urlunsplit(val)
 
 
-def _human_quote(s, unsafe):
+def _human_quote(s: Optional[str], unsafe: str) -> Optional[str]:
     if not s:
         return s
     for c in "%" + unsafe:
@@ -1174,7 +1244,7 @@ _MAXCACHE = 256
 
 
 @lru_cache(_MAXCACHE)
-def _idna_decode(raw):
+def _idna_decode(raw: str) -> str:
     try:
         return idna.decode(raw.encode("ascii"))
     except UnicodeError:  # e.g. '::1'
@@ -1182,7 +1252,7 @@ def _idna_decode(raw):
 
 
 @lru_cache(_MAXCACHE)
-def _idna_encode(host):
+def _idna_encode(host: str) -> str:
     try:
         return idna.encode(host, uts46=True).decode("ascii")
     except UnicodeError:
@@ -1205,7 +1275,7 @@ def cache_clear() -> None:
 
 
 @rewrite_module
-def cache_info():
+def cache_info() -> CacheInfo:
     """Report cache statistics."""
     return {
         "idna_encode": _idna_encode.cache_info(),
@@ -1217,9 +1287,9 @@ def cache_info():
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: int = _MAXCACHE,
-    idna_decode_size: int = _MAXCACHE,
-    ip_address_size: int = _MAXCACHE,
+    idna_encode_size: Optional[int] = _MAXCACHE,
+    idna_decode_size: Optional[int] = _MAXCACHE,
+    ip_address_size: Optional[int] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _ip_compressed_version
