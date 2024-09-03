@@ -39,6 +39,10 @@ body:
 
         [issue search]: ../search?q=is%3Aissue&type=issues
       required: true
+    - label: >-
+        I understand this is open source software provided for free and
+        that I might not receive a timely response.
+      required: true
 
 - type: textarea
   attributes:
