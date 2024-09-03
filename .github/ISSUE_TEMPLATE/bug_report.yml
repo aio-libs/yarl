@@ -21,13 +21,18 @@ body:
 - type: checkboxes
   id: terms
   attributes:
-    label: Code of Conduct
+    label: Please confirm the following
     description: |
-      Read the [aio-libs Code of Conduct][CoC] first.
+      Read the [aio-libs Code of Conduct][CoC] first. Check the existing issues
+      on the tracker. Take into account the possibility of your report
+      surfacing a security vulnerability.
 
-      [CoC]: https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md
+      [CoC]: ../../.github/blob/master/CODE_OF_CONDUCT.md
     options:
-    - label: I agree to follow the aio-libs Code of Conduct
+    - label: |
+        I agree to follow the [aio-libs Code of Conduct][CoC]
+
+        [CoC]: ../../.github/blob/master/CODE_OF_CONDUCT.md
       required: true
 
 - type: textarea
