@@ -1,7 +1,8 @@
 ---
 name: 🐞 Bug Report
 description: Create a report to help us improve.
-labels: [bug]
+labels:
+- bug
 body:
 - type: markdown
   attributes:
