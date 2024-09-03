@@ -1,9 +1,9 @@
-import functools
 import math
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from contextlib import suppress
+from functools import lru_cache
 from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
@@ -819,13 +819,15 @@ class URL:
             # to reduce the cache size
             if human or host.isascii():
                 return host
-            host = _idna_encode(host)
-        else:
-            host = ip.compressed
-            if sep:
-                host += "%" + zone
-            if ip.version == 6:
-                host = "[" + host + "]"
+            return _idna_encode(host)
+
+        # These checks should not happen in the
+        # LRU to keep the cache size small
+        host, version = ip_compressed_version
+        if sep:
+            host += "%" + zone
+        if version == 6:
+            return f"[{host}]"
         return host
 
     @classmethod
@@ -1242,7 +1244,7 @@ def _human_quote(s: str, unsafe: str) -> str:
 _MAXCACHE = 256
 
 
-@functools.lru_cache(_MAXCACHE)
+@lru_cache(_MAXCACHE)
 def _idna_decode(raw: str) -> str:
     try:
         return idna.decode(raw.encode("ascii"))
@@ -1250,7 +1252,7 @@ def _idna_decode(raw: str) -> str:
         return raw.encode("ascii").decode("idna")
 
 
-@functools.lru_cache(_MAXCACHE)
+@lru_cache(_MAXCACHE)
 def _idna_encode(host: str) -> str:
     try:
         return idna.encode(host, uts46=True).decode("ascii")
@@ -1258,23 +1260,43 @@ def _idna_encode(host: str) -> str:
         return host.encode("idna").decode("ascii")
 
 
+@lru_cache(_MAXCACHE)
+def _ip_compressed_version(raw_ip: str) -> Tuple[str, int]:
+    """Return compressed version of IP address and its version."""
+    ip = ip_address(raw_ip)
+    return ip.compressed, ip.version
+
+
 @rewrite_module
 def cache_clear() -> None:
+    """Clear all LRU caches."""
     _idna_decode.cache_clear()
     _idna_encode.cache_clear()
+    _ip_compressed_version.cache_clear()
 
 
 @rewrite_module
 def cache_info() -> Dict[str, Any]:
+    """Report cache statistics."""
     return {
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
+        "ip_address": _ip_compressed_version.cache_info(),
     }
 
 
 @rewrite_module
-def cache_configure(*, idna_encode_size=_MAXCACHE, idna_decode_size=_MAXCACHE):
-    global _idna_decode, _idna_encode
+def cache_configure(
+    *,
+    idna_encode_size: int = _MAXCACHE,
+    idna_decode_size: int = _MAXCACHE,
+    ip_address_size: int = _MAXCACHE,
+) -> None:
+    """Configure LRU cache sizes."""
+    global _idna_decode, _idna_encode, _ip_compressed_version
 
-    _idna_encode = functools.lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
-    _idna_decode = functools.lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
+    _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
+    _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
+    _ip_compressed_version = lru_cache(ip_address_size)(
+        _ip_compressed_version.__wrapped__
+    )
