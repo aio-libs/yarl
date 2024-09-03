@@ -34,6 +34,11 @@ body:
 
         [CoC]: ../../.github/blob/master/CODE_OF_CONDUCT.md
       required: true
+    - label: |
+        I have checked the [current issues][issue search] for duplicates.
+
+        [issue search]: ../search?q=is%3Aissue&type=issues
+      required: true
 
 - type: textarea
   attributes:
