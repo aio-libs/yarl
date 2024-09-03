@@ -271,8 +271,6 @@ class URL:
                 netloc = authority
             else:
                 tmp = SplitResult("", authority, "", "", "")
-                if TYPE_CHECKING:
-                    assert tmp.hostname is not None
                 netloc = cls._make_netloc(
                     tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
                 )
@@ -308,8 +306,6 @@ class URL:
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
         if (port := self._port_not_default) is None:
-            if TYPE_CHECKING:
-                assert self.raw_host is not None
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             val = val._replace(
@@ -435,8 +431,6 @@ class URL:
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
         v = self._val
-        if TYPE_CHECKING:
-            assert v.hostname is not None
         netloc = self._make_netloc(None, None, v.hostname, v.port)
         val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
@@ -493,8 +487,6 @@ class URL:
         Empty string for relative URLs.
 
         """
-        if TYPE_CHECKING:
-            assert self.host is not None
         return self._make_netloc(
             self.user, self.password, self.host, self.port, encode_host=False
         )
@@ -910,8 +902,6 @@ class URL:
             raise TypeError("Invalid user type")
         if not self.is_absolute():
             raise ValueError("user replacement is not allowed for relative URLs")
-        if TYPE_CHECKING:
-            assert val.hostname is not None
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(user, password, val.hostname, val.port)
@@ -937,8 +927,6 @@ class URL:
         if not self.is_absolute():
             raise ValueError("password replacement is not allowed for relative URLs")
         val = self._val
-        if TYPE_CHECKING:
-            assert val.hostname is not None
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(val.username, password, val.hostname, val.port)
@@ -985,8 +973,6 @@ class URL:
         if not self.is_absolute():
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
-        if TYPE_CHECKING:
-            assert val.hostname is not None
         return URL(
             self._val._replace(
                 netloc=self._make_netloc(val.username, val.password, val.hostname, port)
