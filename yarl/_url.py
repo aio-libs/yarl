@@ -230,7 +230,7 @@ class URL:
                 netloc = authority
             else:
                 tmp = SplitResult("", authority, "", "", "")
-                port = None if tmp.port == cls._default_port(scheme) else tmp.port
+                port = None if tmp.port == DEFAULT_PORTS.get(scheme) else tmp.port
                 netloc = cls._make_netloc(
                     tmp.username, tmp.password, tmp.hostname, port, encode=True
                 )
