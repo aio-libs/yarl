@@ -9,7 +9,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Iterable,
     Iterator,
     List,
@@ -53,6 +52,15 @@ class CacheInfo(TypedDict):
     idna_encode: _CacheInfo
     idna_decode: _CacheInfo
     ip_address: _CacheInfo
+
+
+class _RawDict(TypedDict, total=False):
+
+    scheme: str
+    authority: str
+    path: str
+    query_string: str
+    fragment: str
 
 
 def rewrite_module(obj: _T) -> _T:
@@ -1186,7 +1194,7 @@ class URL:
         return self.with_name(name)
 
     @property
-    def _raw_dict(self) -> Dict[str, str]:
+    def _raw_dict(self) -> _RawDict:
         """Return a dictionary with raw URL parts."""
         return {
             "authority": self.raw_authority,
