@@ -19,6 +19,7 @@ body:
       [issue search]: ../search?q=is%3Aissue&type=issues
 
 - type: checkboxes
+  id: terms
   attributes:
     label: Code of Conduct
     description: |
