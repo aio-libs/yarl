@@ -348,22 +348,22 @@ class URL:
             ret = self._cache["hash"] = hash(val)
         return ret
 
-    def __le__(self, other: Any) -> bool:
+    def __le__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
         return self._val <= other._val
 
-    def __lt__(self, other: Any) -> bool:
+    def __lt__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
         return self._val < other._val
 
-    def __ge__(self, other: Any) -> bool:
+    def __ge__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
         return self._val >= other._val
 
-    def __gt__(self, other: Any) -> bool:
+    def __gt__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
         return self._val > other._val
