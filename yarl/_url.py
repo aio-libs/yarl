@@ -1277,12 +1277,11 @@ def cache_clear() -> None:
 @rewrite_module
 def cache_info() -> CacheInfo:
     """Report cache statistics."""
-    cache_info: CacheInfo = {
+    return {
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
         "ip_address": _ip_compressed_version.cache_info(),
     }
-    return cache_info
 
 
 @rewrite_module
