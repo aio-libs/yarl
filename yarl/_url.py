@@ -755,7 +755,7 @@ class URL:
         return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
     @staticmethod
-    def _validate_authority_uri_abs_path(host, path) -> None:
+    def _validate_authority_uri_abs_path(host: str, path: str) -> None:
         """Ensure that path in URL with authority starts with a leading slash.
 
         Raise ValueError if not.
