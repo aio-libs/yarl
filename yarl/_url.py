@@ -993,7 +993,7 @@ class URL:
     @classmethod
     def _query_seq_pairs(
         cls, quoter: Callable[[str], str], pairs: Iterable[Tuple[str, _QueryVariable]]
-    ) -> Generator[str, None, None]:
+    ) -> Iterator[str]:
         for key, val in pairs:
             if isinstance(val, (list, tuple)):
                 for v in val:
