@@ -308,6 +308,8 @@ class URL:
         if not val.path and self.is_absolute() and (val.query or val.fragment):
             val = val._replace(path="/")
         if (port := self._port_not_default) is None:
+            if TYPE_CHECKING:
+                assert self.raw_host is not None
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             val = val._replace(
@@ -491,6 +493,8 @@ class URL:
         Empty string for relative URLs.
 
         """
+        if TYPE_CHECKING:
+            assert self.host is not None
         return self._make_netloc(
             self.user, self.password, self.host, self.port, encode_host=False
         )
@@ -848,19 +852,21 @@ class URL:
         cls,
         user: Optional[str],
         password: Optional[str],
-        host: str,
+        host: Optional[str],
         port: Optional[int],
         encode: bool = False,
         encode_host: bool = True,
         requote: bool = False,
     ) -> str:
+        if host is None:
+            return ""
         quoter = cls._REQUOTER if requote else cls._QUOTER
         if encode_host:
             ret = cls._encode_host(host)
         else:
             ret = host
         if port is not None:
-            ret = ret + ":" + str(port)
+            ret = f"{ret}:{port}"
         if password is not None:
             if not user:
                 user = ""
@@ -1219,31 +1225,25 @@ class URL:
         password = _human_quote(self.password, "#/:?@[]")
         host = self.host
         if host:
-            host = self._encode_host(self.host, human=True)
+            host = self._encode_host(host, human=True)
         path = _human_quote(self.path, "#?")
+        if TYPE_CHECKING:
+            assert path is not None
         query_string = "&".join(
             "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
             for k, v in self.query.items()
         )
         fragment = _human_quote(self.fragment, "")
-        return urlunsplit(
-            SplitResult(
-                self.scheme,
-                self._make_netloc(
-                    user,
-                    password,
-                    host,
-                    self.explicit_port,
-                    encode_host=False,
-                ),
-                path,
-                query_string,
-                fragment,
-            )
+        if TYPE_CHECKING:
+            assert fragment is not None
+        netloc = self._make_netloc(
+            user, password, host, self.explicit_port, encode_host=False
         )
+        val = SplitResult(self.scheme, netloc, path, query_string, fragment)
+        return urlunsplit(val)
 
 
-def _human_quote(s: str, unsafe: str) -> str:
+def _human_quote(s: Optional[str], unsafe: str) -> Optional[str]:
     if not s:
         return s
     for c in "%" + unsafe:
