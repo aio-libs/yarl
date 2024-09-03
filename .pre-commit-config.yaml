@@ -183,5 +183,9 @@ repos:
     - >-  # https://github.com/rhysd/actionlint/issues/384
       ^type of expression at "float number value" must be number
       but found type string$
+    - -ignore
+    - >-  # https://github.com/rhysd/actionlint/pull/380#issuecomment-2325391372
+      ^input "attestations" is not defined in action
+      "pypa/gh-action-pypi-publish@release/v1". available inputs are ".*"$
 
 ...
