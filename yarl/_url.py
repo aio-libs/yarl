@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from functools import lru_cache
 from ipaddress import ip_address
-from typing import Tuple, Union
+from typing import Dict, Tuple, Union
 from urllib.parse import SplitResult, parse_qsl, quote, urlsplit, urlunsplit
 from urllib.parse import uses_netloc as uses_authority
 from urllib.parse import uses_relative
@@ -1108,6 +1108,15 @@ class URL:
             name = name[: -len(old_suffix)] + suffix
         return self.with_name(name)
 
+    @property
+    def _raw_dict(self) -> Dict[str, str]:
+        return {
+            "authority": self.raw_authority,
+            "path": self.raw_path,
+            "query_string": self.raw_query_string,
+            "fragment": self.raw_fragment,
+        }
+
     def join(self, url):
         """Join URLs
 
@@ -1129,21 +1138,12 @@ class URL:
         if scheme != self.scheme or scheme not in uses_relative:
             return URL(other._val._replace(), encoded=True)
 
-        def raw(uo: URL):
-            attrs = (
-                "raw_authority",
-                "raw_path",
-                "raw_query_string",
-                "raw_fragment",
-            )
-            return {k[4:]: getattr(uo, k) or "" for k in attrs}
-
-        parts = raw(self)
+        parts = self._raw_dict
         parts["scheme"] = scheme
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
         if scheme in uses_authority and other.authority:
-            parts.update(raw(other))
+            parts.update(other._raw_dict)
             return URL.build(**parts, encoded=True)
 
         if other.path or other.fragment:
