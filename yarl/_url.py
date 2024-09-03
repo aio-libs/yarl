@@ -325,7 +325,7 @@ class URL:
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
 
