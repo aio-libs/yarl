@@ -43,6 +43,14 @@ body:
         I understand this is open source software provided for free and
         that I might not receive a timely response.
       required: true
+    - label: |
+        I am positive I am **NOT** reporting a (potential) security
+        vulnerability, to the best of my knowledge. *(These must be shared by
+        submitting [this report form][vulnerability report form] instead, if
+        any hesitation exists.)*
+
+        [vulnerability report form]: ../security/advisories/new
+      required: true
 
 - type: textarea
   attributes:
