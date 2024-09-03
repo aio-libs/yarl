@@ -28,7 +28,7 @@ coverage:
         - pytest
         paths:
         - yarl/
-        target: 97.74%  # 97.83%
+        target: 97.91%
       tests:
         flags:
         - pytest

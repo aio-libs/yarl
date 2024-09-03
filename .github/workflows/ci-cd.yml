@@ -294,7 +294,7 @@ jobs:
         )
       run: |
         set -eEuo pipefail
-        sed -i.bak 's/^plugins = .*//g' .coveragerc
+        sed -i.bak 's/^\s\{2\}Cython\.Coverage$//g' .coveragerc
       shell: bash
     - name: Run unittests
       env:
@@ -314,6 +314,7 @@ jobs:
     - name: Append coverage results to Job Summary
       if: >-
         !cancelled()
+      continue-on-error: true
       run: >-
         python -Im coverage report --format=markdown
         >> "${GITHUB_STEP_SUMMARY}"
@@ -441,6 +442,8 @@ jobs:
     - name: >-
         Publish 🐍📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        attestations: true
 
     - name: Sign the dists with Sigstore
       uses: sigstore/gh-action-sigstore-python@v3.0.0
