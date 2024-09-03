@@ -1160,9 +1160,7 @@ class URL:
 
         if self.path[-1] == "/":
             # using an intermediate to avoid URL.joinpath dropping query & fragment
-            parts["path"] = self._normalize_path(
-                URL(self.path).joinpath(other.path).path
-            )
+            parts["path"] = self._normalize_path(self._make_child([other.path]).path)
         else:
             # …
             # and relativizing ".."
