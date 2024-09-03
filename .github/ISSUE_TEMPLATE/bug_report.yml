@@ -1,8 +1,8 @@
 ---
-name: Bug Report
+name: 🐞 Bug Report
 description: Create a report to help us improve.
-labels: [bug]
-assignees: aio-libs/triagers
+labels:
+- bug
 body:
 - type: markdown
   attributes:
@@ -17,6 +17,44 @@ body:
       details as possible._
 
       [issue search]: ../search?q=is%3Aissue&type=issues
+
+- type: checkboxes
+  id: terms
+  attributes:
+    label: Please confirm the following
+    description: |
+      Read the [aio-libs Code of Conduct][CoC] first. Check the existing issues
+      on the tracker. Take into account the possibility of your report
+      surfacing a security vulnerability.
+
+      [CoC]: ../../.github/blob/master/CODE_OF_CONDUCT.md
+    options:
+    - label: |
+        I agree to follow the [aio-libs Code of Conduct][CoC]
+
+        [CoC]: ../../.github/blob/master/CODE_OF_CONDUCT.md
+      required: true
+    - label: |
+        I have checked the [current issues][issue search] for duplicates.
+
+        [issue search]: ../search?q=is%3Aissue&type=issues
+      required: true
+    - label: >-
+        I understand this is open source software provided for free and
+        that I might not receive a timely response.
+      required: true
+    - label: |
+        I am positive I am **NOT** reporting a (potential) security
+        vulnerability, to the best of my knowledge. *(These must be shared by
+        submitting [this report form][vulnerability report form] instead, if
+        any hesitation exists.)*
+
+        [vulnerability report form]: ../security/advisories/new
+      required: true
+    - label: >-
+        I am willing to submit a pull request with reporoducers as xfailing test
+        cases or even entire fix. *(Assign this issue to me.)*
+      required: false
 
 - type: textarea
   attributes:
@@ -102,14 +140,4 @@ body:
       Describe the environment you have that lead to your issue.
       This includes proxy server and other bits that are related to your case.
 
-- type: checkboxes
-  attributes:
-    label: Code of Conduct
-    description: |
-      Read the [aio-libs Code of Conduct][CoC] first.
-
-      [CoC]: https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md
-    options:
-    - label: I agree to follow the aio-libs Code of Conduct
-      required: true
 ...
