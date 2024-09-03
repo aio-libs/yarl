@@ -1,4 +1,5 @@
 -r cython.txt
+covdefaults
 idna==3.8
 multidict==6.0.5
 pytest==8.3.2

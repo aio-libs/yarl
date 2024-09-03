@@ -1,3 +1,7 @@
+[html]
+show_contexts = true
+skip_covered = false
+
 [paths]
 source =
   yarl
@@ -6,14 +10,22 @@ source =
   */Lib/site-packages/yarl
 
 [report]
+fail_under = 98.97
 skip_covered = true
 skip_empty = true
 show_missing = true
+exclude_also =
+  ^\s*@pytest\.mark\.xfail
 
 [run]
 branch = true
 cover_pylib = false
-plugins = Cython.Coverage
+# https://coverage.rtfd.io/en/latest/contexts.html#dynamic-contexts
+# dynamic_context = test_function  # conflicts with `pytest-cov` if set here
+parallel = true
+plugins =
+  covdefaults
+  Cython.Coverage
 relative_files = true
 source =
   .
