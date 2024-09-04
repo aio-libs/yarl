@@ -27,11 +27,13 @@ facto
 glibc
 google
 hardcoded
+macOS
 mailto
 manylinux
 multi
 nightlies
 pre
+rc
 reStructuredText
 reencoding
 requote

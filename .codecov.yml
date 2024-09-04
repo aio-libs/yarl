@@ -2,10 +2,12 @@
 
 codecov:
   notify:
-    after_n_builds: 27  # The number of test matrix+lint jobs uploading coverage
+    after_n_builds: 24  # The number of test matrix+lint jobs uploading coverage
     wait_for_ci: false
 
   require_ci_to_pass: false
+
+  token: 26f4a393-24a9-48d9-8fa4-f1344d930846  # repo-scoped
 
 comment:
   require_changes: true
@@ -13,16 +15,29 @@ comment:
 coverage:
   range: 99.34..100
   status:
+    patch:
+      default:
+        target: 100%
+        flags:
+        - pytest
     project:
       default:
         target: 100%
       lib:
+        flags:
+        - pytest
         paths:
         - yarl/
-        target: 97.83%
+        target: 97.91%
       tests:
+        flags:
+        - pytest
         paths:
         - tests/
+        target: 99.87%  # 100%
+      typing:
+        flags:
+        - MyPy
         target: 100%
 
 ...

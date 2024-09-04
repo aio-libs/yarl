@@ -442,6 +442,9 @@ texinfo_documents = [
 
 default_role = "any"
 nitpicky = True
+nitpick_ignore = [
+    ("envvar", "TMPDIR"),
+]
 
 # -- Options for towncrier_draft extension -----------------------------------
 

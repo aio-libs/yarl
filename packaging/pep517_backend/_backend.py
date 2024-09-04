@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import typing as t
 from contextlib import contextmanager, nullcontext, suppress
+from functools import partial
 from pathlib import Path
 from shutil import copytree
 from sys import implementation as _system_implementation
@@ -66,6 +67,8 @@ __all__ = (  # noqa: WPS410
     ),
 )
 
+_ConfigDict = t.Dict[str, t.Union[str, t.List[str], None]]
+
 
 CYTHON_TRACING_CONFIG_SETTING = 'with-cython-tracing'
 """Config setting name toggle to include line tracing to C-exts."""
@@ -95,7 +98,7 @@ def _is_truthy_setting_value(setting_value) -> bool:
 
 
 def _get_setting_value(
-        config_settings: dict[str, str] | None = None,
+        config_settings: _ConfigDict | None = None,
         config_setting_name: str | None = None,
         env_var_name: str | None = None,
         *,
@@ -115,7 +118,7 @@ def _get_setting_value(
     return default
 
 
-def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
+def _make_pure_python(config_settings: _ConfigDict | None = None) -> bool:
     return _get_setting_value(
         config_settings,
         PURE_PYTHON_CONFIG_SETTING,
@@ -125,7 +128,7 @@ def _make_pure_python(config_settings: dict[str, str] | None = None) -> bool:
 
 
 def _include_cython_line_tracing(
-        config_settings: dict[str, str] | None = None,
+        config_settings: _ConfigDict | None = None,
         *,
         default=False,
 ) -> bool:
@@ -194,12 +197,44 @@ def patched_dist_get_long_description():
         _DistutilsDistributionMetadata.get_long_description = _orig_func
 
 
+def _exclude_dir_path(
+    excluded_dir_path: Path,
+    visited_directory: str,
+    _visited_dir_contents: list[str],
+) -> list[str]:
+    """Prevent recursive directory traversal."""
+    # This stops the temporary directory from being copied
+    # into self recursively forever.
+    # Ref: https://github.com/aio-libs/yarl/issues/992
+    visited_directory_subdirs_to_ignore = [
+        subdir
+        for subdir in _visited_dir_contents
+        if excluded_dir_path == Path(visited_directory) / subdir
+    ]
+    if visited_directory_subdirs_to_ignore:
+        print(
+            f'Preventing `{excluded_dir_path !s}` from being '
+            'copied into itself recursively...',
+            file=_standard_error_stream,
+        )
+    return visited_directory_subdirs_to_ignore
+
+
 @contextmanager
 def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        root_tmp_dir_path = tmp_dir_path.parent
+        _exclude_tmpdir_parent = partial(_exclude_dir_path, root_tmp_dir_path)
+
         with chdir_cm(tmp_dir):
-            tmp_src_dir = Path(tmp_dir) / 'src'
-            copytree(src_dir, tmp_src_dir, symlinks=True)
+            tmp_src_dir = tmp_dir_path / 'src'
+            copytree(
+                src_dir,
+                tmp_src_dir,
+                ignore=_exclude_tmpdir_parent,
+                symlinks=True,
+            )
             os.chdir(tmp_src_dir)
             yield
 
@@ -208,7 +243,7 @@ def _in_temporary_directory(src_dir: Path) -> t.Iterator[None]:
 def maybe_prebuild_c_extensions(
         line_trace_cython_when_unset: bool = False,
         build_inplace: bool = False,
-        config_settings: dict[str, str] | None = None,
+        config_settings: _ConfigDict | None = None,
 ) -> t.Generator[None, t.Any, t.Any]:
     """Pre-build C-extensions in a temporary directory, when needed.
 
@@ -272,7 +307,7 @@ def maybe_prebuild_c_extensions(
 @patched_dist_get_long_description()
 def build_wheel(
         wheel_directory: str,
-        config_settings: dict[str, str] | None = None,
+        config_settings: _ConfigDict | None = None,
         metadata_directory: str | None = None,
 ) -> str:
     """Produce a built wheel.
@@ -299,7 +334,7 @@ def build_wheel(
 @patched_dist_get_long_description()
 def build_editable(
         wheel_directory: str,
-        config_settings: dict[str, str] | None = None,
+        config_settings: _ConfigDict | None = None,
         metadata_directory: str | None = None,
 ) -> str:
     """Produce a built wheel for editable installs.
@@ -324,7 +359,7 @@ def build_editable(
 
 
 def get_requires_for_build_wheel(
-        config_settings: dict[str, str] | None = None,
+        config_settings: _ConfigDict | None = None,
 ) -> list[str]:
     """Determine additional requirements for building wheels.
 
