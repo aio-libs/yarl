@@ -1226,8 +1226,7 @@ class URL:
         if scheme in USES_AUTHORITY and other.raw_authority:
             return URL(other._val._replace(scheme=scheme), encoded=True)
 
-        parts: _SplitResultDict = {}
-        parts["scheme"] = scheme
+        parts: _SplitResultDict = {"scheme": scheme}
         other_path = other._val.path
         if other_path or other.raw_fragment:
             parts["fragment"] = other._val.fragment
