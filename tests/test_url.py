@@ -1307,26 +1307,31 @@ def test_with_suffix_replace():
 def test_is_absolute_for_relative_url():
     url = URL("/path/to")
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_absolute_for_absolute_url():
     url = URL("http://example.com")
     assert url.is_absolute()
+    assert url.absolute
 
 
 def test_is_non_absolute_for_empty_url():
     url = URL()
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_non_absolute_for_empty_url2():
     url = URL("")
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_absolute_path_starting_from_double_slash():
     url = URL("//www.python.org")
     assert url.is_absolute()
+    assert url.absolute
 
 
 # is_default_port
@@ -1759,6 +1764,7 @@ def test_relative_is_relative():
     url = URL("http://user:pass@example.com:8080/path?a=b#frag")
     rel = url.relative()
     assert not rel.is_absolute()
+    assert not rel.absolute
 
 
 def test_relative_abs_parts_are_removed():
