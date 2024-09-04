@@ -1720,6 +1720,22 @@ def test_join_cpython_urljoin(base, url, expected):
     assert joined == expected
 
 
+OPTIMIZE_URLJOIN = [
+    ("a/", "b", "a/b"),
+    ("a/b", "c", "a/c"),
+]
+
+
+@pytest.mark.parametrize("base,url,expected", OPTIMIZE_URLJOIN)
+def test_join_optimize_urljoin(base, url, expected):
+    # tests from cpython urljoin
+    base = URL(base)
+    url = URL(url)
+    expected = URL(expected)
+    joined = base.join(url)
+    assert joined == expected
+
+
 def test_empty_authority():
     assert URL("http:///").authority == ""
 
