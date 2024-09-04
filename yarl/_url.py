@@ -19,9 +19,15 @@ from typing import (
     Union,
     overload,
 )
-from urllib.parse import SplitResult, parse_qsl, quote, urlsplit, urlunsplit
-from urllib.parse import uses_netloc as uses_authority
-from urllib.parse import uses_relative
+from urllib.parse import (
+    SplitResult,
+    parse_qsl,
+    quote,
+    urlsplit,
+    urlunsplit,
+    uses_netloc,
+    uses_relative,
+)
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -30,6 +36,8 @@ from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+USES_AUTHORITY = frozenset(uses_netloc)
+USES_RELATIVE = frozenset(uses_relative)
 
 sentinel = object()
 
@@ -54,12 +62,12 @@ class CacheInfo(TypedDict):
     ip_address: _CacheInfo
 
 
-class _RawDict(TypedDict, total=False):
+class _SplitResultDict(TypedDict, total=False):
 
     scheme: str
-    authority: str
+    netloc: str
     path: str
-    query_string: str
+    query: str
     fragment: str
 
 
@@ -1193,16 +1201,6 @@ class URL:
             name = name[: -len(old_suffix)] + suffix
         return self.with_name(name)
 
-    @property
-    def _raw_dict(self) -> _RawDict:
-        """Return a dictionary with raw URL parts."""
-        return {
-            "authority": self.raw_authority,
-            "path": self.raw_path,
-            "query_string": self.raw_query_string,
-            "fragment": self.raw_fragment,
-        }
-
     def join(self, url: "URL") -> "URL":
         """Join URLs
 
@@ -1215,45 +1213,42 @@ class URL:
         relative URL.
 
         """
-        # See docs for urllib.parse.urljoin
-        if not isinstance(url, URL):
+        if type(url) is not URL:
             raise TypeError("url should be URL")
-        other: URL = url
-        scheme = other.scheme or self.scheme
+        val = self._val
+        other_val = url._val
+        scheme = other_val.scheme or val.scheme
 
-        if scheme != self.scheme or scheme not in uses_relative:
-            return URL(other._val._replace(), encoded=True)
-
-        parts = self._raw_dict
-        parts["scheme"] = scheme
+        if scheme != val.scheme or scheme not in USES_RELATIVE:
+            return url
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
-        if scheme in uses_authority and other.authority:
-            parts.update(other._raw_dict)
-            return URL.build(**parts, encoded=True)
+        if other_val.netloc and scheme in USES_AUTHORITY:
+            return URL(other_val._replace(scheme=scheme), encoded=True)
 
-        if other.path or other.fragment:
-            parts["fragment"] = other.raw_fragment or ""
-        if other.path or other.query:
-            parts["query_string"] = other.raw_query_string or ""
+        parts: _SplitResultDict = {"scheme": scheme}
+        if other_val.path or other_val.fragment:
+            parts["fragment"] = other_val.fragment
+        if other_val.path or other_val.query:
+            parts["query"] = other_val.query
 
-        if not other.path:
-            return URL.build(**parts, encoded=True)
+        if not other_val.path:
+            return URL(val._replace(**parts), encoded=True)
 
-        if other.path[0] == "/":
-            parts["path"] = self._normalize_path(other.path)
-            return URL.build(**parts, encoded=True)
-
-        if self.path[-1] == "/":
-            # using an intermediate to avoid URL.joinpath dropping query & fragment
-            parts["path"] = self._normalize_path(self._make_child([other.path]).path)
+        if other_val.path[0] == "/" or not val.path:
+            path = other_val.path
+        elif val.path[-1] == "/":
+            path = f"{val.path}{other_val.path}"
         else:
             # …
             # and relativizing ".."
-            parts["path"] = self._normalize_path(
-                self._make_child(["..", other.path]).path
-            )
-        return URL.build(**parts, encoded=True)
+            path = "/".join([*self.parts[1:-1], ""])
+            path += other_val.path
+            if val.netloc:
+                path = "/" + path
+
+        parts["path"] = self._normalize_path(path)
+        return URL(val._replace(**parts), encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
