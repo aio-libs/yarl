@@ -1,1 +1,0 @@
-Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.

@@ -14,6 +14,47 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.8
+=====
+
+*(2024-09-03)*
+
+
+Features
+--------
+
+- Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`.
+
+- Cache parsing of IP Addresses when encoding hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1086`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of handling ports -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1081`.
+
+
+----
+
+
 1.9.7
 =====
 
