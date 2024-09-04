@@ -1,1 +1,1 @@
-Added :attr:`~yarl.URL.absolute` which is now preferred over ``is_absolute`` -- by :user:`bdraco`.
+Added :attr:`~yarl.URL.absolute` which is now preferred over ``URL.is_absolute()`` -- by :user:`bdraco`.
