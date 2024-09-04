@@ -476,7 +476,7 @@ class URL:
         """
         return self._val.scheme
 
-    @cached_property
+    @property
     def raw_authority(self) -> str:
         """Encoded authority part of URL.
 
