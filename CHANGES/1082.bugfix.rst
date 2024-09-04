@@ -25,3 +25,5 @@ Empty segments are honored in the base as well as the joined part.
 
 
 -- by :user:`commonism`
+
+This change initially appeared in 1.9.5 but was reverted in 1.9.6 to resolve a problem with query string handling.
