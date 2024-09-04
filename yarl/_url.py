@@ -563,7 +563,7 @@ class URL:
         return _idna_decode(raw)
 
     @cached_property
-    def port(self):
+    def port(self) -> Optional[int]:
         """Port part of URL, with scheme-based fallback.
 
         None for relative URLs or URLs without explicit port and
