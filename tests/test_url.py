@@ -1709,6 +1709,18 @@ URLLIB_URLJOIN = [
     ("http:///", "..", "http:///"),
     ("a/", "b", "a/b"),
     ("a/b", "c", "a/c"),
+    ("a/b/", "c", "a/b/c"),
+    (
+        "https://x.org/",
+        "/?text=Hello+G%C3%BCnter",
+        "https://x.org/?text=Hello+G%C3%BCnter",
+    ),
+    (
+        "https://x.org/",
+        "?text=Hello+G%C3%BCnter",
+        "https://x.org/?text=Hello+G%C3%BCnter",
+    ),
+    ("http://example.com", "http://example.com", "http://example.com"),
 ]
 
 
