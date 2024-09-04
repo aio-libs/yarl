@@ -1228,27 +1228,24 @@ class URL:
 
         parts: _SplitResultDict = {}
         parts["scheme"] = scheme
-        other_raw_path = other.raw_path
-        if other_raw_path or other.raw_fragment:
-            parts["fragment"] = other.raw_fragment or ""
-        if other_raw_path or other.raw_query_string:
-            parts["query"] = other.raw_query_string or ""
+        other_val = other._val
+        other_path = other_val.path
+        if other_path or other.raw_fragment:
+            parts["fragment"] = other_val.fragment
+        if other_path or other.raw_query_string:
+            parts["query"] = other_val.query
 
-        if not other_raw_path:
-            return URL(self._val._replace(**parts), encoded=True)
-
-        other_path = other.path
-        if other_path[0] == "/":
-            parts["path"] = self._normalize_path(other.path)
-            return URL(self._val._replace(**parts), encoded=True)
-
-        if self.path[-1] == "/":
-            # using an intermediate to avoid URL.joinpath dropping query & fragment
-            parts["path"] = self._normalize_path(self._make_child([other_path]).path)
+        if not other_path:
+            pass
+        elif other_path[0] == "/":
+            parts["path"] = self._normalize_path(other_path)
+        elif self.path[-1] == "/":
+            parts["path"] = self._normalize_path(f"{self.path}{other_path}")
         else:
             # …
             # and relativizing ".."
-            path = URL("/".join([*self.parts[1:-1], ""])).joinpath(other_path).path
+            path = "/".join([*self.parts[1:-1], ""])
+            path += other_path
             if self.raw_authority:
                 path = "/" + path
             parts["path"] = self._normalize_path(path)
