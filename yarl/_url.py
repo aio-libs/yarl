@@ -1242,10 +1242,7 @@ class URL:
         else:
             # …
             # and relativizing ".."
-            path = "/".join([*self.parts[1:-1], ""])
-            path += other_val.path
-            if val.netloc:
-                path = "/" + path
+            path = self._make_child(["..", other_val.path]).path
 
         parts["path"] = self._normalize_path(path)
         return URL(val._replace(**parts), encoded=True)
