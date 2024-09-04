@@ -1721,6 +1721,7 @@ URLLIB_URLJOIN = [
         "https://x.org/?text=Hello+G%C3%BCnter",
     ),
     ("http://example.com", "http://example.com", "http://example.com"),
+    ("http://x.org", "https://x.org#fragment", "https://x.org#fragment"),
 ]
 
 
