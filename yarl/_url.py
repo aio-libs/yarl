@@ -19,7 +19,15 @@ from typing import (
     Union,
     overload,
 )
-from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
+from urllib.parse import (
+    SplitResult,
+    parse_qsl,
+    quote,
+    urlsplit,
+    urlunsplit,
+    uses_netloc,
+    uses_relative,
+)
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -28,6 +36,8 @@ from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+USES_AUTHORITY = frozenset(uses_netloc)
+USES_RELATIVE = frozenset(uses_relative)
 
 sentinel = object()
 
@@ -50,6 +60,15 @@ class CacheInfo(TypedDict):
     idna_encode: _CacheInfo
     idna_decode: _CacheInfo
     ip_address: _CacheInfo
+
+
+class _SplitResultDict(TypedDict, total=False):
+
+    scheme: str
+    netloc: str
+    path: str
+    query: str
+    fragment: str
 
 
 def rewrite_module(obj: _T) -> _T:
@@ -271,12 +290,14 @@ class URL:
                 netloc = authority
             else:
                 tmp = SplitResult("", authority, "", "", "")
+                port = None if tmp.port == DEFAULT_PORTS.get(scheme) else tmp.port
                 netloc = cls._make_netloc(
-                    tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
+                    tmp.username, tmp.password, tmp.hostname, port, encode=True
                 )
         elif not user and not password and not host and not port:
             netloc = ""
         else:
+            port = None if port == DEFAULT_PORTS.get(scheme) else port
             netloc = cls._make_netloc(
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )
@@ -791,11 +812,7 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
-            segments = [
-                segment for segment in reversed(path.split("/")) if segment != "."
-            ]
-            if not segments:
-                continue
+            segments = list(reversed(path.split("/")))
             # remove trailing empty segment for all but the last path
             segment_slice_start = int(not last and segments[0] == "")
             parsed += segments[segment_slice_start:]
@@ -1212,10 +1229,44 @@ class URL:
         relative URL.
 
         """
-        # See docs for urllib.parse.urljoin
-        if not isinstance(url, URL):
+        if type(url) is not URL:
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)), encoded=True)
+        val = self._val
+        other_val = url._val
+        scheme = other_val.scheme or val.scheme
+
+        if scheme != val.scheme or scheme not in USES_RELATIVE:
+            return url
+
+        # scheme is in uses_authority as uses_authority is a superset of uses_relative
+        if other_val.netloc and scheme in USES_AUTHORITY:
+            return URL(other_val._replace(scheme=scheme), encoded=True)
+
+        parts: _SplitResultDict = {"scheme": scheme}
+        if other_val.path or other_val.fragment:
+            parts["fragment"] = other_val.fragment
+        if other_val.path or other_val.query:
+            parts["query"] = other_val.query
+
+        if not other_val.path:
+            return URL(val._replace(**parts), encoded=True)
+
+        if other_val.path[0] == "/" or not val.path:
+            path = other_val.path
+        elif val.path[-1] == "/":
+            path = f"{val.path}{other_val.path}"
+        else:
+            # …
+            # and relativizing ".."
+            # parts[0] is / for absolute urls, this join will add a double slash there
+            path = "/".join([*self.parts[:-1], ""])
+            path += other_val.path
+            # which has to be removed
+            if val.path[0] == "/":
+                path = path[1:]
+
+        parts["path"] = self._normalize_path(path)
+        return URL(val._replace(**parts), encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
