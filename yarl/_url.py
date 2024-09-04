@@ -1220,7 +1220,7 @@ class URL:
         scheme = other_val.scheme or val.scheme
 
         if scheme != val.scheme or scheme not in USES_RELATIVE:
-            return URL(other_val._replace(), encoded=True)
+            return url
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
         if other_val.netloc and scheme in USES_AUTHORITY:
