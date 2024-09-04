@@ -1217,21 +1217,22 @@ class URL:
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
         other = url
-        scheme = other.scheme or self.scheme
+        other_val = other._val
+        scheme = other_val.scheme or self._val.scheme
 
-        if scheme != self.scheme or scheme not in USES_RELATIVE:
-            return URL(other._val._replace(), encoded=True)
+        if scheme != self._val.scheme or scheme not in USES_RELATIVE:
+            return URL(other_val._replace(), encoded=True)
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
-        if scheme in USES_AUTHORITY and other.raw_authority:
-            return URL(other._val._replace(scheme=scheme), encoded=True)
+        if other_val.netloc and scheme in USES_AUTHORITY:
+            return URL(other_val._replace(scheme=scheme), encoded=True)
 
         parts: _SplitResultDict = {"scheme": scheme}
-        other_path = other._val.path
-        if other_path or other.raw_fragment:
-            parts["fragment"] = other._val.fragment
-        if other_path or other.raw_query_string:
-            parts["query"] = other._val.query
+        other_path = other_val.path
+        if other_path or other_val.fragment:
+            parts["fragment"] = other_val.fragment
+        if other_path or other_val.query:
+            parts["query"] = other_val.query
 
         if not other_path:
             return URL(self._val._replace(**parts), encoded=True)
@@ -1245,7 +1246,7 @@ class URL:
             # and relativizing ".."
             path = "/".join([*self.parts[1:-1], ""])
             path += other_path
-            if self.raw_authority:
+            if self._val.netloc:
                 path = "/" + path
 
         parts["path"] = self._normalize_path(path)
