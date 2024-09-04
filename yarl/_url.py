@@ -1242,7 +1242,12 @@ class URL:
         else:
             # …
             # and relativizing ".."
-            path = self._make_child(["..", other_val.path], encoded=True).raw_path
+            # parts[0] is / for absolute urls, this join will add a double slash there
+            path = "/".join([*self.parts[:-1], ""])
+            path += other_val.path
+            # which has to be removed
+            if val.path[0] == "/":
+                path = path[1:]
 
         parts["path"] = self._normalize_path(path)
         return URL(val._replace(**parts), encoded=True)
