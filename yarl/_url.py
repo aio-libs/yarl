@@ -192,7 +192,6 @@ class URL:
             raise TypeError("Constructor parameter should be str")
 
         self = object.__new__(cls)
-        self._cache = {}
         if not encoded:
             host: Optional[str]
             if not val[1]:  # netloc
@@ -230,7 +229,8 @@ class URL:
             query = cls._QUERY_REQUOTER(val[3])
             fragment = cls._FRAGMENT_REQUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
-
+        else:
+            self._cache = {}
         self._val = val
         return self
 
