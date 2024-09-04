@@ -1239,8 +1239,8 @@ class URL:
 
         if other_path[0] == "/":
             path = other_path
-        elif self.path[-1] == "/":
-            path = f"{self.path}{other_path}"
+        elif not self._val.path or self._val.path[-1] == "/":
+            path = f"{self._val.path}{other_path}"
         else:
             # …
             # and relativizing ".."
