@@ -15,16 +15,29 @@ comment:
 coverage:
   range: 99.34..100
   status:
+    patch:
+      default:
+        target: 100%
+        flags:
+        - pytest
     project:
       default:
         target: 100%
       lib:
+        flags:
+        - pytest
         paths:
         - yarl/
-        target: 97.83%
+        target: 97.91%
       tests:
+        flags:
+        - pytest
         paths:
         - tests/
+        target: 99.87%  # 100%
+      typing:
+        flags:
+        - MyPy
         target: 100%
 
 ...
