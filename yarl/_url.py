@@ -1236,11 +1236,12 @@ class URL:
             parts["query"] = other_val.query
 
         if not other_path:
-            pass
-        elif other_path[0] == "/":
-            parts["path"] = self._normalize_path(other_path)
+            return URL(self._val._replace(**parts), encoded=True)
+
+        if other_path[0] == "/":
+            path = other_path
         elif self.path[-1] == "/":
-            parts["path"] = self._normalize_path(f"{self.path}{other_path}")
+            path = f"{self.path}{other_path}"
         else:
             # …
             # and relativizing ".."
@@ -1248,8 +1249,8 @@ class URL:
             path += other_path
             if self.raw_authority:
                 path = "/" + path
-            parts["path"] = self._normalize_path(path)
 
+        parts["path"] = self._normalize_path(path)
         return URL(self._val._replace(**parts), encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
