@@ -1,0 +1,1 @@
+Added missing type on :meth:`~yarl.URL.port` -- by :user:`bdraco`.
