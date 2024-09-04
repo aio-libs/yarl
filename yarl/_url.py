@@ -1250,12 +1250,9 @@ class URL:
         else:
             # …
             # and relativizing ".."
-            path = URL("/".join([*self.parts[1:-1], ""])).joinpath(other.path).path
-            if parts["authority"]:
-                parts["path"] = "/" + path
-            else:
-                parts["path"] = path
-        parts["path"] = self._normalize_path(parts["path"])
+            parts["path"] = self._normalize_path(
+                self._make_child(["..", other.path]).path
+            )
         return URL.build(**parts, encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
