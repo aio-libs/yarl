@@ -23,7 +23,7 @@ Changelog
 Bug fixes
 ---------
 
-- Added missing type on :meth:`~yarl.URL.port` -- by :user:`bdraco`.
+- Added missing type on :attr:`~yarl.URL.port` -- by :user:`bdraco`.
 
   *Related issues and pull requests on GitHub:*
   :issue:`1097`.
