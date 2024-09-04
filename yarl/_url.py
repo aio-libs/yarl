@@ -1242,7 +1242,7 @@ class URL:
         else:
             # …
             # and relativizing ".."
-            path = self._make_child(["..", other_val.path], encoded=True).path
+            path = self._make_child(["..", other_val.path], encoded=True).raw_path
 
         parts["path"] = self._normalize_path(path)
         return URL(val._replace(**parts), encoded=True)
