@@ -1213,8 +1213,7 @@ class URL:
         relative URL.
 
         """
-        # See docs for urllib.parse.urljoin
-        if not isinstance(url, URL):
+        if type(url) is not URL:
             raise TypeError("url should be URL")
         val = self._val
         other_val = url._val
