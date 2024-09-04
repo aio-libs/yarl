@@ -324,7 +324,7 @@ class URL:
 
     def __str__(self) -> str:
         val = self._val
-        if not val.path and self.is_absolute() and (val.query or val.fragment):
+        if not val.path and self.absolute and (val.query or val.fragment):
             val = val._replace(path="/")
         if (port := self._port_not_default) is None:
             # port normalization - using None for default ports to remove from rendering
@@ -351,11 +351,11 @@ class URL:
             return NotImplemented
 
         val1 = self._val
-        if not val1.path and self.is_absolute():
+        if not val1.path and self.absolute:
             val1 = val1._replace(path="/")
 
         val2 = other._val
-        if not val2.path and other.is_absolute():
+        if not val2.path and other.absolute:
             val2 = val2._replace(path="/")
 
         return val1 == val2
@@ -364,7 +364,7 @@ class URL:
         ret = self._cache.get("hash")
         if ret is None:
             val = self._val
-            if not val.path and self.is_absolute():
+            if not val.path and self.absolute:
                 val = val._replace(path="/")
             ret = self._cache["hash"] = hash(val)
         return ret
@@ -419,8 +419,24 @@ class URL:
         Return True for absolute ones (having scheme or starting
         with //), False otherwise.
 
+        Is is preferred to call the .absolute property instead
+        as it is cached.
         """
-        return self.raw_host is not None
+        return self.absolute
+
+    @cached_property
+    def absolute(self) -> bool:
+        """A check for absolute URLs.
+
+        Return True for absolute ones (having scheme or starting
+        with //), False otherwise.
+
+        """
+        # `netloc`` is an empty string for relative URLs
+        # Checking `netloc` is faster than checking `hostname`
+        # because `hostname` is a property that does some extra work
+        # to parse the host from the `netloc`
+        return self._val.netloc != ""
 
     def is_default_port(self) -> bool:
         """A check for default port.
@@ -447,7 +463,7 @@ class URL:
 
         """
         # TODO: add a keyword-only option for keeping user/pass maybe?
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("URL should be absolute")
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
@@ -462,7 +478,7 @@ class URL:
         scheme, user, password, host and port are removed.
 
         """
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("URL should be absolute")
         val = self._val._replace(scheme="", netloc="")
         return URL(val, encoded=True)
@@ -610,7 +626,7 @@ class URL:
 
         """
         ret = self._val.path
-        if not ret and self.is_absolute():
+        if not ret and self.absolute:
             ret = "/"
         return ret
 
@@ -692,7 +708,7 @@ class URL:
 
         """
         path = self._val.path
-        if self.is_absolute():
+        if self.absolute:
             if not path:
                 parts = ["/"]
             else:
@@ -732,7 +748,7 @@ class URL:
     def raw_name(self) -> str:
         """The last part of raw_parts."""
         parts = self.raw_parts
-        if self.is_absolute():
+        if self.absolute:
             parts = parts[1:]
             if not parts:
                 return ""
@@ -806,7 +822,7 @@ class URL:
             old_path_cutoff = -1 if old_path_segments[-1] == "" else None
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
-        if self.is_absolute():
+        if self.absolute:
             parsed = _normalize_path_segments(parsed)
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
@@ -896,7 +912,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("scheme replacement is not allowed for relative URLs")
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
@@ -917,7 +933,7 @@ class URL:
             password = val.password
         else:
             raise TypeError("Invalid user type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("user replacement is not allowed for relative URLs")
         return URL(
             self._val._replace(
@@ -941,7 +957,7 @@ class URL:
             password = self._QUOTER(password)
         else:
             raise TypeError("Invalid password type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("password replacement is not allowed for relative URLs")
         val = self._val
         return URL(
@@ -963,7 +979,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
@@ -987,7 +1003,7 @@ class URL:
                 raise TypeError(f"port should be int or None, got {type(port)}")
             if port < 0 or port > 65535:
                 raise ValueError(f"port must be between 0 and 65535, got {port}")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
         return URL(
@@ -1001,7 +1017,7 @@ class URL:
         """Return a new URL with path replaced."""
         if not encoded:
             path = self._PATH_QUOTER(path)
-            if self.is_absolute():
+            if self.absolute:
                 path = self._normalize_path(path)
         if len(path) > 0 and path[0] != "/":
             path = "/" + path
@@ -1165,7 +1181,7 @@ class URL:
         if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
-        if self.is_absolute():
+        if self.absolute:
             if len(parts) == 1:
                 parts.append(name)
             else:
