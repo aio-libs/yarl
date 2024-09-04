@@ -14,6 +14,24 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.9
+=====
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Added missing type on :meth:`~yarl.URL.port` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1097`.
+
+
+----
+
+
 1.9.8
 =====
 
