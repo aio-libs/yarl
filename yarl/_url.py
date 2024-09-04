@@ -1236,9 +1236,9 @@ class URL:
         if not other_path:
             return URL(self._val._replace(**parts), encoded=True)
 
-        if other_path[0] == "/":
+        if other_path[0] == "/" or not self._val.path:
             path = other_path
-        elif not self._val.path or self._val.path[-1] == "/":
+        elif self._val.path[-1] == "/":
             path = f"{self._val.path}{other_path}"
         else:
             # …
