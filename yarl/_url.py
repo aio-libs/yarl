@@ -1228,12 +1228,11 @@ class URL:
 
         parts: _SplitResultDict = {}
         parts["scheme"] = scheme
-        other_val = other._val
-        other_path = other_val.path
+        other_path = other._val.path
         if other_path or other.raw_fragment:
-            parts["fragment"] = other_val.fragment
+            parts["fragment"] = other._val.fragment
         if other_path or other.raw_query_string:
-            parts["query"] = other_val.query
+            parts["query"] = other._val.query
 
         if not other_path:
             return URL(self._val._replace(**parts), encoded=True)
