@@ -490,7 +490,7 @@ Absolute URL should start from either *scheme* or ``'//'``.
 
    .. versionchanged:: 1.9.10
 
-      The ``absolute`` property is preferred over the ``is_absolute`` method.
+      The :attr:`~yarl.URL.absolute` property is preferred over the ``is_absolute()`` method.
 
 
 New URL generation
