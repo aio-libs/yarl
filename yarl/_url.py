@@ -1216,10 +1216,11 @@ class URL:
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
+        val = self._val
         other_val = url._val
-        scheme = other_val.scheme or self._val.scheme
+        scheme = other_val.scheme or val.scheme
 
-        if scheme != self._val.scheme or scheme not in USES_RELATIVE:
+        if scheme != val.scheme or scheme not in USES_RELATIVE:
             return URL(other_val._replace(), encoded=True)
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
@@ -1227,29 +1228,28 @@ class URL:
             return URL(other_val._replace(scheme=scheme), encoded=True)
 
         parts: _SplitResultDict = {"scheme": scheme}
-        other_path = other_val.path
-        if other_path or other_val.fragment:
+        if other_val.path or other_val.fragment:
             parts["fragment"] = other_val.fragment
-        if other_path or other_val.query:
+        if other_val.path or other_val.query:
             parts["query"] = other_val.query
 
-        if not other_path:
-            return URL(self._val._replace(**parts), encoded=True)
+        if not other_val.path:
+            return URL(val._replace(**parts), encoded=True)
 
-        if other_path[0] == "/" or not self._val.path:
-            path = other_path
-        elif self._val.path[-1] == "/":
-            path = f"{self._val.path}{other_path}"
+        if other_val.path[0] == "/" or not val.path:
+            path = other_val.path
+        elif val.path[-1] == "/":
+            path = f"{val.path}{other_val.path}"
         else:
             # …
             # and relativizing ".."
             path = "/".join([*self.parts[1:-1], ""])
-            path += other_path
-            if self._val.netloc:
+            path += other_val.path
+            if val.netloc:
                 path = "/" + path
 
         parts["path"] = self._normalize_path(path)
-        return URL(self._val._replace(**parts), encoded=True)
+        return URL(val._replace(**parts), encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
