@@ -1707,27 +1707,13 @@ URLLIB_URLJOIN = [
     ("http://a/b/", "../../f/g/", "http://a/f/g/"),
     ("a", "b", "b"),
     ("http:///", "..", "http:///"),
-]
-
-
-@pytest.mark.parametrize("base,url,expected", URLLIB_URLJOIN)
-def test_join_cpython_urljoin(base, url, expected):
-    # tests from cpython urljoin
-    base = URL(base)
-    url = URL(url)
-    expected = URL(expected)
-    joined = base.join(url)
-    assert joined == expected
-
-
-OPTIMIZE_URLJOIN = [
     ("a/", "b", "a/b"),
     ("a/b", "c", "a/c"),
 ]
 
 
-@pytest.mark.parametrize("base,url,expected", OPTIMIZE_URLJOIN)
-def test_join_optimize_urljoin(base, url, expected):
+@pytest.mark.parametrize("base,url,expected", URLLIB_URLJOIN)
+def test_join_cpython_urljoin(base, url, expected):
     # tests from cpython urljoin
     base = URL(base)
     url = URL(url)
