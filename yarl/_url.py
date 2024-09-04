@@ -1216,8 +1216,7 @@ class URL:
         # See docs for urllib.parse.urljoin
         if not isinstance(url, URL):
             raise TypeError("url should be URL")
-        other = url
-        other_val = other._val
+        other_val = url._val
         scheme = other_val.scheme or self._val.scheme
 
         if scheme != self._val.scheme or scheme not in USES_RELATIVE:
