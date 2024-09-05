@@ -850,27 +850,45 @@ class URL:
     @classmethod
     def _encode_host(cls, host: str, human: bool = False) -> str:
         raw_ip, sep, zone = host.partition("%")
-        # IP parsing is slow, so its wrapped in an LRU
-        try:
-            ip_compressed_version = _ip_compressed_version(raw_ip)
-        except ValueError:
-            host = host.lower()
-            # IDNA encoding is slow,
-            # skip it for ASCII-only strings
-            # Don't move the check into _idna_encode() helper
-            # to reduce the cache size
-            if human or host.isascii():
+        if raw_ip and raw_ip[-1].isdigit() or ":" in raw_ip:
+            # Might be an IP address, check it
+            #
+            # IP Addresses can look like:
+            # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+            # - 127.0.0.1 (last character is a digit)
+            # - 2001:db8::ff00:42:8329 (contains a colon)
+            # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
+            # - [2001:db8::ff00:42:8329] (contains a colon)
+            # Rare IP Address formats are not supported per:
+            # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
+            #
+            # We try to avoid parsing IP addresses as much as possible
+            # since its orders of magnitude slower than almost any other operation
+            # this library does.
+            #
+            # IP parsing is slow, so its wrapped in an LRU
+            try:
+                ip_compressed_version = _ip_compressed_version(raw_ip)
+            except ValueError:
+                pass
+            else:
+                # These checks should not happen in the
+                # LRU to keep the cache size small
+                host, version = ip_compressed_version
+                if sep:
+                    host += "%" + zone
+                if version == 6:
+                    return f"[{host}]"
                 return host
-            return _idna_encode(host)
 
-        # These checks should not happen in the
-        # LRU to keep the cache size small
-        host, version = ip_compressed_version
-        if sep:
-            host += "%" + zone
-        if version == 6:
-            return f"[{host}]"
-        return host
+        host = host.lower()
+        # IDNA encoding is slow,
+        # skip it for ASCII-only strings
+        # Don't move the check into _idna_encode() helper
+        # to reduce the cache size
+        if human or host.isascii():
+            return host
+        return _idna_encode(host)
 
     @classmethod
     def _make_netloc(
