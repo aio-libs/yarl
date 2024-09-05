@@ -228,10 +228,10 @@ class URL:
                     raw_host, _, _ = bracketed.partition("]")
                 else:
                     raw_host = encoded_host
+                # raw_user property is not allowed to be empty string
                 self._cache = {
                     "raw_host": raw_host,
-                    "raw_user": raw_user
-                    or None,  # raw_user is not allowed to be empty string
+                    "raw_user": raw_user or None,
                     "raw_password": raw_password,
                     "explicit_port": port,
                 }
