@@ -242,6 +242,8 @@ class URL:
             cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(val[3])
             fragment = cls._FRAGMENT_REQUOTER(val[4])
+            self._cache["raw_query_string"] = query
+            self._cache["raw_fragment"] = fragment
             val = SplitResult(val[0], netloc, path, query, fragment)
 
         self._val = val
@@ -653,7 +655,7 @@ class URL:
         ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
 
-    @property
+    @cached_property
     def raw_query_string(self) -> str:
         """Encoded query part of URL.
 
@@ -685,7 +687,7 @@ class URL:
             return self.raw_path
         return f"{self.raw_path}?{self.raw_query_string}"
 
-    @property
+    @cached_property
     def raw_fragment(self) -> str:
         """Encoded fragment part of URL.
 
