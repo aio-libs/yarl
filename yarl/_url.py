@@ -935,7 +935,10 @@ class URL:
         cls,
         netloc: str,
     ) -> Tuple[Optional[str], Optional[str], str, Optional[int]]:
-        """Split netloc into username, password, host and port."""
+        """Split netloc into username, password, host and port.
+
+        host is not encoded, pass it to _encode_host if needed.
+        """
         username: Optional[str]
         password: Optional[str]
         hostname: str
@@ -959,12 +962,6 @@ class URL:
 
         if not hostname:
             raise ValueError("Invalid URL: host is required for absolute urls")
-
-        if "%" in hostname:
-            hostname, percent, zone = hostname.partition("%")
-            hostname = hostname.lower() + percent + zone
-        else:
-            hostname = hostname.lower()
 
         if port_str:
             if port_str.isdigit() and port_str.isascii():
