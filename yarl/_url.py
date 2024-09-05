@@ -931,6 +931,7 @@ class URL:
         return ret
 
     @classmethod
+    @lru_cache  # match the same size as urlsplit
     def _split_netloc(
         cls,
         netloc: str,
