@@ -1,0 +1,3 @@
+Fixed compatibility with ``multidict`` versions where ``MultiDictProxy`` is not a ``Generic`` -- by :user:`bdraco`.
+
+A :exc:`TypeError` would be raised in this case.
