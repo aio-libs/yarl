@@ -226,8 +226,8 @@ class URL:
                 netloc = cls._make_netloc(
                     raw_user, raw_password, encoded_host, port, encode_host=False
                 )
-                _, have_open_br, bracketed = encoded_host.partition("[")
-                if have_open_br:
+                if "[" in encoded_host:
+                    _, _, bracketed = encoded_host.partition("[")
                     raw_host, _, _ = bracketed.partition("]")
                 else:
                     raw_host = encoded_host
@@ -941,16 +941,17 @@ class URL:
         hostname: str
         port: Optional[int]
 
-        userinfo, have_info, hostinfo = netloc.rpartition("@")
-        if have_info:
+        if "@" in netloc:
+            userinfo, _, hostinfo = netloc.rpartition("@")
             username, have_password, password = userinfo.partition(":")
             if not have_password:
                 password = None
         else:
+            hostinfo = netloc
             username = password = None
 
-        _, have_open_br, bracketed = hostinfo.partition("[")
-        if have_open_br:
+        if "[" in hostinfo:
+            _, _, bracketed = hostinfo.partition("[")
             hostname, _, port_str = bracketed.partition("]")
             _, _, port_str = port_str.partition(":")
         else:
@@ -959,8 +960,11 @@ class URL:
         if not hostname:
             raise ValueError("Invalid URL: host is required for absolute urls")
 
-        hostname, percent, zone = hostname.partition("%")
-        hostname = hostname.lower() + percent + zone
+        if "%" in hostname:
+            hostname, percent, zone = hostname.partition("%")
+            hostname = hostname.lower() + percent + zone
+        else:
+            hostname = hostname.lower()
 
         if port_str:
             if port_str.isdigit() and port_str.isascii():
