@@ -76,6 +76,49 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+def split_netloc(
+    netloc: str,
+) -> Tuple[Optional[str], Optional[str], str, Optional[int]]:
+    """Split netloc into username, password, host and port."""
+    username: Optional[str]
+    password: Optional[str]
+    hostname: str
+    port: Optional[int]
+
+    userinfo, have_info, hostinfo = netloc.rpartition("@")
+    if have_info:
+        username, have_password, password = userinfo.partition(":")
+        if not have_password:
+            password = None
+    else:
+        username = password = None
+
+    _, have_open_br, bracketed = hostinfo.partition("[")
+    if have_open_br:
+        hostname, _, port_str = bracketed.partition("]")
+        _, _, port_str = port_str.partition(":")
+    else:
+        hostname, _, port_str = hostinfo.partition(":")
+
+    if not hostname:
+        raise ValueError("Invalid URL: host is required for absolute urls")
+
+    hostname, percent, zone = hostname.partition("%")
+    hostname = hostname.lower() + percent + zone
+
+    if port_str:
+        if port_str.isdigit() and port_str.isascii():
+            port = int(port_str)
+        else:
+            raise ValueError(f"Port could not be cast to integer value as {port_str!r}")
+        if not (0 <= port <= 65535):
+            raise ValueError("Port out of range 0-65535")
+    else:
+        port = None
+
+    return username, password, hostname, port
+
+
 def _normalize_path_segments(segments: "Sequence[str]") -> List[str]:
     """Drop '.' and '..' from a sequence of str segments"""
 
@@ -216,19 +259,9 @@ class URL:
                 netloc = ""
                 host = ""
             else:
-                host = val.hostname
-                if host is None:
-                    raise ValueError("Invalid URL: host is required for absolute urls")
-
-                try:
-                    port = val.port
-                except ValueError as e:
-                    raise ValueError(
-                        "Invalid URL: port can't be converted to integer"
-                    ) from e
-
+                username, password, host, port = split_netloc(val[1])
                 netloc = cls._make_netloc(
-                    val.username, val.password, host, port, encode=True, requote=True
+                    username, password, host, port, encode=True, requote=True
                 )
             path = cls._PATH_REQUOTER(val[2])
             if netloc:
