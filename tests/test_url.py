@@ -1930,3 +1930,28 @@ def test_join_encoded_url():
     assert path_url.path == "/api/4"
     new = original.join(path_url)
     assert new.path == "/api/4"
+
+
+# cache
+
+
+def test_parsing_populates_cache():
+    """Test that parsing a URL populates the cache."""
+    url = URL("http://user:password@example.com:80/path")
+    assert url._cache["raw_user"] == "user"
+    assert url._cache["raw_password"] == "password"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["explicit_port"] == 80
+    assert url.raw_user == "user"
+    assert url.raw_password == "password"
+    assert url.raw_host == "example.com"
+    assert url.explicit_port == 80
+    url._cache.clear()
+    assert url.raw_user == "user"
+    assert url.raw_password == "password"
+    assert url.raw_host == "example.com"
+    assert url.explicit_port == 80
+    assert url._cache["raw_user"] == "user"
+    assert url._cache["raw_password"] == "password"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["explicit_port"] == 80

@@ -230,7 +230,8 @@ class URL:
                     raw_host = encoded_host
                 self._cache = {
                     "raw_host": raw_host,
-                    "raw_user": raw_user,
+                    "raw_user": raw_user
+                    or None,  # raw_user is not allowed to be empty string
                     "raw_password": raw_password,
                     "explicit_port": port,
                 }
@@ -530,7 +531,7 @@ class URL:
             self.user, self.password, self.host, self.port, encode_host=False
         )
 
-    @property
+    @cached_property
     def raw_user(self) -> Optional[str]:
         """Encoded user part of URL.
 
@@ -552,7 +553,7 @@ class URL:
             return None
         return self._UNQUOTER(raw_user)
 
-    @property
+    @cached_property
     def raw_password(self) -> Optional[str]:
         """Encoded password part of URL.
 
