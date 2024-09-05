@@ -1944,12 +1944,14 @@ def test_parsing_populates_cache():
     assert url._cache["explicit_port"] == 80
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
+    assert url._cache["scheme"] == "http"
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"
     assert url.explicit_port == 80
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
+    assert url.scheme == "http"
     url._cache.clear()
     assert url.raw_user == "user"
     assert url.raw_password == "password"
@@ -1957,9 +1959,11 @@ def test_parsing_populates_cache():
     assert url.explicit_port == 80
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
+    assert url.scheme == "http"
     assert url._cache["raw_user"] == "user"
     assert url._cache["raw_password"] == "password"
     assert url._cache["raw_host"] == "example.com"
     assert url._cache["explicit_port"] == 80
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
+    assert url._cache["scheme"] == "http"

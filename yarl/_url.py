@@ -242,6 +242,7 @@ class URL:
             cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(val[3])
             fragment = cls._FRAGMENT_REQUOTER(val[4])
+            self._cache["scheme"] = val[0]
             self._cache["raw_query_string"] = query
             self._cache["raw_fragment"] = fragment
             val = SplitResult(val[0], netloc, path, query, fragment)
