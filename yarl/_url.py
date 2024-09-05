@@ -214,15 +214,12 @@ class URL:
         self._cache = {}
 
         if not encoded:
-            host: Optional[str]
             if not val[1]:  # netloc
-                netloc = ""
-                host = ""
+                encoded_host = netloc = ""
             else:
-                username, password, host, port = cls._split_netloc(val[1])
+                username, password, encoded_host, port = cls._split_netloc(val[1])
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
-                encoded_host = cls._encode_host(host)
                 netloc = cls._make_netloc(
                     raw_user, raw_password, encoded_host, port, encode_host=False
                 )
@@ -241,7 +238,7 @@ class URL:
             if netloc:
                 path = cls._normalize_path(path)
 
-            cls._validate_authority_uri_abs_path(host=host, path=path)
+            cls._validate_authority_uri_abs_path(host=encoded_host, path=path)
             query = cls._QUERY_REQUOTER(val[3])
             fragment = cls._FRAGMENT_REQUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
@@ -937,7 +934,7 @@ class URL:
     ) -> Tuple[Optional[str], Optional[str], str, Optional[int]]:
         """Split netloc into username, password, host and port.
 
-        host is not encoded, pass it to _encode_host if needed.
+        host is always encoded
         """
         username: Optional[str]
         password: Optional[str]
@@ -973,7 +970,7 @@ class URL:
         else:
             port = None
 
-        return username, password, hostname, port
+        return username, password, cls._encode_host(hostname), port
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
