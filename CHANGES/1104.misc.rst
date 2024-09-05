@@ -1,3 +1,0 @@
-Improved performance of encoding hosts -- by :user:`bdraco`.
-
-Previously, the library would unconditionally try to parse a host as an IP Address. The library now avoids trying to parse a host as an IP Address if the string is not in one of the formats described in :rfc:`3986#section-3.2.2`.

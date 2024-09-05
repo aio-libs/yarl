@@ -14,6 +14,35 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.11
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Fixed a :exc:`TypeError` with ``MultiDictProxy`` and Python 3.8 -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`, :issue:`1105`, :issue:`1107`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of encoding hosts -- by :user:`bdraco`.
+
+  Previously, the library would unconditionally try to parse a host as an IP Address. The library now avoids trying to parse a host as an IP Address if the string is not in one of the formats described in :rfc:`3986#section-3.2.2`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1104`.
+
+
+----
+
+
 1.9.10
 ======
 
