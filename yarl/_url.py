@@ -215,19 +215,19 @@ class URL:
 
         if not encoded:
             if not val[1]:  # netloc
-                encoded_host = netloc = ""
+                host = netloc = ""
             else:
-                username, password, encoded_host, port = cls._split_netloc(val[1])
+                username, password, host, port = cls._split_netloc(val[1])
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(
-                    raw_user, raw_password, encoded_host, port, encode_host=False
+                    raw_user, raw_password, host, port, encode_host=False
                 )
-                if "[" in encoded_host:
-                    _, _, bracketed = encoded_host.partition("[")
+                if "[" in host:
+                    _, _, bracketed = host.partition("[")
                     raw_host, _, _ = bracketed.partition("]")
                 else:
-                    raw_host = encoded_host
+                    raw_host = host
                 # raw_user property is not allowed to be empty string
                 self._cache = {
                     "raw_host": raw_host,
@@ -239,7 +239,7 @@ class URL:
             if netloc:
                 path = cls._normalize_path(path)
 
-            cls._validate_authority_uri_abs_path(host=encoded_host, path=path)
+            cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(val[3])
             fragment = cls._FRAGMENT_REQUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
