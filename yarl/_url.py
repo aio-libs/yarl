@@ -228,13 +228,11 @@ class URL:
                     raw_host, _, _ = bracketed.partition("]")
                 else:
                     raw_host = host
+                self._cache["raw_host"] = raw_host
                 # raw_user property is not allowed to be empty string
-                self._cache = {
-                    "raw_host": raw_host,
-                    "raw_user": raw_user or None,
-                    "raw_password": raw_password,
-                    "explicit_port": port,
-                }
+                self._cache["raw_user"] = raw_user or None
+                self._cache["raw_password"] = raw_password
+                self._cache["explicit_port"] = port
             path = cls._PATH_REQUOTER(val[2])
             if netloc:
                 path = cls._normalize_path(path)
