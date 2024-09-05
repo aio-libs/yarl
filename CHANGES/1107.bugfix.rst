@@ -1,0 +1,1 @@
+Fixed a :exc:`TypeError` with ``MultiDictProxy`` and Python 3.8 -- by :user:`bdraco`.

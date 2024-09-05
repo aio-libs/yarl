@@ -640,7 +640,7 @@ class URL:
         return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
-    def query(self) -> MultiDictProxy[str]:
+    def query(self) -> "MultiDictProxy[str]":
         """A MultiDictProxy representing parsed query parameters in decoded
         representation.
 
