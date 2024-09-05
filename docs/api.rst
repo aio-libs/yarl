@@ -470,7 +470,7 @@ The module supports both absolute and relative URLs.
 Absolute URL should start from either *scheme* or ``'//'``.
 
 
-.. method:: URL.is_absolute()
+.. attribute:: URL.absolute
 
     A check for absolute URLs.
 
@@ -479,14 +479,18 @@ Absolute URL should start from either *scheme* or ``'//'``.
 
    .. doctest::
 
-      >>> URL('http://example.com').is_absolute()
+      >>> URL('http://example.com').absolute
       True
-      >>> URL('//example.com').is_absolute()
+      >>> URL('//example.com').absolute
       True
-      >>> URL('/path/to').is_absolute()
+      >>> URL('/path/to').absolute
       False
-      >>> URL('path').is_absolute()
+      >>> URL('path').absolute
       False
+
+   .. versionchanged:: 1.9.10
+
+      The :attr:`~yarl.URL.absolute` property is preferred over the ``is_absolute()`` method.
 
 
 New URL generation

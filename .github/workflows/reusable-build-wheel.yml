@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: ${{ inputs.source-tarball-name }}
         workflow-artifact-name: ${{ inputs.dists-artifact-name }}
@@ -81,9 +81,9 @@ jobs:
           with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.dists-artifact-name }}
+        name: ${{ inputs.dists-artifact-name }}-${{ inputs.os }}
         path: ./wheelhouse/*.whl
 
 ...
