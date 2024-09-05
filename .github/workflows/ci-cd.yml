@@ -205,7 +205,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: >-
           ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -409,7 +409,7 @@ jobs:
 
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: >-
           ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
