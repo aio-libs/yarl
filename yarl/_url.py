@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Dict,
     Iterable,
     Iterator,
     List,
@@ -210,9 +211,7 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
-        self = object.__new__(cls)
-        self._cache = {}
-
+        cache: Dict[str, Union[str, int, None]] = {}
         if not encoded:
             if not val[1]:  # netloc
                 host = netloc = ""
@@ -228,11 +227,11 @@ class URL:
                     raw_host, _, _ = bracketed.partition("]")
                 else:
                     raw_host = host
-                self._cache["raw_host"] = raw_host
+                cache["raw_host"] = raw_host
                 # raw_user property is not allowed to be empty string
-                self._cache["raw_user"] = raw_user or None
-                self._cache["raw_password"] = raw_password
-                self._cache["explicit_port"] = port
+                cache["raw_user"] = raw_user or None
+                cache["raw_password"] = raw_password
+                cache["explicit_port"] = port
             path = cls._PATH_REQUOTER(val[2])
             if netloc:
                 path = cls._normalize_path(path)
@@ -240,12 +239,14 @@ class URL:
             cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(val[3])
             fragment = cls._FRAGMENT_REQUOTER(val[4])
-            self._cache["scheme"] = val[0]
-            self._cache["raw_query_string"] = query
-            self._cache["raw_fragment"] = fragment
+            cache["scheme"] = val[0]
+            cache["raw_query_string"] = query
+            cache["raw_fragment"] = fragment
             val = SplitResult(val[0], netloc, path, query, fragment)
 
+        self = object.__new__(cls)
         self._val = val
+        self._cache = cache
         return self
 
     @classmethod
