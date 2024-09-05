@@ -214,8 +214,9 @@ jobs:
     - name: Download distributions
       uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
@@ -419,8 +420,9 @@ jobs:
     - name: Download distributions
       uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
     - run: |
         tree
     - name: Login
