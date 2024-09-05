@@ -77,6 +77,52 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+@lru_cache  # urlsplit uses the default cache size so we do here as well
+def _split_netloc(
+    cls,
+    netloc: str,
+) -> Tuple[Optional[str], Optional[str], str, Optional[int]]:
+    """Split netloc into username, password, host and port.
+
+    host is always encoded
+    """
+    username: Optional[str]
+    password: Optional[str]
+    hostname: str
+    port: Optional[int]
+
+    if "@" in netloc:
+        userinfo, _, hostinfo = netloc.rpartition("@")
+        username, have_password, password = userinfo.partition(":")
+        if not have_password:
+            password = None
+    else:
+        hostinfo = netloc
+        username = password = None
+
+    if "[" in hostinfo:
+        _, _, bracketed = hostinfo.partition("[")
+        hostname, _, port_str = bracketed.partition("]")
+        _, _, port_str = port_str.partition(":")
+    else:
+        hostname, _, port_str = hostinfo.partition(":")
+
+    if not hostname:
+        raise ValueError("Invalid URL: host is required for absolute urls")
+
+    if port_str:
+        if port_str.isdigit() and port_str.isascii():
+            port = int(port_str)
+        else:
+            raise ValueError("Invalid URL: port can't be converted to integer")
+        if not (0 <= port <= 65535):
+            raise ValueError("Port out of range 0-65535")
+    else:
+        port = None
+
+    return username, password, cls._encode_host(hostname), port
+
+
 def _normalize_path_segments(segments: "Sequence[str]") -> List[str]:
     """Drop '.' and '..' from a sequence of str segments"""
 
@@ -216,7 +262,7 @@ class URL:
             if not val[1]:  # netloc
                 host = netloc = ""
             else:
-                username, password, host, port = cls._split_netloc(val[1])
+                username, password, host, port = _split_netloc(val[1])
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(
@@ -929,51 +975,6 @@ class URL:
         if user:
             ret = user + "@" + ret
         return ret
-
-    @classmethod
-    def _split_netloc(
-        cls,
-        netloc: str,
-    ) -> Tuple[Optional[str], Optional[str], str, Optional[int]]:
-        """Split netloc into username, password, host and port.
-
-        host is always encoded
-        """
-        username: Optional[str]
-        password: Optional[str]
-        hostname: str
-        port: Optional[int]
-
-        if "@" in netloc:
-            userinfo, _, hostinfo = netloc.rpartition("@")
-            username, have_password, password = userinfo.partition(":")
-            if not have_password:
-                password = None
-        else:
-            hostinfo = netloc
-            username = password = None
-
-        if "[" in hostinfo:
-            _, _, bracketed = hostinfo.partition("[")
-            hostname, _, port_str = bracketed.partition("]")
-            _, _, port_str = port_str.partition(":")
-        else:
-            hostname, _, port_str = hostinfo.partition(":")
-
-        if not hostname:
-            raise ValueError("Invalid URL: host is required for absolute urls")
-
-        if port_str:
-            if port_str.isdigit() and port_str.isascii():
-                port = int(port_str)
-            else:
-                raise ValueError("Invalid URL: port can't be converted to integer")
-            if not (0 <= port <= 65535):
-                raise ValueError("Port out of range 0-65535")
-        else:
-            port = None
-
-        return username, password, cls._encode_host(hostname), port
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
