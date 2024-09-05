@@ -210,6 +210,9 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
+        self = object.__new__(cls)
+        self._cache = {}
+
         if not encoded:
             host: Optional[str]
             if not val[1]:  # netloc
@@ -217,9 +220,23 @@ class URL:
                 host = ""
             else:
                 username, password, host, port = cls._split_netloc(val[1])
+                raw_user = None if username is None else cls._REQUOTER(username)
+                raw_password = None if password is None else cls._REQUOTER(password)
+                encoded_host = cls._encode_host(host)
                 netloc = cls._make_netloc(
-                    username, password, host, port, encode=True, requote=True
+                    raw_user, raw_password, encoded_host, port, encode_host=False
                 )
+                _, have_open_br, bracketed = encoded_host.partition("[")
+                if have_open_br:
+                    raw_host, _, _ = bracketed.partition("]")
+                else:
+                    raw_host = encoded_host
+                self._cache = {
+                    "raw_host": raw_host,
+                    "raw_user": raw_user,
+                    "raw_password": raw_password,
+                    "explicit_port": port,
+                }
             path = cls._PATH_REQUOTER(val[2])
             if netloc:
                 path = cls._normalize_path(path)
@@ -229,9 +246,7 @@ class URL:
             fragment = cls._FRAGMENT_REQUOTER(val[4])
             val = SplitResult(val[0], netloc, path, query, fragment)
 
-        self = object.__new__(cls)
         self._val = val
-        self._cache = {}
         return self
 
     @classmethod
