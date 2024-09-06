@@ -12,7 +12,6 @@ from typing import (
     Iterable,
     Iterator,
     List,
-    Optional,
     Tuple,
     TypedDict,
     TypeVar,
@@ -175,7 +174,7 @@ class URL:
         val: Union[str, SplitResult, "URL"] = "",
         *,
         encoded: bool = False,
-        strict: Optional[bool] = None,
+        strict: Union[bool, None] = None,
     ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -234,9 +233,9 @@ class URL:
         user: Union[str, None] = None,
         password: Union[str, None] = None,
         host: str = "",
-        port: Optional[int] = None,
+        port: Union[int, None] = None,
         path: str = "",
-        query: Optional[_Query] = None,
+        query: Union[_Query, None] = None,
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
@@ -573,7 +572,7 @@ class URL:
         return self.explicit_port or self._default_port
 
     @cached_property
-    def explicit_port(self) -> Optional[int]:
+    def explicit_port(self) -> Union[int, None]:
         """Port part of URL, without scheme-based fallback.
 
         None for relative URLs or URLs without explicit port.
@@ -845,7 +844,7 @@ class URL:
         user: Union[str, None],
         password: Union[str, None],
         host: Union[str, None],
-        port: Optional[int],
+        port: Union[int, None],
         encode: bool = False,
         encode_host: bool = True,
         requote: bool = False,
@@ -958,7 +957,7 @@ class URL:
             encoded=True,
         )
 
-    def with_port(self, port: Optional[int]) -> "URL":
+    def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
 
         Clear port to default if None is passed.
@@ -1027,7 +1026,7 @@ class URL:
         )
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
-        query: Optional[Union[str, Mapping[str, _QueryVariable]]]
+        query: Union[str, Mapping[str, _QueryVariable], None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
@@ -1287,9 +1286,9 @@ def cache_info() -> CacheInfo:
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Optional[int] = _MAXCACHE,
-    idna_decode_size: Optional[int] = _MAXCACHE,
-    ip_address_size: Optional[int] = _MAXCACHE,
+    idna_encode_size: Union[int, None] = _MAXCACHE,
+    idna_decode_size: Union[int, None] = _MAXCACHE,
+    ip_address_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _ip_compressed_version
