@@ -953,11 +953,11 @@ class URL:
     def _split_netloc(
         cls,
         netloc: str,
-    ) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[int]]:
+    ) -> Tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
         """Split netloc into username, password, host and port."""
         if "@" not in netloc:
-            username: Optional[str] = None
-            password: Optional[str] = None
+            username: Union[str, None] = None
+            password: Union[str, None] = None
             hostinfo = netloc
         else:
             userinfo, _, hostinfo = netloc.rpartition("@")
@@ -973,7 +973,7 @@ class URL:
             hostname, _, port_str = hostinfo.partition(":")
 
         if not port_str:
-            port: Optional[int] = None
+            port: Union[int, None] = None
         else:
             try:
                 port = int(port_str)
