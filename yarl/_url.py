@@ -213,8 +213,9 @@ class URL:
         cache: Dict[str, Union[str, int, None]] = {}
         if not encoded:
             host: Union[str, None]
-            if not val[1]:  # netloc
-                host = netloc = ""
+            scheme, netloc, path, query, fragment = val
+            if not netloc:  # netloc
+                host = ""
             else:
                 username, password, host, port = cls._split_netloc(val[1])
                 if host is None:
@@ -236,17 +237,17 @@ class URL:
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
                 cache["explicit_port"] = port
-            path = cls._PATH_REQUOTER(val[2])
-            if netloc:
+            path = cls._PATH_REQUOTER(path) if path else path
+            if netloc and path:
                 path = cls._normalize_path(path)
 
             cls._validate_authority_uri_abs_path(host=host, path=path)
-            query = cls._QUERY_REQUOTER(val[3])
-            fragment = cls._FRAGMENT_REQUOTER(val[4])
-            cache["scheme"] = val[0]
+            query = cls._QUERY_REQUOTER(query) if query else query
+            fragment = cls._FRAGMENT_REQUOTER(query) if fragment else fragment
+            cache["scheme"] = scheme
             cache["raw_query_string"] = query
             cache["raw_fragment"] = fragment
-            val = SplitResult(val[0], netloc, path, query, fragment)
+            val = SplitResult(scheme, netloc, path, query, fragment)
 
         self = object.__new__(cls)
         self._val = val
