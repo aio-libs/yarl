@@ -1,0 +1,1 @@
+Replace all ``Optional`` types with ``Union`` types -- by :user:`bdraco`.
