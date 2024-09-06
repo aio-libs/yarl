@@ -243,7 +243,7 @@ class URL:
 
             cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(query) if query else query
-            fragment = cls._FRAGMENT_REQUOTER(query) if fragment else fragment
+            fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
             cache["scheme"] = scheme
             cache["raw_query_string"] = query
             cache["raw_fragment"] = fragment
