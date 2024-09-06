@@ -1771,6 +1771,7 @@ def test_join_preserves_leading_slash():
     """Test that join preserves leading slash in path."""
     base = URL.build(scheme="https", host="localhost", port=443)
     new = base.join(URL("") / "_msearch")
+    assert str(new) == "https://localhost/_msearch"
     assert new.path == "/_msearch"
 
 
