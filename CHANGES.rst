@@ -14,6 +14,63 @@ Changelog
 
 .. towncrier release notes start
 
+1.10.0
+======
+
+*(2024-09-06)*
+
+
+Bug fixes
+---------
+
+- Fixed joining a path when the existing path was empty -- by :user:`bdraco`.
+
+  A regression in :meth:`URL.join() <yarl.URL.join>` was introduced in :issue:`1082`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1118`.
+
+
+Features
+--------
+
+- Added :meth:`URL.without_query_params() <yarl.URL.without_query_params>` method, to drop some parameters from query string -- by :user:`hongquan`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`774`, :issue:`898`, :issue:`1010`.
+
+- The previously protected types ``_SimpleQuery``, ``_QueryVariable``, and ``_Query`` are now available for use externally as ``SimpleQuery``, ``QueryVariable``, and ``Query`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1050`, :issue:`1113`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Replaced all :class:`~typing.Optional` with :class:`~typing.Union` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1095`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Significantly improved performance of parsing the network location -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1112`.
+
+- Added internal types to the cache to prevent future refactoring errors -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1117`.
+
+
+----
+
+
 1.9.11
 ======
 

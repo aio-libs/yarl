@@ -1,1 +1,0 @@
-Added :meth:`URL.without_query_params() <yarl.URL.without_query_params>` method, to drop some parameters from query string -- by :user:`hongquan`.
