@@ -739,6 +739,8 @@ section generates a new :class:`URL` instance.
 
    It does nothing if none of specified keys are present in the query.
 
+   .. versionadded:: 1.10.0
+
 .. method:: URL.with_fragment(fragment)
 
    Return a new URL with *fragment* replaced, auto-encode *fragment* if needed.
