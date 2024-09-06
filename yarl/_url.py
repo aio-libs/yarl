@@ -254,7 +254,7 @@ class URL:
         host: str = "",
         port: Union[int, None] = None,
         path: str = "",
-        query: Union[_Query, None] = None,
+        query: Union[Query, None] = None,
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
@@ -1077,7 +1077,7 @@ class URL:
         )
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
-        query: Union[str, Mapping[str, _QueryVariable], None]
+        query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
