@@ -1,0 +1,1 @@
+Replaced all ``Optional`` with ``Union`` -- by :user:`bdraco`.
