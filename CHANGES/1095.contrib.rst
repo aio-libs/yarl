@@ -1,1 +1,1 @@
-Replaced all :type:`Optional` with :type:`Union` -- by :user:`bdraco`.
+Replaced all ``Optional`` with ``Union`` -- by :user:`bdraco`.
