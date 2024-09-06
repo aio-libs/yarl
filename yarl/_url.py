@@ -63,6 +63,7 @@ class CacheInfo(TypedDict):
 
 
 class _SplitResultDict(TypedDict, total=False):
+
     scheme: str
     netloc: str
     path: str
