@@ -955,10 +955,7 @@ class URL:
         cls,
         netloc: str,
     ) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[int]]:
-        """Split netloc into username, password, host and port.
-
-        host is always encoded
-        """
+        """Split netloc into username, password, host and port."""
         if "@" not in netloc:
             username: Optional[str] = None
             password: Optional[str] = None
