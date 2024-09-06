@@ -1,0 +1,1 @@
+Added internal types to the cache to prevent future refactoring errors -- by :user:`bdraco`.
