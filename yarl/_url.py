@@ -237,9 +237,11 @@ class URL:
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
                 cache["explicit_port"] = port
-            path = cls._PATH_REQUOTER(path) if path else path
-            if netloc and path:
-                path = cls._normalize_path(path)
+
+            if path:
+                path = cls._PATH_REQUOTER(path)
+                if netloc:
+                    path = cls._normalize_path(path)
 
             cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(query) if query else query
@@ -817,7 +819,7 @@ class URL:
 
         Raise ValueError if not.
         """
-        if len(host) > 0 and len(path) > 0 and not path.startswith("/"):
+        if host and path and not path.startswith("/"):
             raise ValueError(
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
