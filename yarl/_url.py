@@ -12,7 +12,6 @@ from typing import (
     Iterable,
     Iterator,
     List,
-    Optional,
     Tuple,
     TypedDict,
     TypeVar,
@@ -194,7 +193,7 @@ class URL:
         val: Union[str, SplitResult, "URL"] = "",
         *,
         encoded: bool = False,
-        strict: Optional[bool] = None,
+        strict: Union[bool, None] = None,
     ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -211,7 +210,7 @@ class URL:
             raise TypeError("Constructor parameter should be str")
 
         if not encoded:
-            host: Optional[str]
+            host: Union[str, None]
             if not val[1]:  # netloc
                 netloc = ""
                 host = ""
@@ -250,12 +249,12 @@ class URL:
         *,
         scheme: str = "",
         authority: str = "",
-        user: Optional[str] = None,
-        password: Optional[str] = None,
+        user: Union[str, None] = None,
+        password: Union[str, None] = None,
         host: str = "",
-        port: Optional[int] = None,
+        port: Union[int, None] = None,
         path: str = "",
-        query: Optional[Query] = None,
+        query: Union[_Query, None] = None,
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
@@ -529,7 +528,7 @@ class URL:
         )
 
     @property
-    def raw_user(self) -> Optional[str]:
+    def raw_user(self) -> Union[str, None]:
         """Encoded user part of URL.
 
         None if user is missing.
@@ -539,7 +538,7 @@ class URL:
         return self._val.username or None
 
     @cached_property
-    def user(self) -> Optional[str]:
+    def user(self) -> Union[str, None]:
         """Decoded user part of URL.
 
         None if user is missing.
@@ -551,7 +550,7 @@ class URL:
         return self._UNQUOTER(raw_user)
 
     @property
-    def raw_password(self) -> Optional[str]:
+    def raw_password(self) -> Union[str, None]:
         """Encoded password part of URL.
 
         None if password is missing.
@@ -560,7 +559,7 @@ class URL:
         return self._val.password
 
     @cached_property
-    def password(self) -> Optional[str]:
+    def password(self) -> Union[str, None]:
         """Decoded password part of URL.
 
         None if password is missing.
@@ -572,7 +571,7 @@ class URL:
         return self._UNQUOTER(raw_password)
 
     @cached_property
-    def raw_host(self) -> Optional[str]:
+    def raw_host(self) -> Union[str, None]:
         """Encoded host part of URL.
 
         None for relative URLs.
@@ -583,7 +582,7 @@ class URL:
         return self._val.hostname
 
     @cached_property
-    def host(self) -> Optional[str]:
+    def host(self) -> Union[str, None]:
         """Decoded host part of URL.
 
         None for relative URLs.
@@ -600,7 +599,7 @@ class URL:
         return _idna_decode(raw)
 
     @cached_property
-    def port(self) -> Optional[int]:
+    def port(self) -> Union[int, None]:
         """Port part of URL, with scheme-based fallback.
 
         None for relative URLs or URLs without explicit port and
@@ -610,7 +609,7 @@ class URL:
         return self.explicit_port or self._default_port
 
     @cached_property
-    def explicit_port(self) -> Optional[int]:
+    def explicit_port(self) -> Union[int, None]:
         """Port part of URL, without scheme-based fallback.
 
         None for relative URLs or URLs without explicit port.
@@ -893,10 +892,10 @@ class URL:
     @classmethod
     def _make_netloc(
         cls,
-        user: Optional[str],
-        password: Optional[str],
-        host: Optional[str],
-        port: Optional[int],
+        user: Union[str, None],
+        password: Union[str, None],
+        host: Union[str, None],
+        port: Union[int, None],
         encode: bool = False,
         encode_host: bool = True,
         requote: bool = False,
@@ -934,7 +933,7 @@ class URL:
             raise ValueError("scheme replacement is not allowed for relative URLs")
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
-    def with_user(self, user: Optional[str]) -> "URL":
+    def with_user(self, user: Union[str, None]) -> "URL":
         """Return a new URL with user replaced.
 
         Autoencode user if needed.
@@ -960,7 +959,7 @@ class URL:
             encoded=True,
         )
 
-    def with_password(self, password: Optional[str]) -> "URL":
+    def with_password(self, password: Union[str, None]) -> "URL":
         """Return a new URL with password replaced.
 
         Autoencode password if needed.
@@ -1009,7 +1008,7 @@ class URL:
             encoded=True,
         )
 
-    def with_port(self, port: Optional[int]) -> "URL":
+    def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
 
         Clear port to default if None is passed.
@@ -1077,8 +1076,8 @@ class URL:
             "of type {}".format(v, cls)
         )
 
-    def _get_str_query(self, *args: Any, **kwargs: Any) -> Optional[str]:
-        query: Optional[Union[str, Mapping[str, QueryVariable]]]
+    def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
+        query: Union[str, Mapping[str, _QueryVariable], None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
@@ -1163,7 +1162,7 @@ class URL:
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
 
-    def with_fragment(self, fragment: Optional[str]) -> "URL":
+    def with_fragment(self, fragment: Union[str, None]) -> "URL":
         """Return a new URL with fragment replaced.
 
         Autoencode fragment if needed.
@@ -1314,7 +1313,7 @@ class URL:
         return urlunsplit(val)
 
 
-def _human_quote(s: Optional[str], unsafe: str) -> Optional[str]:
+def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
     if not s:
         return s
     for c in "%" + unsafe:
@@ -1372,9 +1371,9 @@ def cache_info() -> CacheInfo:
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Optional[int] = _MAXCACHE,
-    idna_decode_size: Optional[int] = _MAXCACHE,
-    ip_address_size: Optional[int] = _MAXCACHE,
+    idna_encode_size: Union[int, None] = _MAXCACHE,
+    idna_decode_size: Union[int, None] = _MAXCACHE,
+    ip_address_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _ip_compressed_version
