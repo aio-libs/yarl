@@ -218,7 +218,7 @@ class URL:
                 host = netloc = ""
             else:
                 username, password, host, port = cls._split_netloc(val[1])
-                if not host:
+                if host is None:
                     raise ValueError("Invalid URL: host is required for absolute urls")
                 host = cls._encode_host(host)
                 raw_user = None if username is None else cls._REQUOTER(username)
