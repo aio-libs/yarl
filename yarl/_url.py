@@ -234,8 +234,7 @@ class URL:
                 else:
                     raw_host = host
                 cache["raw_host"] = raw_host
-                # raw_user property is not allowed to be empty string
-                cache["raw_user"] = raw_user or None
+                cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
                 cache["explicit_port"] = port
             path = cls._PATH_REQUOTER(val[2])
@@ -427,11 +426,12 @@ class URL:
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
         cache = self._cache
-        username, cache["raw_password"], cache["raw_host"], cache["explicit_port"] = (
-            self._split_netloc(self._val.netloc)
-        )
-        # raw_user property is not allowed to be empty string
-        cache["raw_user"] = username or None
+        (
+            cache["raw_user"],
+            cache["raw_password"],
+            cache["raw_host"],
+            cache["explicit_port"],
+        ) = self._split_netloc(self._val.netloc)
 
     def is_absolute(self) -> bool:
         """A check for absolute URLs.
@@ -983,7 +983,7 @@ class URL:
             if not (0 <= port <= 65535):
                 raise ValueError("Port out of range 0-65535")
 
-        return username, password, hostname or None, port
+        return username or None, password, hostname or None, port
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
