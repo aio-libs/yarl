@@ -41,10 +41,10 @@ USES_RELATIVE = frozenset(uses_relative)
 
 sentinel = object()
 
-_SimpleQuery = Union[str, int, float]
-_QueryVariable = Union[_SimpleQuery, "Sequence[_SimpleQuery]"]
-_Query = Union[
-    None, str, "Mapping[str, _QueryVariable]", "Sequence[Tuple[str, _QueryVariable]]"
+SimpleQuery = Union[str, int, float]
+QueryVariable = Union[SimpleQuery, "Sequence[SimpleQuery]"]
+Query = Union[
+    None, str, "Mapping[str, QueryVariable]", "Sequence[Tuple[str, QueryVariable]]"
 ]
 _T = TypeVar("_T")
 
@@ -265,7 +265,7 @@ class URL:
         host: str = "",
         port: Union[int, None] = None,
         path: str = "",
-        query: Union[_Query, None] = None,
+        query: Union[Query, None] = None,
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
@@ -404,7 +404,7 @@ class URL:
             return NotImplemented
         return self._make_child((str(name),))
 
-    def __mod__(self, query: _Query) -> "URL":
+    def __mod__(self, query: Query) -> "URL":
         return self.update_query(query)
 
     def __bool__(self) -> bool:
@@ -1103,7 +1103,7 @@ class URL:
 
     @classmethod
     def _query_seq_pairs(
-        cls, quoter: Callable[[str], str], pairs: Iterable[Tuple[str, _QueryVariable]]
+        cls, quoter: Callable[[str], str], pairs: Iterable[Tuple[str, QueryVariable]]
     ) -> Iterator[str]:
         for key, val in pairs:
             if isinstance(val, (list, tuple)):
@@ -1113,7 +1113,7 @@ class URL:
                 yield quoter(key) + "=" + quoter(cls._query_var(val))
 
     @staticmethod
-    def _query_var(v: _QueryVariable) -> str:
+    def _query_var(v: QueryVariable) -> str:
         cls = type(v)
         if issubclass(cls, str):
             if TYPE_CHECKING:
@@ -1138,7 +1138,7 @@ class URL:
         )
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
-        query: Union[str, Mapping[str, _QueryVariable], None]
+        query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
@@ -1179,10 +1179,10 @@ class URL:
         return query
 
     @overload
-    def with_query(self, query: _Query) -> "URL": ...
+    def with_query(self, query: Query) -> "URL": ...
 
     @overload
-    def with_query(self, **kwargs: _QueryVariable) -> "URL": ...
+    def with_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def with_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part replaced.
@@ -1205,10 +1205,10 @@ class URL:
         )
 
     @overload
-    def update_query(self, query: _Query) -> "URL": ...
+    def update_query(self, query: Query) -> "URL": ...
 
     @overload
-    def update_query(self, **kwargs: _QueryVariable) -> "URL": ...
+    def update_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def update_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part updated."""
