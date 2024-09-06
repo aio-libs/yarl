@@ -735,9 +735,9 @@ section generates a new :class:`URL` instance.
 
 .. method:: URL.without_query_params(*query_params)
 
-   Return a new URL whose *query* part does not contain specified keys.
+   Return a new URL whose *query* part does not contain specified ``query_params``.
 
-   It does nothing if none of specified keys are present in the query.
+   It does nothing if none of specified ``query_params`` are present in the query.
 
    .. versionadded:: 1.10.0
 
