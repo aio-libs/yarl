@@ -737,6 +737,8 @@ section generates a new :class:`URL` instance.
 
    Return a new URL whose *query* part does not contain specified ``query_params``.
 
+   Accepts :class:`str` for ``query_params``.
+
    It does nothing if none of specified ``query_params`` are present in the query.
 
    .. versionadded:: 1.10.0
