@@ -63,7 +63,6 @@ class CacheInfo(TypedDict):
 
 
 class _SplitResultDict(TypedDict, total=False):
-
     scheme: str
     netloc: str
     path: str
@@ -1167,7 +1166,7 @@ class URL:
         """Remove some keys from query part and return new URL."""
         params_to_remove = set(query_params) & self.query.keys()
         if not params_to_remove:
-            return URL(self._val._replace(query=self.query_string), encoded=True)
+            return self
         return self.with_query(
             tuple(
                 (name, value)

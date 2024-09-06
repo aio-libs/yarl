@@ -176,12 +176,15 @@ def test_query_from_empty_update_query(
 @pytest.mark.parametrize(
     ("original_query_string", "keys_to_drop", "expected_query_string"),
     [
-        ("a=10&b=M%C3%B9a+xu%C3%A2n", ["a"], "b=Mùa xuân"),
+        ("a=10&b=M%C3%B9a+xu%C3%A2n&u%E1%BB%91ng=cafe", ["a"], "b=Mùa xuân&uống=cafe"),
         ("a=10&b=M%C3%B9a+xu%C3%A2n", ["b"], "a=10"),
         ("a=10&b=M%C3%B9a+xu%C3%A2n&c=30", ["b"], "a=10&c=30"),
-        ("a=10&b=M%C3%B9a+xu%C3%A2n&c=30", ["invalid_key"], "a=10&b=Mùa xuân&c=30"),
+        (
+            "a=10&b=M%C3%B9a+xu%C3%A2n&u%E1%BB%91ng=cafe",
+            ["uống"],
+            "a=10&b=Mùa xuân",
+        ),
         ("a=10&b=M%C3%B9a+xu%C3%A2n", ["a", "b"], ""),
-        ("a=10&b=M%C3%B9a+xu%C3%A2n", [], "a=10&b=Mùa xuân"),
     ],
 )
 def test_without_query_params(
@@ -191,3 +194,18 @@ def test_without_query_params(
     new_url = url.without_query_params(*keys_to_drop)
     assert new_url.query_string == expected_query_string
     assert new_url is not url
+
+
+@pytest.mark.parametrize(
+    ("original_query_string", "keys_to_drop"),
+    [
+        ("a=10&b=M%C3%B9a+xu%C3%A2n&c=30", ["invalid_key"]),
+        ("a=10&b=M%C3%B9a+xu%C3%A2n", []),
+    ],
+)
+def test_skip_dropping_query_params(
+    original_query_string: str, keys_to_drop: Sequence[str]
+):
+    url = URL(f"http://example.com?{original_query_string}")
+    new_url = url.without_query_params(*keys_to_drop)
+    assert new_url is url
