@@ -83,7 +83,8 @@ jobs:
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.dists-artifact-name }}-${{ inputs.os }}
+        name: >-
+          ${{ inputs.dists-artifact-name }}-${{ inputs.os }}-${{ inputs.qemu }}
         path: ./wheelhouse/*.whl
 
 ...
