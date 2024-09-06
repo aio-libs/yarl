@@ -940,19 +940,15 @@ class URL:
 
         host is always encoded
         """
-        username: Optional[str]
-        password: Optional[str]
-        hostname: str
-        port: Optional[int]
-
-        if "@" in netloc:
+        if "@" not in netloc:
+            username: Optional[str] = None
+            password: Optional[str] = None
+            hostinfo = netloc
+        else:
             userinfo, _, hostinfo = netloc.rpartition("@")
             username, have_password, password = userinfo.partition(":")
             if not have_password:
                 password = None
-        else:
-            hostinfo = netloc
-            username = password = None
 
         if "[" in hostinfo:
             _, _, bracketed = hostinfo.partition("[")
@@ -964,15 +960,15 @@ class URL:
         if not hostname:
             raise ValueError("Invalid URL: host is required for absolute urls")
 
-        if port_str:
+        if not port_str:
+            port: Optional[int] = None
+        else:
             if port_str.isdigit() and port_str.isascii():
                 port = int(port_str)
             else:
                 raise ValueError("Invalid URL: port can't be converted to integer")
             if not (0 <= port <= 65535):
                 raise ValueError("Port out of range 0-65535")
-        else:
-            port = None
 
         return username, password, cls._encode_host(hostname), port
 
