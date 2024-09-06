@@ -962,11 +962,10 @@ class URL:
 
         if not port_str:
             port: Optional[int] = None
+        elif not port_str.isdigit() or not port_str.isascii():
+            raise ValueError("Invalid URL: port can't be converted to integer")
         else:
-            if port_str.isdigit() and port_str.isascii():
-                port = int(port_str)
-            else:
-                raise ValueError("Invalid URL: port can't be converted to integer")
+            port = int(port_str)
             if not (0 <= port <= 65535):
                 raise ValueError("Port out of range 0-65535")
 
