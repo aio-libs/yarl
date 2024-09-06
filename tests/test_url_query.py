@@ -134,10 +134,10 @@ def test_query_separators_from_parsing(
     URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES_W_XFAIL,
 )
 def test_query_separators_from_update_query(
-    original_url,
-    expected_query_len,
-    expected_value_a,
-):
+    original_url: URL,
+    expected_query_len: int,
+    expected_value_a: str,
+) -> None:
     new_url = original_url.update_query({"c": expected_value_a})
     assert new_url.query["a"] == expected_value_a
     assert new_url.query["c"] == expected_value_a
@@ -148,10 +148,10 @@ def test_query_separators_from_update_query(
     URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
 )
 def test_query_separators_from_with_query(
-    original_url,
-    expected_query_len,
-    expected_value_a,
-):
+    original_url: URL,
+    expected_query_len: int,
+    expected_value_a: int,
+) -> None:
     new_url = original_url.with_query({"c": expected_value_a})
     assert new_url.query["c"] == expected_value_a
 
@@ -161,10 +161,10 @@ def test_query_separators_from_with_query(
     URLS_WITH_RESERVED_CHARS_IN_QUERY_VALUES,
 )
 def test_query_from_empty_update_query(
-    original_url,
-    expected_query_len,
-    expected_value_a,
-):
+    original_url: URL,
+    expected_query_len: int,
+    expected_value_a: str,
+) -> None:
     new_url = original_url.update_query({})
 
     assert new_url.query["a"] == original_url.query["a"]
