@@ -18,7 +18,15 @@ from typing import (
     Union,
     overload,
 )
-from urllib.parse import SplitResult, parse_qsl, quote, urljoin, urlsplit, urlunsplit
+from urllib.parse import (
+    SplitResult,
+    parse_qsl,
+    quote,
+    urlsplit,
+    urlunsplit,
+    uses_netloc,
+    uses_relative,
+)
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -27,6 +35,8 @@ from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+USES_AUTHORITY = frozenset(uses_netloc)
+USES_RELATIVE = frozenset(uses_relative)
 
 sentinel = object()
 
@@ -49,6 +59,15 @@ class CacheInfo(TypedDict):
     idna_encode: _CacheInfo
     idna_decode: _CacheInfo
     ip_address: _CacheInfo
+
+
+class _SplitResultDict(TypedDict, total=False):
+
+    scheme: str
+    netloc: str
+    path: str
+    query: str
+    fragment: str
 
 
 def rewrite_module(obj: _T) -> _T:
@@ -270,12 +289,14 @@ class URL:
                 netloc = authority
             else:
                 tmp = SplitResult("", authority, "", "", "")
+                port = None if tmp.port == DEFAULT_PORTS.get(scheme) else tmp.port
                 netloc = cls._make_netloc(
-                    tmp.username, tmp.password, tmp.hostname, tmp.port, encode=True
+                    tmp.username, tmp.password, tmp.hostname, port, encode=True
                 )
         elif not user and not password and not host and not port:
             netloc = ""
         else:
+            port = None if port == DEFAULT_PORTS.get(scheme) else port
             netloc = cls._make_netloc(
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )
@@ -302,7 +323,7 @@ class URL:
 
     def __str__(self) -> str:
         val = self._val
-        if not val.path and self.is_absolute() and (val.query or val.fragment):
+        if not val.path and self.absolute and (val.query or val.fragment):
             val = val._replace(path="/")
         if (port := self._port_not_default) is None:
             # port normalization - using None for default ports to remove from rendering
@@ -329,11 +350,11 @@ class URL:
             return NotImplemented
 
         val1 = self._val
-        if not val1.path and self.is_absolute():
+        if not val1.path and self.absolute:
             val1 = val1._replace(path="/")
 
         val2 = other._val
-        if not val2.path and other.is_absolute():
+        if not val2.path and other.absolute:
             val2 = val2._replace(path="/")
 
         return val1 == val2
@@ -342,7 +363,7 @@ class URL:
         ret = self._cache.get("hash")
         if ret is None:
             val = self._val
-            if not val.path and self.is_absolute():
+            if not val.path and self.absolute:
                 val = val._replace(path="/")
             ret = self._cache["hash"] = hash(val)
         return ret
@@ -397,8 +418,24 @@ class URL:
         Return True for absolute ones (having scheme or starting
         with //), False otherwise.
 
+        Is is preferred to call the .absolute property instead
+        as it is cached.
         """
-        return self.raw_host is not None
+        return self.absolute
+
+    @cached_property
+    def absolute(self) -> bool:
+        """A check for absolute URLs.
+
+        Return True for absolute ones (having scheme or starting
+        with //), False otherwise.
+
+        """
+        # `netloc`` is an empty string for relative URLs
+        # Checking `netloc` is faster than checking `hostname`
+        # because `hostname` is a property that does some extra work
+        # to parse the host from the `netloc`
+        return self._val.netloc != ""
 
     def is_default_port(self) -> bool:
         """A check for default port.
@@ -425,7 +462,7 @@ class URL:
 
         """
         # TODO: add a keyword-only option for keeping user/pass maybe?
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("URL should be absolute")
         if not self._val.scheme:
             raise ValueError("URL should have scheme")
@@ -440,7 +477,7 @@ class URL:
         scheme, user, password, host and port are removed.
 
         """
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("URL should be absolute")
         val = self._val._replace(scheme="", netloc="")
         return URL(val, encoded=True)
@@ -562,7 +599,7 @@ class URL:
         return _idna_decode(raw)
 
     @cached_property
-    def port(self):
+    def port(self) -> Optional[int]:
         """Port part of URL, with scheme-based fallback.
 
         None for relative URLs or URLs without explicit port and
@@ -588,7 +625,7 @@ class URL:
 
         """
         ret = self._val.path
-        if not ret and self.is_absolute():
+        if not ret and self.absolute:
             ret = "/"
         return ret
 
@@ -602,7 +639,7 @@ class URL:
         return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
-    def query(self) -> MultiDictProxy[str]:
+    def query(self) -> "MultiDictProxy[str]":
         """A MultiDictProxy representing parsed query parameters in decoded
         representation.
 
@@ -670,7 +707,7 @@ class URL:
 
         """
         path = self._val.path
-        if self.is_absolute():
+        if self.absolute:
             if not path:
                 parts = ["/"]
             else:
@@ -710,7 +747,7 @@ class URL:
     def raw_name(self) -> str:
         """The last part of raw_parts."""
         parts = self.raw_parts
-        if self.is_absolute():
+        if self.absolute:
             parts = parts[1:]
             if not parts:
                 return ""
@@ -774,11 +811,7 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
-            segments = [
-                segment for segment in reversed(path.split("/")) if segment != "."
-            ]
-            if not segments:
-                continue
+            segments = list(reversed(path.split("/")))
             # remove trailing empty segment for all but the last path
             segment_slice_start = int(not last and segments[0] == "")
             parsed += segments[segment_slice_start:]
@@ -788,7 +821,7 @@ class URL:
             old_path_cutoff = -1 if old_path_segments[-1] == "" else None
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
-        if self.is_absolute():
+        if self.absolute:
             parsed = _normalize_path_segments(parsed)
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
@@ -816,27 +849,45 @@ class URL:
     @classmethod
     def _encode_host(cls, host: str, human: bool = False) -> str:
         raw_ip, sep, zone = host.partition("%")
-        # IP parsing is slow, so its wrapped in an LRU
-        try:
-            ip_compressed_version = _ip_compressed_version(raw_ip)
-        except ValueError:
-            host = host.lower()
-            # IDNA encoding is slow,
-            # skip it for ASCII-only strings
-            # Don't move the check into _idna_encode() helper
-            # to reduce the cache size
-            if human or host.isascii():
+        if raw_ip and raw_ip[-1].isdigit() or ":" in raw_ip:
+            # Might be an IP address, check it
+            #
+            # IP Addresses can look like:
+            # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+            # - 127.0.0.1 (last character is a digit)
+            # - 2001:db8::ff00:42:8329 (contains a colon)
+            # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
+            # - [2001:db8::ff00:42:8329] (contains a colon)
+            # Rare IP Address formats are not supported per:
+            # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
+            #
+            # We try to avoid parsing IP addresses as much as possible
+            # since its orders of magnitude slower than almost any other operation
+            # this library does.
+            #
+            # IP parsing is slow, so its wrapped in an LRU
+            try:
+                ip_compressed_version = _ip_compressed_version(raw_ip)
+            except ValueError:
+                pass
+            else:
+                # These checks should not happen in the
+                # LRU to keep the cache size small
+                host, version = ip_compressed_version
+                if sep:
+                    host += "%" + zone
+                if version == 6:
+                    return f"[{host}]"
                 return host
-            return _idna_encode(host)
 
-        # These checks should not happen in the
-        # LRU to keep the cache size small
-        host, version = ip_compressed_version
-        if sep:
-            host += "%" + zone
-        if version == 6:
-            return f"[{host}]"
-        return host
+        host = host.lower()
+        # IDNA encoding is slow,
+        # skip it for ASCII-only strings
+        # Don't move the check into _idna_encode() helper
+        # to reduce the cache size
+        if human or host.isascii():
+            return host
+        return _idna_encode(host)
 
     @classmethod
     def _make_netloc(
@@ -878,7 +929,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("scheme replacement is not allowed for relative URLs")
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
@@ -899,7 +950,7 @@ class URL:
             password = val.password
         else:
             raise TypeError("Invalid user type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("user replacement is not allowed for relative URLs")
         return URL(
             self._val._replace(
@@ -923,7 +974,7 @@ class URL:
             password = self._QUOTER(password)
         else:
             raise TypeError("Invalid password type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("password replacement is not allowed for relative URLs")
         val = self._val
         return URL(
@@ -945,7 +996,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
@@ -969,7 +1020,7 @@ class URL:
                 raise TypeError(f"port should be int or None, got {type(port)}")
             if port < 0 or port > 65535:
                 raise ValueError(f"port must be between 0 and 65535, got {port}")
-        if not self.is_absolute():
+        if not self.absolute:
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
         return URL(
@@ -983,7 +1034,7 @@ class URL:
         """Return a new URL with path replaced."""
         if not encoded:
             path = self._PATH_QUOTER(path)
-            if self.is_absolute():
+            if self.absolute:
                 path = self._normalize_path(path)
         if len(path) > 0 and path[0] != "/":
             path = "/" + path
@@ -1147,7 +1198,7 @@ class URL:
         if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
-        if self.is_absolute():
+        if self.absolute:
             if len(parts) == 1:
                 parts.append(name)
             else:
@@ -1195,10 +1246,44 @@ class URL:
         relative URL.
 
         """
-        # See docs for urllib.parse.urljoin
-        if not isinstance(url, URL):
+        if type(url) is not URL:
             raise TypeError("url should be URL")
-        return URL(urljoin(str(self), str(url)), encoded=True)
+        val = self._val
+        other_val = url._val
+        scheme = other_val.scheme or val.scheme
+
+        if scheme != val.scheme or scheme not in USES_RELATIVE:
+            return url
+
+        # scheme is in uses_authority as uses_authority is a superset of uses_relative
+        if other_val.netloc and scheme in USES_AUTHORITY:
+            return URL(other_val._replace(scheme=scheme), encoded=True)
+
+        parts: _SplitResultDict = {"scheme": scheme}
+        if other_val.path or other_val.fragment:
+            parts["fragment"] = other_val.fragment
+        if other_val.path or other_val.query:
+            parts["query"] = other_val.query
+
+        if not other_val.path:
+            return URL(val._replace(**parts), encoded=True)
+
+        if other_val.path[0] == "/" or not val.path:
+            path = other_val.path
+        elif val.path[-1] == "/":
+            path = f"{val.path}{other_val.path}"
+        else:
+            # …
+            # and relativizing ".."
+            # parts[0] is / for absolute urls, this join will add a double slash there
+            path = "/".join([*self.parts[:-1], ""])
+            path += other_val.path
+            # which has to be removed
+            if val.path[0] == "/":
+                path = path[1:]
+
+        parts["path"] = self._normalize_path(path)
+        return URL(val._replace(**parts), encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""

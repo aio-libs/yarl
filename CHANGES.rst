@@ -14,6 +14,108 @@ Changelog
 
 .. towncrier release notes start
 
+1.9.11
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Fixed a :exc:`TypeError` with ``MultiDictProxy`` and Python 3.8 -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`, :issue:`1105`, :issue:`1107`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of encoding hosts -- by :user:`bdraco`.
+
+  Previously, the library would unconditionally try to parse a host as an IP Address. The library now avoids trying to parse a host as an IP Address if the string is not in one of the formats described in :rfc:`3986#section-3.2.2`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1104`.
+
+
+----
+
+
+1.9.10
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- :meth:`URL.join() <yarl.URL.join>` has been changed to match
+  :rfc:`3986` and align with
+  :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  when joining URLs with empty segments.
+  Previously :py:func:`urllib.parse.urljoin` was used,
+  which has known issues with empty segments
+  (`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
+
+  Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
+  URL with scheme requires making it relative, prefixing with ``./``.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+  Empty segments are honored in the base as well as the joined part.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+
+  -- by :user:`commonism`
+
+  This change initially appeared in 1.9.5 but was reverted in 1.9.6 to resolve a problem with query string handling.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1039`, :issue:`1082`.
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.absolute` which is now preferred over ``URL.is_absolute()`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1100`.
+
+
+----
+
+
+1.9.9
+=====
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Added missing type on :attr:`~yarl.URL.port` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1097`.
+
+
+----
+
+
 1.9.8
 =====
 

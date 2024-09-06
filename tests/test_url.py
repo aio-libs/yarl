@@ -1307,26 +1307,31 @@ def test_with_suffix_replace():
 def test_is_absolute_for_relative_url():
     url = URL("/path/to")
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_absolute_for_absolute_url():
     url = URL("http://example.com")
     assert url.is_absolute()
+    assert url.absolute
 
 
 def test_is_non_absolute_for_empty_url():
     url = URL()
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_non_absolute_for_empty_url2():
     url = URL("")
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_absolute_path_starting_from_double_slash():
     url = URL("//www.python.org")
     assert url.is_absolute()
+    assert url.absolute
 
 
 # is_default_port
@@ -1664,6 +1669,81 @@ def test_join_from_rfc_3986_abnormal(url, expected):
     assert base.join(url) == expected
 
 
+EMPTY_SEGMENTS = [
+    (
+        "https://web.archive.org/web/",
+        "./https://github.com/aio-libs/yarl",
+        "https://web.archive.org/web/https://github.com/aio-libs/yarl",
+    ),
+    (
+        "https://web.archive.org/web/https://github.com/",
+        "aio-libs/yarl",
+        "https://web.archive.org/web/https://github.com/aio-libs/yarl",
+    ),
+]
+
+
+@pytest.mark.parametrize("base,url,expected", EMPTY_SEGMENTS)
+def test_join_empty_segments(base, url, expected):
+    base = URL(base)
+    url = URL(url)
+    expected = URL(expected)
+    joined = base.join(url)
+    assert joined == expected
+
+
+SIMPLE_BASE = "http://a/b/c/d"
+URLLIB_URLJOIN = [
+    ("", "http://a/b/c/g?y/./x", "http://a/b/c/g?y/./x"),
+    ("", "http://a/./g", "http://a/./g"),
+    ("svn://pathtorepo/dir1", "dir2", "svn://pathtorepo/dir2"),
+    ("svn+ssh://pathtorepo/dir1", "dir2", "svn+ssh://pathtorepo/dir2"),
+    ("ws://a/b", "g", "ws://a/g"),
+    ("wss://a/b", "g", "wss://a/g"),
+    # test for issue22118 duplicate slashes
+    (SIMPLE_BASE + "/", "foo", SIMPLE_BASE + "/foo"),
+    # Non-RFC-defined tests, covering variations of base and trailing
+    # slashes
+    ("http://a/b/c/d/e/", "../../f/g/", "http://a/b/c/f/g/"),
+    ("http://a/b/c/d/e", "../../f/g/", "http://a/b/f/g/"),
+    ("http://a/b/c/d/e/", "/../../f/g/", "http://a/f/g/"),
+    ("http://a/b/c/d/e", "/../../f/g/", "http://a/f/g/"),
+    ("http://a/b/c/d/e/", "../../f/g", "http://a/b/c/f/g"),
+    ("http://a/b/", "../../f/g/", "http://a/f/g/"),
+    ("a", "b", "b"),
+    ("http:///", "..", "http:///"),
+    ("a/", "b", "a/b"),
+    ("a/b", "c", "a/c"),
+    ("a/b/", "c", "a/b/c"),
+    (
+        "https://x.org/",
+        "/?text=Hello+G%C3%BCnter",
+        "https://x.org/?text=Hello+G%C3%BCnter",
+    ),
+    (
+        "https://x.org/",
+        "?text=Hello+G%C3%BCnter",
+        "https://x.org/?text=Hello+G%C3%BCnter",
+    ),
+    ("http://example.com", "http://example.com", "http://example.com"),
+    ("http://x.org", "https://x.org#fragment", "https://x.org#fragment"),
+]
+
+
+@pytest.mark.parametrize("base,url,expected", URLLIB_URLJOIN)
+def test_join_cpython_urljoin(base, url, expected):
+    # tests from cpython urljoin
+    base = URL(base)
+    url = URL(url)
+    expected = URL(expected)
+    joined = base.join(url)
+    assert joined == expected
+
+
+def test_empty_authority():
+    assert URL("http:///").authority == ""
+
+
 def test_split_result_non_decoded():
     with pytest.raises(ValueError):
         URL(SplitResult("http", "example.com", "path", "qs", "frag"))
@@ -1759,6 +1839,7 @@ def test_relative_is_relative():
     url = URL("http://user:pass@example.com:8080/path?a=b#frag")
     rel = url.relative()
     assert not rel.is_absolute()
+    assert not rel.absolute
 
 
 def test_relative_abs_parts_are_removed():

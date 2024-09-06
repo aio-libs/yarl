@@ -103,7 +103,7 @@ jobs:
         }
         >> "${GITHUB_OUTPUT}"
     - name: Upload built artifacts for testing
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         if-no-files-found: error
         name: ${{ needs.pre-setup.outputs.dists-artifact-name  }}
@@ -205,17 +205,18 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: >-
           ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
@@ -409,7 +410,7 @@ jobs:
 
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: >-
           ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -417,10 +418,11 @@ jobs:
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
     - name: Download distributions
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
     - run: |
         tree
     - name: Login
