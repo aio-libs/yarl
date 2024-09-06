@@ -733,6 +733,16 @@ section generates a new :class:`URL` instance.
       Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
       as a query parameter value.
 
+.. method:: URL.without_query_params(*query_params)
+
+   Return a new URL whose *query* part does not contain specified ``query_params``.
+
+   Accepts :class:`str` for ``query_params``.
+
+   It does nothing if none of specified ``query_params`` are present in the query.
+
+   .. versionadded:: 1.10.0
+
 .. method:: URL.with_fragment(fragment)
 
    Return a new URL with *fragment* replaced, auto-encode *fragment* if needed.
