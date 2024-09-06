@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Dict,
     Iterable,
     Iterator,
     List,
@@ -209,38 +210,50 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
+        cache: Dict[str, Union[str, int, None]] = {}
         if not encoded:
             host: Union[str, None]
-            if not val[1]:  # netloc
-                netloc = ""
+            scheme, netloc, path, query, fragment = val
+            if not netloc:  # netloc
                 host = ""
             else:
-                host = val.hostname
+                username, password, host, port = cls._split_netloc(val[1])
                 if host is None:
                     raise ValueError("Invalid URL: host is required for absolute urls")
-
-                try:
-                    port = val.port
-                except ValueError as e:
-                    raise ValueError(
-                        "Invalid URL: port can't be converted to integer"
-                    ) from e
-
+                host = cls._encode_host(host)
+                raw_user = None if username is None else cls._REQUOTER(username)
+                raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(
-                    val.username, val.password, host, port, encode=True, requote=True
+                    raw_user, raw_password, host, port, encode_host=False
                 )
-            path = cls._PATH_REQUOTER(val[2])
-            if netloc:
-                path = cls._normalize_path(path)
+                if "[" in host:
+                    # Our host encoder adds back brackets for IPv6 addresses
+                    # so we need to remove them here to get the raw host
+                    _, _, bracketed = host.partition("[")
+                    raw_host, _, _ = bracketed.partition("]")
+                else:
+                    raw_host = host
+                cache["raw_host"] = raw_host
+                cache["raw_user"] = raw_user
+                cache["raw_password"] = raw_password
+                cache["explicit_port"] = port
+
+            if path:
+                path = cls._PATH_REQUOTER(path)
+                if netloc:
+                    path = cls._normalize_path(path)
 
             cls._validate_authority_uri_abs_path(host=host, path=path)
-            query = cls._QUERY_REQUOTER(val[3])
-            fragment = cls._FRAGMENT_REQUOTER(val[4])
-            val = SplitResult(val[0], netloc, path, query, fragment)
+            query = cls._QUERY_REQUOTER(query) if query else query
+            fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
+            cache["scheme"] = scheme
+            cache["raw_query_string"] = query
+            cache["raw_fragment"] = fragment
+            val = SplitResult(scheme, netloc, path, query, fragment)
 
         self = object.__new__(cls)
         self._val = val
-        self._cache = {}
+        self._cache = cache
         return self
 
     @classmethod
@@ -412,6 +425,16 @@ class URL:
             self._val, *unused = state
         self._cache = {}
 
+    def _cache_netloc(self) -> None:
+        """Cache the netloc parts of the URL."""
+        cache = self._cache
+        (
+            cache["raw_user"],
+            cache["raw_password"],
+            cache["raw_host"],
+            cache["explicit_port"],
+        ) = self._split_netloc(self._val.netloc)
+
     def is_absolute(self) -> bool:
         """A check for absolute URLs.
 
@@ -527,7 +550,7 @@ class URL:
             self.user, self.password, self.host, self.port, encode_host=False
         )
 
-    @property
+    @cached_property
     def raw_user(self) -> Union[str, None]:
         """Encoded user part of URL.
 
@@ -535,7 +558,8 @@ class URL:
 
         """
         # not .username
-        return self._val.username or None
+        self._cache_netloc()
+        return self._cache["raw_user"]
 
     @cached_property
     def user(self) -> Union[str, None]:
@@ -549,14 +573,15 @@ class URL:
             return None
         return self._UNQUOTER(raw_user)
 
-    @property
+    @cached_property
     def raw_password(self) -> Union[str, None]:
         """Encoded password part of URL.
 
         None if password is missing.
 
         """
-        return self._val.password
+        self._cache_netloc()
+        return self._cache["raw_password"]
 
     @cached_property
     def password(self) -> Union[str, None]:
@@ -579,7 +604,8 @@ class URL:
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
-        return self._val.hostname
+        self._cache_netloc()
+        return self._cache["raw_host"]
 
     @cached_property
     def host(self) -> Union[str, None]:
@@ -615,7 +641,8 @@ class URL:
         None for relative URLs or URLs without explicit port.
 
         """
-        return self._val.port
+        self._cache_netloc()
+        return self._cache["explicit_port"]
 
     @property
     def raw_path(self) -> str:
@@ -649,7 +676,7 @@ class URL:
         ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
         return MultiDictProxy(ret)
 
-    @property
+    @cached_property
     def raw_query_string(self) -> str:
         """Encoded query part of URL.
 
@@ -681,7 +708,7 @@ class URL:
             return self.raw_path
         return f"{self.raw_path}?{self.raw_query_string}"
 
-    @property
+    @cached_property
     def raw_fragment(self) -> str:
         """Encoded fragment part of URL.
 
@@ -792,7 +819,7 @@ class URL:
 
         Raise ValueError if not.
         """
-        if len(host) > 0 and len(path) > 0 and not path.startswith("/"):
+        if host and path and not path.startswith("/"):
             raise ValueError(
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
@@ -923,6 +950,42 @@ class URL:
         if user:
             ret = user + "@" + ret
         return ret
+
+    @classmethod
+    @lru_cache  # match the same size as urlsplit
+    def _split_netloc(
+        cls,
+        netloc: str,
+    ) -> Tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
+        """Split netloc into username, password, host and port."""
+        if "@" not in netloc:
+            username: Union[str, None] = None
+            password: Union[str, None] = None
+            hostinfo = netloc
+        else:
+            userinfo, _, hostinfo = netloc.rpartition("@")
+            username, have_password, password = userinfo.partition(":")
+            if not have_password:
+                password = None
+
+        if "[" in hostinfo:
+            _, _, bracketed = hostinfo.partition("[")
+            hostname, _, port_str = bracketed.partition("]")
+            _, _, port_str = port_str.partition(":")
+        else:
+            hostname, _, port_str = hostinfo.partition(":")
+
+        if not port_str:
+            port: Union[int, None] = None
+        else:
+            try:
+                port = int(port_str)
+            except ValueError:
+                raise ValueError("Invalid URL: port can't be converted to integer")
+            if not (0 <= port <= 65535):
+                raise ValueError("Port out of range 0-65535")
+
+        return username or None, password, hostname or None, port
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
