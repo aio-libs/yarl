@@ -9,7 +9,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Iterable,
     Iterator,
     List,
@@ -69,6 +68,42 @@ class _SplitResultDict(TypedDict, total=False):
     path: str
     query: str
     fragment: str
+
+
+class _InternalURLCache(TypedDict, total=False):
+
+    absolute: bool
+    scheme: str
+    raw_authority: str
+    _default_port: Union[int, None]
+    _port_not_default: Union[int, None]
+    authority: str
+    raw_user: Union[str, None]
+    user: Union[str, None]
+    raw_password: Union[str, None]
+    password: Union[str, None]
+    raw_host: Union[str, None]
+    host: Union[str, None]
+    port: Union[int, None]
+    explicit_port: Union[int, None]
+    raw_path: str
+    path: str
+    query: "MultiDictProxy[str]"
+    raw_query_string: str
+    query_string: str
+    path_qs: str
+    raw_path_qs: str
+    raw_fragment: str
+    fragment: str
+    raw_parts: Tuple[str, ...]
+    parts: Tuple[str, ...]
+    parent: "URL"
+    raw_name: str
+    name: str
+    raw_suffix: str
+    suffix: str
+    raw_suffixes: Tuple[str, ...]
+    suffixes: Tuple[str, ...]
 
 
 def rewrite_module(obj: _T) -> _T:
@@ -210,7 +245,7 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
-        cache: Dict[str, Union[str, int, None]] = {}
+        cache: _InternalURLCache = {}
         if not encoded:
             host: Union[str, None]
             scheme, netloc, path, query, fragment = val
@@ -446,20 +481,6 @@ class URL:
         """
         return self.absolute
 
-    @cached_property
-    def absolute(self) -> bool:
-        """A check for absolute URLs.
-
-        Return True for absolute ones (having scheme or starting
-        with //), False otherwise.
-
-        """
-        # `netloc`` is an empty string for relative URLs
-        # Checking `netloc` is faster than checking `hostname`
-        # because `hostname` is a property that does some extra work
-        # to parse the host from the `netloc`
-        return self._val.netloc != ""
-
     def is_default_port(self) -> bool:
         """A check for default port.
 
@@ -506,6 +527,20 @@ class URL:
         return URL(val, encoded=True)
 
     @cached_property
+    def absolute(self) -> bool:
+        """A check for absolute URLs.
+
+        Return True for absolute ones (having scheme or starting
+        with //), False otherwise.
+
+        """
+        # `netloc`` is an empty string for relative URLs
+        # Checking `netloc` is faster than checking `hostname`
+        # because `hostname` is a property that does some extra work
+        # to parse the host from the `netloc`
+        return self._val.netloc != ""
+
+    @cached_property
     def scheme(self) -> str:
         """Scheme for absolute URLs.
 
@@ -514,7 +549,7 @@ class URL:
         """
         return self._val.scheme
 
-    @property
+    @cached_property
     def raw_authority(self) -> str:
         """Encoded authority part of URL.
 
@@ -644,7 +679,7 @@ class URL:
         self._cache_netloc()
         return self._cache["explicit_port"]
 
-    @property
+    @cached_property
     def raw_path(self) -> str:
         """Encoded path of URL.
 
