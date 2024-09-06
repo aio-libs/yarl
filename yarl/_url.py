@@ -213,16 +213,22 @@ class URL:
 
         cache: Dict[str, Union[str, int, None]] = {}
         if not encoded:
+            host: Optional[str]
             if not val[1]:  # netloc
                 host = netloc = ""
             else:
                 username, password, host, port = cls._split_netloc(val[1])
+                if not host:
+                    raise ValueError("Invalid URL: host is required for absolute urls")
+                host = cls._encode_host(host)
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(
                     raw_user, raw_password, host, port, encode_host=False
                 )
                 if "[" in host:
+                    # Our host encoder adds back brackets for IPv6 addresses
+                    # so we need to remove them here to get the raw host
                     _, _, bracketed = host.partition("[")
                     raw_host, _, _ = bracketed.partition("]")
                 else:
@@ -418,6 +424,15 @@ class URL:
             self._val, *unused = state
         self._cache = {}
 
+    def _cache_netloc(self) -> None:
+        """Cache the netloc parts of the URL."""
+        cache = self._cache
+        username, cache["raw_password"], cache["raw_host"], cache["explicit_port"] = (
+            self._split_netloc(self._val.netloc)
+        )
+        # raw_user property is not allowed to be empty string
+        cache["raw_user"] = username or None
+
     def is_absolute(self) -> bool:
         """A check for absolute URLs.
 
@@ -541,7 +556,8 @@ class URL:
 
         """
         # not .username
-        return self._val.username or None
+        self._cache_netloc()
+        return self._cache["raw_user"]
 
     @cached_property
     def user(self) -> Optional[str]:
@@ -562,7 +578,8 @@ class URL:
         None if password is missing.
 
         """
-        return self._val.password
+        self._cache_netloc()
+        return self._cache["raw_password"]
 
     @cached_property
     def password(self) -> Optional[str]:
@@ -585,7 +602,8 @@ class URL:
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
-        return self._val.hostname
+        self._cache_netloc()
+        return self._cache["raw_host"]
 
     @cached_property
     def host(self) -> Optional[str]:
@@ -621,7 +639,8 @@ class URL:
         None for relative URLs or URLs without explicit port.
 
         """
-        return self._val.port
+        self._cache_netloc()
+        return self._cache["explicit_port"]
 
     @property
     def raw_path(self) -> str:
@@ -935,7 +954,7 @@ class URL:
     def _split_netloc(
         cls,
         netloc: str,
-    ) -> Tuple[Optional[str], Optional[str], str, Optional[int]]:
+    ) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[int]]:
         """Split netloc into username, password, host and port.
 
         host is always encoded
@@ -957,9 +976,6 @@ class URL:
         else:
             hostname, _, port_str = hostinfo.partition(":")
 
-        if not hostname:
-            raise ValueError("Invalid URL: host is required for absolute urls")
-
         if not port_str:
             port: Optional[int] = None
         else:
@@ -970,7 +986,7 @@ class URL:
             if not (0 <= port <= 65535):
                 raise ValueError("Port out of range 0-65535")
 
-        return username, password, cls._encode_host(hostname), port
+        return username, password, hostname or None, port
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
