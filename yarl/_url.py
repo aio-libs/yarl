@@ -924,7 +924,9 @@ class URL:
         return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
-    def _encode_host(cls, host: str, human: bool = False, validate_host=True) -> str:
+    def _encode_host(
+        cls, host: str, human: bool = False, validate_host: bool = True
+    ) -> str:
         if "%" in host:
             raw_ip, sep, zone = host.partition("%")
         else:
