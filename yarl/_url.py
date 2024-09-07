@@ -491,13 +491,12 @@ class URL:
         Return False for relative URLs.
 
         """
-        if self.explicit_port is None:
-            # A relative URL does not have an implicit port / default port
-            return self.port is not None
         default = self._default_port
-        if default is None:
-            return False
-        return self.port == default
+        explicit = self.explicit_port
+        if explicit is None:
+            # A relative URL does not have an implicit port / default port
+            return default is not None
+        return explicit == default
 
     def origin(self) -> "URL":
         """Return an URL with scheme, host and port parts only.
@@ -561,10 +560,7 @@ class URL:
     @cached_property
     def _default_port(self) -> Union[int, None]:
         """Default port for the scheme or None if not known."""
-        scheme = self.scheme
-        if not scheme:
-            return None
-        return DEFAULT_PORTS.get(scheme)
+        return DEFAULT_PORTS.get(self.scheme)
 
     @cached_property
     def _port_not_default(self) -> Union[int, None]:
