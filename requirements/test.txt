@@ -1,7 +1,8 @@
 -r cython.txt
-hypothesis >= 6.0
-idna==3.6
-multidict==6.0.4
-pytest==7.4.3
+covdefaults
+hypothesis>=6.0
+idna==3.8
+multidict==6.0.5
+pytest==8.3.2
 pytest-cov>=2.3.1
 pytest-xdist

@@ -41,11 +41,7 @@ class TestScheme:
     def test_no_scheme1(self):
         u = URL("google.com:80")
         # See: https://bugs.python.org/issue27657
-        if (
-            sys.version_info[:3] == (3, 7, 6)
-            or sys.version_info[:3] == (3, 8, 1)
-            or sys.version_info >= (3, 9, 0)
-        ):
+        if sys.version_info[:3] == (3, 8, 1) or sys.version_info >= (3, 9, 0):
             assert u.scheme == "google.com"
             assert u.host is None
             assert u.path == "80"

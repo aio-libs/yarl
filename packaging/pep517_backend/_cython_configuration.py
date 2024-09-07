@@ -9,11 +9,7 @@ from sys import version_info as _python_version_tuple
 
 from expandvars import expandvars
 
-try:
-    from tomllib import loads as _load_toml_from_string
-except ImportError:
-    from tomli import loads as _load_toml_from_string  # type: ignore[no-redef]
-
+from ._compat import load_toml_from_string  # noqa: WPS436
 from ._transformers import (  # noqa: WPS436
     get_cli_kwargs_from_config,
     get_enabled_cli_flags_from_config,
@@ -73,7 +69,7 @@ def get_local_cython_config() -> dict:
         # NAME = "VALUE"
     """
     config_toml_txt = (Path.cwd().resolve() / 'pyproject.toml').read_text()
-    config_mapping = _load_toml_from_string(config_toml_txt)
+    config_mapping = load_toml_from_string(config_toml_txt)
     return config_mapping['tool']['local']['cythonize']
 
 

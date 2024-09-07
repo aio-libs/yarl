@@ -1,3 +1,7 @@
+=========
+Changelog
+=========
+
 ..
     You should *NOT* be adding new change log entries to this file, this
     file is managed by towncrier. You *may* edit previous change logs to
@@ -10,6 +14,500 @@
 
 .. towncrier release notes start
 
+1.10.0
+======
+
+*(2024-09-06)*
+
+
+Bug fixes
+---------
+
+- Fixed joining a path when the existing path was empty -- by :user:`bdraco`.
+
+  A regression in :meth:`URL.join() <yarl.URL.join>` was introduced in :issue:`1082`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1118`.
+
+
+Features
+--------
+
+- Added :meth:`URL.without_query_params() <yarl.URL.without_query_params>` method, to drop some parameters from query string -- by :user:`hongquan`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`774`, :issue:`898`, :issue:`1010`.
+
+- The previously protected types ``_SimpleQuery``, ``_QueryVariable``, and ``_Query`` are now available for use externally as ``SimpleQuery``, ``QueryVariable``, and ``Query`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1050`, :issue:`1113`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Replaced all :class:`~typing.Optional` with :class:`~typing.Union` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1095`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Significantly improved performance of parsing the network location -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1112`.
+
+- Added internal types to the cache to prevent future refactoring errors -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1117`.
+
+
+----
+
+
+1.9.11
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Fixed a :exc:`TypeError` with ``MultiDictProxy`` and Python 3.8 -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`, :issue:`1105`, :issue:`1107`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of encoding hosts -- by :user:`bdraco`.
+
+  Previously, the library would unconditionally try to parse a host as an IP Address. The library now avoids trying to parse a host as an IP Address if the string is not in one of the formats described in :rfc:`3986#section-3.2.2`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1104`.
+
+
+----
+
+
+1.9.10
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- :meth:`URL.join() <yarl.URL.join>` has been changed to match
+  :rfc:`3986` and align with
+  :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  when joining URLs with empty segments.
+  Previously :py:func:`urllib.parse.urljoin` was used,
+  which has known issues with empty segments
+  (`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
+
+  Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
+  URL with scheme requires making it relative, prefixing with ``./``.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+  Empty segments are honored in the base as well as the joined part.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+
+  -- by :user:`commonism`
+
+  This change initially appeared in 1.9.5 but was reverted in 1.9.6 to resolve a problem with query string handling.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1039`, :issue:`1082`.
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.absolute` which is now preferred over ``URL.is_absolute()`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1100`.
+
+
+----
+
+
+1.9.9
+=====
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Added missing type on :attr:`~yarl.URL.port` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1097`.
+
+
+----
+
+
+1.9.8
+=====
+
+*(2024-09-03)*
+
+
+Features
+--------
+
+- Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`.
+
+- Cache parsing of IP Addresses when encoding hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1086`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of handling ports -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1081`.
+
+
+----
+
+
+1.9.7
+=====
+
+*(2024-09-01)*
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Removed support :rfc:`3986#section-3.2.3` port normalization when the scheme is not one of ``http``, ``https``, ``wss``, or ``ws`` -- by :user:`bdraco`.
+
+  Support for port normalization was recently added in :issue:`1033` and contained code that would do blocking I/O if the scheme was not one of the four listed above. The code has been removed because this library is intended to be safe for usage with :mod:`asyncio`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1076`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of property caching -- by :user:`bdraco`.
+
+  The ``reify`` implementation from ``aiohttp`` was adapted to replace the internal ``cached_property`` implementation.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1070`.
+
+
+----
+
+
+1.9.6
+=====
+
+*(2024-08-30)*
+
+
+Bug fixes
+---------
+
+- Reverted :rfc:`3986` compatible :meth:`URL.join() <yarl.URL.join>` honoring empty segments which was introduced in :issue:`1039`.
+
+  This change introduced a regression handling query string parameters with joined URLs. The change was reverted to maintain compatibility with the previous behavior.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1067`.
+
+
+----
+
+
+1.9.5
+=====
+
+*(2024-08-30)*
+
+
+Bug fixes
+---------
+
+- Joining URLs with empty segments has been changed
+  to match :rfc:`3986`.
+
+  Previously empty segments would be removed from path,
+  breaking use-cases such as
+
+  .. code-block:: python
+
+     URL("https://web.archive.org/web/") / "https://github.com/"
+
+  Now :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  keep empty segments, but do not introduce new empty segments.
+  e.g.
+
+  .. code-block:: python
+
+     URL("https://example.org/") / ""
+
+  does not introduce an empty segment.
+
+  -- by :user:`commonism` and :user:`youtux`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1026`.
+
+- The default protocol ports of well-known URI schemes are now taken into account
+  during the normalization of the URL string representation in accordance with
+  :rfc:`3986#section-3.2.3`.
+
+  Specified ports are removed from the :class:`str` representation of a :class:`~yarl.URL`
+  if the port matches the scheme's default port -- by :user:`commonism`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1033`.
+
+- :meth:`URL.join() <yarl.URL.join>` has been changed to match
+  :rfc:`3986` and align with
+  :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  when joining URLs with empty segments.
+  Previously :py:func:`urllib.parse.urljoin` was used,
+  which has known issues with empty segments
+  (`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
+
+  Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
+  URL with scheme requires making it relative, prefixing with ``./``.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+  Empty segments are honored in the base as well as the joined part.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+
+  -- by :user:`commonism`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1039`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Stopped decoding ``%2F`` (``/``) in ``URL.path``, as this could lead to code incorrectly treating it as a path separator
+  -- by :user:`Dreamsorcerer`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1057`.
+
+- Dropped support for Python 3.7 -- by :user:`Dreamsorcerer`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1016`.
+
+
+Improved documentation
+----------------------
+
+- On the :doc:`Contributing docs <contributing/guidelines>` page,
+  a link to the ``Towncrier philosophy`` has been fixed.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`981`.
+
+- The pre-existing :meth:`/ magic method <yarl.URL.__truediv__>`
+  has been documented in the API reference -- by :user:`commonism`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1026`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- A flaw in the logic for copying the project directory into a
+  temporary folder that led to infinite recursion when :envvar:`TMPDIR`
+  was set to a project subdirectory path. This was happening in Fedora
+  and its downstream due to the use of `pyproject-rpm-macros
+  <https://src.fedoraproject.org/rpms/pyproject-rpm-macros>`__. It was
+  only reproducible with ``pip wheel`` and was not affecting the
+  ``pyproject-build`` users.
+
+  -- by :user:`hroncok` and :user:`webknjaz`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`992`, :issue:`1014`.
+
+- Support Python 3.13 and publish non-free-threaded wheels
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1054`.
+
+
+Contributor-facing changes
+--------------------------
+
+- The CI/CD setup has been updated to test ``arm64`` wheels
+  under macOS 14, except for Python 3.7 that is unsupported
+  in that environment -- by :user:`webknjaz`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1015`.
+
+- Removed unused type ignores and casts -- by :user:`hauntsaninja`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1031`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- ``port``, ``scheme``, and ``raw_host`` are now ``cached_property`` -- by :user:`bdraco`.
+
+  ``aiohttp`` accesses these properties quite often, which cause :mod:`urllib` to build the ``_hostinfo`` property every time. ``port``, ``scheme``, and ``raw_host`` are now cached properties, which will improve performance.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1044`, :issue:`1058`.
+
+
+----
+
+
+1.9.4 (2023-12-06)
+==================
+
+Bug fixes
+---------
+
+- Started raising :py:exc:`TypeError` when a string value is passed into
+  :py:meth:`~yarl.URL.build` as the ``port`` argument  -- by :user:`commonism`.
+
+  Previously the empty string as port would create malformed URLs when rendered as string representations. (:issue:`883`)
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- The leading ``--`` has been dropped from the :pep:`517` in-tree build
+  backend config setting names. ``--pure-python`` is now just ``pure-python``
+  -- by :user:`webknjaz`.
+
+  The usage now looks as follows:
+
+  .. code-block:: console
+
+      $ python -m build \
+          --config-setting=pure-python=true \
+          --config-setting=with-cython-tracing=true
+
+  (:issue:`963`)
+
+
+Contributor-facing changes
+--------------------------
+
+- A step-by-step :doc:`Release Guide <contributing/release_guide>` guide has
+  been added, describing how to release *yarl* -- by :user:`webknjaz`.
+
+  This is primarily targeting maintainers. (:issue:`960`)
+- Coverage collection has been implemented for the Cython modules
+  -- by :user:`webknjaz`.
+
+  It will also be reported to Codecov from any non-release CI jobs.
+
+  To measure coverage in a development environment, *yarl* can be
+  installed in editable mode:
+
+  .. code-block:: console
+
+      $ python -Im pip install -e .
+
+  Editable install produces C-files required for the Cython coverage
+  plugin to map the measurements back to the PYX-files.
+
+  :issue:`961`
+
+- It is now possible to request line tracing in Cython builds using the
+  ``with-cython-tracing`` :pep:`517` config setting
+  -- :user:`webknjaz`.
+
+  This can be used in CI and development environment to measure coverage
+  on Cython modules, but is not normally useful to the end-users or
+  downstream packagers.
+
+  Here's a usage example:
+
+  .. code-block:: console
+
+      $ python -Im pip install . --config-settings=with-cython-tracing=true
+
+  For editable installs, this setting is on by default. Otherwise, it's
+  off unless requested explicitly.
+
+  The following produces C-files required for the Cython coverage
+  plugin to map the measurements back to the PYX-files:
+
+  .. code-block:: console
+
+      $ python -Im pip install -e .
+
+  Alternatively, the ``YARL_CYTHON_TRACING=1`` environment variable
+  can be set to do the same as the :pep:`517` config setting.
+
+  :issue:`962`
+
+
 1.9.3 (2023-11-20)
 ==================
 
@@ -17,7 +515,7 @@ Bug fixes
 ---------
 
 - Stopped dropping trailing slashes in :py:meth:`~yarl.URL.joinpath` -- by :user:`gmacon`. (:issue:`862`, :issue:`866`)
-- Started accepting string subclasses in ``__truediv__()`` operations (``URL / segment``) -- by :user:`mjpieters`. (:issue:`871`, :issue:`884`)
+- Started accepting string subclasses in :meth:`~yarl.URL.__truediv__` operations (``URL / segment``) -- by :user:`mjpieters`. (:issue:`871`, :issue:`884`)
 - Fixed the human representation of URLs with square brackets in usernames and passwords -- by :user:`mjpieters`. (:issue:`876`, :issue:`882`)
 - Updated type hints to include ``URL.missing_port()``, ``URL.__bytes__()``
   and the ``encoding`` argument to :py:meth:`~yarl.URL.joinpath`
@@ -86,7 +584,7 @@ Contributor-facing changes
 Bugfixes
 --------
 
-- Fix regression with ``__truediv__`` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
+- Fix regression with :meth:`~yarl.URL.__truediv__` and absolute URLs with empty paths causing the raw path to lack the leading ``/``.
   (`#854 <https://github.com/aio-libs/yarl/issues/854>`_)
 
 
@@ -108,7 +606,7 @@ Features
 --------
 
 - Added ``URL.joinpath(*elements)``, to create a new URL appending multiple path elements. (`#704 <https://github.com/aio-libs/yarl/issues/704>`_)
-- Made ``URL.__truediv__()`` return ``NotImplemented`` if called with an
+- Made :meth:`URL.__truediv__() <yarl.URL.__truediv__>` return ``NotImplemented`` if called with an
   unsupported type — by :user:`michaeljpeters`.
   (`#832 <https://github.com/aio-libs/yarl/issues/832>`_)
 
