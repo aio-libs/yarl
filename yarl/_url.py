@@ -964,9 +964,8 @@ class URL:
         if human:
             return host
         if host.isascii():
-            # Check for invalid characters explicitly; _idna_encode() does this
-            # for non-ascii host names.
             _host_validate(host)
+            return host
         return _idna_encode(host)
 
     @classmethod
