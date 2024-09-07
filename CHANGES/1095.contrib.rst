@@ -1,1 +1,1 @@
-Replaced all ``Optional`` with ``Union`` -- by :user:`bdraco`.
+Replaced all :class:`~typing.Optional` with :class:`~typing.Union` -- by :user:`bdraco`.
