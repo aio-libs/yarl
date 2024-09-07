@@ -961,19 +961,20 @@ Default port substitution
 Cache control
 -------------
 
-IDNA conversion and IP Address parsing used for host encoding are quite expensive
-operations, that's why the ``yarl`` library caches these calls by storing
-last ``256`` results in the global LRU cache.
+IDNA conversion, host validation, and IP Address parsing used for host
+encoding are quite expensive operations, that's why the ``yarl``
+library caches these calls by storing last ``256`` results in the
+global LRU cache.
 
 .. function:: cache_clear()
 
-   Clear IDNA and IP Address caches.
+   Clear IDNA, host validation, and IP Address caches.
 
 
 .. function:: cache_info()
 
-   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, and
-   ``"ip_address"`` keys, each value
+   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, ``"ip_address"``,
+   and ``"host_validate"`` keys, each value
    points to corresponding ``CacheInfo`` structure (see :func:`functools.lru_cache` for
    details):
 
@@ -983,12 +984,15 @@ last ``256`` results in the global LRU cache.
       >>> yarl.cache_info()
       {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=256, currsize=5),
        'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15),
-       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=256, currsize=101)}
+       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=256, currsize=101),
+       'host_validate': CacheInfo(hits=0, misses=0, maxsize=256, currsize=0)}
 
 
-.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, ip_address_size=256)
 
-   Set the IP Address and IDNA encode and decode cache sizes (``256`` for each by default).
+.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, ip_address_size=256, host_validate_size=256)
+
+   Set the IP Address, host validation, and IDNA encode and
+   decode cache sizes (``256`` for each by default).
 
    Pass ``None`` to make the corresponding cache unbounded (may speed up host encoding
    operation a little but the memory footprint can be very high,
