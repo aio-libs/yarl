@@ -957,13 +957,16 @@ class URL:
                 return host
 
         host = host.lower()
+        if human:
+            return host
+
         # IDNA encoding is slow,
         # skip it for ASCII-only strings
         # Don't move the check into _idna_encode() helper
         # to reduce the cache size
-        if human:
-            return host
         if host.isascii():
+            # Check for invalid characters explicitly; _idna_encode() does this
+            # for non-ascii host names.
             _host_validate(host)
             return host
         return _idna_encode(host)
@@ -1483,8 +1486,6 @@ def _ip_compressed_version(raw_ip: str) -> Tuple[str, int]:
 @lru_cache(_MAXCACHE)
 def _host_validate(host: str) -> None:
     """Validate an ascii host name."""
-    # Check for invalid characters explicitly; _idna_encode() does this
-    # for non-ascii host names.
     invalid = _not_reg_name.search(host)
     if invalid is None:
         return
