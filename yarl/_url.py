@@ -273,7 +273,7 @@ class URL:
                 username, password, host, port = cls._split_netloc(val[1])
                 if host is None:
                     raise ValueError("Invalid URL: host is required for absolute urls")
-                host = cls._encode_host(host)
+                host = cls._encode_host(host, validate_host=False)
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(
@@ -924,7 +924,7 @@ class URL:
         return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
-    def _encode_host(cls, host: str, human: bool = False) -> str:
+    def _encode_host(cls, host: str, human: bool = False, validate_host=True) -> str:
         if "%" in host:
             raw_ip, sep, zone = host.partition("%")
         else:
@@ -973,7 +973,8 @@ class URL:
         if host.isascii():
             # Check for invalid characters explicitly; _idna_encode() does this
             # for non-ascii host names.
-            _host_validate(host)
+            if validate_host:
+                _host_validate(host)
             return host
         return _idna_encode(host)
 
