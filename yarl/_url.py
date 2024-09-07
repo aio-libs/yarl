@@ -906,7 +906,12 @@ class URL:
 
     @classmethod
     def _encode_host(cls, host: str, human: bool = False) -> str:
-        raw_ip, sep, zone = host.partition("%")
+        if "%" in host:
+            raw_ip, sep, zone = host.partition("%")
+        else:
+            raw_ip = host
+            sep = zone = ""
+
         if raw_ip and raw_ip[-1].isdigit() or ":" in raw_ip:
             # Might be an IP address, check it
             #
