@@ -349,13 +349,15 @@ class URL:
                 user, password, host, port, encode=not encoded, encode_host=not encoded
             )
         if not encoded:
-            path = cls._PATH_QUOTER(path)
-            if netloc:
+            path = cls._PATH_QUOTER(path) if path else path
+            if path and netloc:
                 path = cls._normalize_path(path)
 
             cls._validate_authority_uri_abs_path(host=host, path=path)
-            query_string = cls._QUERY_QUOTER(query_string)
-            fragment = cls._FRAGMENT_QUOTER(fragment)
+            query_string = (
+                cls._QUERY_QUOTER(query_string) if query_string else query_string
+            )
+            fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
         url = cls(
             SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
@@ -363,8 +365,7 @@ class URL:
 
         if query:
             return url.with_query(query)
-        else:
-            return url
+        return url
 
     def __init_subclass__(cls):
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
