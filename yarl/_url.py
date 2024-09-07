@@ -939,7 +939,6 @@ class URL:
             # - 127.0.0.1 (last character is a digit)
             # - 2001:db8::ff00:42:8329 (contains a colon)
             # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
-            # - [2001:db8::ff00:42:8329] (contains a colon)
             # Rare IP Address formats are not supported per:
             # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
             #
