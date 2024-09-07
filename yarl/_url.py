@@ -76,6 +76,7 @@ class CacheInfo(TypedDict):
     idna_encode: _CacheInfo
     idna_decode: _CacheInfo
     ip_address: _CacheInfo
+    host_validate: _CacheInfo
 
 
 class _SplitResultDict(TypedDict, total=False):
@@ -965,19 +966,7 @@ class URL:
         if host.isascii():
             # Check for invalid characters explicitly; _idna_encode() does this
             # for non-ascii host names.
-            invalid = _not_reg_name.search(host)
-            if invalid is not None:
-                value, pos, extra = invalid.group(), invalid.start(), ""
-                if value == "@" or (value == ":" and "@" in host[pos:]):
-                    # this looks like an authority string
-                    extra = (
-                        ", if the value includes a username or password, "
-                        "use 'authority' instead of 'host'"
-                    )
-                raise ValueError(
-                    f"Host {host!r} cannot contain {value!r} (at position "
-                    f"{pos}){extra}"
-                ) from None
+            _host_validate(host)
         return _idna_encode(host)
 
     @classmethod
@@ -1492,12 +1481,33 @@ def _ip_compressed_version(raw_ip: str) -> Tuple[str, int]:
     return ip.compressed, ip.version
 
 
+@lru_cache(_MAXCACHE)
+def _host_validate(host: str) -> None:
+    """Validate an ascii host name."""
+    # Check for invalid characters explicitly; _idna_encode() does this
+    # for non-ascii host names.
+    invalid = _not_reg_name.search(host)
+    if invalid is None:
+        return
+    value, pos, extra = invalid.group(), invalid.start(), ""
+    if value == "@" or (value == ":" and "@" in host[pos:]):
+        # this looks like an authority string
+        extra = (
+            ", if the value includes a username or password, "
+            "use 'authority' instead of 'host'"
+        )
+    raise ValueError(
+        f"Host {host!r} cannot contain {value!r} (at position " f"{pos}){extra}"
+    ) from None
+
+
 @rewrite_module
 def cache_clear() -> None:
     """Clear all LRU caches."""
     _idna_decode.cache_clear()
     _idna_encode.cache_clear()
     _ip_compressed_version.cache_clear()
+    _host_validate.cache_clear()
 
 
 @rewrite_module
@@ -1507,6 +1517,7 @@ def cache_info() -> CacheInfo:
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
         "ip_address": _ip_compressed_version.cache_info(),
+        "host_validate": _host_validate.cache_info(),
     }
 
 
@@ -1516,12 +1527,14 @@ def cache_configure(
     idna_encode_size: Union[int, None] = _MAXCACHE,
     idna_decode_size: Union[int, None] = _MAXCACHE,
     ip_address_size: Union[int, None] = _MAXCACHE,
+    host_validate_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
-    global _idna_decode, _idna_encode, _ip_compressed_version
+    global _idna_decode, _idna_encode, _ip_compressed_version, _host_validate
 
     _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
     _ip_compressed_version = lru_cache(ip_address_size)(
         _ip_compressed_version.__wrapped__
     )
+    _host_validate = lru_cache(host_validate_size)(_host_validate.__wrapped__)
