@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import TYPE_CHECKING
 
 __all__ = ("cached_property",)
 
@@ -10,7 +11,11 @@ if sys.implementation.name != "cpython":
 
 
 # isort: off
-if not NO_EXTENSIONS:  # pragma: no branch
+if TYPE_CHECKING:
+    from ._helpers_py import cached_property as cached_property_py
+
+    cached_property = cached_property_py
+elif not NO_EXTENSIONS:  # pragma: no branch
     try:
         from ._helpers_c import cached_property as cached_property_c  # type: ignore[attr-defined, unused-ignore] # noqa: E501
 

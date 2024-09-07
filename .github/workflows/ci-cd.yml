@@ -103,7 +103,7 @@ jobs:
         }
         >> "${GITHUB_OUTPUT}"
     - name: Upload built artifacts for testing
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         if-no-files-found: error
         name: ${{ needs.pre-setup.outputs.dists-artifact-name  }}
@@ -205,17 +205,18 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: >-
           ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
@@ -294,7 +295,7 @@ jobs:
         )
       run: |
         set -eEuo pipefail
-        sed -i.bak 's/^plugins = .*//g' .coveragerc
+        sed -i.bak 's/^\s\{2\}Cython\.Coverage$//g' .coveragerc
       shell: bash
     - name: Run unittests
       env:
@@ -314,6 +315,7 @@ jobs:
     - name: Append coverage results to Job Summary
       if: >-
         !cancelled()
+      continue-on-error: true
       run: >-
         python -Im coverage report --format=markdown
         >> "${GITHUB_STEP_SUMMARY}"
@@ -338,6 +340,7 @@ jobs:
         file: ./coverage.xml
         flags: >-
           CI-GHA,
+          pytest,
           OS-${{ runner.os }},
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
@@ -407,7 +410,7 @@ jobs:
 
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v1
+      uses: re-actors/checkout-python-sdist@release/v2
       with:
         source-tarball-name: >-
           ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -415,10 +418,11 @@ jobs:
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
     - name: Download distributions
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
         path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
     - run: |
         tree
     - name: Login
@@ -440,6 +444,8 @@ jobs:
     - name: >-
         Publish 🐍📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        attestations: true
 
     - name: Sign the dists with Sigstore
       uses: sigstore/gh-action-sigstore-python@v3.0.0

@@ -1,7 +1,7 @@
 import codecs
 import re
 from string import ascii_letters, ascii_lowercase, digits
-from typing import Optional, cast
+from typing import cast
 
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
 BPCT_ALLOWED = {f"%{i:02X}".encode("ascii") for i in range(256)}
@@ -33,7 +33,7 @@ class _Quoter:
         self._qs = qs
         self._requote = requote
 
-    def __call__(self, val: Optional[str]) -> Optional[str]:
+    def __call__(self, val: str) -> str:
         if val is None:
             return None
         if not isinstance(val, str):
@@ -123,7 +123,7 @@ class _Unquoter:
         self._quoter = _Quoter()
         self._qs_quoter = _Quoter(qs=True)
 
-    def __call__(self, val: Optional[str]) -> Optional[str]:
+    def __call__(self, val: str) -> str:
         if val is None:
             return None
         if not isinstance(val, str):

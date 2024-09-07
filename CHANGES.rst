@@ -14,6 +14,237 @@ Changelog
 
 .. towncrier release notes start
 
+1.10.0
+======
+
+*(2024-09-06)*
+
+
+Bug fixes
+---------
+
+- Fixed joining a path when the existing path was empty -- by :user:`bdraco`.
+
+  A regression in :meth:`URL.join() <yarl.URL.join>` was introduced in :issue:`1082`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1118`.
+
+
+Features
+--------
+
+- Added :meth:`URL.without_query_params() <yarl.URL.without_query_params>` method, to drop some parameters from query string -- by :user:`hongquan`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`774`, :issue:`898`, :issue:`1010`.
+
+- The previously protected types ``_SimpleQuery``, ``_QueryVariable``, and ``_Query`` are now available for use externally as ``SimpleQuery``, ``QueryVariable``, and ``Query`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1050`, :issue:`1113`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Replaced all :class:`~typing.Optional` with :class:`~typing.Union` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1095`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Significantly improved performance of parsing the network location -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1112`.
+
+- Added internal types to the cache to prevent future refactoring errors -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1117`.
+
+
+----
+
+
+1.9.11
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Fixed a :exc:`TypeError` with ``MultiDictProxy`` and Python 3.8 -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`, :issue:`1105`, :issue:`1107`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of encoding hosts -- by :user:`bdraco`.
+
+  Previously, the library would unconditionally try to parse a host as an IP Address. The library now avoids trying to parse a host as an IP Address if the string is not in one of the formats described in :rfc:`3986#section-3.2.2`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1104`.
+
+
+----
+
+
+1.9.10
+======
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- :meth:`URL.join() <yarl.URL.join>` has been changed to match
+  :rfc:`3986` and align with
+  :meth:`/ operation <yarl.URL.__truediv__>` and :meth:`URL.joinpath() <yarl.URL.joinpath>`
+  when joining URLs with empty segments.
+  Previously :py:func:`urllib.parse.urljoin` was used,
+  which has known issues with empty segments
+  (`python/cpython#84774 <https://github.com/python/cpython/issues/84774>`_).
+
+  Due to the semantics of :meth:`URL.join() <yarl.URL.join>`, joining an
+  URL with scheme requires making it relative, prefixing with ``./``.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/").join(URL("./https://github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+  Empty segments are honored in the base as well as the joined part.
+
+  .. code-block:: pycon
+
+     >>> URL("https://web.archive.org/web/https://").join(URL("github.com/aio-libs/yarl"))
+     URL('https://web.archive.org/web/https://github.com/aio-libs/yarl')
+
+
+
+  -- by :user:`commonism`
+
+  This change initially appeared in 1.9.5 but was reverted in 1.9.6 to resolve a problem with query string handling.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1039`, :issue:`1082`.
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.absolute` which is now preferred over ``URL.is_absolute()`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1100`.
+
+
+----
+
+
+1.9.9
+=====
+
+*(2024-09-04)*
+
+
+Bug fixes
+---------
+
+- Added missing type on :attr:`~yarl.URL.port` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1097`.
+
+
+----
+
+
+1.9.8
+=====
+
+*(2024-09-03)*
+
+
+Features
+--------
+
+- Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`.
+
+- Cache parsing of IP Addresses when encoding hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1086`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Covered the :class:`~yarl.URL` object with types -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1084`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of handling ports -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1081`.
+
+
+----
+
+
+1.9.7
+=====
+
+*(2024-09-01)*
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Removed support :rfc:`3986#section-3.2.3` port normalization when the scheme is not one of ``http``, ``https``, ``wss``, or ``ws`` -- by :user:`bdraco`.
+
+  Support for port normalization was recently added in :issue:`1033` and contained code that would do blocking I/O if the scheme was not one of the four listed above. The code has been removed because this library is intended to be safe for usage with :mod:`asyncio`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1076`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of property caching -- by :user:`bdraco`.
+
+  The ``reify`` implementation from ``aiohttp`` was adapted to replace the internal ``cached_property`` implementation.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1070`.
+
+
+----
+
+
 1.9.6
 =====
 

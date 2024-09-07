@@ -9,7 +9,7 @@ from yarl import URL
 def test_inheritance():
     with pytest.raises(TypeError) as ctx:
 
-        class MyURL(URL):  # type: ignore[misc]
+        class MyURL(URL):
             pass
 
     assert (
@@ -114,11 +114,13 @@ def test_scheme():
 def test_raw_user():
     url = URL("http://user@example.com")
     assert "user" == url.raw_user
+    assert url.raw_user == url._val.username
 
 
 def test_raw_user_non_ascii():
     url = URL("http://бажан@example.com")
     assert "%D0%B1%D0%B0%D0%B6%D0%B0%D0%BD" == url.raw_user
+    assert url.raw_user == url._val.username
 
 
 def test_no_user():
@@ -134,11 +136,13 @@ def test_user_non_ascii():
 def test_raw_password():
     url = URL("http://user:password@example.com")
     assert "password" == url.raw_password
+    assert url.raw_password == url._val.password
 
 
 def test_raw_password_non_ascii():
     url = URL("http://user:пароль@example.com")
     assert "%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C" == url.raw_password
+    assert url.raw_password == url._val.password
 
 
 def test_password_non_ascii():
@@ -152,6 +156,14 @@ def test_password_without_user():
     assert "password" == url.password
 
 
+def test_empty_password_without_user():
+    url = URL("http://:@example.com")
+    assert url.user is None
+    assert url.password == ""
+    assert url.raw_password == ""
+    assert url.raw_password == url._val.password
+
+
 def test_user_empty_password():
     url = URL("http://user:@example.com")
     assert "user" == url.user
@@ -161,11 +173,13 @@ def test_user_empty_password():
 def test_raw_host():
     url = URL("http://example.com")
     assert "example.com" == url.raw_host
+    assert url.raw_host == url._val.hostname
 
 
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
+    assert url.raw_host == url._val.hostname
 
 
 def test_host_non_ascii():
@@ -186,16 +200,19 @@ def test_host_with_underscore():
 def test_raw_host_when_port_is_specified():
     url = URL("http://example.com:8888")
     assert "example.com" == url.raw_host
+    assert url.raw_host == url._val.hostname
 
 
 def test_raw_host_from_str_with_ipv4():
     url = URL("http://127.0.0.1:80")
     assert url.raw_host == "127.0.0.1"
+    assert url.raw_host == url._val.hostname
 
 
 def test_raw_host_from_str_with_ipv6():
     url = URL("http://[::1]:80")
     assert url.raw_host == "::1"
+    assert url.raw_host == url._val.hostname
 
 
 def test_authority_full() -> None:
@@ -229,11 +246,13 @@ def test_lowercase():
     url = URL("http://gitHUB.com")
     assert url.raw_host == "github.com"
     assert url.host == url.raw_host
+    assert url.raw_host == url._val.hostname
 
 
 def test_lowercase_nonascii():
     url = URL("http://Слава.Укр")
     assert url.raw_host == "xn--80aaf8a3a.xn--j1amh"
+    assert url.raw_host == url._val.hostname
     assert url.host == "слава.укр"
 
 
@@ -241,6 +260,7 @@ def test_compressed_ipv6():
     url = URL("http://[1DEC:0:0:0::1]")
     assert url.raw_host == "1dec::1"
     assert url.host == url.raw_host
+    assert url.raw_host == url._val.hostname
 
 
 def test_ipv4_zone():
@@ -248,16 +268,19 @@ def test_ipv4_zone():
     url = URL("http://1.2.3.4%тест%42:123")
     assert url.raw_host == "1.2.3.4%тест%42"
     assert url.host == url.raw_host
+    assert url.raw_host == url._val.hostname
 
 
 def test_port_for_explicit_port():
     url = URL("http://example.com:8888")
     assert 8888 == url.port
+    assert url.explicit_port == url._val.port
 
 
 def test_port_for_implicit_port():
     url = URL("http://example.com")
     assert 80 == url.port
+    assert url.explicit_port == url._val.port
 
 
 def test_port_for_relative_url():
@@ -273,21 +296,25 @@ def test_port_for_unknown_scheme():
 def test_explicit_port_for_explicit_port():
     url = URL("http://example.com:8888")
     assert 8888 == url.explicit_port
+    assert url.explicit_port == url._val.port
 
 
 def test_explicit_port_for_implicit_port():
     url = URL("http://example.com")
     assert url.explicit_port is None
+    assert url.explicit_port == url._val.port
 
 
 def test_explicit_port_for_relative_url():
     url = URL("/path/to")
     assert url.explicit_port is None
+    assert url.explicit_port == url._val.port
 
 
 def test_explicit_port_for_unknown_scheme():
     url = URL("unknown://example.com")
     assert url.explicit_port is None
+    assert url.explicit_port == url._val.port
 
 
 def test_raw_path_string_empty():
@@ -1307,26 +1334,31 @@ def test_with_suffix_replace():
 def test_is_absolute_for_relative_url():
     url = URL("/path/to")
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_absolute_for_absolute_url():
     url = URL("http://example.com")
     assert url.is_absolute()
+    assert url.absolute
 
 
 def test_is_non_absolute_for_empty_url():
     url = URL()
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_non_absolute_for_empty_url2():
     url = URL("")
     assert not url.is_absolute()
+    assert not url.absolute
 
 
 def test_is_absolute_path_starting_from_double_slash():
     url = URL("//www.python.org")
     assert url.is_absolute()
+    assert url.absolute
 
 
 # is_default_port
@@ -1664,6 +1696,89 @@ def test_join_from_rfc_3986_abnormal(url, expected):
     assert base.join(url) == expected
 
 
+EMPTY_SEGMENTS = [
+    (
+        "https://web.archive.org/web/",
+        "./https://github.com/aio-libs/yarl",
+        "https://web.archive.org/web/https://github.com/aio-libs/yarl",
+    ),
+    (
+        "https://web.archive.org/web/https://github.com/",
+        "aio-libs/yarl",
+        "https://web.archive.org/web/https://github.com/aio-libs/yarl",
+    ),
+]
+
+
+@pytest.mark.parametrize("base,url,expected", EMPTY_SEGMENTS)
+def test_join_empty_segments(base, url, expected):
+    base = URL(base)
+    url = URL(url)
+    expected = URL(expected)
+    joined = base.join(url)
+    assert joined == expected
+
+
+SIMPLE_BASE = "http://a/b/c/d"
+URLLIB_URLJOIN = [
+    ("", "http://a/b/c/g?y/./x", "http://a/b/c/g?y/./x"),
+    ("", "http://a/./g", "http://a/./g"),
+    ("svn://pathtorepo/dir1", "dir2", "svn://pathtorepo/dir2"),
+    ("svn+ssh://pathtorepo/dir1", "dir2", "svn+ssh://pathtorepo/dir2"),
+    ("ws://a/b", "g", "ws://a/g"),
+    ("wss://a/b", "g", "wss://a/g"),
+    # test for issue22118 duplicate slashes
+    (SIMPLE_BASE + "/", "foo", SIMPLE_BASE + "/foo"),
+    # Non-RFC-defined tests, covering variations of base and trailing
+    # slashes
+    ("http://a/b/c/d/e/", "../../f/g/", "http://a/b/c/f/g/"),
+    ("http://a/b/c/d/e", "../../f/g/", "http://a/b/f/g/"),
+    ("http://a/b/c/d/e/", "/../../f/g/", "http://a/f/g/"),
+    ("http://a/b/c/d/e", "/../../f/g/", "http://a/f/g/"),
+    ("http://a/b/c/d/e/", "../../f/g", "http://a/b/c/f/g"),
+    ("http://a/b/", "../../f/g/", "http://a/f/g/"),
+    ("a", "b", "b"),
+    ("http:///", "..", "http:///"),
+    ("a/", "b", "a/b"),
+    ("a/b", "c", "a/c"),
+    ("a/b/", "c", "a/b/c"),
+    (
+        "https://x.org/",
+        "/?text=Hello+G%C3%BCnter",
+        "https://x.org/?text=Hello+G%C3%BCnter",
+    ),
+    (
+        "https://x.org/",
+        "?text=Hello+G%C3%BCnter",
+        "https://x.org/?text=Hello+G%C3%BCnter",
+    ),
+    ("http://example.com", "http://example.com", "http://example.com"),
+    ("http://x.org", "https://x.org#fragment", "https://x.org#fragment"),
+]
+
+
+@pytest.mark.parametrize("base,url,expected", URLLIB_URLJOIN)
+def test_join_cpython_urljoin(base, url, expected):
+    # tests from cpython urljoin
+    base = URL(base)
+    url = URL(url)
+    expected = URL(expected)
+    joined = base.join(url)
+    assert joined == expected
+
+
+def test_join_preserves_leading_slash():
+    """Test that join preserves leading slash in path."""
+    base = URL.build(scheme="https", host="localhost", port=443)
+    new = base.join(URL("") / "_msearch")
+    assert str(new) == "https://localhost/_msearch"
+    assert new.path == "/_msearch"
+
+
+def test_empty_authority():
+    assert URL("http:///").authority == ""
+
+
 def test_split_result_non_decoded():
     with pytest.raises(ValueError):
         URL(SplitResult("http", "example.com", "path", "qs", "frag"))
@@ -1759,6 +1874,7 @@ def test_relative_is_relative():
     url = URL("http://user:pass@example.com:8080/path?a=b#frag")
     rel = url.relative()
     assert not rel.is_absolute()
+    assert not rel.absolute
 
 
 def test_relative_abs_parts_are_removed():
@@ -1822,3 +1938,40 @@ def test_join_encoded_url():
     assert path_url.path == "/api/4"
     new = original.join(path_url)
     assert new.path == "/api/4"
+
+
+# cache
+
+
+def test_parsing_populates_cache():
+    """Test that parsing a URL populates the cache."""
+    url = URL("http://user:password@example.com:80/path?a=b#frag")
+    assert url._cache["raw_user"] == "user"
+    assert url._cache["raw_password"] == "password"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["explicit_port"] == 80
+    assert url._cache["raw_query_string"] == "a=b"
+    assert url._cache["raw_fragment"] == "frag"
+    assert url._cache["scheme"] == "http"
+    assert url.raw_user == "user"
+    assert url.raw_password == "password"
+    assert url.raw_host == "example.com"
+    assert url.explicit_port == 80
+    assert url.raw_query_string == "a=b"
+    assert url.raw_fragment == "frag"
+    assert url.scheme == "http"
+    url._cache.clear()
+    assert url.raw_user == "user"
+    assert url.raw_password == "password"
+    assert url.raw_host == "example.com"
+    assert url.explicit_port == 80
+    assert url.raw_query_string == "a=b"
+    assert url.raw_fragment == "frag"
+    assert url.scheme == "http"
+    assert url._cache["raw_user"] == "user"
+    assert url._cache["raw_password"] == "password"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["explicit_port"] == 80
+    assert url._cache["raw_query_string"] == "a=b"
+    assert url._cache["raw_fragment"] == "frag"
+    assert url._cache["scheme"] == "http"

@@ -1,3 +1,0 @@
-Improved performance of property caching -- by :user:`bdraco`.
-
-The ``reify`` implementation from ``aiohttp`` was adapted to replace the internal ``cached_property`` implementation.
