@@ -1,0 +1,3 @@
+Added :meth:`URL.extend_query() <yarl.URL.extend_query>` method, which can be used to extend parameters without replacing same named keys -- by :user:`bdraco`.
+
+This method was primarily added to replace the inefficient hand rolled method currently used in ``aiohttp``.

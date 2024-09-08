@@ -1251,13 +1251,51 @@ class URL:
         return URL(self._val._replace(query=new_query), encoded=True)
 
     @overload
+    def extend_query(self, query: Query) -> "URL": ...
+
+    @overload
+    def extend_query(self, **kwargs: QueryVariable) -> "URL": ...
+
+    def extend_query(self, *args: Any, **kwargs: Any) -> "URL":
+        """Return a new URL with query part combined with the existing.
+
+        This method will not remove existing query parameters.
+
+        Example:
+        >>> url = URL('http://example.com/?a=1&b=2')
+        >>> url.extend_query(a=3, c=4)
+        URL('http://example.com/?a=1&b=2&a=3&c=4')
+        """
+        new_query_string = self._get_str_query(*args, **kwargs)
+        if not new_query_string:
+            return self
+        if current_query := self.raw_query_string:
+            # both strings are already encoded so we can use a simple
+            # string join
+            if current_query[-1] == "&":
+                combined_query = f"{current_query}{new_query_string}"
+            else:
+                combined_query = f"{current_query}&{new_query_string}"
+        else:
+            combined_query = new_query_string
+        return URL(self._val._replace(query=combined_query), encoded=True)
+
+    @overload
     def update_query(self, query: Query) -> "URL": ...
 
     @overload
     def update_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def update_query(self, *args: Any, **kwargs: Any) -> "URL":
-        """Return a new URL with query part updated."""
+        """Return a new URL with query part updated.
+
+        This method will overwrite existing query parameters.
+
+        Example:
+        >>> url = URL('http://example.com/?a=1&b=2')
+        >>> url.update_query(a=3, c=4)
+        URL('http://example.com/?a=3&b=2&c=4')
+        """
         s = self._get_str_query(*args, **kwargs)
         if s is None:
             return URL(self._val._replace(query=""), encoded=True)
