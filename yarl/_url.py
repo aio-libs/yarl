@@ -1159,7 +1159,7 @@ class URL:
     @staticmethod
     def _query_var(v: QueryVariable) -> str:
         cls = type(v)
-        if issubclass(cls, str):
+        if cls is str or issubclass(cls, str):
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
