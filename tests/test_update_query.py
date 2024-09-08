@@ -353,6 +353,16 @@ def test_update_query_multiple_keys():
     assert str(u2) == "http://example.com/path?a=3&a=4"
 
 
+def test_update_query_with_non_ascii():
+    url = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    assert url.update_query({"𝕦": "𝕦"}) == url
+
+
+def test_update_query_with_non_ascii_as_str():
+    url = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    assert url.update_query("𝕦=𝕦") == url
+
+
 # mod operator
 
 
