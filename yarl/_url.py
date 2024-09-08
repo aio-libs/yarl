@@ -1,7 +1,7 @@
 import math
 import sys
 import warnings
-from collections.abc import ItemsView, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
@@ -1181,11 +1181,10 @@ class URL:
             "of type {}".format(v, cls)
         )
 
-    def _get_str_query_from_sequence(
-        self,
-        items: "Union[ItemsView[Union[str, istr], str], Sequence[Tuple[str, str]]]",
+    def _get_str_query_from_iterable(
+        self, items: "Iterable[Tuple[Union[str, istr], str]]"
     ) -> str:
-        """Return a query string from a sequence."""
+        """Return a query string from an iterable."""
         quoter = self._QUERY_PART_QUOTER
         return "&".join([f"{quoter(k)}={quoter(self._query_var(v))}" for k, v in items])
 
@@ -1204,6 +1203,8 @@ class URL:
 
         if query is None:
             return None
+        if isinstance(query, MultiDict):
+            return self._get_str_query_from_iterable(query.items())
         if isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
             return "&".join(self._query_seq_pairs(quoter, query.items()))
@@ -1214,12 +1215,11 @@ class URL:
                 "Invalid query type: bytes, bytearray and memoryview are forbidden"
             )
         if isinstance(query, Sequence):
-            quoter = self._QUERY_PART_QUOTER
             # We don't expect sequence values if we're given a list of pairs
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
-            return self._get_str_query_from_sequence(query)
+            return self._get_str_query_from_iterable(query)
 
         raise TypeError(
             "Invalid query type: only str, mapping or "
@@ -1302,10 +1302,10 @@ class URL:
         else:
             new_query = MultiDict(self._parsed_query + new_parsed)
 
-        # We can use the faster _get_str_query_from_sequence here because
+        # We can use the faster _get_str_query_from_iterable here because
         # we constructed the MultiDict ourselves and we know there are
         # no QueryVariable as the values in this case.
-        combined_query = self._get_str_query_from_sequence(new_query.items()) or ""
+        combined_query = self._get_str_query_from_iterable(new_query.items()) or ""
         return URL(self._val._replace(query=combined_query), encoded=True)
 
     def without_query_params(self, *query_params: str) -> "URL":
