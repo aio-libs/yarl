@@ -1205,8 +1205,6 @@ class URL:
 
         if query is None:
             return None
-        if isinstance(query, (MultiDict, MultiDictProxy)):
-            return self._get_str_query_from_iterable(query.items())
         if isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
             return "&".join(self._query_seq_pairs(quoter, query.items()))
