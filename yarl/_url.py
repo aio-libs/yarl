@@ -1181,13 +1181,13 @@ class URL:
             "of type {}".format(v, cls)
         )
 
-    def _get_str_query_from_mapping(self, query: Mapping[str, QueryVariable]) -> str:
+    def _get_str_query_from_mapping(self, query: "Mapping[str, QueryVariable]") -> str:
         """Return a query string from a mapping."""
         quoter = self._QUERY_PART_QUOTER
         return "&".join(self._query_seq_pairs(quoter, query.items()))
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
-        query: Union[str, Mapping[str, QueryVariable], None]
+        query: Union[str, "Mapping[str, QueryVariable]", None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
