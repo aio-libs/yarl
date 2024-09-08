@@ -1159,7 +1159,7 @@ class URL:
     @staticmethod
     def _query_var(v: QueryVariable) -> str:
         cls = type(v)
-        if issubclass(cls, str):
+        if cls is str or issubclass(cls, str):
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
@@ -1171,7 +1171,7 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if issubclass(cls, int) and cls is not bool:
+        if cls is not bool and issubclass(cls, int):
             if TYPE_CHECKING:
                 assert isinstance(v, int)
             return str(int(v))
