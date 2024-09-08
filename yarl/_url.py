@@ -1294,14 +1294,13 @@ class URL:
 
     def _merge_query(self, to_add: Union[str, None], update: bool) -> "URL":
         """Return a new URL with query part merged or extended."""
-        old_parsed = self._parsed_query
         new_parsed = parse_qsl(to_add, keep_blank_values=True)
 
         if update:
-            new_query = MultiDict(old_parsed)
+            new_query = MultiDict(self._parsed_query)
             new_query.update(new_parsed)
         else:
-            new_query = MultiDict(old_parsed + new_parsed)
+            new_query = MultiDict(self._parsed_query + new_parsed)
 
         combined_query = self._get_str_query_from_mapping(new_query) or ""
         return URL(self._val._replace(query=combined_query), encoded=True)
