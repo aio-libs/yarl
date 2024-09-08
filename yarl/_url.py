@@ -1266,10 +1266,10 @@ class URL:
         >>> url.extend_query(a=3, c=4)
         URL('http://example.com/?a=1&b=2&a=3&c=4')
         """
-        s = self._get_str_query(*args, **kwargs)
-        if s is None:
+        new_query_string = self._get_str_query(*args, **kwargs)
+        if new_query_string is None:
             return self
-        return self._merge_query(s, update=False)
+        return self._merge_query(new_query_string, update=False)
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1287,14 +1287,14 @@ class URL:
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        s = self._get_str_query(*args, **kwargs)
-        if s is None:
+        new_query_string = self._get_str_query(*args, **kwargs)
+        if new_query_string is None:
             return URL(self._val._replace(query=""), encoded=True)
-        return self._merge_query(s, update=True)
+        return self._merge_query(new_query_string, update=True)
 
-    def _merge_query(self, to_add: Union[str, None], update: bool) -> "URL":
+    def _merge_query(self, new_query_string: Union[str, None], update: bool) -> "URL":
         """Return a new URL with query part merged or extended."""
-        new_parsed = parse_qsl(to_add, keep_blank_values=True)
+        new_parsed = parse_qsl(new_query_string, keep_blank_values=True)
 
         if update:
             new_query = MultiDict(self._parsed_query)
