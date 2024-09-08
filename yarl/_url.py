@@ -1244,9 +1244,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
 
         new_query = self._get_str_query(*args, **kwargs) or ""
-        return URL(
-            self._val._replace(path=self._val.path, query=new_query), encoded=True
-        )
+        return URL(self._val._replace(query=new_query), encoded=True)
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
