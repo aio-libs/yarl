@@ -1204,29 +1204,27 @@ class URL:
             raise ValueError("Either kwargs or single query parameter must be present")
 
         if query is None:
-            query = None
-        elif isinstance(query, Mapping):
+            return None
+        if isinstance(query, Mapping):
             quoter = self._QUERY_PART_QUOTER
-            query = "&".join(self._query_seq_pairs(quoter, query.items()))
-        elif isinstance(query, str):
-            query = self._QUERY_QUOTER(query)
-        elif isinstance(query, (bytes, bytearray, memoryview)):
+            return "&".join(self._query_seq_pairs(quoter, query.items()))
+        if isinstance(query, str):
+            return self._QUERY_QUOTER(query)
+        if isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError(
                 "Invalid query type: bytes, bytearray and memoryview are forbidden"
             )
-        elif isinstance(query, Sequence):
+        if isinstance(query, Sequence):
             # We don't expect sequence values if we're given a list of pairs
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
             return self._get_str_query_from_iterable(query)
-        else:
-            raise TypeError(
-                "Invalid query type: only str, mapping or "
-                "sequence of (key, value) pairs is allowed"
-            )
 
-        return query
+        raise TypeError(
+            "Invalid query type: only str, mapping or "
+            "sequence of (key, value) pairs is allowed"
+        )
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
