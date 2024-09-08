@@ -1295,7 +1295,7 @@ class URL:
         return self._merge_query(new_query_string, update=True)
 
     def _merge_query(self, new_query_string: Union[str, None], update: bool) -> "URL":
-        """Return a new URL with query part merged or extended."""
+        """Return a new URL with query part updated or extended."""
         new_parsed = parse_qsl(new_query_string, keep_blank_values=True)
 
         if update:
