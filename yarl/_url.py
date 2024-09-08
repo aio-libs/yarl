@@ -88,6 +88,7 @@ class _InternalURLCache(TypedDict, total=False):
     explicit_port: Union[int, None]
     raw_path: str
     path: str
+    _parsed_query: List[Tuple[str, str]]
     query: "MultiDictProxy[str]"
     raw_query_string: str
     query_string: str
@@ -698,6 +699,11 @@ class URL:
         return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
+    def _parsed_query(self) -> List[Tuple[str, str]]:
+        """Parse query part of URL."""
+        return parse_qsl(self.raw_query_string, keep_blank_values=True)
+
+    @cached_property
     def query(self) -> "MultiDictProxy[str]":
         """A MultiDictProxy representing parsed query parameters in decoded
         representation.
@@ -705,8 +711,7 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
-        return MultiDictProxy(ret)
+        return MultiDictProxy(MultiDict(self._parsed_query))
 
     @cached_property
     def raw_query_string(self) -> str:
@@ -1176,6 +1181,11 @@ class URL:
             "of type {}".format(v, cls)
         )
 
+    def _get_str_query_from_mapping(self, query: Mapping[str, QueryVariable]) -> str:
+        """Return a query string from a mapping."""
+        quoter = self._QUERY_PART_QUOTER
+        return "&".join(self._query_seq_pairs(quoter, query.items()))
+
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
         query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
@@ -1190,32 +1200,29 @@ class URL:
             raise ValueError("Either kwargs or single query parameter must be present")
 
         if query is None:
-            query = None
-        elif isinstance(query, Mapping):
-            quoter = self._QUERY_PART_QUOTER
-            query = "&".join(self._query_seq_pairs(quoter, query.items()))
-        elif isinstance(query, str):
-            query = self._QUERY_QUOTER(query)
-        elif isinstance(query, (bytes, bytearray, memoryview)):
+            return None
+        if isinstance(query, Mapping):
+            return self._get_str_query_from_mapping(query)
+        if isinstance(query, str):
+            return self._QUERY_QUOTER(query)
+        if isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError(
                 "Invalid query type: bytes, bytearray and memoryview are forbidden"
             )
-        elif isinstance(query, Sequence):
+        if isinstance(query, Sequence):
             quoter = self._QUERY_PART_QUOTER
             # We don't expect sequence values if we're given a list of pairs
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
-            query = "&".join(
+            return "&".join(
                 quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
             )
-        else:
-            raise TypeError(
-                "Invalid query type: only str, mapping or "
-                "sequence of (key, value) pairs is allowed"
-            )
 
-        return query
+        raise TypeError(
+            "Invalid query type: only str, mapping or "
+            "sequence of (key, value) pairs is allowed"
+        )
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
@@ -1244,23 +1251,59 @@ class URL:
         )
 
     @overload
+    def extend_query(self, query: Query) -> "URL": ...
+
+    @overload
+    def extend_query(self, **kwargs: QueryVariable) -> "URL": ...
+
+    def extend_query(self, *args: Any, **kwargs: Any) -> "URL":
+        """Return a new URL with query part combined with the existing.
+
+        This method will not remove existing query parameters.
+
+        Example:
+        >>> url = URL('http://example.com/?a=1&b=2')
+        >>> url.extend_query(a=3, c=4)
+        URL('http://example.com/?a=1&b=2&a=3&c=4')
+        """
+        s = self._get_str_query(*args, **kwargs)
+        return self._merge_query(s, update=False)
+
+    @overload
     def update_query(self, query: Query) -> "URL": ...
 
     @overload
     def update_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def update_query(self, *args: Any, **kwargs: Any) -> "URL":
-        """Return a new URL with query part updated."""
-        s = self._get_str_query(*args, **kwargs)
-        query = None
-        if s is not None:
-            new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
-            query = MultiDict(self.query)
-            query.update(new_query)
+        """Return a new URL with query part updated.
 
-        return URL(
-            self._val._replace(query=self._get_str_query(query) or ""), encoded=True
-        )
+        This method will overwrite existing query parameters.
+
+        Example:
+        >>> url = URL('http://example.com/?a=1&b=2')
+        >>> url.update_query(a=3, c=4)
+        URL('http://example.com/?a=3&b=2&c=4')
+        """
+        s = self._get_str_query(*args, **kwargs)
+        return self._merge_query(s, update=True)
+
+    def _merge_query(self, to_add: Union[str, None], update: bool) -> "URL":
+        """Return a new URL with query part merged or extended."""
+        if to_add is None:
+            return self
+
+        old_parsed = self._parsed_query
+        new_parsed = parse_qsl(to_add, keep_blank_values=True)
+
+        if update:
+            new_query = MultiDict(old_parsed)
+            new_query.update(new_parsed)
+        else:
+            new_query = MultiDict(old_parsed + new_parsed)
+
+        combined_query = self._get_str_query_from_mapping(new_query) or ""
+        return URL(self._val._replace(query=combined_query), encoded=True)
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
