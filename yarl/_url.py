@@ -1191,7 +1191,7 @@ class URL:
         return "&".join([f"{quoter(k)}={quoter(self._query_var(v))}" for k, v in items])
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
-        query: Union[str, "Mapping[str, QueryVariable]", None]
+        query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
