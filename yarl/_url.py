@@ -1302,6 +1302,9 @@ class URL:
         else:
             new_query = MultiDict(self._parsed_query + new_parsed)
 
+        # We can use the faster _get_str_query_from_sequence here because
+        # we constructed the MultiDict ourselves and we know there are
+        # no QueryVariable as the values in this case.
         combined_query = self._get_str_query_from_sequence(new_query.items()) or ""
         return URL(self._val._replace(query=combined_query), encoded=True)
 
