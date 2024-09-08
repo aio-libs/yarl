@@ -664,7 +664,7 @@ section generates a new :class:`URL` instance.
 
    Returns a new URL with *query* part extended.
 
-   Unlike :meth:`update_query` the method keeps duplicate keys.
+   Unlike :meth:`update_query`, this method keeps duplicate keys.
 
    Returned :class:`URL` object will contain query string which extends
    parts from passed query parts (or parts of parsed query string).
