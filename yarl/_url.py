@@ -1267,6 +1267,8 @@ class URL:
         URL('http://example.com/?a=1&b=2&a=3&c=4')
         """
         s = self._get_str_query(*args, **kwargs)
+        if s is None:
+            return self
         return self._merge_query(s, update=False)
 
     @overload
@@ -1286,13 +1288,12 @@ class URL:
         URL('http://example.com/?a=3&b=2&c=4')
         """
         s = self._get_str_query(*args, **kwargs)
+        if s is None:
+            return URL(self._val._replace(query=""), encoded=True)
         return self._merge_query(s, update=True)
 
     def _merge_query(self, to_add: Union[str, None], update: bool) -> "URL":
         """Return a new URL with query part merged or extended."""
-        if to_add is None:
-            return URL(self._val._replace(query=""), encoded=True)
-
         old_parsed = self._parsed_query
         new_parsed = parse_qsl(to_add, keep_blank_values=True)
 
