@@ -1269,9 +1269,27 @@ class URL:
         URL('http://example.com/?a=1&b=2&a=3&c=4')
         """
         new_query_string = self._get_str_query(*args, **kwargs)
-        if new_query_string is None:
+        if not new_query_string:
             return self
-        return self._merge_query(new_query_string, update=False)
+
+        import pprint
+
+        pprint.pprint(
+            [
+                "new_query_string",
+                new_query_string,
+                "current_query",
+                self.raw_query_string,
+            ]
+        )
+        if current_query := self.raw_query_string:
+            if current_query[-1] == "&":
+                combined_query = f"{current_query}{new_query_string}"
+            else:
+                combined_query = f"{current_query}&{new_query_string}"
+        else:
+            combined_query = new_query_string
+        return URL(self._val._replace(query=combined_query), encoded=True)
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1292,18 +1310,9 @@ class URL:
         new_query_string = self._get_str_query(*args, **kwargs)
         if new_query_string is None:
             return URL(self._val._replace(query=""), encoded=True)
-        return self._merge_query(new_query_string, update=True)
-
-    def _merge_query(self, new_query_string: Union[str, None], update: bool) -> "URL":
-        """Return a new URL with query part merged or extended."""
         new_parsed = parse_qsl(new_query_string, keep_blank_values=True)
-
-        if update:
-            new_query = MultiDict(self._parsed_query)
-            new_query.update(new_parsed)
-        else:
-            new_query = MultiDict(self._parsed_query + new_parsed)
-
+        new_query = MultiDict(self._parsed_query)
+        new_query.update(new_parsed)
         # We can use the faster _get_str_query_from_iterable here because
         # we constructed the MultiDict ourselves and we know there are
         # no QueryVariable as the values in this case.
