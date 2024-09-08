@@ -1270,6 +1270,8 @@ class URL:
         if not new_query_string:
             return self
         if current_query := self.raw_query_string:
+            # both strings are already encoded so we can use a simple
+            # string join
             if current_query[-1] == "&":
                 combined_query = f"{current_query}{new_query_string}"
             else:
