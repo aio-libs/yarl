@@ -1257,11 +1257,11 @@ class URL:
     def update_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part updated."""
         s = self._get_str_query(*args, **kwargs)
-        query = None
-        if s is not None:
-            query = MultiDict(self._parsed_query)
-            query.update(parse_qsl(s, keep_blank_values=True))
+        if s is None:
+            return URL(self._val._replace(query=""), encoded=True)
 
+        query = MultiDict(self._parsed_query)
+        query.update(parse_qsl(s, keep_blank_values=True))
         return URL(
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
         )
