@@ -1302,9 +1302,6 @@ class URL:
         new_parsed = parse_qsl(new_query_string, keep_blank_values=True)
         new_query = MultiDict(self._parsed_query)
         new_query.update(new_parsed)
-        # We can use the faster _get_str_query_from_iterable here because
-        # we constructed the MultiDict ourselves and we know there are
-        # no QueryVariable as the values in this case.
         combined_query = self._get_str_query_from_iterable(new_query.items()) or ""
         return URL(self._val._replace(query=combined_query), encoded=True)
 
