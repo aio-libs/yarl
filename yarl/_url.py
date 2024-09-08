@@ -1158,7 +1158,7 @@ class URL:
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
-        if cls is float or issubclass(cls, float):
+        if issubclass(cls, float):
             if TYPE_CHECKING:
                 assert isinstance(v, float)
             if math.isinf(v):
