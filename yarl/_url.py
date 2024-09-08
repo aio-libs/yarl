@@ -1,7 +1,7 @@
 import math
 import sys
 import warnings
-from collections.abc import Mapping, Sequence
+from collections.abc import ItemsView, Mapping, Sequence
 from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
@@ -29,7 +29,7 @@ from urllib.parse import (
 )
 
 import idna
-from multidict import MultiDict, MultiDictProxy
+from multidict import MultiDict, MultiDictProxy, istr
 
 from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
@@ -1181,10 +1181,13 @@ class URL:
             "of type {}".format(v, cls)
         )
 
-    def _get_str_query_from_mapping(self, query: "Mapping[str, QueryVariable]") -> str:
-        """Return a query string from a mapping."""
+    def _get_str_query_from_sequence(
+        self,
+        items: "Union[ItemsView[Union[str, istr], str], Sequence[Tuple[str, str]]]",
+    ) -> str:
+        """Return a query string from a sequence."""
         quoter = self._QUERY_PART_QUOTER
-        return "&".join(self._query_seq_pairs(quoter, query.items()))
+        return "&".join([f"{quoter(k)}={quoter(self._query_var(v))}" for k, v in items])
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
         query: Union[str, "Mapping[str, QueryVariable]", None]
@@ -1202,7 +1205,8 @@ class URL:
         if query is None:
             return None
         if isinstance(query, Mapping):
-            return self._get_str_query_from_mapping(query)
+            quoter = self._QUERY_PART_QUOTER
+            return "&".join(self._query_seq_pairs(quoter, query.items()))
         if isinstance(query, str):
             return self._QUERY_QUOTER(query)
         if isinstance(query, (bytes, bytearray, memoryview)):
@@ -1215,9 +1219,7 @@ class URL:
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
-            return "&".join(
-                quoter(k) + "=" + quoter(self._query_var(v)) for k, v in query
-            )
+            return self._get_str_query_from_sequence(query)
 
         raise TypeError(
             "Invalid query type: only str, mapping or "
@@ -1300,7 +1302,7 @@ class URL:
         else:
             new_query = MultiDict(self._parsed_query + new_parsed)
 
-        combined_query = self._get_str_query_from_mapping(new_query) or ""
+        combined_query = self._get_str_query_from_sequence(new_query.items()) or ""
         return URL(self._val._replace(query=combined_query), encoded=True)
 
     def without_query_params(self, *query_params: str) -> "URL":
