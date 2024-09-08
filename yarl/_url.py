@@ -1182,7 +1182,7 @@ class URL:
         )
 
     def _get_str_query_from_iterable(
-        self, items: "Iterable[Tuple[Union[str, istr], str]]"
+        self, items: Iterable[Tuple[Union[str, istr], str]]
     ) -> str:
         """Return a query string from an iterable."""
         quoter = self._QUERY_PART_QUOTER
@@ -1296,14 +1296,14 @@ class URL:
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        new_query_string = self._get_str_query(*args, **kwargs)
-        if new_query_string is None:
+        s = self._get_str_query(*args, **kwargs)
+        if s is None:
             return URL(self._val._replace(query=""), encoded=True)
-        new_parsed = parse_qsl(new_query_string, keep_blank_values=True)
-        new_query = MultiDict(self._parsed_query)
-        new_query.update(new_parsed)
-        combined_query = self._get_str_query_from_iterable(new_query.items()) or ""
-        return URL(self._val._replace(query=combined_query), encoded=True)
+
+        query = MultiDict(self._parsed_query)
+        query.update(parse_qsl(s, keep_blank_values=True))
+        new_str = self._get_str_query_from_iterable(query.items())
+        return URL(self._val._replace(query=new_str), encoded=True)
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
