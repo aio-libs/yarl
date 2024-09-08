@@ -1271,17 +1271,6 @@ class URL:
         new_query_string = self._get_str_query(*args, **kwargs)
         if not new_query_string:
             return self
-
-        import pprint
-
-        pprint.pprint(
-            [
-                "new_query_string",
-                new_query_string,
-                "current_query",
-                self.raw_query_string,
-            ]
-        )
         if current_query := self.raw_query_string:
             if current_query[-1] == "&":
                 combined_query = f"{current_query}{new_query_string}"
