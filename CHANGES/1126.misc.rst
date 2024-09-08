@@ -1,1 +1,0 @@
-Improved performance of :meth:`URL.build() <yarl.URL.build>` when the path, query string, or fragment is an empty string -- by :user:`bdraco`.

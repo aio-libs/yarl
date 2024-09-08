@@ -1,1 +1,0 @@
-Improved performance of the Cython ``cached_property`` implementation -- by :user:`bdraco`.
