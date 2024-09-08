@@ -1166,7 +1166,7 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if cls is int or (cls is not bool and issubclass(cls, int)):
+        if cls is not bool and issubclass(cls, int):
             if TYPE_CHECKING:
                 assert isinstance(v, int)
             return str(int(v))
