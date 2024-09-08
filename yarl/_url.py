@@ -88,6 +88,7 @@ class _InternalURLCache(TypedDict, total=False):
     explicit_port: Union[int, None]
     raw_path: str
     path: str
+    _parsed_query: List[Tuple[str, str]]
     query: "MultiDictProxy[str]"
     raw_query_string: str
     query_string: str
@@ -698,6 +699,11 @@ class URL:
         return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
+    def _parsed_query(self) -> List[Tuple[str, str]]:
+        """Parse query part of URL."""
+        return parse_qsl(self.raw_query_string, keep_blank_values=True)
+
+    @cached_property
     def query(self) -> "MultiDictProxy[str]":
         """A MultiDictProxy representing parsed query parameters in decoded
         representation.
@@ -705,8 +711,7 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        ret = MultiDict(parse_qsl(self.raw_query_string, keep_blank_values=True))
-        return MultiDictProxy(ret)
+        return MultiDictProxy(MultiDict(self._parsed_query))
 
     @cached_property
     def raw_query_string(self) -> str:
@@ -1254,9 +1259,8 @@ class URL:
         s = self._get_str_query(*args, **kwargs)
         query = None
         if s is not None:
-            new_query = MultiDict(parse_qsl(s, keep_blank_values=True))
-            query = MultiDict(self.query)
-            query.update(new_query)
+            query = MultiDict(self._parsed_query)
+            query.update(parse_qsl(s, keep_blank_values=True))
 
         return URL(
             self._val._replace(query=self._get_str_query(query) or ""), encoded=True
