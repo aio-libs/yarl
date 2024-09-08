@@ -1186,6 +1186,8 @@ class URL:
     ) -> str:
         """Return a query string from an iterable."""
         quoter = self._QUERY_PART_QUOTER
+        # A listcomp is used since listcomps are inlined on CPython 3.12+ and
+        # they are a bit faster than a generator expression.
         return "&".join([f"{quoter(k)}={quoter(self._query_var(v))}" for k, v in items])
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
