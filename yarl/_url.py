@@ -1182,7 +1182,7 @@ class URL:
         )
 
     def _get_str_query_from_iterable(
-        self, items: "Iterable[Tuple[Union[str, istr], str]]"
+        self, items: Iterable[Tuple[Union[str, istr], str]]
     ) -> str:
         """Return a query string from an iterable."""
         quoter = self._QUERY_PART_QUOTER
