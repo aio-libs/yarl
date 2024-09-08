@@ -29,7 +29,7 @@ from urllib.parse import (
 )
 
 import idna
-from multidict import MultiDict, MultiDictProxy
+from multidict import MultiDict, MultiDictProxy, istr
 
 from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
@@ -1154,11 +1154,11 @@ class URL:
     @staticmethod
     def _query_var(v: QueryVariable) -> str:
         cls = type(v)
-        if issubclass(cls, str):
+        if cls is str or cls is istr or issubclass(cls, str):
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
-        if issubclass(cls, float):
+        if cls is float or issubclass(cls, float):
             if TYPE_CHECKING:
                 assert isinstance(v, float)
             if math.isinf(v):
@@ -1166,7 +1166,7 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if issubclass(cls, int) and cls is not bool:
+        if cls is int or (cls is not bool and issubclass(cls, int)):
             if TYPE_CHECKING:
                 assert isinstance(v, int)
             return str(int(v))
