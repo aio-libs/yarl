@@ -1163,7 +1163,7 @@ class URL:
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
-        if issubclass(cls, float):
+        if cls is float or issubclass(cls, float):
             if TYPE_CHECKING:
                 assert isinstance(v, float)
             if math.isinf(v):
@@ -1171,7 +1171,7 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if issubclass(cls, int) and cls is not bool:
+        if cls is int or (issubclass(cls, int) and cls is not bool):
             if TYPE_CHECKING:
                 assert isinstance(v, int)
             return str(int(v))
