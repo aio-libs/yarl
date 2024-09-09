@@ -1048,8 +1048,12 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
-        if not self.absolute:
-            raise ValueError("scheme replacement is not allowed for relative URLs")
+        if not self.absolute and scheme in SCHEME_REQUIRES_HOST:
+            msg = (
+                "scheme replacement is not allowed for "
+                f"relative URLs for the {scheme} scheme"
+            )
+            raise ValueError(msg)
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
     def with_user(self, user: Union[str, None]) -> "URL":
