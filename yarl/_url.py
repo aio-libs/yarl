@@ -886,7 +886,7 @@ class URL:
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
         if self.absolute:
-            parsed = _normalize_path_segments(parsed) if "." in parsed else parsed
+            parsed = _normalize_path_segments(parsed)
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
                 # where there was none before
