@@ -901,7 +901,7 @@ class URL:
         # Drop '.' and '..' from str path
 
         prefix = ""
-        if path.startswith("/"):
+        if path and path[0] == "/":
             # preserve the "/" root element of absolute paths, copying it to the
             # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
             prefix = "/"
