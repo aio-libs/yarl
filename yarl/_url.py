@@ -34,9 +34,13 @@ from multidict import MultiDict, MultiDictProxy, istr
 from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
-DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_AUTHORITY = frozenset(uses_netloc)
 USES_RELATIVE = frozenset(uses_relative)
+
+# Special schemes https://url.spec.whatwg.org/#special-scheme
+# are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
+SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 sentinel = object()
 
@@ -255,7 +259,14 @@ class URL:
             else:
                 username, password, host, port = cls._split_netloc(val[1])
                 if host is None:
-                    raise ValueError("Invalid URL: host is required for absolute urls")
+                    if scheme in SCHEME_REQUIRES_HOST:
+                        msg = (
+                            "Invalid URL: host is required for "
+                            f"absolute urls with the {scheme} scheme"
+                        )
+                        raise ValueError(msg)
+                    else:
+                        host = ""
                 host = cls._encode_host(host)
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
