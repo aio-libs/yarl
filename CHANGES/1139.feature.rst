@@ -1,0 +1,1 @@
+Loosen restriction on integers as query string values to allow classes that implement ``__int__`` -- by :user:`bdraco`.

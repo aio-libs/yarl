@@ -12,6 +12,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    SupportsInt,
     Tuple,
     TypedDict,
     TypeVar,
@@ -1185,9 +1186,7 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if cls is not bool and issubclass(cls, int):
-            if TYPE_CHECKING:
-                assert isinstance(v, int)
+        if cls is not bool and isinstance(cls, SupportsInt):
             return str(int(v))
         raise TypeError(
             "Invalid variable type: value "
