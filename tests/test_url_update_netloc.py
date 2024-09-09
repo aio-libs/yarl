@@ -16,8 +16,13 @@ def test_with_scheme_uppercased():
 
 
 def test_with_scheme_for_relative_url():
-    with pytest.raises(ValueError):
-        URL("path/to").with_scheme("http")
+    """Test scheme can be set for relative URL."""
+    msg = "scheme replacement is not allowed for " "relative URLs for the http scheme"
+    with pytest.raises(ValueError, match=msg):
+        assert URL("path/to").with_scheme("http")
+
+    expected = URL("file:///absolute/path")
+    assert expected.with_scheme("file") == expected
 
 
 def test_with_scheme_invalid_type():
