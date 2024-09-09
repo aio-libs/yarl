@@ -886,7 +886,7 @@ class URL:
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
         if self.absolute:
-            parsed = _normalize_path_segments(parsed)
+            parsed = _normalize_path_segments(parsed) if "." in parsed else parsed
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
                 # where there was none before
@@ -899,6 +899,9 @@ class URL:
     @classmethod
     def _normalize_path(cls, path: str) -> str:
         # Drop '.' and '..' from str path
+        if "." not in path:
+            # No need to normalize if there are no '.' or '..' segments
+            return path
 
         prefix = ""
         if path and path[0] == "/":
