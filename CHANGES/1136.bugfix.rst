@@ -1,1 +1,0 @@
-Allowed empty host for URL schemes other than the special schemes listed in the WHATWG URL spec -- by :user:`bdraco`.

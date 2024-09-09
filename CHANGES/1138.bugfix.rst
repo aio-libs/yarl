@@ -1,1 +1,0 @@
-Allowed scheme replacement for relative URLs if the scheme does not require a host -- by :user:`bdraco`.
