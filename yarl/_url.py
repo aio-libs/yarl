@@ -37,6 +37,9 @@ from ._quoting import _Quoter, _Unquoter
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_AUTHORITY = frozenset(uses_netloc)
 USES_RELATIVE = frozenset(uses_relative)
+
+# Special schemes https://url.spec.whatwg.org/#special-scheme
+# are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
 SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 sentinel = object()
