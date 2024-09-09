@@ -659,6 +659,48 @@ section generates a new :class:`URL` instance.
       Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
       as a query parameter value.
 
+.. method:: URL.extend_query(query)
+            URL.extend_query(**kwargs)
+
+   Returns a new URL with *query* part extended.
+
+   Unlike :meth:`update_query`, this method keeps duplicate keys.
+
+   Returned :class:`URL` object will contain query string which extends
+   parts from passed query parts (or parts of parsed query string).
+
+   Accepts any :class:`~collections.abc.Mapping` (e.g. :class:`dict`,
+   :class:`~multidict.MultiDict` instances) or :class:`str`,
+   auto-encode the argument if needed.
+
+   A sequence of ``(key, value)`` pairs is supported as well.
+
+   Also it can take an arbitrary number of keyword arguments.
+
+   Returns the same :class:`URL` if *query* of ``None`` is passed.
+
+   .. note::
+
+      The library accepts :class:`str`, :class:`float`, :class:`int` and their
+      subclasses except :class:`bool` as query argument values.
+
+      If a mapping such as :class:`dict` is used, the values may also be
+      :class:`list` or :class:`tuple` to represent a key has many values.
+
+      Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
+      supported out-of-the-box.
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?a=b&b=1').extend_query(b='2')
+      URL('http://example.com/path?a=b&b=1&b=2')
+      >>> URL('http://example.com/path?a=b&b=1').extend_query([('b', '2')])
+      URL('http://example.com/path?a=b&b=1&b=2')
+      >>> URL('http://example.com/path?a=b&c=e&c=f').extend_query(c='d')
+      URL('http://example.com/path?a=b&c=e&c=f&c=d')
+
+   .. versionadded:: 1.11.0
+
 .. method:: URL.update_query(query)
             URL.update_query(**kwargs)
 

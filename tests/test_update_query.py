@@ -353,6 +353,16 @@ def test_update_query_multiple_keys():
     assert str(u2) == "http://example.com/path?a=3&a=4"
 
 
+def test_update_query_with_non_ascii():
+    url = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    assert url.update_query({"𝕦": "𝕦"}) == url
+
+
+def test_update_query_with_non_ascii_as_str():
+    url = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    assert url.update_query("𝕦=𝕦") == url
+
+
 # mod operator
 
 
@@ -364,3 +374,81 @@ def test_update_query_with_mod_operator():
     assert str(url % {"a": "1"} % {"b": "2"}) == "http://example.com/?a=1&b=2"
     assert str(url % {"a": "1"} % {"a": "3", "b": "2"}) == "http://example.com/?a=3&b=2"
     assert str(url / "foo" % {"a": "1"}) == "http://example.com/foo?a=1"
+
+
+def test_extend_query():
+    url = URL("http://example.com/")
+    assert str(url.extend_query({"a": "1"})) == "http://example.com/?a=1"
+    assert str(URL("test").extend_query(a=1)) == "test?a=1"
+
+    url = URL("http://example.com/?foo=bar")
+    expected_url = URL("http://example.com/?foo=bar&baz=foo")
+
+    assert url.extend_query({"baz": "foo"}) == expected_url
+    assert url.extend_query(baz="foo") == expected_url
+    assert url.extend_query("baz=foo") == expected_url
+
+
+def test_extend_query_with_args_and_kwargs():
+    url = URL("http://example.com/")
+
+    with pytest.raises(ValueError):
+        url.extend_query("a", foo="bar")
+
+
+def test_extend_query_with_multiple_args():
+    url = URL("http://example.com/")
+
+    with pytest.raises(ValueError):
+        url.extend_query("a", "b")
+
+
+def test_extend_query_with_none_arg():
+    url = URL("http://example.com/?foo=bar&baz=foo")
+    assert url.extend_query(None) == url
+
+
+def test_extend_query_with_empty_dict():
+    url = URL("http://example.com/?foo=bar&baz=foo")
+    assert url.extend_query({}) == url
+
+
+def test_extend_query_existing_keys():
+    url = URL("http://example.com/?a=2")
+    assert str(url.extend_query({"a": "1"})) == "http://example.com/?a=2&a=1"
+    assert str(URL("test").extend_query(a=1)) == "test?a=1"
+
+    url = URL("http://example.com/?foo=bar&baz=original")
+    expected_url = URL("http://example.com/?foo=bar&baz=original&baz=foo")
+
+    assert url.extend_query({"baz": "foo"}) == expected_url
+    assert url.extend_query(baz="foo") == expected_url
+    assert url.extend_query("baz=foo") == expected_url
+
+
+def test_extend_query_with_args_and_kwargs_with_existing():
+    url = URL("http://example.com/?a=original")
+
+    with pytest.raises(ValueError):
+        url.extend_query("a", foo="bar")
+
+
+def test_extend_query_with_non_ascii():
+    url = URL("http://example.com/?foo=bar&baz=foo")
+    expected = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    assert url.extend_query({"𝕦": "𝕦"}) == expected
+
+
+def test_extend_query_with_non_ascii_as_str():
+    url = URL("http://example.com/?foo=bar&baz=foo&")
+    expected = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    assert url.extend_query("𝕦=𝕦") == expected
+
+
+def test_extend_query_with_non_ascii_same_key():
+    url = URL("http://example.com/?foo=bar&baz=foo&%F0%9D%95%A6=%F0%9D%95%A6")
+    expected = URL(
+        "http://example.com/?foo=bar&baz=foo"
+        "&%F0%9D%95%A6=%F0%9D%95%A6&%F0%9D%95%A6=%F0%9D%95%A6"
+    )
+    assert url.extend_query({"𝕦": "𝕦"}) == expected

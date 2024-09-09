@@ -993,6 +993,35 @@ def test_joinpath_path_starting_from_slash_is_forbidden():
         assert url.joinpath("/to/others")
 
 
+PATHS = [
+    # No dots
+    ("", ""),
+    ("path", "path"),
+    # Single-dot
+    ("path/to", "path/to"),
+    ("././path/to", "path/to"),
+    ("path/./to", "path/to"),
+    ("path/././to", "path/to"),
+    ("path/to/.", "path/to/"),
+    ("path/to/./.", "path/to/"),
+    # Double-dots
+    ("../path/to", "path/to"),
+    ("path/../to", "to"),
+    ("path/../../to", "to"),
+    # Non-ASCII characters
+    ("μονοπάτι/../../να/ᴜɴɪ/ᴄᴏᴅᴇ", "να/ᴜɴɪ/ᴄᴏᴅᴇ"),
+    ("μονοπάτι/../../να/𝕦𝕟𝕚/𝕔𝕠𝕕𝕖/.", "να/𝕦𝕟𝕚/𝕔𝕠𝕕𝕖/"),
+]
+
+
+@pytest.mark.parametrize("original,expected", PATHS)
+def test_join_path_normalized(original: str, expected: str) -> None:
+    """Test that joinpath normalizes paths."""
+    base_url = URL("http://example.com")
+    new_url = base_url.joinpath(original)
+    assert new_url.path == f"/{expected}"
+
+
 # with_path
 
 

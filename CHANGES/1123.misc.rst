@@ -1,1 +1,0 @@
-Simplified computing ports by removing unnecessary code -- by :user:`bdraco`.
