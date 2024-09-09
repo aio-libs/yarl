@@ -899,9 +899,12 @@ class URL:
     @classmethod
     def _normalize_path(cls, path: str) -> str:
         # Drop '.' and '..' from str path
+        if "." not in path:
+            # No need to normalize if there are no '.' or '..' segments
+            return path
 
         prefix = ""
-        if path.startswith("/"):
+        if path and path[0] == "/":
             # preserve the "/" root element of absolute paths, copying it to the
             # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
             prefix = "/"
