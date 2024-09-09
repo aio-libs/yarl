@@ -249,6 +249,19 @@ def test_with_int_enum():
     assert str(url2) == "http://example.com/path?a=1"
 
 
+def test_with_class_that_implements__int__():
+    """Allow classes that implement __int__ to be used in query strings."""
+
+    class myint:
+
+        def __int__(self):
+            return 84
+
+    url = URL("http://example.com/path")
+    url2 = url.with_query(a=myint())
+    assert str(url2) == "http://example.com/path?a=84"
+
+
 def test_with_float_enum():
     class FloatEnum(float, enum.Enum):
         A = 1.1
