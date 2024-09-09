@@ -14,6 +14,60 @@ Changelog
 
 .. towncrier release notes start
 
+1.11.0
+======
+
+*(2024-09-08)*
+
+
+Features
+--------
+
+- Added :meth:`URL.extend_query() <yarl.URL.extend_query>` method, which can be used to extend parameters without replacing same named keys -- by :user:`bdraco`.
+
+  This method was primarily added to replace the inefficient hand rolled method currently used in ``aiohttp``.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1128`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the Cython ``cached_property`` implementation -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1122`.
+
+- Simplified computing ports by removing unnecessary code -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1123`.
+
+- Improved performance of encoding non IPv6 hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1125`.
+
+- Improved performance of :meth:`URL.build() <yarl.URL.build>` when the path, query string, or fragment is an empty string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1126`.
+
+- Improved performance of the :meth:`URL.update_query() <yarl.URL.update_query>` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1130`.
+
+- Improved performance of processing query string changes when arguments are :class:`str` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1131`.
+
+
+----
+
+
 1.10.0
 ======
 

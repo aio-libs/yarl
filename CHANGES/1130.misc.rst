@@ -1,1 +1,0 @@
-Improved performance of the :meth:`URL.update_query() <yarl.URL.update_query>` method -- by :user:`bdraco`.

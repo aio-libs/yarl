@@ -1,1 +1,0 @@
-Improved performance of encoding non IPv6 hosts -- by :user:`bdraco`.

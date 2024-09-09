@@ -35,9 +35,13 @@ from multidict import MultiDict, MultiDictProxy, istr
 from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
-DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_AUTHORITY = frozenset(uses_netloc)
 USES_RELATIVE = frozenset(uses_relative)
+
+# Special schemes https://url.spec.whatwg.org/#special-scheme
+# are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
+SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 sentinel = object()
 
@@ -273,7 +277,14 @@ class URL:
             else:
                 username, password, host, port = cls._split_netloc(val[1])
                 if host is None:
-                    raise ValueError("Invalid URL: host is required for absolute urls")
+                    if scheme in SCHEME_REQUIRES_HOST:
+                        msg = (
+                            "Invalid URL: host is required for "
+                            f"absolute urls with the {scheme} scheme"
+                        )
+                        raise ValueError(msg)
+                    else:
+                        host = ""
                 host = cls._encode_host(host, validate_host=False)
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
@@ -917,9 +928,12 @@ class URL:
     @classmethod
     def _normalize_path(cls, path: str) -> str:
         # Drop '.' and '..' from str path
+        if "." not in path:
+            # No need to normalize if there are no '.' or '..' segments
+            return path
 
         prefix = ""
-        if path.startswith("/"):
+        if path and path[0] == "/":
             # preserve the "/" root element of absolute paths, copying it to the
             # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
             prefix = "/"
@@ -1277,13 +1291,51 @@ class URL:
         return URL(self._val._replace(query=new_query), encoded=True)
 
     @overload
+    def extend_query(self, query: Query) -> "URL": ...
+
+    @overload
+    def extend_query(self, **kwargs: QueryVariable) -> "URL": ...
+
+    def extend_query(self, *args: Any, **kwargs: Any) -> "URL":
+        """Return a new URL with query part combined with the existing.
+
+        This method will not remove existing query parameters.
+
+        Example:
+        >>> url = URL('http://example.com/?a=1&b=2')
+        >>> url.extend_query(a=3, c=4)
+        URL('http://example.com/?a=1&b=2&a=3&c=4')
+        """
+        new_query_string = self._get_str_query(*args, **kwargs)
+        if not new_query_string:
+            return self
+        if current_query := self.raw_query_string:
+            # both strings are already encoded so we can use a simple
+            # string join
+            if current_query[-1] == "&":
+                combined_query = f"{current_query}{new_query_string}"
+            else:
+                combined_query = f"{current_query}&{new_query_string}"
+        else:
+            combined_query = new_query_string
+        return URL(self._val._replace(query=combined_query), encoded=True)
+
+    @overload
     def update_query(self, query: Query) -> "URL": ...
 
     @overload
     def update_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def update_query(self, *args: Any, **kwargs: Any) -> "URL":
-        """Return a new URL with query part updated."""
+        """Return a new URL with query part updated.
+
+        This method will overwrite existing query parameters.
+
+        Example:
+        >>> url = URL('http://example.com/?a=1&b=2')
+        >>> url.update_query(a=3, c=4)
+        URL('http://example.com/?a=3&b=2&c=4')
+        """
         s = self._get_str_query(*args, **kwargs)
         if s is None:
             return URL(self._val._replace(query=""), encoded=True)
