@@ -13,6 +13,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    SupportsInt,
     Tuple,
     TypedDict,
     TypeVar,
@@ -806,7 +807,7 @@ class URL:
             else:
                 parts = ["/"] + path[1:].split("/")
         else:
-            if path.startswith("/"):
+            if path and path[0] == "/":
                 parts = ["/"] + path[1:].split("/")
             else:
                 parts = path.split("/")
@@ -885,7 +886,7 @@ class URL:
 
         Raise ValueError if not.
         """
-        if host and path and not path.startswith("/"):
+        if host and path and not path[0] == "/":
             raise ValueError(
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
@@ -1074,8 +1075,12 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
-        if not self.absolute:
-            raise ValueError("scheme replacement is not allowed for relative URLs")
+        if not self.absolute and scheme in SCHEME_REQUIRES_HOST:
+            msg = (
+                "scheme replacement is not allowed for "
+                f"relative URLs for the {scheme} scheme"
+            )
+            raise ValueError(msg)
         return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
 
     def with_user(self, user: Union[str, None]) -> "URL":
@@ -1211,9 +1216,7 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if cls is not bool and issubclass(cls, int):
-            if TYPE_CHECKING:
-                assert isinstance(v, int)
+        if cls is not bool and isinstance(cls, SupportsInt):
             return str(int(v))
         raise TypeError(
             "Invalid variable type: value "
@@ -1418,7 +1421,7 @@ class URL:
         """
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
-        if suffix and not suffix.startswith(".") or suffix == ".":
+        if suffix and not suffix[0] == "." or suffix == ".":
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:

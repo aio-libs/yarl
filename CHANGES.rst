@@ -14,6 +14,47 @@ Changelog
 
 .. towncrier release notes start
 
+1.11.1
+======
+
+*(2024-09-09)*
+
+
+Bug fixes
+---------
+
+- Allowed scheme replacement for relative URLs if the scheme does not require a host -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`280`, :issue:`1138`.
+
+- Allowed empty host for URL schemes other than the special schemes listed in the WHATWG URL spec -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1136`.
+
+
+Features
+--------
+
+- Loosened restriction on integers as query string values to allow classes that implement ``__int__`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1139`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of normalizing paths -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1137`.
+
+
+----
+
+
 1.11.0
 ======
 
