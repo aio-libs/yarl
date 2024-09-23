@@ -273,7 +273,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
    .. warning::
 
       In many situations it is important to distinguish between path separators
-      (a literal ``/``) and other forward slashes (a literal `%2F`). Use
+      (a literal ``/``) and other forward slashes (a literal ``%2F``). Use
       :attr:`URL.path_safe` for these cases.
 
 .. attribute:: URL.path_safe
