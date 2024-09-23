@@ -352,6 +352,22 @@ def test_path_with_2F():
     assert url.path == "/foo/bar%2Fbaz"
 
 
+def test_path_safe_with_2F():
+    """Path should not decode %2F, otherwise it may look like a path separator."""
+
+    url = URL("http://example.com/foo/bar%2fbaz")
+    assert url.path_safe == "/foo/bar%2Fbaz"
+
+
+def test_path_safe_with_25():
+    """Path should not decode %25, otherwise it is prone to double unquoting."""
+
+    url = URL("http://example.com/foo/bar%252Fbaz")
+    assert url.path_safe == "/foo/bar%252Fbaz"
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == "/foo/bar%2Fbaz"
+
+
 def test_raw_path_for_empty_url():
     url = URL()
     assert "" == url.raw_path
