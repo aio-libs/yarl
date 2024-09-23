@@ -720,7 +720,7 @@ class URL:
         / (%2F) and % (%25) are not decoded
 
         """
-        return self._SAFE_PATH_UNQUOTER(self.raw_path)
+        return self._PATH_SAFE_UNQUOTER(self.raw_path)
 
     @cached_property
     def _parsed_query(self) -> List[Tuple[str, str]]:
