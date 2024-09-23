@@ -225,7 +225,8 @@ class URL:
     _FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
-    _PATH_UNQUOTER = _Unquoter(ignore="/", unsafe="+")
+    _PATH_UNQUOTER = _Unquoter(unsafe="+")
+    _SAFE_PATH_UNQUOTER = _Unquoter(ignore="/%", unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
     _val: SplitResult
@@ -709,6 +710,17 @@ class URL:
 
         """
         return self._PATH_UNQUOTER(self.raw_path)
+
+    @cached_property
+    def safe_path(self) -> str:
+        """Decoded path of URL.
+
+        / for absolute URLs without path part.
+
+        / (%2F) and % (%25) are not decoded
+
+        """
+        return self._SAFE_PATH_UNQUOTER(self.raw_path)
 
     @cached_property
     def _parsed_query(self) -> List[Tuple[str, str]]:
