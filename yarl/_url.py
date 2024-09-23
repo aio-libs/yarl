@@ -712,7 +712,7 @@ class URL:
         return self._PATH_UNQUOTER(self.raw_path)
 
     @cached_property
-    def safe_path(self) -> str:
+    def path_safe(self) -> str:
         """Decoded path of URL.
 
         / for absolute URLs without path part.
