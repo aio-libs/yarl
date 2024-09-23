@@ -345,13 +345,6 @@ def test_path_with_spaces():
     assert "/a b" == url.path
 
 
-def test_path_with_2F():
-    """Path should not decode %2F, otherwise it may look like a path separator."""
-
-    url = URL("http://example.com/foo/bar%2fbaz")
-    assert url.path == "/foo/bar%2Fbaz"
-
-
 def test_raw_path_for_empty_url():
     url = URL()
     assert "" == url.raw_path

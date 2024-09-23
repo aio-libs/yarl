@@ -116,8 +116,7 @@ class _Quoter:
 
 
 class _Unquoter:
-    def __init__(self, *, ignore: str = "", unsafe: str = "", qs: bool = False) -> None:
-        self._ignore = ignore
+    def __init__(self, *, unsafe: str = "", qs: bool = False) -> None:
         self._unsafe = unsafe
         self._qs = qs
         self._quoter = _Quoter()
@@ -159,7 +158,7 @@ class _Unquoter:
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
                         ret.append(to_add)
-                    elif unquoted in self._unsafe or unquoted in self._ignore:
+                    elif unquoted in self._unsafe:
                         to_add = self._quoter(unquoted)
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
