@@ -1,5 +1,5 @@
 from enum import Enum
-from urllib.parse import SplitResult
+from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
@@ -350,6 +350,42 @@ def test_path_with_2F():
 
     url = URL("http://example.com/foo/bar%2fbaz")
     assert url.path == "/foo/bar/baz"
+
+
+def test_path_safe_with_2F():
+    """Path safe should not decode %2F, otherwise it may look like a path separator."""
+
+    url = URL("http://example.com/foo/bar%2fbaz")
+    assert url.path_safe == "/foo/bar%2Fbaz"
+
+
+def test_path_safe_with_25():
+    """Path safe should not decode %25, otherwise it is prone to double unquoting."""
+
+    url = URL("http://example.com/foo/bar%252Fbaz")
+    assert url.path_safe == "/foo/bar%252Fbaz"
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == "/foo/bar%2Fbaz"
+
+
+@pytest.mark.parametrize(
+    "original_path",
+    [
+        "m+@bar/baz",
+        "m%2B@bar/baz",
+        "m%252B@bar/baz",
+        "m%2F@bar/baz",
+    ],
+)
+def test_path_safe_only_round_trips(original_path: str) -> None:
+    """Path safe can round trip with documented decode method."""
+    encoded_once = quote(original_path, safe="")
+    encoded_twice = quote(encoded_once, safe="")
+
+    url = URL(f"http://example.com/{encoded_twice}")
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == f"/{encoded_once}"
+    assert unquote(unquoted) == f"/{original_path}"
 
 
 def test_raw_path_for_empty_url():
