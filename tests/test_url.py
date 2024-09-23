@@ -346,10 +346,10 @@ def test_path_with_spaces():
 
 
 def test_path_with_2F():
-    """Path should not decode %2F, otherwise it may look like a path separator."""
+    """Path should decode %2F."""
 
     url = URL("http://example.com/foo/bar%2fbaz")
-    assert url.path == "/foo/bar%2Fbaz"
+    assert url.path == "/foo/bar/baz"
 
 
 def test_raw_path_for_empty_url():
