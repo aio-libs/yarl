@@ -1,3 +1,0 @@
-Restore decoding ``%2F`` (``/``) in ``URL.path`` -- by :user:`bdraco`.
-
-This change restored the behavior before :issue:`1136`.

@@ -14,6 +14,44 @@ Changelog
 
 .. towncrier release notes start
 
+1.12.0
+======
+
+*(2024-09-23)*
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.path_safe` to be able to fetch the path without ``%2F`` and ``%25`` decoded -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1150`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Restore decoding ``%2F`` (``/``) in ``URL.path`` -- by :user:`bdraco`.
+
+  This change restored the behavior before :issue:`1057`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1151`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of processing paths -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1143`.
+
+
+----
+
+
 1.11.1
 ======
 
