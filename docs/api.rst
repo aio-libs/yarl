@@ -285,7 +285,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Note that ``%25`` is also not decoded to avoid issues with double unquoting
    of values. e.g. You can unquote the value with
    ``URL.path_safe.replace("%2F", "/").replace("%25", %")`` to get the same
-   result as :meth:`URL.path_safe`. If the `%25` was unqouted, it would be
+   result as :meth:`URL.path_safe`. If the `%25` was unquoted, it would be
    impossible to tell the difference between ``%2F`` and ``%252F``.
 
 .. attribute:: URL.path_qs
