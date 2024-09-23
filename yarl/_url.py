@@ -225,7 +225,7 @@ class URL:
     _FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
     _UNQUOTER = _Unquoter()
-    _PATH_UNQUOTER = _Unquoter(ignore="/", unsafe="+")
+    _PATH_UNQUOTER = _Unquoter(unsafe="+")
     _QS_UNQUOTER = _Unquoter(qs=True)
 
     _val: SplitResult
