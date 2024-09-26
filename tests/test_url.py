@@ -189,6 +189,11 @@ def test_host_subcomponent(host: str):
     assert url.host_subcomponent == host
 
 
+def test_host_subcomponent_return_idna_encoded_host():
+    url = URL("http://оун-упа.укр")
+    assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
