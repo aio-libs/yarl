@@ -647,6 +647,8 @@ class URL:
 
         None for relative URLs.
 
+        When working with IPv6 addresses, use the `host_subcomponent` property instead
+        as it will return the host subcomponent with brackets.
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
@@ -660,15 +662,34 @@ class URL:
         None for relative URLs.
 
         """
-        raw = self.raw_host
-        if raw is None:
+        if (raw := self.raw_host) is None:
             return None
-        if "%" in raw:
-            # Hack for scoped IPv6 addresses like
-            # fe80::2%Перевірка
-            # presence of '%' sign means only IPv6 address, so idna is useless.
+        if raw and raw[-1].isdigit() or ":" in raw:
+            # IP addresses are never IDNA encoded
             return raw
         return _idna_decode(raw)
+
+    @cached_property
+    def host_subcomponent(self) -> Union[str, None]:
+        """Return the host subcomponent part of URL.
+
+        None for relative URLs.
+
+        https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+
+        `IP-literal = "[" ( IPv6address / IPvFuture  ) "]"`
+
+        Examples:
+        - `http://example.com:8080` -> `example.com`
+        - `http://example.com:80` -> `example.com`
+        - `https://127.0.0.1:8443` -> `127.0.0.1`
+        - `https://[::1]:8443` -> `[::1]`
+        - `http://[::1]` -> `[::1]`
+
+        """
+        if (raw := self.raw_host) is None:
+            return None
+        return f"[{raw}]" if ":" in raw else raw
 
     @cached_property
     def port(self) -> Union[int, None]:
@@ -953,7 +974,8 @@ class URL:
             # - 127.0.0.1 (last character is a digit)
             # - 2001:db8::ff00:42:8329 (contains a colon)
             # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
-            # - [2001:db8::ff00:42:8329] (contains a colon)
+            # - [2001:db8::ff00:42:8329] (contains a colon -- brackets should
+            #                             have been removed before it gets here)
             # Rare IP Address formats are not supported per:
             # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
             #

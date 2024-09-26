@@ -191,7 +191,22 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
       >>> URL('http://хост.домен').raw_host
       'xn--n1agdj.xn--d1acufc'
+      >>> URL('http://[::1]').raw_host
+      '::1'
 
+.. attribute:: URL.host_subcomponent
+
+   :rfc:`3986#section-3.2.2` host subcomponent part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   .. doctest::
+
+      >>> URL('http://хост.домен').host_subcomponent
+      'xn--n1agdj.xn--d1acufc'
+      >>> URL('http://[::1]').host_subcomponent
+      '[::1]'
+
+   .. versionadded:: 1.13
 
 .. attribute:: URL.port
 
