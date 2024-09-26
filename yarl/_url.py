@@ -676,6 +676,9 @@ class URL:
         None for relative URLs.
 
         https://datatracker.ietf.org/doc/html/rfc2732#section-2
+        https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+        
+        `IP-literal = "[" ( IPv6address / IPvFuture  ) "]"`
 
         Examples:
          'http://example.com:8080' -> 'example.com'
