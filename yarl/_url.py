@@ -647,7 +647,7 @@ class URL:
 
         None for relative URLs.
 
-        For literal IPv6 addresses, use the literal_host property instead
+        For literal IPv6 addresses, use the host_subcomponent property instead
         as it will return the host part with brackets.
         """
         # Use host instead of hostname for sake of shortness
