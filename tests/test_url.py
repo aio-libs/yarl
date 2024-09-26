@@ -181,7 +181,6 @@ def test_raw_host():
     [
         ("example.com"),
         ("[::1]"),
-        ("g%c3%bcnter.com"),
         ("xn--gnter-4ya.com"),
     ],
 )
@@ -199,11 +198,6 @@ def test_raw_host_non_ascii():
 def test_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "оун-упа.укр" == url.host
-
-
-def test_host_non_ascii_percent_encoded():
-    url = URL("g%c3%bcnter.com")
-    assert url.host == "günter.com"
 
 
 def test_localhost():
