@@ -43,6 +43,7 @@ runtimes
 sdist
 subclass
 subclasses
+subcomponent
 svetlov
 uncompiled
 v1
