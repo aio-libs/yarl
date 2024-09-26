@@ -1,0 +1,3 @@
+Added :attr:`~yarl.URL.host_subcomponent` which returns the :rfc:`3986#section-3.2.2` host subcomponent -- by :user:`bdraco`.
+
+The only current practical difference between :attr:`~yarl.URL.raw_host` and :attr:`~yarl.URL.host_subcomponent` is that IPv6 addresses are returned bracketed.

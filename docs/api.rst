@@ -191,7 +191,22 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
       >>> URL('http://хост.домен').raw_host
       'xn--n1agdj.xn--d1acufc'
+      >>> URL('http://[::1]').raw_host
+      '::1'
 
+.. attribute:: URL.host_subcomponent
+
+   :rfc:`3986#section-3.2.2` host subcomponent part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   .. doctest::
+
+      >>> URL('http://хост.домен').host_subcomponent
+      'xn--n1agdj.xn--d1acufc'
+      >>> URL('http://[::1]').host_subcomponent
+      '[::1]'
+
+   .. versionadded:: 1.13
 
 .. attribute:: URL.port
 
@@ -270,6 +285,23 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://example.com').path
       '/'
 
+   .. warning::
+
+      In many situations it is important to distinguish between path separators
+      (a literal ``/``) and other forward slashes (a literal ``%2F``). Use
+      :attr:`URL.path_safe` for these cases.
+
+.. attribute:: URL.path_safe
+
+   Similar to :attr:`URL.path` except it doesn't decode ``%2F`` or ``%25``.
+   This allows to distinguish between path separators (``/``) and encoded
+   slashes (``%2F``).
+
+   Note that ``%25`` is also not decoded to avoid issues with double unquoting
+   of values. e.g. You can unquote the value with
+   ``URL.path_safe.replace("%2F", "/").replace("%25", %")`` to get the same
+   result as :meth:`URL.path`. If the ``%25`` was unquoted, it would be
+   impossible to tell the difference between ``%2F`` and ``%252F``.
 
 .. attribute:: URL.path_qs
 

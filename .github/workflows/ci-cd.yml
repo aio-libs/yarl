@@ -398,7 +398,7 @@ jobs:
     - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 14
 
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases
