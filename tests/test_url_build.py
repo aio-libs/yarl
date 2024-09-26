@@ -17,17 +17,22 @@ def test_build_simple():
 
 def test_url_build_ipv6():
     u = URL.build(scheme="http", host="::1")
-    assert str(u) == "http://::1"
+    assert str(u) == "http://[::1]"
 
 
-def test_url_build_ipv6_brackets():
-    u = URL.build(scheme="http", host="[::1]")
-    assert str(u) == "http://::1"
+def test_url_build_ipv6_brackets_encoded():
+    u = URL.build(scheme="http", host="[::1]", encoded=True)
+    assert str(u) == "http://[::1]"
+
+
+def test_url_build_ipv6_brackets_not_encoded():
+    u = URL.build(scheme="http", host="::1", encoded=False)
+    assert str(u) == "http://[::1]"
 
 
 def test_url_ipv4_in_ipv6():
     u = URL.build(scheme="http", host="2001:db8:122:344::192.0.2.33")
-    assert str(u) == "http://2001:db8:122:344::c000:221"
+    assert str(u) == "http://[2001:db8:122:344::c000:221]"
 
 
 def test_build_with_scheme():
