@@ -619,10 +619,10 @@ def test_schemes_that_require_host(scheme: str) -> None:
         ),
     ],
 )
-def test_ipv6_url_round_trips(
+def test_url_round_trips(
     url: str, hostname: str, hostname_without_brackets: str
 ) -> None:
-    """Verify that IPv6 URLs round-trip correctly."""
+    """Verify that URLs round-trip correctly."""
     parsed = URL(url)
     assert parsed._val.hostname == hostname_without_brackets
     assert parsed.raw_host == hostname_without_brackets
