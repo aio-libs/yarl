@@ -32,7 +32,7 @@ def test_url_build_ipv6_brackets_not_encoded():
 
 def test_url_ipv4_in_ipv6():
     u = URL.build(scheme="http", host="2001:db8:122:344::192.0.2.33")
-    assert str(u) == "http://2001:db8:122:344::c000:221"
+    assert str(u) == "http://[2001:db8:122:344::c000:221]"
 
 
 def test_build_with_scheme():
