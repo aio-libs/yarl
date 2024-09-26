@@ -1,4 +1,5 @@
 import math
+import re
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
@@ -45,6 +46,22 @@ SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 sentinel = object()
 
+# reg-name: unreserved / pct-encoded / sub-delims
+# this pattern matches anything that is *not* in those classes. and is only used
+# on lower-cased ASCII values.
+_not_reg_name = re.compile(
+    r"""
+        # any character not in the unreserved or sub-delims sets, plus %
+        # (validated with the additional check for pct-encoded sequences below)
+        [^a-z0-9\-._~!$&'()*+,;=%]
+    |
+        # % only allowed if it is part of a pct-encoded
+        # sequence of 2 hex digits.
+        %(?![0-9a-f]{2})
+    """,
+    re.VERBOSE,
+)
+
 SimpleQuery = Union[str, int, float]
 QueryVariable = Union[SimpleQuery, "Sequence[SimpleQuery]"]
 Query = Union[
@@ -64,6 +81,7 @@ class CacheInfo(TypedDict):
     idna_encode: _CacheInfo
     idna_decode: _CacheInfo
     ip_address: _CacheInfo
+    host_validate: _CacheInfo
 
 
 class _SplitResultDict(TypedDict, total=False):
@@ -269,7 +287,7 @@ class URL:
                         raise ValueError(msg)
                     else:
                         host = ""
-                host = cls._encode_host(host)
+                host = cls._encode_host(host, validate_host=False)
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(
@@ -959,7 +977,9 @@ class URL:
         return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
-    def _encode_host(cls, host: str, human: bool = False) -> str:
+    def _encode_host(
+        cls, host: str, human: bool = False, validate_host: bool = True
+    ) -> str:
         if "%" in host:
             raw_ip, sep, zone = host.partition("%")
         else:
@@ -999,11 +1019,18 @@ class URL:
                 return host
 
         host = host.lower()
+        if human:
+            return host
+
         # IDNA encoding is slow,
         # skip it for ASCII-only strings
         # Don't move the check into _idna_encode() helper
         # to reduce the cache size
-        if human or host.isascii():
+        if host.isascii():
+            # Check for invalid characters explicitly; _idna_encode() does this
+            # for non-ascii host names.
+            if validate_host:
+                _host_validate(host)
             return host
         return _idna_encode(host)
 
@@ -1559,12 +1586,31 @@ def _ip_compressed_version(raw_ip: str) -> Tuple[str, int]:
     return ip.compressed, ip.version
 
 
+@lru_cache(_MAXCACHE)
+def _host_validate(host: str) -> None:
+    """Validate an ascii host name."""
+    invalid = _not_reg_name.search(host)
+    if invalid is None:
+        return
+    value, pos, extra = invalid.group(), invalid.start(), ""
+    if value == "@" or (value == ":" and "@" in host[pos:]):
+        # this looks like an authority string
+        extra = (
+            ", if the value includes a username or password, "
+            "use 'authority' instead of 'host'"
+        )
+    raise ValueError(
+        f"Host {host!r} cannot contain {value!r} (at position " f"{pos}){extra}"
+    ) from None
+
+
 @rewrite_module
 def cache_clear() -> None:
     """Clear all LRU caches."""
     _idna_decode.cache_clear()
     _idna_encode.cache_clear()
     _ip_compressed_version.cache_clear()
+    _host_validate.cache_clear()
 
 
 @rewrite_module
@@ -1574,6 +1620,7 @@ def cache_info() -> CacheInfo:
         "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
         "ip_address": _ip_compressed_version.cache_info(),
+        "host_validate": _host_validate.cache_info(),
     }
 
 
@@ -1583,12 +1630,14 @@ def cache_configure(
     idna_encode_size: Union[int, None] = _MAXCACHE,
     idna_decode_size: Union[int, None] = _MAXCACHE,
     ip_address_size: Union[int, None] = _MAXCACHE,
+    host_validate_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
-    global _idna_decode, _idna_encode, _ip_compressed_version
+    global _idna_decode, _idna_encode, _ip_compressed_version, _host_validate
 
     _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
     _ip_compressed_version = lru_cache(ip_address_size)(
         _ip_compressed_version.__wrapped__
     )
+    _host_validate = lru_cache(host_validate_size)(_host_validate.__wrapped__)

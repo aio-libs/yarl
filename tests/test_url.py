@@ -2058,3 +2058,14 @@ def test_parsing_populates_cache():
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
     assert url._cache["scheme"] == "http"
+
+
+@pytest.mark.parametrize(
+    ("host", "is_authority"),
+    [
+        *(("other_gen_delim_" + c, False) for c in "[]"),
+    ],
+)
+def test_build_with_invalid_ipv6_host(host: str, is_authority: bool):
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(f"http://{host}/")

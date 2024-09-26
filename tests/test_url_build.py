@@ -120,6 +120,25 @@ def test_build_with_authority_and_host():
         URL.build(authority="host.com", host="example.com")
 
 
+@pytest.mark.parametrize(
+    ("host", "is_authority"),
+    [
+        ("user:pass@host.com", True),
+        ("user@host.com", True),
+        ("host:com", False),
+        ("not_percent_encoded%Zf", False),
+        ("still_not_percent_encoded%fZ", False),
+        *(("other_gen_delim_" + c, False) for c in "/?#[]"),
+    ],
+)
+def test_build_with_invalid_host(host: str, is_authority: bool):
+    match = r"Host '[^']+' cannot contain '[^']+' \(at position \d+\)"
+    if is_authority:
+        match += ", if .* use 'authority' instead of 'host'"
+    with pytest.raises(ValueError, match=f"{match}$"):
+        URL.build(host=host)
+
+
 def test_build_with_authority():
     url = URL.build(scheme="http", authority="степан:bar@host.com:8000", path="path")
     assert (
