@@ -176,6 +176,18 @@ def test_raw_host():
     assert url.raw_host == url._val.hostname
 
 
+@pytest.mark.parametrize(
+    ("host"),
+    [
+        ("example.com"),
+        ("[::1]"),
+    ],
+)
+def test_host_subcomponent(host: str):
+    url = URL(f"http://{host}")
+    assert url.host_subcomponent == host
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
