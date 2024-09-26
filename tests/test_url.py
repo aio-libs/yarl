@@ -188,6 +188,7 @@ def test_raw_host():
 def test_host_subcomponent(host: str):
     url = URL(f"http://{host}")
     assert url.host_subcomponent == host
+    assert url._val.hostname == url.host_subcomponent
 
 
 def test_raw_host_non_ascii():
