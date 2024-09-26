@@ -22,7 +22,7 @@ def test_url_build_ipv6():
 
 def test_url_build_ipv6_brackets():
     u = URL.build(scheme="http", host="[::1]", encoded=True)
-    assert str(u) == "http://::1"
+    assert str(u) == "http://[::1]"
 
 
 def test_url_ipv4_in_ipv6():
