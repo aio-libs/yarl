@@ -664,7 +664,7 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        if raw and (":" in raw or raw[-1].isdigit()):
+        if raw and raw[-1].isdigit() or ":" in raw:
             # IP addresses are never IDNA encoded
             return raw
         return _idna_decode(raw)
