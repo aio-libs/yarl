@@ -1,1 +1,0 @@
-Fixed IPv6 addresses missing brackets when the :class:`~yarl.URL` was converted to a string -- by :user:`bdraco`.

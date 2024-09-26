@@ -14,6 +14,42 @@ Changelog
 
 .. towncrier release notes start
 
+1.13.0
+======
+
+*(2024-09-26)*
+
+
+Bug fixes
+---------
+
+- Started rejecting ASCII hostnames with invalid characters. For host strings that
+  look like authority strings, the exception message includes advice on what to do
+  instead -- by :user:`mjpieters`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`880`, :issue:`954`.
+
+- Fixed IPv6 addresses missing brackets when the :class:`~yarl.URL` was converted to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1157`, :issue:`1158`.
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.host_subcomponent` which returns the :rfc:`3986#section-3.2.2` host subcomponent -- by :user:`bdraco`.
+
+  The only current practical difference between :attr:`~yarl.URL.raw_host` and :attr:`~yarl.URL.host_subcomponent` is that IPv6 addresses are returned bracketed.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1159`.
+
+
+----
+
+
 1.12.1
 ======
 
