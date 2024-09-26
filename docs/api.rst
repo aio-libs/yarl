@@ -288,6 +288,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
    result as :meth:`URL.path`. If the ``%25`` was unquoted, it would be
    impossible to tell the difference between ``%2F`` and ``%252F``.
 
+   .. versionadded:: 1.12
+
 .. attribute:: URL.path_qs
 
    Decoded *path* part of URL and query string, ``'/'`` for absolute URLs without *path* part.
