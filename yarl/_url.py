@@ -647,8 +647,8 @@ class URL:
 
         None for relative URLs.
 
-        For literal IPv6 addresses, use the host_subcomponent property instead
-        as it will return the host part with brackets.
+        When working with IPv6 addresses, use the `host_subcomponent` property instead
+        as it will return the host subcomponent with brackets.
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
