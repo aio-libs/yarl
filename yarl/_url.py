@@ -966,7 +966,7 @@ class URL:
             raw_ip = host
             sep = zone = ""
 
-        if raw_ip and (":" in raw_ip or raw_ip[-1].isdigit()):
+        if raw_ip and (raw_ip[-1].isdigit() or ":" in raw_ip):
             # Might be an IP address, check it
             #
             # IP Addresses can look like:
