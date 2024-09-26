@@ -206,7 +206,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://[::1]').host_subcomponent
       '[::1]'
 
-   .. versionadded:: 1.13.0
+   .. versionadded:: 1.13
 
 .. attribute:: URL.port
 
