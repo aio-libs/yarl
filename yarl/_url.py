@@ -395,7 +395,7 @@ class URL:
                 netloc=self._make_netloc(
                     self.raw_user,
                     self.raw_password,
-                    self.raw_host,
+                    self.literal_host,
                     port,
                     encode_host=False,
                 )
@@ -647,6 +647,8 @@ class URL:
 
         None for relative URLs.
 
+        For literal IPv6 addresses, use the literal_host property instead
+        as it will return the host part with brackets.
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
@@ -660,15 +662,32 @@ class URL:
         None for relative URLs.
 
         """
-        raw = self.raw_host
-        if raw is None:
+        if (raw := self.raw_host) is None:
             return None
-        if "%" in raw:
-            # Hack for scoped IPv6 addresses like
-            # fe80::2%Перевірка
-            # presence of '%' sign means only IPv6 address, so idna is useless.
+        if raw and (":" in raw or raw[-1].isdigit()):
+            # IP addresses are never IDNA encoded
             return raw
         return _idna_decode(raw)
+
+    @cached_property
+    def literal_host(self) -> Union[str, None]:
+        """Return the literal host part of URL.
+
+        None for relative URLs.
+
+        https://datatracker.ietf.org/doc/html/rfc2732#section-2
+
+        Examples:
+         'http://example.com:8080' -> 'example.com'
+         'http://example.com:80' -> 'example.com'
+         'https://127.0.0.1:8443' -> '127.0.0.1'
+         'https://[::1]:8443' -> '[::1]'
+         'http://[::1]' -> '[::1]'
+
+        """
+        if (raw := self.raw_host) is None:
+            return None
+        return f"[{raw}]" if ":" in raw else raw
 
     @cached_property
     def port(self) -> Union[int, None]:
@@ -945,7 +964,7 @@ class URL:
             raw_ip = host
             sep = zone = ""
 
-        if raw_ip and raw_ip[-1].isdigit() or ":" in raw_ip:
+        if raw_ip and (":" in raw_ip or raw_ip[-1].isdigit()):
             # Might be an IP address, check it
             #
             # IP Addresses can look like:
@@ -953,7 +972,8 @@ class URL:
             # - 127.0.0.1 (last character is a digit)
             # - 2001:db8::ff00:42:8329 (contains a colon)
             # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
-            # - [2001:db8::ff00:42:8329] (contains a colon)
+            # - [2001:db8::ff00:42:8329] (contains a colon -- brackets should
+            #                             have been removed before it gets here)
             # Rare IP Address formats are not supported per:
             # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
             #

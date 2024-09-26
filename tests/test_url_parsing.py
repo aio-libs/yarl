@@ -604,3 +604,18 @@ def test_schemes_that_require_host(scheme: str) -> None:
     )
     with pytest.raises(ValueError, match=expect):
         URL(f"{scheme}://:1")
+
+
+@pytest.mark.parametrize(
+    ("url", "hostname"),
+    [("http://[::1]", "[::1]"), ("http://[::1]:8080", "[::1]")],
+)
+def test_ipv6_url_round_trips(url: str, hostname: str) -> None:
+    """Verify that IPv6 URLs round-trip correctly."""
+    parsed = URL(url)
+    hostname_without_brackets = hostname[1:-1]
+    assert parsed._val.hostname == hostname_without_brackets
+    assert parsed.raw_host == hostname_without_brackets
+    assert parsed.literal_host == hostname
+    assert str(parsed) == url
+    assert str(URL(str(parsed))) == url
