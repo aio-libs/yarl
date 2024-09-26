@@ -395,7 +395,7 @@ class URL:
                 netloc=self._make_netloc(
                     self.raw_user,
                     self.raw_password,
-                    self.literal_host,
+                    self.host_subcomponent,
                     port,
                     encode_host=False,
                 )
@@ -670,22 +670,21 @@ class URL:
         return _idna_decode(raw)
 
     @cached_property
-    def literal_host(self) -> Union[str, None]:
-        """Return the literal host part of URL.
+    def host_subcomponent(self) -> Union[str, None]:
+        """Return the host subcomponent part of URL.
 
         None for relative URLs.
 
-        https://datatracker.ietf.org/doc/html/rfc2732#section-2
         https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
-        
+
         `IP-literal = "[" ( IPv6address / IPvFuture  ) "]"`
 
         Examples:
-         'http://example.com:8080' -> 'example.com'
-         'http://example.com:80' -> 'example.com'
-         'https://127.0.0.1:8443' -> '127.0.0.1'
-         'https://[::1]:8443' -> '[::1]'
-         'http://[::1]' -> '[::1]'
+        - `http://example.com:8080` -> `example.com`
+        - `http://example.com:80` -> `example.com`
+        - `https://127.0.0.1:8443` -> `127.0.0.1`
+        - `https://[::1]:8443` -> `[::1]`
+        - `http://[::1]` -> `[::1]`
 
         """
         if (raw := self.raw_host) is None:

@@ -616,6 +616,6 @@ def test_ipv6_url_round_trips(url: str, hostname: str) -> None:
     hostname_without_brackets = hostname[1:-1]
     assert parsed._val.hostname == hostname_without_brackets
     assert parsed.raw_host == hostname_without_brackets
-    assert parsed.literal_host == hostname
+    assert parsed.host_subcomponent == hostname
     assert str(parsed) == url
     assert str(URL(str(parsed))) == url
