@@ -395,7 +395,7 @@ class URL:
                 netloc=self._make_netloc(
                     self.raw_user,
                     self.raw_password,
-                    self.host_subcomponent,
+                    self.raw_host,
                     port,
                     encode_host=False,
                 )
