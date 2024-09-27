@@ -368,10 +368,15 @@ class URL:
             if encoded:
                 netloc = authority
             else:
-                tmp = SplitResult("", authority, "", "", "")
-                port = None if tmp.port == DEFAULT_PORTS.get(scheme) else tmp.port
+                _user, _password, _host, _port = cls._split_netloc(authority)
+                port = None if _port == DEFAULT_PORTS.get(scheme) else _port
+                _host = (
+                    ""
+                    if _host is None
+                    else cls._encode_host(_host, validate_host=False)
+                )
                 netloc = cls._make_netloc(
-                    tmp.username, tmp.password, tmp.hostname, port, encode=True
+                    _user, _password, _host, port, encode=True, encode_host=False
                 )
         elif not user and not password and not host and not port:
             netloc = ""

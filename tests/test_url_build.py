@@ -153,6 +153,31 @@ def test_build_with_authority_without_encoding():
     assert str(url) == "http://foo:bar@host.com:8000/path"
 
 
+def test_build_with_authority_empty_host_no_scheme():
+    url = URL.build(authority="", path="path")
+    assert str(url) == "path"
+
+
+def test_build_with_authority_and_only_user():
+    url = URL.build(scheme="https", authority="user:@foo.com", path="/path")
+    assert str(url) == "https://user:@foo.com/path"
+
+
+def test_build_with_authority_with_port():
+    url = URL.build(scheme="https", authority="foo.com:8080", path="/path")
+    assert str(url) == "https://foo.com:8080/path"
+
+
+def test_build_with_authority_with_ipv6():
+    url = URL.build(scheme="https", authority="[::1]", path="/path")
+    assert str(url) == "https://[::1]/path"
+
+
+def test_build_with_authority_with_ipv6_and_port():
+    url = URL.build(scheme="https", authority="[::1]:81", path="/path")
+    assert str(url) == "https://[::1]:81/path"
+
+
 def test_query_str():
     u = URL.build(scheme="http", host="127.0.0.1", path="/", query_string="arg=value1")
     assert str(u) == "http://127.0.0.1/?arg=value1"
