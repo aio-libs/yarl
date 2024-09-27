@@ -372,11 +372,10 @@ class URL:
                     authority
                 )
                 port = None if tmp_port == DEFAULT_PORTS.get(scheme) else tmp_port
-                tmp_host = (
-                    ""
-                    if tmp_host is None
-                    else cls._encode_host(tmp_host, validate_host=False)
-                )
+                if tmp_host is None:
+                    tmp_host = ""
+                else:
+                    tmp_host = cls._encode_host(tmp_host, validate_host=False)
                 netloc = cls._make_netloc(
                     tmp_username,
                     tmp_password,
