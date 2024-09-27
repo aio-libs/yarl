@@ -14,6 +14,24 @@ Changelog
 
 .. towncrier release notes start
 
+1.13.1
+======
+
+*(2024-09-27)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` with ``authority`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1163`.
+
+
+----
+
+
 1.13.0
 ======
 
