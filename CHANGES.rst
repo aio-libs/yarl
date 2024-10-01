@@ -14,6 +14,205 @@ Changelog
 
 .. towncrier release notes start
 
+1.13.1
+======
+
+*(2024-09-27)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` with ``authority`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1163`.
+
+
+----
+
+
+1.13.0
+======
+
+*(2024-09-26)*
+
+
+Bug fixes
+---------
+
+- Started rejecting ASCII hostnames with invalid characters. For host strings that
+  look like authority strings, the exception message includes advice on what to do
+  instead -- by :user:`mjpieters`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`880`, :issue:`954`.
+
+- Fixed IPv6 addresses missing brackets when the :class:`~yarl.URL` was converted to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1157`, :issue:`1158`.
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.host_subcomponent` which returns the :rfc:`3986#section-3.2.2` host subcomponent -- by :user:`bdraco`.
+
+  The only current practical difference between :attr:`~yarl.URL.raw_host` and :attr:`~yarl.URL.host_subcomponent` is that IPv6 addresses are returned bracketed.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1159`.
+
+
+----
+
+
+1.12.1
+======
+
+*(2024-09-23)*
+
+
+No significant changes.
+
+
+----
+
+
+1.12.0
+======
+
+*(2024-09-23)*
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.path_safe` to be able to fetch the path without ``%2F`` and ``%25`` decoded -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1150`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Restore decoding ``%2F`` (``/``) in ``URL.path`` -- by :user:`bdraco`.
+
+  This change restored the behavior before :issue:`1057`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1151`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of processing paths -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1143`.
+
+
+----
+
+
+1.11.1
+======
+
+*(2024-09-09)*
+
+
+Bug fixes
+---------
+
+- Allowed scheme replacement for relative URLs if the scheme does not require a host -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`280`, :issue:`1138`.
+
+- Allowed empty host for URL schemes other than the special schemes listed in the WHATWG URL spec -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1136`.
+
+
+Features
+--------
+
+- Loosened restriction on integers as query string values to allow classes that implement ``__int__`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1139`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of normalizing paths -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1137`.
+
+
+----
+
+
+1.11.0
+======
+
+*(2024-09-08)*
+
+
+Features
+--------
+
+- Added :meth:`URL.extend_query() <yarl.URL.extend_query>` method, which can be used to extend parameters without replacing same named keys -- by :user:`bdraco`.
+
+  This method was primarily added to replace the inefficient hand rolled method currently used in ``aiohttp``.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1128`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the Cython ``cached_property`` implementation -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1122`.
+
+- Simplified computing ports by removing unnecessary code -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1123`.
+
+- Improved performance of encoding non IPv6 hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1125`.
+
+- Improved performance of :meth:`URL.build() <yarl.URL.build>` when the path, query string, or fragment is an empty string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1126`.
+
+- Improved performance of the :meth:`URL.update_query() <yarl.URL.update_query>` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1130`.
+
+- Improved performance of processing query string changes when arguments are :class:`str` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1131`.
+
+
+----
+
+
 1.10.0
 ======
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from urllib.parse import SplitResult
+from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
@@ -176,6 +176,24 @@ def test_raw_host():
     assert url.raw_host == url._val.hostname
 
 
+@pytest.mark.parametrize(
+    ("host"),
+    [
+        ("example.com"),
+        ("[::1]"),
+        ("xn--gnter-4ya.com"),
+    ],
+)
+def test_host_subcomponent(host: str):
+    url = URL(f"http://{host}")
+    assert url.host_subcomponent == host
+
+
+def test_host_subcomponent_return_idna_encoded_host():
+    url = URL("http://оун-упа.укр")
+    assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
@@ -346,10 +364,46 @@ def test_path_with_spaces():
 
 
 def test_path_with_2F():
-    """Path should not decode %2F, otherwise it may look like a path separator."""
+    """Path should decode %2F."""
 
     url = URL("http://example.com/foo/bar%2fbaz")
-    assert url.path == "/foo/bar%2Fbaz"
+    assert url.path == "/foo/bar/baz"
+
+
+def test_path_safe_with_2F():
+    """Path safe should not decode %2F, otherwise it may look like a path separator."""
+
+    url = URL("http://example.com/foo/bar%2fbaz")
+    assert url.path_safe == "/foo/bar%2Fbaz"
+
+
+def test_path_safe_with_25():
+    """Path safe should not decode %25, otherwise it is prone to double unquoting."""
+
+    url = URL("http://example.com/foo/bar%252Fbaz")
+    assert url.path_safe == "/foo/bar%252Fbaz"
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == "/foo/bar%2Fbaz"
+
+
+@pytest.mark.parametrize(
+    "original_path",
+    [
+        "m+@bar/baz",
+        "m%2B@bar/baz",
+        "m%252B@bar/baz",
+        "m%2F@bar/baz",
+    ],
+)
+def test_path_safe_only_round_trips(original_path: str) -> None:
+    """Path safe can round trip with documented decode method."""
+    encoded_once = quote(original_path, safe="")
+    encoded_twice = quote(encoded_once, safe="")
+
+    url = URL(f"http://example.com/{encoded_twice}")
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == f"/{encoded_once}"
+    assert unquote(unquoted) == f"/{original_path}"
 
 
 def test_raw_path_for_empty_url():
@@ -991,6 +1045,35 @@ def test_joinpath_path_starting_from_slash_is_forbidden():
         ValueError, match="Appending path .* starting from slash is forbidden"
     ):
         assert url.joinpath("/to/others")
+
+
+PATHS = [
+    # No dots
+    ("", ""),
+    ("path", "path"),
+    # Single-dot
+    ("path/to", "path/to"),
+    ("././path/to", "path/to"),
+    ("path/./to", "path/to"),
+    ("path/././to", "path/to"),
+    ("path/to/.", "path/to/"),
+    ("path/to/./.", "path/to/"),
+    # Double-dots
+    ("../path/to", "path/to"),
+    ("path/../to", "to"),
+    ("path/../../to", "to"),
+    # Non-ASCII characters
+    ("μονοπάτι/../../να/ᴜɴɪ/ᴄᴏᴅᴇ", "να/ᴜɴɪ/ᴄᴏᴅᴇ"),
+    ("μονοπάτι/../../να/𝕦𝕟𝕚/𝕔𝕠𝕕𝕖/.", "να/𝕦𝕟𝕚/𝕔𝕠𝕕𝕖/"),
+]
+
+
+@pytest.mark.parametrize("original,expected", PATHS)
+def test_join_path_normalized(original: str, expected: str) -> None:
+    """Test that joinpath normalizes paths."""
+    base_url = URL("http://example.com")
+    new_url = base_url.joinpath(original)
+    assert new_url.path == f"/{expected}"
 
 
 # with_path
@@ -1975,3 +2058,14 @@ def test_parsing_populates_cache():
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
     assert url._cache["scheme"] == "http"
+
+
+@pytest.mark.parametrize(
+    ("host", "is_authority"),
+    [
+        *(("other_gen_delim_" + c, False) for c in "[]"),
+    ],
+)
+def test_build_with_invalid_ipv6_host(host: str, is_authority: bool):
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(f"http://{host}/")

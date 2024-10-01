@@ -27,6 +27,7 @@ facto
 glibc
 google
 hardcoded
+hostnames
 macOS
 mailto
 manylinux
@@ -42,6 +43,7 @@ runtimes
 sdist
 subclass
 subclasses
+subcomponent
 svetlov
 uncompiled
 v1
