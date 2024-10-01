@@ -1,0 +1,1 @@
+Improved performance of :py:meth:`~yarl.URL.is_default_port` when no explicit port is set -- by :user:`bdraco`.
