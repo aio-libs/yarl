@@ -529,12 +529,12 @@ class URL:
         Return False for relative URLs.
 
         """
-        default = self._default_port
-        explicit = self.explicit_port
-        if explicit is None:
-            # A relative URL does not have an implicit port / default port
-            return default is not None
-        return explicit == default
+        if (explicit := self.explicit_port) is None:
+            # If the explicit port is None, then the URL must be
+            # using the default port unless its a relative URL
+            # which does not have an implicit port / default port
+            return self.absolute
+        return explicit == self._default_port
 
     def origin(self) -> "URL":
         """Return an URL with scheme, host and port parts only.
