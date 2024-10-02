@@ -603,10 +603,10 @@ class URL:
     @cached_property
     def _port_not_default(self) -> Union[int, None]:
         """The port part of URL normalized to None if its the default port."""
-        port = self.port
-        if self._default_port == port:
+        explicit_port = self.explicit_port
+        if explicit_port is None or explicit_port == self._default_port:
             return None
-        return port
+        return explicit_port
 
     @cached_property
     def authority(self) -> str:
