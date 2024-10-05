@@ -1,3 +1,5 @@
+from typing import Type
+
 import pytest
 from hypothesis import HealthCheck, assume, example, given, note, settings
 from hypothesis import strategies as st
@@ -477,8 +479,8 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
     )
 )
 def test_quote_unquote_parameter(
-    quoter: _PyQuoter,
-    unquoter: _PyUnquoter,
+    quoter: Type[_PyQuoter],
+    unquoter: Type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter()
@@ -497,8 +499,8 @@ def test_quote_unquote_parameter(
     )
 )
 def test_quote_unquote_parameter_requote(
-    quoter: _PyQuoter,
-    unquoter: _PyUnquoter,
+    quoter: Type[_PyQuoter],
+    unquoter: Type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter(requote=True)
@@ -517,8 +519,8 @@ def test_quote_unquote_parameter_requote(
     )
 )
 def test_quote_unquote_parameter_path_safe(
-    quoter: _PyQuoter,
-    unquoter: _PyUnquoter,
+    quoter: Type[_PyQuoter],
+    unquoter: Type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter()
