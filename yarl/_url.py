@@ -1048,7 +1048,6 @@ class URL:
             if validate_host:
                 _host_validate(host)
             return host
-
         return _idna_encode(host)
 
     @classmethod
