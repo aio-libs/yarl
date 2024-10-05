@@ -95,6 +95,7 @@ class _SplitResultDict(TypedDict, total=False):
 
 class _InternalURLCache(TypedDict, total=False):
 
+    _origin: "URL"
     absolute: bool
     scheme: str
     raw_authority: str
@@ -543,13 +544,24 @@ class URL:
 
         """
         # TODO: add a keyword-only option for keeping user/pass maybe?
-        if not self.absolute:
-            raise ValueError("URL should be absolute")
-        if not self._val.scheme:
-            raise ValueError("URL should have scheme")
+        return self._origin
+
+    @cached_property
+    def _origin(self) -> "URL":
+        """Return an URL with scheme, host and port parts only.
+
+        user, password, path, query and fragment are removed.
+        """
         v = self._val
-        netloc = self._make_netloc(None, None, v.hostname, v.port)
-        val = v._replace(netloc=netloc, path="", query="", fragment="")
+        if not v.netloc:
+            raise ValueError("URL should be absolute")
+        if not v.scheme:
+            raise ValueError("URL should have scheme")
+        if "@" not in v.netloc:
+            val = v._replace(path="", query="", fragment="")
+        else:
+            netloc = self._make_netloc(None, None, v.hostname, v.port)
+            val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
 
     def relative(self) -> "URL":
@@ -1052,26 +1064,24 @@ class URL:
     ) -> str:
         if host is None:
             return ""
-        quoter = cls._REQUOTER if requote else cls._QUOTER
-        if encode_host:
-            ret = cls._encode_host(host)
-        else:
-            ret = host
+        ret = cls._encode_host(host) if encode_host else host
         if port is not None:
             ret = f"{ret}:{port}"
+        if user is None and password is None:
+            return ret
+        quoter = cls._REQUOTER if requote else cls._QUOTER
         if password is not None:
             if not user:
                 user = ""
-            else:
-                if encode:
-                    user = quoter(user)
+            elif encode:
+                user = quoter(user)
             if encode:
                 password = quoter(password)
-            user = user + ":" + password
+            user = f"{user}:{password}"
         elif user and encode:
             user = quoter(user)
         if user:
-            ret = user + "@" + ret
+            ret = f"{user}@{ret}"
         return ret
 
     @classmethod
