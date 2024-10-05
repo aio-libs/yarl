@@ -95,6 +95,7 @@ class _SplitResultDict(TypedDict, total=False):
 
 class _InternalURLCache(TypedDict, total=False):
 
+    _origin: "URL"
     absolute: bool
     scheme: str
     raw_authority: str
@@ -543,13 +544,24 @@ class URL:
 
         """
         # TODO: add a keyword-only option for keeping user/pass maybe?
-        if not self.absolute:
-            raise ValueError("URL should be absolute")
-        if not self._val.scheme:
-            raise ValueError("URL should have scheme")
+        return self._origin
+
+    @cached_property
+    def _origin(self) -> "URL":
+        """Return an URL with scheme, host and port parts only.
+
+        user, password, path, query and fragment are removed.
+        """
         v = self._val
-        netloc = self._make_netloc(None, None, v.hostname, v.port)
-        val = v._replace(netloc=netloc, path="", query="", fragment="")
+        if not v.netloc:
+            raise ValueError("URL should be absolute")
+        if not v.scheme:
+            raise ValueError("URL should have scheme")
+        if "@" not in v.netloc:
+            val = v._replace(path="", query="", fragment="")
+        else:
+            netloc = self._make_netloc(None, None, v.hostname, v.port)
+            val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
 
     def relative(self) -> "URL":
@@ -603,10 +615,10 @@ class URL:
     @cached_property
     def _port_not_default(self) -> Union[int, None]:
         """The port part of URL normalized to None if its the default port."""
-        port = self.port
-        if self._default_port == port:
+        explicit_port = self.explicit_port
+        if explicit_port is None or explicit_port == self._default_port:
             return None
-        return port
+        return explicit_port
 
     @cached_property
     def authority(self) -> str:
@@ -985,13 +997,18 @@ class URL:
     def _encode_host(
         cls, host: str, human: bool = False, validate_host: bool = True
     ) -> str:
-        if "%" in host:
-            raw_ip, sep, zone = host.partition("%")
-        else:
-            raw_ip = host
-            sep = zone = ""
-
-        if raw_ip and raw_ip[-1].isdigit() or ":" in raw_ip:
+        if host and host[-1].isdigit() or ":" in host:
+            # If the host ends with a digit or contains a colon, its likely
+            # an IP address. So we check with _ip_compressed_version
+            # and fall-through if its not an IP address. This is a performance
+            # optimization to avoid parsing IP addresses as much as possible
+            # because it is orders of magnitude slower than almost any other
+            # operation this library does.
+            if "%" in host:
+                raw_ip, sep, zone = host.partition("%")
+            else:
+                raw_ip = host
+                sep = zone = ""
             # Might be an IP address, check it
             #
             # IP Addresses can look like:
@@ -1004,10 +1021,6 @@ class URL:
             # Rare IP Address formats are not supported per:
             # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
             #
-            # We try to avoid parsing IP addresses as much as possible
-            # since its orders of magnitude slower than almost any other operation
-            # this library does.
-            #
             # IP parsing is slow, so its wrapped in an LRU
             try:
                 ip_compressed_version = _ip_compressed_version(raw_ip)
@@ -1017,11 +1030,9 @@ class URL:
                 # These checks should not happen in the
                 # LRU to keep the cache size small
                 host, version = ip_compressed_version
-                if sep:
-                    host += "%" + zone
                 if version == 6:
-                    return f"[{host}]"
-                return host
+                    return f"[{host}%{zone}]" if sep else f"[{host}]"
+                return f"{host}%{zone}" if sep else host
 
         host = host.lower()
         if human:
@@ -1052,26 +1063,24 @@ class URL:
     ) -> str:
         if host is None:
             return ""
-        quoter = cls._REQUOTER if requote else cls._QUOTER
-        if encode_host:
-            ret = cls._encode_host(host)
-        else:
-            ret = host
+        ret = cls._encode_host(host) if encode_host else host
         if port is not None:
             ret = f"{ret}:{port}"
+        if user is None and password is None:
+            return ret
+        quoter = cls._REQUOTER if requote else cls._QUOTER
         if password is not None:
             if not user:
                 user = ""
-            else:
-                if encode:
-                    user = quoter(user)
+            elif encode:
+                user = quoter(user)
             if encode:
                 password = quoter(password)
-            user = user + ":" + password
+            user = f"{user}:{password}"
         elif user and encode:
             user = quoter(user)
         if user:
-            ret = user + "@" + ret
+            ret = f"{user}@{ret}"
         return ret
 
     @classmethod
