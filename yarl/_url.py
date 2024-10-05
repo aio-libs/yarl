@@ -610,7 +610,7 @@ class URL:
     @cached_property
     def _default_port(self) -> Union[int, None]:
         """Default port for the scheme or None if not known."""
-        return DEFAULT_PORTS.get(self.scheme)
+        return DEFAULT_PORTS.get(self._val.scheme)
 
     @cached_property
     def _port_not_default(self) -> Union[int, None]:
@@ -781,7 +781,7 @@ class URL:
     @cached_property
     def _parsed_query(self) -> List[Tuple[str, str]]:
         """Parse query part of URL."""
-        return parse_qsl(self.raw_query_string, keep_blank_values=True)
+        return parse_qsl(self._val.query, keep_blank_values=True)
 
     @cached_property
     def query(self) -> "MultiDictProxy[str]":
@@ -809,7 +809,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        return self._QS_UNQUOTER(self.raw_query_string)
+        return self._QS_UNQUOTER(self._val.query)
 
     @cached_property
     def path_qs(self) -> str:
@@ -821,9 +821,9 @@ class URL:
     @cached_property
     def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
-        if not self.raw_query_string:
+        if not self._val.query:
             return self.raw_path
-        return f"{self.raw_path}?{self.raw_query_string}"
+        return f"{self.raw_path}?{self._val.query}"
 
     @cached_property
     def raw_fragment(self) -> str:
@@ -841,7 +841,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        return self._UNQUOTER(self.raw_fragment)
+        return self._UNQUOTER(self._val.fragment)
 
     @cached_property
     def raw_parts(self) -> Tuple[str, ...]:
@@ -880,7 +880,7 @@ class URL:
         """
         path = self.raw_path
         if not path or path == "/":
-            if self.raw_fragment or self.raw_query_string:
+            if self._val.fragment or self._val.query:
                 return URL(self._val._replace(query="", fragment=""), encoded=True)
             return self
         parts = path.split("/")
@@ -1361,7 +1361,7 @@ class URL:
         new_query_string = self._get_str_query(*args, **kwargs)
         if not new_query_string:
             return self
-        if current_query := self.raw_query_string:
+        if current_query := self._val.query:
             # both strings are already encoded so we can use a simple
             # string join
             if current_query[-1] == "&":
@@ -1425,7 +1425,7 @@ class URL:
             raise TypeError("Invalid fragment type")
         else:
             raw_fragment = self._FRAGMENT_QUOTER(fragment)
-        if self.raw_fragment == raw_fragment:
+        if self._val.fragment == raw_fragment:
             return self
         return URL(self._val._replace(fragment=raw_fragment), encoded=True)
 
@@ -1559,7 +1559,7 @@ class URL:
         netloc = self._make_netloc(
             user, password, host, self.explicit_port, encode_host=False
         )
-        val = SplitResult(self.scheme, netloc, path, query_string, fragment)
+        val = SplitResult(self._val.scheme, netloc, path, query_string, fragment)
         return urlunsplit(val)
 
 
