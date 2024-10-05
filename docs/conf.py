@@ -84,6 +84,7 @@ except ImportError:
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "multidict": ("https://multidict.aio-libs.org/en/stable", None),
+    "propcache": ("https://propcache.aio-libs.org/en/stable", None),
 }
 
 
