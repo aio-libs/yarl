@@ -20,8 +20,10 @@ if not NO_EXTENSIONS:
     def unquoter(request):
         return request.param
 
-    quoters = st.sampled_from([_PyQuoter, _CQuoter])
-    unquoters = st.sampled_from([_PyUnquoter, _CUnquoter])
+    quoters = [_PyQuoter, _CQuoter]
+    quoter_ids = ["PyQuoter", "CQuoter"]
+    unquoters = [_PyUnquoter, _CUnquoter]
+    unquoter_ids = ["PyUnquoter", "CUnquoter"]
 else:
 
     @pytest.fixture(params=[_PyQuoter], ids=["py_quoter"])
@@ -32,8 +34,10 @@ else:
     def unquoter(request):
         return request.param
 
-    quoters = st.just(_PyQuoter)
-    unquoters = st.just(_PyUnquoter)
+    quoters = [_PyQuoter]
+    quoter_ids = ["PyQuoter"]
+    unquoters = [_PyUnquoter]
+    unquoter_ids = ["PyUnquoter"]
 
 
 def hexescape(char):
@@ -478,14 +482,14 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
     assert _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
 
 
-@example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
+@example(text_input="0")
 @given(
-    quoter=quoters,
-    unquoter=unquoters,
     text_input=st.text(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
+@pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter(
     quoter: Type[_PyQuoter],
     unquoter: Type[_PyUnquoter],
@@ -499,14 +503,14 @@ def test_quote_unquote_parameter(
     assert text_input == text_output
 
 
-@example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
+@example(text_input="0")
 @given(
-    quoter=quoters,
-    unquoter=unquoters,
     text_input=st.text(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
+@pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_requote(
     quoter: Type[_PyQuoter],
     unquoter: Type[_PyUnquoter],
@@ -520,14 +524,14 @@ def test_quote_unquote_parameter_requote(
     assert text_input == text_output
 
 
-@example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
+@example(text_input="0")
 @given(
-    quoter=quoters,
-    unquoter=unquoters,
     text_input=st.text(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
+@pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_path_safe(
     quoter: Type[_PyQuoter],
     unquoter: Type[_PyUnquoter],
