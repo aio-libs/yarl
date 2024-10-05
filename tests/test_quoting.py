@@ -1,7 +1,7 @@
 from typing import Type
 
 import pytest
-from hypothesis import HealthCheck, assume, example, given, note, settings
+from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
 from yarl._quoting import NO_EXTENSIONS
@@ -479,7 +479,6 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
 
 
 @example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
-@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
     quoter=quoters,
     unquoter=unquoters,
@@ -501,7 +500,6 @@ def test_quote_unquote_parameter(
 
 
 @example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
-@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
     quoter=quoters,
     unquoter=unquoters,
@@ -523,7 +521,6 @@ def test_quote_unquote_parameter_requote(
 
 
 @example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
-@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
     quoter=quoters,
     unquoter=unquoters,
