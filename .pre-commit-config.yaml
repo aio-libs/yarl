@@ -113,6 +113,7 @@ repos:
     alias: mypy-py313
     name: MyPy, for Python 3.13
     additional_dependencies:
+    - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
     - pytest
@@ -128,6 +129,7 @@ repos:
     alias: mypy-py312
     name: MyPy, for Python 3.12
     additional_dependencies:
+    - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
     - pytest
@@ -143,6 +145,7 @@ repos:
     alias: mypy-py310
     name: MyPy, for Python 3.10
     additional_dependencies:
+    - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
     - pytest
@@ -160,6 +163,7 @@ repos:
     alias: mypy-py38
     name: MyPy, for Python 3.8
     additional_dependencies:
+    - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
     - pytest
