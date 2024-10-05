@@ -20,6 +20,8 @@ if not NO_EXTENSIONS:
     def unquoter(request):
         return request.param
 
+    quoters = st.sampled_from([_PyQuoter, _CQuoter])
+    unquoters = st.sampled_from([_PyUnquoter, _CUnquoter])
 else:
 
     @pytest.fixture(params=[_PyQuoter], ids=["py_quoter"])
@@ -29,6 +31,9 @@ else:
     @pytest.fixture(params=[_PyUnquoter], ids=["py_unquoter"])
     def unquoter(request):
         return request.param
+
+    quoters = st.just(_PyQuoter)
+    unquoters = st.just(_PyUnquoter)
 
 
 def hexescape(char):
@@ -473,12 +478,14 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
     assert _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
 
 
-@example(text_input="0")
+@example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
 @settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
+    quoter=quoters,
+    unquoter=unquoters,
     text_input=st.text(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
-    )
+    ),
 )
 def test_quote_unquote_parameter(
     quoter: Type[_PyQuoter],
@@ -493,12 +500,14 @@ def test_quote_unquote_parameter(
     assert text_input == text_output
 
 
-@example(text_input="0")
+@example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
 @settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
+    quoter=quoters,
+    unquoter=unquoters,
     text_input=st.text(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
-    )
+    ),
 )
 def test_quote_unquote_parameter_requote(
     quoter: Type[_PyQuoter],
@@ -513,12 +522,14 @@ def test_quote_unquote_parameter_requote(
     assert text_input == text_output
 
 
-@example(text_input="0")
+@example(text_input="0", quoter=_PyQuoter, unquoter=_PyUnquoter)
 @settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
+    quoter=quoters,
+    unquoter=unquoters,
     text_input=st.text(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
-    )
+    ),
 )
 def test_quote_unquote_parameter_path_safe(
     quoter: Type[_PyQuoter],
@@ -532,59 +543,3 @@ def test_quote_unquote_parameter_path_safe(
     note(f"text_quoted={text_quoted!r}")
     text_output = unquote(text_quoted)
     assert text_input == text_output
-
-
-if not NO_EXTENSIONS:
-    test_quote_unquote_parameter = example(
-        quoter=_PyQuoter,
-        unquoter=_CUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter)
-
-    test_quote_unquote_parameter = example(
-        quoter=_CQuoter,
-        unquoter=_PyUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter)
-
-    test_quote_unquote_parameter = example(
-        quoter=_CQuoter,
-        unquoter=_CUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter)
-
-    test_quote_unquote_parameter_requote = example(
-        quoter=_PyQuoter,
-        unquoter=_CUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter_requote)
-
-    test_quote_unquote_parameter_requote = example(
-        quoter=_CQuoter,
-        unquoter=_PyUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter_requote)
-
-    test_quote_unquote_parameter_requote = example(
-        quoter=_CQuoter,
-        unquoter=_CUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter_requote)
-
-    test_quote_unquote_parameter_path_safe = example(
-        quoter=_PyQuoter,
-        unquoter=_CUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter_path_safe)
-
-    test_quote_unquote_parameter_path_safe = example(
-        quoter=_CQuoter,
-        unquoter=_PyUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter_path_safe)
-
-    test_quote_unquote_parameter_path_safe = example(
-        quoter=_CQuoter,
-        unquoter=_CUnquoter,
-        text_input="0",
-    )(test_quote_unquote_parameter_path_safe)
