@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Type
 
 import pytest
 from hypothesis import HealthCheck, assume, example, given, note, settings
@@ -29,9 +29,6 @@ else:
     @pytest.fixture(params=[_PyUnquoter], ids=["py_unquoter"])
     def unquoter(request):
         return request.param
-
-    _CUnquoter = _PyUnquoter  # type: ignore[misc, assignment]
-    _CQuoter = _PyQuoter  # type: ignore[misc, assignment]
 
 
 def hexescape(char):
@@ -482,8 +479,8 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
     )
 )
 def test_quote_unquote_parameter(
-    quoter: Union[Type[_PyQuoter], Type[_CQuoter]],
-    unquoter: Union[Type[_PyUnquoter], Type[_CUnquoter]],
+    quoter: Type[_PyQuoter],
+    unquoter: Type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter()
@@ -502,8 +499,8 @@ def test_quote_unquote_parameter(
     )
 )
 def test_quote_unquote_parameter_requote(
-    quoter: Union[Type[_PyQuoter], Type[_CQuoter]],
-    unquoter: Union[Type[_PyUnquoter], Type[_CUnquoter]],
+    quoter: Type[_PyQuoter],
+    unquoter: Type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter(requote=True)
@@ -522,8 +519,8 @@ def test_quote_unquote_parameter_requote(
     )
 )
 def test_quote_unquote_parameter_path_safe(
-    quoter: Union[Type[_PyQuoter], Type[_CQuoter]],
-    unquoter: Union[Type[_PyUnquoter], Type[_CUnquoter]],
+    quoter: Type[_PyQuoter],
+    unquoter: Type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter()
