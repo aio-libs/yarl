@@ -534,7 +534,7 @@ def test_quote_unquote_parameter_path_safe(
     assert text_input == text_output
 
 
-if not NO_EXTENSIONS and False:
+if not NO_EXTENSIONS:
     test_quote_unquote_parameter = example(
         quoter=_PyQuoter,
         unquoter=_CUnquoter,
