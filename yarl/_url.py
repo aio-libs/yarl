@@ -997,13 +997,18 @@ class URL:
     def _encode_host(
         cls, host: str, human: bool = False, validate_host: bool = True
     ) -> str:
-        if "%" in host:
-            raw_ip, sep, zone = host.partition("%")
-        else:
-            raw_ip = host
-            sep = zone = ""
-
-        if raw_ip and raw_ip[-1].isdigit() or ":" in raw_ip:
+        if host and host[-1].isdigit() or ":" in host:
+            # If the host ends with a digit or contains a colon, its likely
+            # an IP address. So we check with _ip_compressed_version
+            # and fall-through if its not an IP address. This is a performance
+            # optimization to avoid parsing IP addresses as much as possible
+            # because it is orders of magnitude slower than almost any other
+            # operation this library does.
+            if "%" in host:
+                raw_ip, sep, zone = host.partition("%")
+            else:
+                raw_ip = host
+                sep = zone = ""
             # Might be an IP address, check it
             #
             # IP Addresses can look like:
@@ -1016,10 +1021,6 @@ class URL:
             # Rare IP Address formats are not supported per:
             # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
             #
-            # We try to avoid parsing IP addresses as much as possible
-            # since its orders of magnitude slower than almost any other operation
-            # this library does.
-            #
             # IP parsing is slow, so its wrapped in an LRU
             try:
                 ip_compressed_version = _ip_compressed_version(raw_ip)
@@ -1029,11 +1030,9 @@ class URL:
                 # These checks should not happen in the
                 # LRU to keep the cache size small
                 host, version = ip_compressed_version
-                if sep:
-                    host += "%" + zone
-                if version == 6:
-                    return f"[{host}]"
-                return host
+                if version != 6:
+                    return host
+                return f"[{host}%{zone}]" if sep else f"[{host}]"
 
         host = host.lower()
         if human:
@@ -1049,6 +1048,7 @@ class URL:
             if validate_host:
                 _host_validate(host)
             return host
+
         return _idna_encode(host)
 
     @classmethod
