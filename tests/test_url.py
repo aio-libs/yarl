@@ -2,10 +2,7 @@ from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
 
-import yarl
 from yarl import URL
 
 
