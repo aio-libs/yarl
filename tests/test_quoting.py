@@ -3,6 +3,7 @@ from hypothesis import HealthCheck, assume, example, given, note, settings
 from hypothesis import strategies as st
 
 from yarl._quoting import NO_EXTENSIONS
+from yarl._quoting_py import ALLOWED
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
@@ -459,49 +460,77 @@ def test_unquoter_path_with_plus(unquoter):
     assert "/test/x+y+z/:++/" == unquoter(unsafe="+")(s)
 
 
-@example(
-    # quoter=_PyQuoter,
-    # unquoter=_PyUnquoter,
-    text_input="0",
-    safe="",
-    unsafe="0",
-    protected="",
-    qs=False,
-    requote=False,
-)
+@given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
+def test_fuzz__PyQuoter(safe, protected, qs, requote):
+    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+
+
+@given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
+def test_fuzz__PyUnquoter(ignore, unsafe, qs):
+    _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
+
+
+@example(text_input="0")
 @settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
-@given(
-    text_input=st.text(),
-    safe=st.text(alphabet=st.characters(max_codepoint=127)),
-    unsafe=st.text(),
-    protected=st.text(alphabet=st.characters(max_codepoint=127)),
-    qs=st.booleans(),
-    requote=st.booleans(),
-)
+@given(text_input=st.text(alphabet=st.characters(max_codepoint=127)))
 def test_quote_unquote_parameter(
     quoter: _PyQuoter,
     unquoter: _PyUnquoter,
-    safe: str,
-    unsafe: str,
-    protected: str,
-    qs: bool,
-    requote: bool,
     text_input: str,
 ) -> None:
-    quote = quoter(safe=safe, protected=protected, qs=qs, requote=requote)
-    unquote = unquoter(unsafe=unsafe, qs=qs)
-
+    quote = quoter()
+    unquote = unquoter()
     text_quoted = quote(text_input)
-    assume(qs and all(unsafe_char not in text_quoted for unsafe_char in unsafe))
-    note(f"text_quoted={text_quoted !r}")
+    note(f"text_quoted={text_quoted!r}")
     text_output = unquote(text_quoted)
-    assume(qs or all(unsafe_char not in text_output for unsafe_char in unsafe))
-    # assume(
-    #     qs and
-    #     (unsafe in text_quoted and text_input != text_output) or
-    #     (unsafe not in text_quoted)
-    # )
+    import pprint
 
+    pprint.pprint(
+        [
+            "text_input",
+            text_input,
+            "text_quoted",
+            text_quoted,
+            "text_output",
+            text_output,
+        ]
+    )
+    assert text_input == text_output
+
+
+@example(text_input="0")
+@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
+@given(text_input=st.text(alphabet=st.characters(max_codepoint=127)))
+def test_quote_unquote_parameter_requote(
+    quoter: _PyQuoter,
+    unquoter: _PyUnquoter,
+    text_input: str,
+) -> None:
+    quote = quoter(requote=True)
+    unquote = unquoter()
+    text_quoted = quote(text_input)
+    note(f"text_quoted={text_quoted!r}")
+    text_output = unquote(text_quoted)
+    assert text_input == text_output
+
+
+@example(text_input="0")
+@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
+@given(
+    text_input=st.text(
+        alphabet=st.characters(max_codepoint=127, blacklist_characters="/%+")
+    )
+)
+def test_quote_unquote_parameter_path_safe(
+    quoter: _PyQuoter,
+    unquoter: _PyUnquoter,
+    text_input: str,
+) -> None:
+    quote = quoter()
+    unquote = unquoter(ignore="/%", unsafe="+")
+    text_quoted = quote(text_input)
+    note(f"text_quoted={text_quoted!r}")
+    text_output = unquote(text_quoted)
     assert text_input == text_output
 
 
@@ -510,29 +539,52 @@ if not NO_EXTENSIONS and False:
         quoter=_PyQuoter,
         unquoter=_CUnquoter,
         text_input="0",
-        safe="",
-        unsafe="0",
-        protected="",
-        qs=False,
-        requote=False,
     )(test_quote_unquote_parameter)
+
     test_quote_unquote_parameter = example(
         quoter=_CQuoter,
         unquoter=_PyUnquoter,
         text_input="0",
-        safe="",
-        unsafe="0",
-        protected="",
-        qs=False,
-        requote=False,
     )(test_quote_unquote_parameter)
+
     test_quote_unquote_parameter = example(
         quoter=_CQuoter,
         unquoter=_CUnquoter,
         text_input="0",
-        safe="",
-        unsafe="0",
-        protected="",
-        qs=False,
-        requote=False,
     )(test_quote_unquote_parameter)
+
+#    test_quote_unquote_parameter_requote = example(
+#        quoter=_PyQuoter,
+#        unquoter=_CUnquoter,
+#        text_input="0",
+#    )(test_quote_unquote_parameter_requote)
+
+#    test_quote_unquote_parameter_requote = example(
+#        quoter=_CQuoter,
+#        unquoter=_PyUnquoter,
+#        text_input="0",
+#    )(test_quote_unquote_parameter_requote)
+
+#    test_quote_unquote_parameter_requote = example(
+#        quoter=_CQuoter,
+#        unquoter=_CUnquoter,
+#        text_input="0",
+#    )(test_quote_unquote_parameter_requote)
+
+#    test_quote_unquote_parameter_path_safe = example(
+#        quoter=_PyQuoter,
+#        unquoter=_CUnquoter,
+#        text_input="0",
+#    )(test_quote_unquote_parameter_path_safe)
+
+#    test_quote_unquote_parameter_path_safe = example(
+#        quoter=_CQuoter,
+#        unquoter=_PyUnquoter,
+#        text_input="0",
+#    )(test_quote_unquote_parameter_path_safe)
+
+#    test_quote_unquote_parameter_path_safe = example(
+#        quoter=_CQuoter,
+#        unquoter=_CUnquoter,
+#        text_input="0",
+#    )(test_quote_unquote_parameter_path_safe)
