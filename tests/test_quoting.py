@@ -463,12 +463,14 @@ def test_unquoter_path_with_plus(unquoter):
 
 @given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
 def test_fuzz__PyQuoter(safe, protected, qs, requote):
-    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    """Verify that _PyQuoter can be instantiated with any valid arguments."""
+    assert _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
 @given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
 def test_fuzz__PyUnquoter(ignore, unsafe, qs):
-    _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
+    """Verify that _PyUnquoter can be instantiated with any valid arguments."""
+    assert _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
 
 
 @example(text_input="0")
