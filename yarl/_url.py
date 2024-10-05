@@ -1030,9 +1030,9 @@ class URL:
                 # These checks should not happen in the
                 # LRU to keep the cache size small
                 host, version = ip_compressed_version
-                if version != 6:
-                    return host
-                return f"[{host}%{zone}]" if sep else f"[{host}]"
+                if version == 6:
+                    return f"[{host}%{zone}]" if sep else f"[{host}]"
+                return f"{host}%{zone}" if sep else host
 
         host = host.lower()
         if human:
