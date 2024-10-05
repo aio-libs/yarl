@@ -3,7 +3,6 @@ from hypothesis import HealthCheck, assume, example, given, note, settings
 from hypothesis import strategies as st
 
 from yarl._quoting import NO_EXTENSIONS
-from yarl._quoting_py import ALLOWED
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
@@ -514,7 +513,7 @@ def test_quote_unquote_parameter_requote(
 @settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
 @given(
     text_input=st.text(
-        alphabet=st.characters(max_codepoint=127, blacklist_characters="/%+")
+        alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     )
 )
 def test_quote_unquote_parameter_path_safe(
@@ -524,6 +523,7 @@ def test_quote_unquote_parameter_path_safe(
 ) -> None:
     quote = quoter()
     unquote = unquoter(ignore="/%", unsafe="+")
+    assume("+" not in text_input and "/" not in text_input)
     text_quoted = quote(text_input)
     note(f"text_quoted={text_quoted!r}")
     text_output = unquote(text_quoted)
