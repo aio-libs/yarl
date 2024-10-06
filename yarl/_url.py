@@ -32,7 +32,7 @@ from urllib.parse import (
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
-from propcache import under_cached_property as cached_property
+from propcache.api import under_cached_property as cached_property
 
 from ._quoting import _Quoter, _Unquoter
 
