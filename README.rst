@@ -128,7 +128,7 @@ by this variable.
 Dependencies
 ------------
 
-YARL requires multidict_ library.
+YARL requires multidict_ and propcache_ libraries.
 
 
 API documentation
@@ -203,3 +203,5 @@ It's *Apache 2* licensed and freely available.
 .. _GitHub: https://github.com/aio-libs/yarl
 
 .. _multidict: https://github.com/aio-libs/multidict
+
+.. _propcache: https://github.com/aio-libs/propcache

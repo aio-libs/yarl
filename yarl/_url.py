@@ -32,8 +32,8 @@ from urllib.parse import (
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
+from propcache.api import under_cached_property as cached_property
 
-from ._helpers import cached_property
 from ._quoting import _Quoter, _Unquoter
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}

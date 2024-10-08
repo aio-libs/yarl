@@ -116,6 +116,7 @@ repos:
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
+    - propcache >= 0.2.0
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
@@ -132,6 +133,7 @@ repos:
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
+    - propcache >= 0.2.0
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
@@ -148,6 +150,7 @@ repos:
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
+    - propcache >= 0.2.0
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
@@ -166,6 +169,7 @@ repos:
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
+    - propcache >= 0.2.0
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
