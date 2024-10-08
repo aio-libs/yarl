@@ -1,1 +1,0 @@
-Improved performance of the :py:meth:`~yarl.URL.origin` method -- by :user:`bdraco`.

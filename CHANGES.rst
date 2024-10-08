@@ -14,6 +14,64 @@ Changelog
 
 .. towncrier release notes start
 
+1.14.0
+======
+
+*(2024-10-08)*
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Switched to using the :mod:`propcache <propcache.api>` package for property caching
+  -- by :user:`bdraco`.
+
+  The :mod:`propcache <propcache.api>` package is derived from the property caching
+  code in :mod:`yarl` and has been broken out to avoid maintaining it for multiple
+  projects.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1169`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Started testing with Hypothesis -- by :user:`webknjaz` and :user:`bdraco`.
+
+  Special thanks to :user:`Zac-HD` for helping us get started with this framework.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`860`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of :py:meth:`~yarl.URL.is_default_port` when no explicit port is set -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1168`.
+
+- Improved performance of converting :class:`~yarl.URL` to a string when no explicit port is set -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1170`.
+
+- Improved performance of the :py:meth:`~yarl.URL.origin` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1175`.
+
+- Improved performance of encoding hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1176`.
+
+
+----
+
+
 1.13.1
 ======
 
