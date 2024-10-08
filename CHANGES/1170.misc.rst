@@ -1,1 +1,0 @@
-Improved performance of converting :class:`~yarl.URL` to a string when no explicit port is set -- by :user:`bdraco`.

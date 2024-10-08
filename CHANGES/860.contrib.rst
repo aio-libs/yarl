@@ -1,3 +1,0 @@
-Started testing with Hypothesis -- by :user:`webknjaz` and :user:`bdraco`.
-
-Special thanks to :user:`Zac-HD` for helping us get started with this framework.
