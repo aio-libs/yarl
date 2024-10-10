@@ -73,6 +73,7 @@ before-test = [
   # Ref: https://github.com/pypa/cibuildwheel/issues/1666
   "PIP_CONSTRAINT= pip install PyYAML",
 ]
+free-threaded-support = true
 test-requires = "-r requirements/test.txt"
 test-command = "pytest -v --no-cov {project}/tests"
 # don't build PyPy wheels, install from source instead
