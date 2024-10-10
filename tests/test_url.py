@@ -1486,6 +1486,15 @@ def test_is_default_port_for_unknown_scheme():
     assert not url.is_default_port()
 
 
+def test_handling_port_zero():
+    url = URL("http://example.com:0")
+    assert url.explicit_port == 0
+    assert url.explicit_port == url._val.port
+    assert url._port_not_default == 0
+    assert str(url) == "http://example.com:0"
+    assert not url.is_default_port()
+
+
 #
 
 
