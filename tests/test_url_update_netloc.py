@@ -26,8 +26,10 @@ def test_with_scheme_uppercased():
 def test_with_scheme_for_relative_url(scheme: str) -> None:
     """Test scheme can be set for relative URL."""
     lower_scheme = scheme.lower()
-    msg = "scheme replacement is not allowed for "
-    msg += f"relative URLs for the {lower_scheme} scheme"
+    msg = (
+        "scheme replacement is not allowed for "
+        f"relative URLs for the {lower_scheme} scheme"
+    )
     with pytest.raises(ValueError, match=msg):
         assert URL("path/to").with_scheme(scheme)
 
