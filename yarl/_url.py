@@ -291,9 +291,7 @@ class URL:
                 host = cls._encode_host(host, validate_host=False)
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
-                netloc = cls._make_netloc(
-                    raw_user, raw_password, host, port, encode_host=False
-                )
+                netloc = cls._make_netloc(raw_user, raw_password, host, port)
                 if "[" in host:
                     # Our host encoder adds back brackets for IPv6 addresses
                     # so we need to remove them here to get the raw host
@@ -309,15 +307,25 @@ class URL:
             if path:
                 path = cls._PATH_REQUOTER(path)
                 if netloc:
-                    path = cls._normalize_path(path)
+                    if "." in path:
+                        path = cls._normalize_path(path)
+                    cls._validate_authority_uri_abs_path(host, path)
 
-            cls._validate_authority_uri_abs_path(host=host, path=path)
             query = cls._QUERY_REQUOTER(query) if query else query
             fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
             cache["scheme"] = scheme
             cache["raw_query_string"] = query
             cache["raw_fragment"] = fragment
-            val = SplitResult(scheme, netloc, path, query, fragment)
+            # There is a good chance that the SplitResult is already normalized
+            # so we can avoid the extra work of creating a new SplitResult
+            # if the input SplitResult is already normalized
+            if (
+                val.netloc != netloc
+                or val.path != path
+                or val.query != query
+                or val.fragment != fragment
+            ):
+                val = SplitResult(scheme, netloc, path, query, fragment)
 
         self = object.__new__(cls)
         self._val = val
@@ -376,22 +384,22 @@ class URL:
                     if _host is None
                     else cls._encode_host(_host, validate_host=False)
                 )
-                netloc = cls._make_netloc(
-                    _user, _password, _host, port, encode=True, encode_host=False
-                )
+                netloc = cls._make_netloc(_user, _password, _host, port, encode=True)
         elif not user and not password and not host and not port:
             netloc = ""
         else:
             port = None if port == DEFAULT_PORTS.get(scheme) else port
+            encoded_host = host if encoded else cls._encode_host(host)
             netloc = cls._make_netloc(
-                user, password, host, port, encode=not encoded, encode_host=not encoded
+                user, password, encoded_host, port, encode=not encoded
             )
         if not encoded:
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
-                path = cls._normalize_path(path)
+                if "." in path:
+                    path = cls._normalize_path(path)
+                cls._validate_authority_uri_abs_path(host, path)
 
-            cls._validate_authority_uri_abs_path(host=host, path=path)
             query_string = (
                 cls._QUERY_QUOTER(query_string) if query_string else query_string
             )
@@ -421,7 +429,6 @@ class URL:
                     self.raw_password,
                     self.host_subcomponent,
                     port,
-                    encode_host=False,
                 )
             )
         return urlunsplit(val)
@@ -560,7 +567,8 @@ class URL:
         if "@" not in v.netloc:
             val = v._replace(path="", query="", fragment="")
         else:
-            netloc = self._make_netloc(None, None, v.hostname, v.port)
+            encoded_host = self._encode_host(v.hostname) if v.hostname else ""
+            netloc = self._make_netloc(None, None, encoded_host, v.port)
             val = v._replace(netloc=netloc, path="", query="", fragment="")
         return URL(val, encoded=True)
 
@@ -627,9 +635,7 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return self._make_netloc(
-            self.user, self.password, self.host, self.port, encode_host=False
-        )
+        return self._make_netloc(self.user, self.password, self.host, self.port)
 
     @cached_property
     def raw_user(self) -> Union[str, None]:
@@ -979,10 +985,6 @@ class URL:
     @classmethod
     def _normalize_path(cls, path: str) -> str:
         # Drop '.' and '..' from str path
-        if "." not in path:
-            # No need to normalize if there are no '.' or '..' segments
-            return path
-
         prefix = ""
         if path and path[0] == "/":
             # preserve the "/" root element of absolute paths, copying it to the
@@ -994,21 +996,43 @@ class URL:
         return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
+    @lru_cache  # match the same size as urlsplit
+    def _parse_host(
+        cls, host: str
+    ) -> Tuple[bool, str, Union[bool, None], str, str, str]:
+        """Parse host into parts
+
+        Returns a tuple of:
+        - True if the host looks like an IP address, False otherwise.
+        - Lowercased host
+        - True if the host is ASCII-only, False otherwise.
+        - Raw IP address
+        - Separator between IP address and zone
+        - Zone part of the IP address
+        """
+        lower_host = host.lower()
+        is_ascii = host.isascii()
+
+        if host and (host[-1].isdigit() or ":" in host):
+            if "%" in host:
+                return True, lower_host, is_ascii, *host.partition("%")
+            return True, lower_host, is_ascii, host, "", ""
+
+        return False, lower_host, is_ascii, "", "", ""
+
+    @classmethod
     def _encode_host(
         cls, host: str, human: bool = False, validate_host: bool = True
     ) -> str:
-        if host and host[-1].isdigit() or ":" in host:
+        """Encode host part of URL."""
+        looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
+        if looks_like_ip:
             # If the host ends with a digit or contains a colon, its likely
             # an IP address. So we check with _ip_compressed_version
             # and fall-through if its not an IP address. This is a performance
             # optimization to avoid parsing IP addresses as much as possible
             # because it is orders of magnitude slower than almost any other
             # operation this library does.
-            if "%" in host:
-                raw_ip, sep, zone = host.partition("%")
-            else:
-                raw_ip = host
-                sep = zone = ""
             # Might be an IP address, check it
             #
             # IP Addresses can look like:
@@ -1034,23 +1058,23 @@ class URL:
                     return f"[{host}%{zone}]" if sep else f"[{host}]"
                 return f"{host}%{zone}" if sep else host
 
-        host = host.lower()
         if human:
-            return host
+            return lower_host
 
         # IDNA encoding is slow,
         # skip it for ASCII-only strings
         # Don't move the check into _idna_encode() helper
         # to reduce the cache size
-        if host.isascii():
+        if is_ascii:
             # Check for invalid characters explicitly; _idna_encode() does this
             # for non-ascii host names.
             if validate_host:
-                _host_validate(host)
-            return host
-        return _idna_encode(host)
+                _host_validate(lower_host)
+            return lower_host
+        return _idna_encode(lower_host)
 
     @classmethod
+    @lru_cache  # match the same size as urlsplit
     def _make_netloc(
         cls,
         user: Union[str, None],
@@ -1058,12 +1082,17 @@ class URL:
         host: Union[str, None],
         port: Union[int, None],
         encode: bool = False,
-        encode_host: bool = True,
         requote: bool = False,
     ) -> str:
+        """Make netloc from parts.
+
+        The user and password are encoded if encode is True.
+
+        The host must already be encoded with _encode_host.
+        """
         if host is None:
             return ""
-        ret = cls._encode_host(host) if encode_host else host
+        ret = host
         if port is not None:
             ret = f"{ret}:{port}"
         if user is None and password is None:
@@ -1108,15 +1137,14 @@ class URL:
             hostname, _, port_str = hostinfo.partition(":")
 
         if not port_str:
-            port: Union[int, None] = None
-        else:
-            try:
-                port = int(port_str)
-            except ValueError:
-                raise ValueError("Invalid URL: port can't be converted to integer")
-            if not (0 <= port <= 65535):
-                raise ValueError("Port out of range 0-65535")
+            return username or None, password, hostname or None, None
 
+        try:
+            port = int(port_str)
+        except ValueError:
+            raise ValueError("Invalid URL: port can't be converted to integer")
+        if not (0 <= port <= 65535):
+            raise ValueError("Port out of range 0-65535")
         return username or None, password, hostname or None, port
 
     def with_scheme(self, scheme: str) -> "URL":
@@ -1151,12 +1179,9 @@ class URL:
             raise TypeError("Invalid user type")
         if not self.absolute:
             raise ValueError("user replacement is not allowed for relative URLs")
-        return URL(
-            self._val._replace(
-                netloc=self._make_netloc(user, password, val.hostname, val.port)
-            ),
-            encoded=True,
-        )
+        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
+        netloc = self._make_netloc(user, password, encoded_host, val.port)
+        return URL(netloc, encoded=True)
 
     def with_password(self, password: Union[str, None]) -> "URL":
         """Return a new URL with password replaced.
@@ -1176,12 +1201,9 @@ class URL:
         if not self.absolute:
             raise ValueError("password replacement is not allowed for relative URLs")
         val = self._val
-        return URL(
-            self._val._replace(
-                netloc=self._make_netloc(val.username, password, val.hostname, val.port)
-            ),
-            encoded=True,
-        )
+        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
+        netloc = self._make_netloc(val.username, password, encoded_host, val.port)
+        return URL(netloc, encoded=True)
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1200,12 +1222,9 @@ class URL:
         if not host:
             raise ValueError("host removing is not allowed")
         val = self._val
-        return URL(
-            self._val._replace(
-                netloc=self._make_netloc(val.username, val.password, host, val.port)
-            ),
-            encoded=True,
-        )
+        encoded_host = self._encode_host(host) if host else ""
+        netloc = self._make_netloc(val.username, val.password, encoded_host, val.port)
+        return URL(self._val._replace(netloc=netloc), encoded=True)
 
     def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
@@ -1222,19 +1241,16 @@ class URL:
         if not self.absolute:
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
-        return URL(
-            self._val._replace(
-                netloc=self._make_netloc(val.username, val.password, val.hostname, port)
-            ),
-            encoded=True,
-        )
+        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
+        netloc = self._make_netloc(val.username, val.password, encoded_host, port)
+        return URL(netloc, encoded=True)
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
         """Return a new URL with path replaced."""
         if not encoded:
             path = self._PATH_QUOTER(path)
             if self.absolute:
-                path = self._normalize_path(path)
+                path = self._normalize_path(path) if "." in path else path
         if len(path) > 0 and path[0] != "/":
             path = "/" + path
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
@@ -1532,7 +1548,7 @@ class URL:
             if val.path[0] == "/":
                 path = path[1:]
 
-        parts["path"] = self._normalize_path(path)
+        parts["path"] = self._normalize_path(path) if "." in path else path
         return URL(val._replace(**parts), encoded=True)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
@@ -1556,9 +1572,7 @@ class URL:
         fragment = _human_quote(self.fragment, "")
         if TYPE_CHECKING:
             assert fragment is not None
-        netloc = self._make_netloc(
-            user, password, host, self.explicit_port, encode_host=False
-        )
+        netloc = self._make_netloc(user, password, host, self.explicit_port)
         val = SplitResult(self._val.scheme, netloc, path, query_string, fragment)
         return urlunsplit(val)
 
