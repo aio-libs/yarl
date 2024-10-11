@@ -174,7 +174,6 @@ jobs:
         - >-
           3.10
         - 3.9
-        - 3.8
         no-extensions: ['', 'Y']
         os:
         - ubuntu-latest
@@ -192,10 +191,6 @@ jobs:
           experimental: false
           os: ubuntu-latest
         - pyver: pypy-3.9
-          no-extensions: Y
-          experimental: false
-          os: ubuntu-latest
-        - pyver: pypy-3.8
           no-extensions: Y
           experimental: false
           os: ubuntu-latest
