@@ -2,14 +2,13 @@ import math
 import re
 import sys
 import warnings
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
-    List,
     SupportsInt,
     Tuple,
     TypedDict,
@@ -17,7 +16,6 @@ from typing import (
     Union,
     overload,
 )
-from collections.abc import Iterable
 from urllib.parse import (
     SplitResult,
     parse_qsl,

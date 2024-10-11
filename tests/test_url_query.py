@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import List, Tuple
 from urllib.parse import parse_qs, urlencode
 
 import pytest
