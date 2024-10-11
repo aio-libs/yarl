@@ -1101,7 +1101,7 @@ class URL:
         elif user and encode:
             user = quoter(user)
         if user:
-            ret = f"{user}@{ret}"
+            return f"{user}@{ret}"
         return ret
 
     @classmethod
