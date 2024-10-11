@@ -925,7 +925,7 @@ class URL:
 
         Raise ValueError if not.
         """
-        if host and path and not path[0] == "/":
+        if host and path and path[0] != "/":
             raise ValueError(
                 "Path in a URL with authority should start with a slash ('/') if set"
             )
