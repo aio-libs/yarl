@@ -2,13 +2,14 @@ import timeit
 
 from yarl import URL
 
-MANY_HOSTS = [f"localhost.{i}" for i in range(10000)]
-MANY_URLS = [f"https://localhost.{i}" for i in range(10000)]
-BASE_URL = URL("http://localhost")
+MANY_HOSTS = [f"www.domain{i}.tld" for i in range(10000)]
+MANY_URLS = [f"https://www.domain{i}.tld" for i in range(10000)]
+BASE_URL = URL("http://www.domain.tld")
+
 print(
     "Build URL with host and path and port: {:.3f} sec".format(
         timeit.timeit(
-            "URL.build(host='localhost', path='/req', port=1234)",
+            "URL.build(host='www.domain.tld', path='/req', port=1234)",
             globals={"URL": URL},
             number=100000,
         )
@@ -18,7 +19,7 @@ print(
 print(
     "Build encoded URL with host and path and port: {:.3f} sec".format(
         timeit.timeit(
-            "URL.build(host='localhost', path='/req', port=1234, encoded=True)",
+            "URL.build(host='www.domain.tld', path='/req', port=1234, encoded=True)",
             globals={"URL": URL},
             number=100000,
         )
@@ -27,9 +28,7 @@ print(
 
 print(
     "Build URL with host: {:.3f} sec".format(
-        timeit.timeit(
-            "URL.build(host='localhost')", globals={"URL": URL}, number=100000
-        )
+        timeit.timeit("URL.build(host='domain')", globals={"URL": URL}, number=100000)
     )
 )
 
@@ -46,7 +45,7 @@ print(
 print(
     "Build URL with host and port: {:.3f} sec".format(
         timeit.timeit(
-            "URL.build(host='localhost', port=1234)",
+            "URL.build(host='www.domain.tld', port=1234)",
             globals={"URL": URL},
             number=100000,
         )
@@ -56,7 +55,7 @@ print(
 print(
     "Make URL with host and path and port: {:.3f} sec".format(
         timeit.timeit(
-            "URL('http://localhost:1234/req')", globals={"URL": URL}, number=100000
+            "URL('http://www.domain.tld:1234/req')", globals={"URL": URL}, number=100000
         )
     )
 )
@@ -64,7 +63,7 @@ print(
 print(
     "Make encoded URL with host and path and port: {:.3f} sec".format(
         timeit.timeit(
-            "URL('http://localhost:1234/req', encoded=True)",
+            "URL('http://www.domain.tld:1234/req', encoded=True)",
             globals={"URL": URL},
             number=100000,
         )
@@ -74,7 +73,7 @@ print(
 print(
     "Make URL with host and path: {:.3f} sec".format(
         timeit.timeit(
-            "URL('http://localhost/req')", globals={"URL": URL}, number=100000
+            "URL('http://www.domain.tld/req')", globals={"URL": URL}, number=100000
         )
     )
 )
