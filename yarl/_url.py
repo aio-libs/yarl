@@ -944,7 +944,7 @@ class URL:
         add paths to self._val.path, accounting for absolute vs relative paths,
         keep existing, but do not create new, empty segments
         """
-        parsed = []
+        parsed: List[str] = []
         for idx, path in enumerate(reversed(paths)):
             # empty segment of last is not removed
             last = idx == 0
