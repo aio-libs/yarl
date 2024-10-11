@@ -848,16 +848,10 @@ class URL:
         """
         path = self._val.path
         if self.absolute:
-            if not path:
-                parts = ["/"]
-            else:
-                parts = ["/"] + path[1:].split("/")
-        else:
-            if path and path[0] == "/":
-                parts = ["/"] + path[1:].split("/")
-            else:
-                parts = path.split("/")
-        return tuple(parts)
+            return ("/", *path[1:].split("/")) if path else ("/",)
+        if path and path[0] == "/":
+            return ("/", *path[1:].split("/"))
+        return tuple(path.split("/"))
 
     @cached_property
     def parts(self) -> Tuple[str, ...]:
