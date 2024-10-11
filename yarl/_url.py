@@ -423,14 +423,10 @@ class URL:
         if (port := self._port_not_default) is None:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
-            val = val._replace(
-                netloc=self._make_netloc(
-                    self.raw_user,
-                    self.raw_password,
-                    self.host_subcomponent,
-                    port,
-                )
+            netloc = self._make_netloc(
+                self.raw_user, self.raw_password, self.host_subcomponent, port
             )
+            val = val._replace(netloc=netloc)
         return urlunsplit(val)
 
     def __repr__(self) -> str:
