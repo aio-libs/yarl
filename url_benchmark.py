@@ -16,6 +16,16 @@ print(
 )
 
 print(
+    "Build encoded URL with host and path and port: {:.3f} sec".format(
+        timeit.timeit(
+            "URL.build(host='localhost', path='/req', port=1234, encoded=True)",
+            globals={"URL": URL},
+            number=100000,
+        )
+    )
+)
+
+print(
     "Build URL with host: {:.3f} sec".format(
         timeit.timeit(
             "URL.build(host='localhost')", globals={"URL": URL}, number=100000
@@ -47,6 +57,16 @@ print(
     "Make URL with host and path and port: {:.3f} sec".format(
         timeit.timeit(
             "URL('http://localhost:1234/req')", globals={"URL": URL}, number=100000
+        )
+    )
+)
+
+print(
+    "Make encoded URL with host and path and port: {:.3f} sec".format(
+        timeit.timeit(
+            "URL('http://localhost:1234/req', encoded=True)",
+            globals={"URL": URL},
+            number=100000,
         )
     )
 )
