@@ -1087,9 +1087,7 @@ class URL:
             user = f"{user}:{password}"
         elif user and encode:
             user = quoter(user)
-        if user:
-            return f"{user}@{ret}"
-        return ret
+        return f"{user}@{ret}" if user else ret
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
@@ -1484,10 +1482,7 @@ class URL:
         if not name:
             raise ValueError(f"{self!r} has an empty name")
         old_suffix = self.raw_suffix
-        if not old_suffix:
-            name = name + suffix
-        else:
-            name = name[: -len(old_suffix)] + suffix
+        name = name + suffix if not old_suffix else name[: -len(old_suffix)] + suffix
         return self.with_name(name)
 
     def join(self, url: "URL") -> "URL":
