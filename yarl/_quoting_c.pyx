@@ -202,6 +202,9 @@ cdef class _Quoter:
             set_bit(self._protected_table, ch)
 
     def __call__(self, val):
+        return self._call(val)
+
+    cdef _call(self, val):
         cdef Writer writer
         if val is None:
             return None
@@ -337,9 +340,9 @@ cdef class _Unquoter:
                     assert consumed == buflen
                     buflen = 0
                     if self._qs and unquoted in '+=&;':
-                        ret.append(self._qs_quoter(unquoted))
+                        ret.append(self._qs_quoter._call(unquoted))
                     elif unquoted in self._unsafe or unquoted in self._ignore:
-                        ret.append(self._quoter(unquoted))
+                        ret.append(self._quoter._call(unquoted))
                     else:
                         ret.append(unquoted)
                     continue
