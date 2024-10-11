@@ -994,21 +994,43 @@ class URL:
         return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
+    @lru_cache  # match the same size as urlsplit
+    def _parse_host(
+        cls, host: str
+    ) -> Tuple[bool, str, Union[bool, None], str, str, str]:
+        """Parse host into parts
+
+        Returns a tuple of:
+        - True if the host looks like an IP address, False otherwise.
+        - Lowercased host
+        - True if the host is ASCII-only, False otherwise.
+        - Raw IP address
+        - Separator between IP address and zone
+        - Zone part of the IP address
+        """
+        lower_host = host.lower()
+        is_ascii = host.isascii()
+
+        if host and (host[-1].isdigit() or ":" in host):
+            if "%" in host:
+                return True, lower_host, is_ascii, *host.partition("%")
+            return True, lower_host, is_ascii, host, "", ""
+
+        return False, lower_host, is_ascii, "", "", ""
+
+    @classmethod
     def _encode_host(
         cls, host: str, human: bool = False, validate_host: bool = True
     ) -> str:
-        if host and host[-1].isdigit() or ":" in host:
+        """Encode host part of URL."""
+        looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
+        if looks_like_ip:
             # If the host ends with a digit or contains a colon, its likely
             # an IP address. So we check with _ip_compressed_version
             # and fall-through if its not an IP address. This is a performance
             # optimization to avoid parsing IP addresses as much as possible
             # because it is orders of magnitude slower than almost any other
             # operation this library does.
-            if "%" in host:
-                raw_ip, sep, zone = host.partition("%")
-            else:
-                raw_ip = host
-                sep = zone = ""
             # Might be an IP address, check it
             #
             # IP Addresses can look like:
@@ -1034,21 +1056,21 @@ class URL:
                     return f"[{host}%{zone}]" if sep else f"[{host}]"
                 return f"{host}%{zone}" if sep else host
 
-        host = host.lower()
         if human:
-            return host
+            return lower_host
 
         # IDNA encoding is slow,
         # skip it for ASCII-only strings
         # Don't move the check into _idna_encode() helper
         # to reduce the cache size
-        if host.isascii():
+        if is_ascii:
             # Check for invalid characters explicitly; _idna_encode() does this
             # for non-ascii host names.
             if validate_host:
-                _host_validate(host)
-            return host
-        return _idna_encode(host)
+                _host_validate(lower_host)
+            return lower_host
+
+        return _idna_encode(lower_host)
 
     @classmethod
     def _make_netloc(
