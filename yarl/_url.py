@@ -1144,13 +1144,14 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
-        if not self.absolute and scheme in SCHEME_REQUIRES_HOST:
+        lower_scheme = scheme.lower()
+        if not self.absolute and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (
                 "scheme replacement is not allowed for "
                 f"relative URLs for the {scheme} scheme"
             )
             raise ValueError(msg)
-        return URL(self._val._replace(scheme=scheme.lower()), encoded=True)
+        return URL(self._val._replace(scheme=lower_scheme), encoded=True)
 
     def with_user(self, user: Union[str, None]) -> "URL":
         """Return a new URL with user replaced.
@@ -1173,7 +1174,7 @@ class URL:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self._encode_host(val.hostname) if val.hostname else ""
         netloc = self._make_netloc(user, password, encoded_host, val.port)
-        return URL(netloc, encoded=True)
+        return URL(val._replace(netloc=netloc), encoded=True)
 
     def with_password(self, password: Union[str, None]) -> "URL":
         """Return a new URL with password replaced.
@@ -1195,7 +1196,7 @@ class URL:
         val = self._val
         encoded_host = self._encode_host(val.hostname) if val.hostname else ""
         netloc = self._make_netloc(val.username, password, encoded_host, val.port)
-        return URL(netloc, encoded=True)
+        return URL(val._replace(netloc=netloc), encoded=True)
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1235,7 +1236,7 @@ class URL:
         val = self._val
         encoded_host = self._encode_host(val.hostname) if val.hostname else ""
         netloc = self._make_netloc(val.username, val.password, encoded_host, port)
-        return URL(netloc, encoded=True)
+        return URL(val._replace(netloc=netloc), encoded=True)
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
         """Return a new URL with path replaced."""
