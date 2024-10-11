@@ -9,7 +9,6 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
-    Iterable,
     List,
     SupportsInt,
     Tuple,
@@ -18,6 +17,7 @@ from typing import (
     Union,
     overload,
 )
+from collections.abc import Iterable
 from urllib.parse import (
     SplitResult,
     parse_qsl,
@@ -110,7 +110,7 @@ class _InternalURLCache(TypedDict, total=False):
     explicit_port: Union[int, None]
     raw_path: str
     path: str
-    _parsed_query: List[Tuple[str, str]]
+    _parsed_query: list[tuple[str, str]]
     query: "MultiDictProxy[str]"
     raw_query_string: str
     query_string: str
@@ -118,15 +118,15 @@ class _InternalURLCache(TypedDict, total=False):
     raw_path_qs: str
     raw_fragment: str
     fragment: str
-    raw_parts: Tuple[str, ...]
-    parts: Tuple[str, ...]
+    raw_parts: tuple[str, ...]
+    parts: tuple[str, ...]
     parent: "URL"
     raw_name: str
     name: str
     raw_suffix: str
     suffix: str
-    raw_suffixes: Tuple[str, ...]
-    suffixes: Tuple[str, ...]
+    raw_suffixes: tuple[str, ...]
+    suffixes: tuple[str, ...]
 
 
 def rewrite_module(obj: _T) -> _T:
@@ -134,10 +134,10 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
-def _normalize_path_segments(segments: "Sequence[str]") -> List[str]:
+def _normalize_path_segments(segments: "Sequence[str]") -> list[str]:
     """Drop '.' and '..' from a sequence of str segments"""
 
-    resolved_path: List[str] = []
+    resolved_path: list[str] = []
 
     for seg in segments:
         if seg == "..":
@@ -493,7 +493,7 @@ class URL:
             self._val.netloc or self._val.path or self._val.query or self._val.fragment
         )
 
-    def __getstate__(self) -> Tuple[SplitResult]:
+    def __getstate__(self) -> tuple[SplitResult]:
         return (self._val,)
 
     def __setstate__(self, state):
@@ -775,7 +775,7 @@ class URL:
         return self._PATH_SAFE_UNQUOTER(self.raw_path)
 
     @cached_property
-    def _parsed_query(self) -> List[Tuple[str, str]]:
+    def _parsed_query(self) -> list[tuple[str, str]]:
         """Parse query part of URL."""
         return parse_qsl(self._val.query, keep_blank_values=True)
 
@@ -840,7 +840,7 @@ class URL:
         return self._UNQUOTER(self._val.fragment)
 
     @cached_property
-    def raw_parts(self) -> Tuple[str, ...]:
+    def raw_parts(self) -> tuple[str, ...]:
         """A tuple containing encoded *path* parts.
 
         ('/',) for absolute URLs if *path* is missing.
@@ -854,7 +854,7 @@ class URL:
         return tuple(path.split("/"))
 
     @cached_property
-    def parts(self) -> Tuple[str, ...]:
+    def parts(self) -> tuple[str, ...]:
         """A tuple containing decoded *path* parts.
 
         ('/',) for absolute URLs if *path* is missing.
@@ -909,7 +909,7 @@ class URL:
         return self._UNQUOTER(self.raw_suffix)
 
     @cached_property
-    def raw_suffixes(self) -> Tuple[str, ...]:
+    def raw_suffixes(self) -> tuple[str, ...]:
         name = self.raw_name
         if name.endswith("."):
             return ()
@@ -917,7 +917,7 @@ class URL:
         return tuple("." + suffix for suffix in name.split(".")[1:])
 
     @cached_property
-    def suffixes(self) -> Tuple[str, ...]:
+    def suffixes(self) -> tuple[str, ...]:
         return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
     @staticmethod
@@ -936,7 +936,7 @@ class URL:
         add paths to self._val.path, accounting for absolute vs relative paths,
         keep existing, but do not create new, empty segments
         """
-        parsed: List[str] = []
+        parsed: list[str] = []
         for idx, path in enumerate(reversed(paths)):
             # empty segment of last is not removed
             last = idx == 0
@@ -981,7 +981,7 @@ class URL:
     @lru_cache  # match the same size as urlsplit
     def _parse_host(
         cls, host: str
-    ) -> Tuple[bool, str, Union[bool, None], str, str, str]:
+    ) -> tuple[bool, str, Union[bool, None], str, str, str]:
         """Parse host into parts
 
         Returns a tuple of:
@@ -1097,7 +1097,7 @@ class URL:
     def _split_netloc(
         cls,
         netloc: str,
-    ) -> Tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
+    ) -> tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
         """Split netloc into username, password, host and port."""
         if "@" not in netloc:
             username: Union[str, None] = None
@@ -1238,7 +1238,7 @@ class URL:
 
     def _get_str_query_from_sequence_iterable(
         self,
-        items: Iterable[Tuple[Union[str, istr], QueryVariable]],
+        items: Iterable[tuple[Union[str, istr], QueryVariable]],
     ) -> str:
         """Return a query string from a sequence of (key, value) pairs.
 
@@ -1278,7 +1278,7 @@ class URL:
         )
 
     def _get_str_query_from_iterable(
-        self, items: Iterable[Tuple[Union[str, istr], str]]
+        self, items: Iterable[tuple[Union[str, istr], str]]
     ) -> str:
         """Return a query string from an iterable.
 
@@ -1597,7 +1597,7 @@ def _idna_encode(host: str) -> str:
 
 
 @lru_cache(_MAXCACHE)
-def _ip_compressed_version(raw_ip: str) -> Tuple[str, int]:
+def _ip_compressed_version(raw_ip: str) -> tuple[str, int]:
     """Return compressed version of IP address and its version."""
     ip = ip_address(raw_ip)
     return ip.compressed, ip.version

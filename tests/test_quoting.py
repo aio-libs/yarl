@@ -491,8 +491,8 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter(
-    quoter: Type[_PyQuoter],
-    unquoter: Type[_PyUnquoter],
+    quoter: type[_PyQuoter],
+    unquoter: type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter()
@@ -512,8 +512,8 @@ def test_quote_unquote_parameter(
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_requote(
-    quoter: Type[_PyQuoter],
-    unquoter: Type[_PyUnquoter],
+    quoter: type[_PyQuoter],
+    unquoter: type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter(requote=True)
@@ -533,8 +533,8 @@ def test_quote_unquote_parameter_requote(
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_path_safe(
-    quoter: Type[_PyQuoter],
-    unquoter: Type[_PyUnquoter],
+    quoter: type[_PyQuoter],
+    unquoter: type[_PyUnquoter],
     text_input: str,
 ) -> None:
     quote = quoter()
