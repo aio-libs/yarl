@@ -5,6 +5,8 @@ from yarl import URL
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(10000)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(10000)]
 BASE_URL = URL("http://www.domain.tld")
+QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
+URL_WITH_PATH = URL("http://www.domain.tld/req")
 
 print(
     "Build URL with host and path and port: {:.3f} sec".format(
@@ -151,6 +153,39 @@ print(
                 ]
             ),
             globals={"base_url": BASE_URL, "URL": URL},
+            number=100000,
+        )
+    )
+)
+
+
+print(
+    "Convert URL to string: {:.3f} sec".format(
+        timeit.timeit(
+            "str(base_url)",
+            globals={"base_url": BASE_URL, "URL": URL},
+            number=100000,
+        )
+    )
+)
+
+
+print(
+    "Convert URL with path to string: {:.3f} sec".format(
+        timeit.timeit(
+            "str(url_with_path)",
+            globals={"url_with_path": URL_WITH_PATH, "URL": URL},
+            number=100000,
+        )
+    )
+)
+
+
+print(
+    "Convert URL with query to string: {:.3f} sec".format(
+        timeit.timeit(
+            "str(query_url)",
+            globals={"query_url": QUERY_URL, "URL": URL},
             number=100000,
         )
     )
