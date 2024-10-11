@@ -1011,6 +1011,8 @@ class URL:
         lower_host = host.lower()
         is_ascii = host.isascii()
 
+        # If the host ends with a digit or contains a colon, its likely
+        # an IP address.
         if host and (host[-1].isdigit() or ":" in host):
             if "%" in host:
                 return True, lower_host, is_ascii, *host.partition("%")
@@ -1025,8 +1027,7 @@ class URL:
         """Encode host part of URL."""
         looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
         if looks_like_ip:
-            # If the host ends with a digit or contains a colon, its likely
-            # an IP address. So we check with _ip_compressed_version
+            # If it looks like an IP, we check with _ip_compressed_version
             # and fall-through if its not an IP address. This is a performance
             # optimization to avoid parsing IP addresses as much as possible
             # because it is orders of magnitude slower than almost any other
