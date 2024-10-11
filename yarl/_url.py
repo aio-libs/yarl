@@ -1248,7 +1248,6 @@ class URL:
             path = "/" + path
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
-    @classmethod
     def _get_str_query_from_sequence_iterable(
         self,
         items: Iterable[Tuple[Union[str, istr], QueryVariable]],
