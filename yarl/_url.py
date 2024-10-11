@@ -9,9 +9,7 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Iterable,
-    Iterator,
     List,
     SupportsInt,
     Tuple,
@@ -1250,16 +1248,23 @@ class URL:
             path = "/" + path
         return URL(self._val._replace(path=path, query="", fragment=""), encoded=True)
 
-    @classmethod
-    def _query_seq_pairs(
-        cls, quoter: Callable[[str], str], pairs: Iterable[Tuple[str, QueryVariable]]
-    ) -> Iterator[str]:
-        for key, val in pairs:
-            if isinstance(val, (list, tuple)):
-                for v in val:
-                    yield quoter(key) + "=" + quoter(cls._query_var(v))
-            else:
-                yield quoter(key) + "=" + quoter(cls._query_var(val))
+    def _get_str_query_from_sequence_iterable(
+        self,
+        items: Iterable[Tuple[Union[str, istr], QueryVariable]],
+    ) -> str:
+        """Return a query string from a sequence of (key, value) pairs.
+
+        value is a single value or a sequence of values for the key
+
+        The sequence of values must be a list or tuple.
+        """
+        quoter = self._QUERY_PART_QUOTER
+        pairs = [
+            f"{quoter(k)}={quoter(self._query_var(v))}"
+            for k, val in items
+            for v in (val if isinstance(val, (list, tuple)) else (val,))
+        ]
+        return "&".join(pairs)
 
     @staticmethod
     def _query_var(v: QueryVariable) -> str:
@@ -1287,7 +1292,13 @@ class URL:
     def _get_str_query_from_iterable(
         self, items: Iterable[Tuple[Union[str, istr], str]]
     ) -> str:
-        """Return a query string from an iterable."""
+        """Return a query string from an iterable.
+
+        The iterable must contain (key, value) pairs.
+
+        The values are not allowed to be sequences, only single values are
+        allowed. For sequences, use `_get_str_query_from_sequence_iterable`.
+        """
         quoter = self._QUERY_PART_QUOTER
         # A listcomp is used since listcomps are inlined on CPython 3.12+ and
         # they are a bit faster than a generator expression.
@@ -1309,8 +1320,7 @@ class URL:
         if query is None:
             return None
         if isinstance(query, Mapping):
-            quoter = self._QUERY_PART_QUOTER
-            return "&".join(self._query_seq_pairs(quoter, query.items()))
+            return self._get_str_query_from_sequence_iterable(query.items())
         if isinstance(query, str):
             return self._QUERY_QUOTER(query)
         if isinstance(query, (bytes, bytearray, memoryview)):
