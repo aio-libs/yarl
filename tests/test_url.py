@@ -309,14 +309,12 @@ def test_port_for_implicit_port():
 def test_port_for_relative_url():
     url = URL("/path/to")
     assert url.port is None
-    assert url._port_not_default is None
     assert url.explicit_port is None
 
 
 def test_port_for_unknown_scheme():
     url = URL("unknown://example.com")
     assert url.port is None
-    assert url._port_not_default is None
     assert url.explicit_port is None
 
 
@@ -324,28 +322,24 @@ def test_explicit_port_for_explicit_port():
     url = URL("http://example.com:8888")
     assert 8888 == url.explicit_port
     assert url.explicit_port == url._val.port
-    assert url._port_not_default == 8888
 
 
 def test_explicit_port_for_implicit_port():
     url = URL("http://example.com")
     assert url.explicit_port is None
     assert url.explicit_port == url._val.port
-    assert url._port_not_default is None
 
 
 def test_explicit_port_for_relative_url():
     url = URL("/path/to")
     assert url.explicit_port is None
     assert url.explicit_port == url._val.port
-    assert url._port_not_default is None
 
 
 def test_explicit_port_for_unknown_scheme():
     url = URL("unknown://example.com")
     assert url.explicit_port is None
     assert url.explicit_port == url._val.port
-    assert url._port_not_default is None
 
 
 def test_raw_path_string_empty():
@@ -1490,7 +1484,6 @@ def test_handling_port_zero():
     url = URL("http://example.com:0")
     assert url.explicit_port == 0
     assert url.explicit_port == url._val.port
-    assert url._port_not_default == 0
     assert str(url) == "http://example.com:0"
     assert not url.is_default_port()
 
