@@ -134,8 +134,14 @@ jobs:
         - windows
         - macos
         tag:
-        - 'manylinux'
-        - 'musllinux'
+        - manylinux
+        - musllinux
+        exclude:
+        - tag: >-
+           ${{
+           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           && 'musllinux' || ''
+           }}
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
@@ -472,8 +478,11 @@ jobs:
         - s390x
         - armv7l
         tag:
-        - 'manylinux'
-        - 'musllinux'
+        - manylinux
+        - musllinux
+        exclude:
+        - tag: manylinux
+          qemu: armv7l
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
