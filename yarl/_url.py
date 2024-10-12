@@ -417,8 +417,9 @@ class URL:
 
     def __str__(self) -> str:
         val = self._val
+        scheme, netloc, path, query, fragment = val
         if not val.path and self.absolute and (val.query or val.fragment):
-            val = val._replace(path="/")
+            path = "/"
         if (
             explicit_port := self.explicit_port
         ) is not None and explicit_port == self._default_port:
@@ -427,13 +428,13 @@ class URL:
             netloc = self._make_netloc(
                 self.raw_user, self.raw_password, self.host_subcomponent, None
             )
-            val = val._replace(netloc=netloc)
-        return self._unsplit_result(val)
+        return self._unsplit_result(scheme, netloc, path, query, fragment)
 
     @staticmethod
-    def _unsplit_result(val: SplitResult) -> str:
+    def _unsplit_result(
+        scheme: str, netloc: str, url: str, query: str, fragment: str
+    ) -> str:
         """Unsplit a URL without any normalization."""
-        scheme, netloc, url, query, fragment = val
         if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
             if url and url[:1] != "/":
                 url = f"//{netloc or ''}/{url}"
@@ -1576,8 +1577,9 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = self._make_netloc(user, password, host, self.explicit_port)
-        val = SplitResult(self._val.scheme, netloc, path, query_string, fragment)
-        return self._unsplit_result(val)
+        return self._unsplit_result(
+            self._val.scheme, netloc, path, query_string, fragment
+        )
 
 
 def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
