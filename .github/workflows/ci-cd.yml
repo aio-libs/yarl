@@ -421,6 +421,9 @@ jobs:
       shell: bash
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
+    - name: Fix git owner
+      # https://github.com/CodSpeedHQ/action/issues/104
+      run: git config --global --add safe.directory "*"
     - name: Run benchmarks
       uses: CodSpeedHQ/action@v3
       with:
