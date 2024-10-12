@@ -1,1 +1,0 @@
-Improved performance of converting :class:`~yarl.URL` objects to strings -- by :user:`bdraco`.

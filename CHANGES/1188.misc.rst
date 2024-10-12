@@ -1,1 +1,0 @@
-Improved performance of constructing unencoded :class:`~yarl.URL` objects -- by :user:`bdraco`.

@@ -1,1 +1,0 @@
-Fixed validation with :py:meth:`~yarl.URL.with_scheme` when passed scheme is not lowercase -- by :user:`bdraco`.
