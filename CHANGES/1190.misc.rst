@@ -1,1 +1,0 @@
-Added a cache for parsing hosts to reduce overhead of encoding :class:`~yarl.URL` -- by :user:`bdraco`.

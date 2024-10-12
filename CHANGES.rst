@@ -14,6 +14,57 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.0
+======
+
+*(2024-10-11)*
+
+
+Bug fixes
+---------
+
+- Fixed validation with :py:meth:`~yarl.URL.with_scheme` when passed scheme is not lowercase -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1189`.
+
+
+Features
+--------
+
+- Started building ``armv7l`` wheels -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1204`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of constructing unencoded :class:`~yarl.URL` objects -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1188`.
+
+- Added a cache for parsing hosts to reduce overhead of encoding :class:`~yarl.URL` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1190`.
+
+- Improved performance of constructing query strings from :class:`~collections.abc.Mapping` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1193`.
+
+- Improved performance of converting :class:`~yarl.URL` objects to strings -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1198`.
+
+
+----
+
+
 1.14.0
 ======
 

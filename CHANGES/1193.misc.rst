@@ -1,1 +1,0 @@
-Improved performance of constructing query strings from :class:`~collections.abc.Mapping` -- by :user:`bdraco`.
