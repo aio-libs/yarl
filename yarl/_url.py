@@ -376,34 +376,32 @@ class URL:
                 cache["raw_password"] = password or None
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
                 netloc = cls._make_netloc(user, password, host, port)
+
         else:  # not encoded
+            encoded_host = None
             if authority:
-                _user, _password, _host, _port = cls._split_netloc(authority)
-                port = None if _port == DEFAULT_PORTS.get(scheme) else _port
-                _host = cls._encode_host(_host, validate_host=False) if _host else ""
-                raw_user = None if _user is None else cls._QUOTER(_user)
-                raw_password = None if _password is None else cls._QUOTER(_password)
-                cache["explicit_port"] = _port
-                cache["raw_host"] = (
-                    cls._remove_brackets(_host) if "[" in _host else _host
+                user, password, _host, port = cls._split_netloc(authority)
+                encoded_host = (
+                    cls._encode_host(_host, validate_host=False) if _host else ""
                 )
-                cache["raw_user"] = raw_user
-                cache["raw_password"] = raw_password
-                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
             elif not user and not password and not host and not port:
                 netloc = ""
             else:
+                encoded_host = cls._encode_host(host)
+
+            if encoded_host is not None:
                 cache["explicit_port"] = port
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
-                _host = cls._encode_host(host)
                 raw_user = None if user is None else cls._QUOTER(user)
                 raw_password = None if password is None else cls._QUOTER(password)
                 cache["raw_host"] = (
-                    cls._remove_brackets(_host) if "[" in _host else _host
+                    cls._remove_brackets(encoded_host)
+                    if "[" in encoded_host
+                    else encoded_host
                 )
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
-                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
+                netloc = cls._make_netloc(raw_user, raw_password, encoded_host, port)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
