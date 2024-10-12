@@ -370,23 +370,68 @@ class URL:
                 '"query_string", and "fragment" args, use empty string instead.'
             )
 
-        if authority:
-            if encoded:
+        cache: _InternalURLCache = {}
+        if encoded:
+            if authority:
                 netloc = authority
+            elif not user and not password and not host and not port:
+                netloc = ""
             else:
+                if "[" in host:
+                    # Our host encoder adds back brackets for IPv6 addresses
+                    # so we need to remove them here to get the raw host
+                    _, _, bracketed = host.partition("[")
+                    raw_host, _, _ = bracketed.partition("]")
+                else:
+                    raw_host = host
+                cache["explicit_port"] = port
+                cache["raw_host"] = raw_host
+                cache["raw_user"] = user or None
+                cache["raw_password"] = password or None
+                port = None if port == DEFAULT_PORTS.get(scheme) else port
+                netloc = cls._make_netloc(user, password, host, port)
+            cache["scheme"] = scheme
+            cache["raw_query_string"] = query_string
+            cache["raw_fragment"] = fragment
+        else:  # not encoded
+            if authority:
                 _user, _password, _host, _port = cls._split_netloc(authority)
                 port = None if _port == DEFAULT_PORTS.get(scheme) else _port
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
-                netloc = cls._make_netloc(_user, _password, _host, port, encode=True)
-        elif not user and not password and not host and not port:
-            netloc = ""
-        else:
-            port = None if port == DEFAULT_PORTS.get(scheme) else port
-            encoded_host = host if encoded else cls._encode_host(host)
-            netloc = cls._make_netloc(
-                user, password, encoded_host, port, encode=not encoded
-            )
-        if not encoded:
+                raw_user = None if _user is None else cls._QUOTER(_user)
+                raw_password = None if _password is None else cls._QUOTER(_password)
+                if "[" in _host:
+                    # Our host encoder adds back brackets for IPv6 addresses
+                    # so we need to remove them here to get the raw host
+                    _, _, bracketed = _host.partition("[")
+                    raw_host, _, _ = bracketed.partition("]")
+                else:
+                    raw_host = _host
+                cache["explicit_port"] = _port
+                cache["raw_host"] = raw_host
+                cache["raw_user"] = raw_user
+                cache["raw_password"] = raw_password
+                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
+            elif not user and not password and not host and not port:
+                netloc = ""
+            else:
+                cache["explicit_port"] = port
+                port = None if port == DEFAULT_PORTS.get(scheme) else port
+                encoded_host = cls._encode_host(host)
+                if "[" in encoded_host:
+                    # Our host encoder adds back brackets for IPv6 addresses
+                    # so we need to remove them here to get the raw host
+                    _, _, bracketed = encoded_host.partition("[")
+                    raw_host, _, _ = bracketed.partition("]")
+                else:
+                    raw_host = encoded_host
+                raw_user = None if user is None else cls._QUOTER(user)
+                raw_password = None if password is None else cls._QUOTER(password)
+                cache["raw_host"] = raw_host
+                cache["raw_user"] = raw_user
+                cache["raw_password"] = raw_password
+                netloc = cls._make_netloc(raw_user, raw_password, encoded_host, port)
+
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
                 if "." in path:
@@ -397,13 +442,19 @@ class URL:
                 cls._QUERY_QUOTER(query_string) if query_string else query_string
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
+            cache["scheme"] = scheme
+            cache["raw_query_string"] = query_string
+            cache["raw_fragment"] = fragment
 
         url = cls(
             SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
         )
 
         if query:
-            return url.with_query(query)
+            cache.pop("raw_query_string", None)
+            url = url.with_query(query)
+
+        url._cache = cache
         return url
 
     def __init_subclass__(cls):
@@ -1060,12 +1111,10 @@ class URL:
         password: Union[str, None],
         host: Union[str, None],
         port: Union[int, None],
-        encode: bool = False,
-        requote: bool = False,
     ) -> str:
         """Make netloc from parts.
 
-        The user and password are encoded if encode is True.
+        The user and password must already be encoded.
 
         The host must already be encoded with _encode_host.
         """
@@ -1076,17 +1125,8 @@ class URL:
             ret = f"{ret}:{port}"
         if user is None and password is None:
             return ret
-        quoter = cls._REQUOTER if requote else cls._QUOTER
         if password is not None:
-            if not user:
-                user = ""
-            elif encode:
-                user = quoter(user)
-            if encode:
-                password = quoter(password)
-            user = f"{user}:{password}"
-        elif user and encode:
-            user = quoter(user)
+            user = f"{user or ''}:{password}"
         return f"{user}@{ret}" if user else ret
 
     @classmethod
