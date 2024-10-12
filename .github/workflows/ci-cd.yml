@@ -133,9 +133,13 @@ jobs:
         - ubuntu
         - windows
         - macos
+        tag:
+        - 'manylinux'
+        - 'musllinux'
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
+      tag: ${{ matrix.tag }}
       wheel-tags-to-skip: >-
         ${{
         (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
@@ -467,9 +471,13 @@ jobs:
         - ppc64le
         - s390x
         - armv7l
+        tag:
+        - 'manylinux'
+        - 'musllinux'
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
+      tag: ${{ matrix.tag }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
