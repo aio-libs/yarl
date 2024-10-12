@@ -26,7 +26,7 @@ on:
         type: string
       tag:
         description: Build platform tag wheels
-        default: '0'
+        default: ''
         required: false
         type: string
       source-tarball-name:
@@ -48,7 +48,7 @@ jobs:
 
   build-wheel:
     name: >-
-     Build wheels on ${{ inputs.os }} ${{ inputs.qemu }} ${{ inputs.tag }}
+     Build ${{ inputs.tag }} wheels on ${{ inputs.os }} ${{ inputs.qemu }}
     runs-on: ${{ inputs.os }}-latest
     timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
@@ -91,7 +91,7 @@ jobs:
       shell: bash
 
     - name: Skip musllinux wheels
-      if: inputs.tag == 'manylinux'
+      if: inputs.tag == ''
       run: |
         echo "CIBW_SKIP=$CIBW_SKIP *musllinux*" >> "${GITHUB_ENV}"
       shell: bash

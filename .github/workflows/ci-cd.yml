@@ -134,10 +134,15 @@ jobs:
         - windows
         - macos
         tag:
-        - manylinux
-        - musllinux
+        - ''
+        - 'musllinux'
         exclude:
-        - tag: >-
+        - os: windows
+          tag: 'musllinux'
+        - os: macos
+          tag: 'musllinux'
+        - os: ubuntu
+          tag: >-
            ${{
            (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
            && 'musllinux' || ''
@@ -478,10 +483,10 @@ jobs:
         - s390x
         - armv7l
         tag:
-        - manylinux
+        - ''
         - musllinux
         exclude:
-        - tag: manylinux
+        - tag: ''
           qemu: armv7l
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
