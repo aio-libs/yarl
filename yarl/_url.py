@@ -1055,7 +1055,6 @@ class URL:
         host: Union[str, None],
         port: Union[int, None],
         encode: bool = False,
-        requote: bool = False,
     ) -> str:
         """Make netloc from parts.
 
@@ -1070,17 +1069,16 @@ class URL:
             ret = f"{ret}:{port}"
         if user is None and password is None:
             return ret
-        quoter = cls._REQUOTER if requote else cls._QUOTER
         if password is not None:
             if not user:
                 user = ""
             elif encode:
-                user = quoter(user)
+                user = cls._QUOTER(user)
             if encode:
-                password = quoter(password)
+                password = cls._QUOTER(password)
             user = f"{user}:{password}"
         elif user and encode:
-            user = quoter(user)
+            user = cls._QUOTER(user)
         return f"{user}@{ret}" if user else ret
 
     @classmethod
