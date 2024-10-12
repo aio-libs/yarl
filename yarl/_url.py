@@ -399,10 +399,9 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
-        url = cls(
-            SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
-        )
-
+        url = object.__new__(cls)
+        url._val = SplitResult(scheme, netloc, path, query_string, fragment)
+        url._cache = {}
         if query:
             return url.with_query(query)
         return url
