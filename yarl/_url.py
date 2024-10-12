@@ -399,12 +399,18 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
-        url = object.__new__(cls)
-        url._val = SplitResult(scheme, netloc, path, query_string, fragment)
-        url._cache = {}
+        url = cls._from_val(SplitResult(scheme, netloc, path, query_string, fragment))
         if query:
             return url.with_query(query)
         return url
+
+    @classmethod
+    def _from_val(cls, val: SplitResult) -> "URL":
+        """Create a new URL from a SplitResult."""
+        self = object.__new__(cls)
+        self._val = val
+        self._cache = {}
+        return self
 
     def __init_subclass__(cls):
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
