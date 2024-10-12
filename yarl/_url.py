@@ -367,7 +367,7 @@ class URL:
         if encoded:
             if authority:
                 netloc = authority
-            elif not user and not password and not host and not port:
+            elif not host:
                 netloc = ""
             else:
                 if port is not None:
@@ -378,7 +378,7 @@ class URL:
             if authority:
                 user, password, _host, port = cls._split_netloc(authority)
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
-            elif not user and not password and not host and not port:
+            elif not host:
                 netloc = ""
             else:
                 _host = cls._encode_host(host)
