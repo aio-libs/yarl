@@ -1,1 +1,0 @@
-Improved performance of all :class:`~yarl.URL` methods that create new :class:`~yarl.URL` objects -- by :user:`bdraco`.
