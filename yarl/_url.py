@@ -443,9 +443,7 @@ class URL:
             url = f"{scheme}:{url}"
         if query:
             url = f"{url}?{query}"
-        if fragment:
-            return f"{url}#{fragment}"
-        return url
+        return f"{url}#{fragment}" if fragment else url
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
