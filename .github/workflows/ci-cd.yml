@@ -159,7 +159,8 @@ jobs:
         *-musllinux_*
         *-win32
         pp*'
-        || ''
+        || (matrix.tag == 'musllinux') && '*-manylinux_*'
+        || '*-musllinux_*'
         }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -493,6 +494,12 @@ jobs:
     with:
       qemu: ${{ matrix.qemu }}
       tag: ${{ matrix.tag }}
+      wheel-tags-to-skip: >-
+        ${{
+        (matrix.tag == 'musllinux')
+        && '*-manylinux_*'
+        || '*-musllinux_*'
+        }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}

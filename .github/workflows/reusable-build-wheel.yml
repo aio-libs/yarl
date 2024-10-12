@@ -64,7 +64,6 @@ jobs:
       with:
         platforms: all
       id: qemu
-
     - name: Prepare emulation
       if: inputs.qemu
       run: |
@@ -77,18 +76,6 @@ jobs:
       if: inputs.wheel-tags-to-skip
       run: |
         echo "CIBW_SKIP=${{ inputs.wheel-tags-to-skip }}" >> "${GITHUB_ENV}"
-      shell: bash
-
-    - name: Skip manylinux wheels
-      if: inputs.tag == 'musllinux'
-      run: |
-        echo "CIBW_SKIP=$CIBW_SKIP *manylinux*" >> "${GITHUB_ENV}"
-      shell: bash
-
-    - name: Skip musllinux wheels
-      if: inputs.tag == ''
-      run: |
-        echo "CIBW_SKIP=$CIBW_SKIP *musllinux*" >> "${GITHUB_ENV}"
       shell: bash
 
     - name: Build wheels
