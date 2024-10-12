@@ -9,7 +9,7 @@ from yarl._quoting import NO_EXTENSIONS
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
-IS_CIBUILDWHEEL = bool(os.getenv("CIBW_TYPE"))
+IS_CIBUILDWHEEL = bool(os.environ.get("CIBW_TYPE"))
 
 if not NO_EXTENSIONS:
     from yarl._quoting_c import _Quoter as _CQuoter
