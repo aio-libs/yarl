@@ -98,6 +98,7 @@ class _InternalURLCache(TypedDict, total=False):
     scheme: str
     raw_authority: str
     _default_port: Union[int, None]
+    _port_not_default: Union[int, None]
     authority: str
     raw_user: Union[str, None]
     user: Union[str, None]
@@ -413,13 +414,11 @@ class URL:
         val = self._val
         if not val.path and self.absolute and (val.query or val.fragment):
             val = val._replace(path="/")
-        if (
-            explicit_port := self.explicit_port
-        ) is not None and explicit_port == self._default_port:
+        if (port := self._port_not_default) is None:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             netloc = self._make_netloc(
-                self.raw_user, self.raw_password, self.host_subcomponent, None
+                self.raw_user, self.raw_password, self.host_subcomponent, port
             )
             val = val._replace(netloc=netloc)
         return urlunsplit(val)
@@ -610,6 +609,14 @@ class URL:
     def _default_port(self) -> Union[int, None]:
         """Default port for the scheme or None if not known."""
         return DEFAULT_PORTS.get(self._val.scheme)
+
+    @cached_property
+    def _port_not_default(self) -> Union[int, None]:
+        """The port part of URL normalized to None if its the default port."""
+        explicit_port = self.explicit_port
+        if explicit_port is None or explicit_port == self._default_port:
+            return None
+        return explicit_port
 
     @cached_property
     def authority(self) -> str:
