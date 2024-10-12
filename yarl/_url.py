@@ -422,8 +422,7 @@ class URL:
         )
 
         if query:
-            cache.pop("raw_query_string", None)
-            url = url.with_query(query)
+            return url.with_query(query)
 
         return url
 
