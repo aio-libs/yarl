@@ -105,6 +105,7 @@ class _InternalURLCache(TypedDict, total=False):
     password: Union[str, None]
     raw_host: Union[str, None]
     host: Union[str, None]
+    host_subcomponent: Union[str, None]
     port: Union[int, None]
     explicit_port: Union[int, None]
     raw_path: str
