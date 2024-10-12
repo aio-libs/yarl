@@ -355,6 +355,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+    - name: Checkout project
+      uses: actions/checkout@v4
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -421,9 +423,6 @@ jobs:
       shell: bash
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
-    - name: Fix git owner
-      # https://github.com/CodSpeedHQ/action/issues/104
-      run: git config --global --add safe.directory "*"
     - name: Run benchmarks
       uses: CodSpeedHQ/action@v3
       with:
