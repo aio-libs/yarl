@@ -255,6 +255,13 @@ def test_url_origin(benchmark: BenchmarkFixture) -> None:
             BASE_URL.origin()
 
 
+def test_url_with_path_origin(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_PATH.origin()
+
+
 def test_url_join(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
