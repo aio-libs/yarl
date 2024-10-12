@@ -4,8 +4,8 @@ from pytest_codspeed import BenchmarkFixture  # type: ignore[import-untyped]
 
 from yarl import URL
 
-MANY_HOSTS = [f"www.domain{i}.tld" for i in range(512)]
-MANY_URLS = [f"https://www.domain{i}.tld" for i in range(512)]
+MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
+MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
 BASE_URL = URL("http://www.domain.tld")
 QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_PATH = URL("http://www.domain.tld/req")
