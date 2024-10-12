@@ -253,6 +253,7 @@ class URL:
         *,
         encoded: bool = False,
         strict: Union[bool, None] = None,
+        _cache: Union[_InternalURLCache, None] = None,
     ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -268,7 +269,7 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
-        cache: _InternalURLCache = {}
+        cache = _cache or {}
         if not encoded:
             host: Union[str, None]
             scheme, netloc, path, query, fragment = val
@@ -415,14 +416,15 @@ class URL:
         cache["raw_query_string"] = query_string
         cache["raw_fragment"] = fragment
         url = cls(
-            SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
+            SplitResult(scheme, netloc, path, query_string, fragment),
+            encoded=True,
+            _cache=cache,
         )
 
         if query:
             cache.pop("raw_query_string", None)
             url = url.with_query(query)
 
-        url._cache = cache
         return url
 
     def __init_subclass__(cls):
