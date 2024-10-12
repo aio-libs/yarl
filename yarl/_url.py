@@ -364,7 +364,6 @@ class URL:
                 '"query_string", and "fragment" args, use empty string instead.'
             )
 
-        cache: _InternalURLCache = {}
         _host: Union[str, None] = None
         raw_user: Union[str, None] = None
         raw_password: Union[str, None] = None
@@ -407,14 +406,17 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
+        cache: _InternalURLCache = {
+            "scheme": scheme,
+            "raw_query_string": query_string,
+            "raw_fragment": fragment,
+        }
         if _host is not None:
             cache["raw_host"] = cls._remove_brackets(_host) if "[" in _host else _host
             cache["raw_user"] = raw_user
             cache["raw_password"] = raw_password
             cache["explicit_port"] = port
-        cache["scheme"] = scheme
-        cache["raw_query_string"] = query_string
-        cache["raw_fragment"] = fragment
+
         url = cls(
             SplitResult(scheme, netloc, path, query_string, fragment),
             encoded=True,
