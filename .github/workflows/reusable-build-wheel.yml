@@ -65,11 +65,6 @@ jobs:
         platforms: all
       id: qemu
 
-    - name: Add wheel type to environment
-      run: |
-        echo "CIBW_TYPE=${{ inputs.os }}-${{ inputs.qemu }}" >> "${GITHUB_ENV}"
-      shell: bash
-
     - name: Prepare emulation
       if: inputs.qemu
       run: |
