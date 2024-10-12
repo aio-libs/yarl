@@ -23,7 +23,6 @@ from urllib.parse import (
     parse_qsl,
     quote,
     urlsplit,
-    urlunsplit,
     uses_netloc,
     uses_relative,
 )
@@ -429,7 +428,23 @@ class URL:
                 self.raw_user, self.raw_password, self.host_subcomponent, None
             )
             val = val._replace(netloc=netloc)
-        return urlunsplit(val)
+        return self._unsplit_url(val)
+
+    @staticmethod
+    def _unsplit_url(val: SplitResult) -> str:
+        """Unsplit a URL without any normalization."""
+        scheme, netloc, url, query, fragment = val
+        if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
+            if url and url[:1] != "/":
+                url = f"/{url}"
+            url = f"//{netloc or ''}{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
+        if query:
+            url = f"{url}?{query}"
+        if fragment:
+            return f"{url}?{fragment}"
+        return url
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
@@ -1563,7 +1578,7 @@ class URL:
             assert fragment is not None
         netloc = self._make_netloc(user, password, host, self.explicit_port)
         val = SplitResult(self._val.scheme, netloc, path, query_string, fragment)
-        return urlunsplit(val)
+        return self._unsplit_url(val)
 
 
 def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
