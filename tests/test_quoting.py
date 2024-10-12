@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 import pytest
 from hypothesis import assume, example, given, note
