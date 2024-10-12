@@ -436,8 +436,9 @@ class URL:
         scheme, netloc, url, query, fragment = val
         if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
             if url and url[:1] != "/":
-                url = f"/{url}"
-            url = f"//{netloc or ''}{url}"
+                url = f"//{netloc or ''}/{url}"
+            else:
+                url = f"//{netloc or ''}{url}"
         if scheme:
             url = f"{scheme}:{url}"
         if query:
