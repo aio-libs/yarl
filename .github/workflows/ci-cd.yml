@@ -145,7 +145,7 @@ jobs:
           tag: >-
            ${{
            (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
-           && 'musllinux' || ''
+           && 'musllinux' || 'none'
            }}
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
