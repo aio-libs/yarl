@@ -367,21 +367,21 @@ class URL:
         if encoded:
             if authority:
                 netloc = authority
-            elif not host:
-                netloc = ""
-            else:
+            elif host:
                 if port is not None:
                     port = None if port == DEFAULT_PORTS.get(scheme) else port
                 netloc = cls._make_netloc(user, password, host, port)
+            else:
+                netloc = ""
         else:  # not encoded
             _host: Union[str, None] = None
             if authority:
                 user, password, _host, port = cls._split_netloc(authority)
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
-            elif not host:
-                netloc = ""
-            else:
+            elif host:
                 _host = cls._encode_host(host)
+            else:
+                netloc = ""
 
             if _host is not None:
                 if port is not None:
