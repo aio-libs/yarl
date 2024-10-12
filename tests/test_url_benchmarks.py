@@ -30,6 +30,39 @@ def test_url_build_with_host(benchmark):
             URL.build(host="domain")
 
 
+def test_url_build_access_username_password(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL.build(host="www.domain.tld", user="user", password="password")
+            url.raw_user
+            url.raw_password
+
+
+def test_url_build_access_raw_host(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL.build(host="www.domain.tld")
+            url.raw_host
+
+
+def test_url_build_access_fragment(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL.build(host="www.domain.tld")
+            url.fragment
+
+
+def test_url_build_access_raw_path(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL.build(host="www.domain.tld", path="/req")
+            url.raw_path
+
+
 def test_url_build_with_different_hosts(benchmark):
     @benchmark
     def _run():
@@ -70,6 +103,39 @@ def test_url_make_with_many_hosts(benchmark):
     def _run():
         for url in MANY_URLS:
             URL(url)
+
+
+def test_url_make_access_raw_host(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL("http://www.domain.tld")
+            url.raw_host
+
+
+def test_url_make_access_fragment(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL("http://www.domain.tld")
+            url.fragment
+
+
+def test_url_make_access_raw_path(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL("http://www.domain.tld/req")
+            url.raw_path
+
+
+def test_url_make_access_username_password(benchmark):
+    @benchmark
+    def _run():
+        for _ in range(100):
+            url = URL("http://user:password@www.domain.tld")
+            url.raw_user
+            url.raw_password
 
 
 def test_url_make_with_ipv4_address_path_and_port(benchmark):
