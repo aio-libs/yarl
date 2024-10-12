@@ -1574,9 +1574,8 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = self._make_netloc(user, password, host, self.explicit_port)
-        return self._unsplit_result(
-            self._val.scheme, netloc, path, query_string, fragment
-        )
+        scheme = self._val.scheme
+        return self._unsplit_result(scheme, netloc, path, query_string, fragment)
 
 
 def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
