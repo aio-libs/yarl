@@ -376,9 +376,6 @@ class URL:
                 cache["raw_password"] = password or None
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
                 netloc = cls._make_netloc(user, password, host, port)
-            cache["scheme"] = scheme
-            cache["raw_query_string"] = query_string
-            cache["raw_fragment"] = fragment
         else:  # not encoded
             if authority:
                 _user, _password, _host, _port = cls._split_netloc(authority)
@@ -418,10 +415,10 @@ class URL:
                 cls._QUERY_QUOTER(query_string) if query_string else query_string
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
-            cache["scheme"] = scheme
-            cache["raw_query_string"] = query_string
-            cache["raw_fragment"] = fragment
 
+        cache["scheme"] = scheme
+        cache["raw_query_string"] = query_string
+        cache["raw_fragment"] = fragment
         url = cls(
             SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
         )
