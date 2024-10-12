@@ -384,9 +384,7 @@ class URL:
 
             if _host is not None:
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
-                raw_user = None if user is None else cls._QUOTER(user)
-                raw_password = None if password is None else cls._QUOTER(password)
-                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
+                netloc = cls._make_netloc(user, password, _host, port, encode=True)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
@@ -1061,20 +1059,31 @@ class URL:
         password: Union[str, None],
         host: Union[str, None],
         port: Union[int, None],
+        encode: bool = False,
     ) -> str:
         """Make netloc from parts.
 
-        The user and password must already be encoded.
+        The user and password are encoded if encode is True.
 
         The host must already be encoded with _encode_host.
         """
         if host is None:
             return ""
-        ret = host if port is None else f"{host}:{port}"
+        ret = host
+        if port is not None:
+            ret = f"{ret}:{port}"
         if user is None and password is None:
             return ret
         if password is not None:
-            return f"{user or ''}:{password}@{ret}"
+            if not user:
+                user = ""
+            elif encode:
+                user = cls._QUOTER(user)
+            if encode:
+                password = cls._QUOTER(password)
+            user = f"{user}:{password}"
+        elif user and encode:
+            user = cls._QUOTER(user)
         return f"{user}@{ret}" if user else ret
 
     @classmethod
