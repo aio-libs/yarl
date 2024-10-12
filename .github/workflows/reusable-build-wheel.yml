@@ -24,6 +24,11 @@ on:
         default: ''
         required: false
         type: string
+      tag:
+        description: Build platform tag wheels
+        default: '0'
+        required: false
+        type: string
       source-tarball-name:
         description: Sdist filename wildcard
         required: true
@@ -42,7 +47,8 @@ env:
 jobs:
 
   build-wheel:
-    name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
+    name: >-
+     Build wheels on ${{ inputs.os }} ${{ inputs.qemu }} ${{ inputs.tag }}
     runs-on: ${{ inputs.os }}-latest
     timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
@@ -58,6 +64,12 @@ jobs:
       with:
         platforms: all
       id: qemu
+
+    - name: Add wheel type to environment
+      run: |
+        echo "CIBW_TYPE=${{ inputs.os }}-${{ inputs.qemu }}" >> "${GITHUB_ENV}"
+      shell: bash
+
     - name: Prepare emulation
       if: inputs.qemu
       run: |
@@ -72,6 +84,18 @@ jobs:
         echo "CIBW_SKIP=${{ inputs.wheel-tags-to-skip }}" >> "${GITHUB_ENV}"
       shell: bash
 
+    - name: Skip manylinux wheels
+      if: inputs.tag == 'musllinux'
+      run: |
+        echo "CIBW_SKIP=$CIBW_SKIP *manylinux*" >> "${GITHUB_ENV}"
+      shell: bash
+
+    - name: Skip musllinux wheels
+      if: inputs.tag == 'manylinux'
+      run: |
+        echo "CIBW_SKIP=$CIBW_SKIP *musllinux*" >> "${GITHUB_ENV}"
+      shell: bash
+
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.21.3
       env:
@@ -83,8 +107,10 @@ jobs:
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v4
       with:
-        name: >-
-          ${{ inputs.dists-artifact-name }}-${{ inputs.os }}-${{ inputs.qemu }}
+        name: ${{ inputs.dists-artifact-name }}-
+          ${{ inputs.os }}-
+          ${{ inputs.qemu }}-
+          ${{ inputs.tag }}
         path: ./wheelhouse/*.whl
 
 ...
