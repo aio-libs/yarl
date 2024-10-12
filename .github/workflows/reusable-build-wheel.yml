@@ -43,6 +43,7 @@ env:
   FORCE_COLOR: "1"  # Make tools pretty.
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
   PIP_NO_PYTHON_VERSION_WARNING: "1"
+  CIBW_TYPE: ${{ inputs.os }}-${{ inputs.qemu }}-${{ inputs.tag }}
 
 jobs:
 
@@ -64,11 +65,6 @@ jobs:
       with:
         platforms: all
       id: qemu
-
-    - name: Add wheel type to environment
-      run: |
-        echo "CIBW_TYPE=${{ inputs.os }}-${{ inputs.qemu }}" >> "${GITHUB_ENV}"
-      shell: bash
 
     - name: Prepare emulation
       if: inputs.qemu
