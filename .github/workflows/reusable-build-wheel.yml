@@ -43,7 +43,6 @@ env:
   FORCE_COLOR: "1"  # Make tools pretty.
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
   PIP_NO_PYTHON_VERSION_WARNING: "1"
-  CIBW_TYPE: ${{ inputs.os }}-${{ inputs.qemu }}-${{ inputs.tag }}
 
 jobs:
 
