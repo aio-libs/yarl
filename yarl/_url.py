@@ -364,21 +364,25 @@ class URL:
             )
 
         cache: _InternalURLCache = {}
+        _host: Union[str, None] = None
+        explicit_port: Union[int, None] = None
+        raw_user: Union[str, None] = None
+        raw_password: Union[str, None] = None
+
         if encoded:
             if authority:
                 netloc = authority
             elif not user and not password and not host and not port:
                 netloc = ""
             else:
-                cache["explicit_port"] = port
-                cache["raw_host"] = cls._remove_brackets(host) if "[" in host else host
-                cache["raw_user"] = user or None
-                cache["raw_password"] = password or None
+                explicit_port = port
+                _host = host
+                raw_password = user or None
+                raw_user = password or None
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
                 netloc = cls._make_netloc(user, password, host, port)
 
         else:  # not encoded
-            _host: Union[str, None] = None
             if authority:
                 user, password, _host, port = cls._split_netloc(authority)
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
@@ -388,15 +392,10 @@ class URL:
                 _host = cls._encode_host(host)
 
             if _host is not None:
-                cache["explicit_port"] = port
+                explicit_port = port
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
                 raw_user = None if user is None else cls._QUOTER(user)
                 raw_password = None if password is None else cls._QUOTER(password)
-                cache["raw_host"] = (
-                    cls._remove_brackets(_host) if "[" in _host else _host
-                )
-                cache["raw_user"] = raw_user
-                cache["raw_password"] = raw_password
                 netloc = cls._make_netloc(raw_user, raw_password, _host, port)
 
             path = cls._PATH_QUOTER(path) if path else path
@@ -410,6 +409,11 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
+        if _host is not None:
+            cache["raw_host"] = cls._remove_brackets(_host) if "[" in _host else _host
+            cache["raw_user"] = raw_user
+            cache["raw_password"] = raw_password
+            cache["explicit_port"] = explicit_port
         cache["scheme"] = scheme
         cache["raw_query_string"] = query_string
         cache["raw_fragment"] = fragment
