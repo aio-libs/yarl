@@ -1,1 +1,1 @@
-Significant improve performance of :class:`~yarl.URL` methods that modify the network location -- by :user:`bdraco`.
+Improved performance of :class:`~yarl.URL` methods that modify the network location -- by :user:`bdraco`.
