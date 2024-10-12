@@ -378,30 +378,26 @@ class URL:
                 netloc = cls._make_netloc(user, password, host, port)
 
         else:  # not encoded
-            encoded_host = None
+            _host: Union[str, None] = None
             if authority:
                 user, password, _host, port = cls._split_netloc(authority)
-                encoded_host = (
-                    cls._encode_host(_host, validate_host=False) if _host else ""
-                )
+                _host = cls._encode_host(_host, validate_host=False) if _host else ""
             elif not user and not password and not host and not port:
                 netloc = ""
             else:
-                encoded_host = cls._encode_host(host)
+                _host = cls._encode_host(host)
 
-            if encoded_host is not None:
+            if _host is not None:
                 cache["explicit_port"] = port
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
                 raw_user = None if user is None else cls._QUOTER(user)
                 raw_password = None if password is None else cls._QUOTER(password)
                 cache["raw_host"] = (
-                    cls._remove_brackets(encoded_host)
-                    if "[" in encoded_host
-                    else encoded_host
+                    cls._remove_brackets(_host) if "[" in _host else _host
                 )
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
-                netloc = cls._make_netloc(raw_user, raw_password, encoded_host, port)
+                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
