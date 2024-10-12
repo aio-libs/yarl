@@ -427,7 +427,6 @@ class URL:
 
         if query:
             return url.with_query(query)
-
         return url
 
     def __init_subclass__(cls):
