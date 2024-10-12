@@ -289,14 +289,7 @@ class URL:
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(raw_user, raw_password, host, port)
-                if "[" in host:
-                    # Our host encoder adds back brackets for IPv6 addresses
-                    # so we need to remove them here to get the raw host
-                    _, _, bracketed = host.partition("[")
-                    raw_host, _, _ = bracketed.partition("]")
-                else:
-                    raw_host = host
-                cache["raw_host"] = raw_host
+                cache["raw_host"] = cls._remove_brackets(host) if "[" in host else host
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
                 cache["explicit_port"] = port
@@ -377,15 +370,8 @@ class URL:
             elif not user and not password and not host and not port:
                 netloc = ""
             else:
-                if "[" in host:
-                    # Our host encoder adds back brackets for IPv6 addresses
-                    # so we need to remove them here to get the raw host
-                    _, _, bracketed = host.partition("[")
-                    raw_host, _, _ = bracketed.partition("]")
-                else:
-                    raw_host = host
                 cache["explicit_port"] = port
-                cache["raw_host"] = raw_host
+                cache["raw_host"] = cls._remove_brackets(host) if "[" in host else host
                 cache["raw_user"] = user or None
                 cache["raw_password"] = password or None
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
@@ -400,15 +386,10 @@ class URL:
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
                 raw_user = None if _user is None else cls._QUOTER(_user)
                 raw_password = None if _password is None else cls._QUOTER(_password)
-                if "[" in _host:
-                    # Our host encoder adds back brackets for IPv6 addresses
-                    # so we need to remove them here to get the raw host
-                    _, _, bracketed = _host.partition("[")
-                    raw_host, _, _ = bracketed.partition("]")
-                else:
-                    raw_host = _host
                 cache["explicit_port"] = _port
-                cache["raw_host"] = raw_host
+                cache["raw_host"] = (
+                    cls._remove_brackets(_host) if "[" in _host else _host
+                )
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
                 netloc = cls._make_netloc(raw_user, raw_password, _host, port)
@@ -417,20 +398,15 @@ class URL:
             else:
                 cache["explicit_port"] = port
                 port = None if port == DEFAULT_PORTS.get(scheme) else port
-                encoded_host = cls._encode_host(host)
-                if "[" in encoded_host:
-                    # Our host encoder adds back brackets for IPv6 addresses
-                    # so we need to remove them here to get the raw host
-                    _, _, bracketed = encoded_host.partition("[")
-                    raw_host, _, _ = bracketed.partition("]")
-                else:
-                    raw_host = encoded_host
+                _host = cls._encode_host(host)
                 raw_user = None if user is None else cls._QUOTER(user)
                 raw_password = None if password is None else cls._QUOTER(password)
-                cache["raw_host"] = raw_host
+                cache["raw_host"] = (
+                    cls._remove_brackets(_host) if "[" in _host else _host
+                )
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
-                netloc = cls._make_netloc(raw_user, raw_password, encoded_host, port)
+                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
@@ -1022,6 +998,16 @@ class URL:
 
         segments = path.split("/")
         return prefix + "/".join(_normalize_path_segments(segments))
+
+    @classmethod
+    @lru_cache  # match the same size as urlsplit
+    def _remove_brackets(cls, host: str) -> str:
+        """Remove brackets from host part of URL."""
+        # Our host encoder adds back brackets for IPv6 addresses
+        # so we need to remove them here to get the raw host
+        _, _, bracketed = host.partition("[")
+        raw_host, _, _ = bracketed.partition("]")
+        return raw_host
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
