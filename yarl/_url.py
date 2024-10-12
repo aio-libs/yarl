@@ -366,23 +366,30 @@ class URL:
                 '"query_string", and "fragment" args, use empty string instead.'
             )
 
-        if authority:
-            if encoded:
+        if encoded:
+            if authority:
                 netloc = authority
+            elif host:
+                if port is not None:
+                    port = None if port == DEFAULT_PORTS.get(scheme) else port
+                netloc = cls._make_netloc(user, password, host, port)
             else:
-                _user, _password, _host, _port = cls._split_netloc(authority)
-                port = None if _port == DEFAULT_PORTS.get(scheme) else _port
+                netloc = ""
+        else:  # not encoded
+            _host: Union[str, None] = None
+            if authority:
+                user, password, _host, port = cls._split_netloc(authority)
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
-                netloc = cls._make_netloc(_user, _password, _host, port, encode=True)
-        elif not user and not password and not host and not port:
-            netloc = ""
-        else:
-            port = None if port == DEFAULT_PORTS.get(scheme) else port
-            encoded_host = host if encoded else cls._encode_host(host)
-            netloc = cls._make_netloc(
-                user, password, encoded_host, port, encode=not encoded
-            )
-        if not encoded:
+            elif host:
+                _host = cls._encode_host(host)
+            else:
+                netloc = ""
+
+            if _host is not None:
+                if port is not None:
+                    port = None if port == DEFAULT_PORTS.get(scheme) else port
+                netloc = cls._make_netloc(user, password, _host, port, encode=True)
+
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
                 if "." in path:
@@ -394,13 +401,18 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
-        url = cls(
-            SplitResult(scheme, netloc, path, query_string, fragment), encoded=True
-        )
-
+        url = cls._from_val(SplitResult(scheme, netloc, path, query_string, fragment))
         if query:
             return url.with_query(query)
         return url
+
+    @classmethod
+    def _from_val(cls, val: SplitResult) -> "URL":
+        """Create a new URL from a SplitResult."""
+        self = object.__new__(cls)
+        self._val = val
+        self._cache = {}
+        return self
 
     def __init_subclass__(cls):
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")

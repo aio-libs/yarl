@@ -9,6 +9,7 @@ MANY_URLS = [f"https://www.domain{i}.tld" for i in range(512)]
 BASE_URL = URL("http://www.domain.tld")
 QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_PATH = URL("http://www.domain.tld/req")
+REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 
@@ -203,3 +204,73 @@ def test_url_with_query_to_string(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             str(QUERY_URL)
+
+
+def test_url_with_fragment(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_fragment("fragment")
+
+
+def test_url_with_user(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_user("user")
+
+
+def test_url_with_password(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_password("password")
+
+
+def test_url_with_host(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_host("www.domain.tld")
+
+
+def test_url_with_port(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_port(1234)
+
+
+def test_url_with_path(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_path("/req")
+
+
+def test_url_origin(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.origin()
+
+
+def test_url_with_path_origin(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_PATH.origin()
+
+
+def test_url_join(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.join(REL_URL)
+
+
+def test_url_joinpath_encoded(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.joinpath("req", encoded=True)
