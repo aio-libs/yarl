@@ -14,6 +14,34 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.1
+======
+
+*(2024-10-12)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1222`.
+
+- Improved performance of all :class:`~yarl.URL` methods that create new :class:`~yarl.URL` objects -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1226`.
+
+- Improved performance of :class:`~yarl.URL` methods that modify the network location -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1229`.
+
+
+----
+
+
 1.15.0
 ======
 
