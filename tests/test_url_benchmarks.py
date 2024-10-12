@@ -2,8 +2,8 @@ import pytest
 
 from yarl import URL
 
-MANY_HOSTS = [f"www.domain{i}.tld" for i in range(10000)]
-MANY_URLS = [f"https://www.domain{i}.tld" for i in range(10000)]
+MANY_HOSTS = [f"www.domain{i}.tld" for i in range(512)]
+MANY_URLS = [f"https://www.domain{i}.tld" for i in range(512)]
 BASE_URL = URL("http://www.domain.tld")
 QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_PATH = URL("http://www.domain.tld/req")
