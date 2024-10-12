@@ -428,10 +428,10 @@ class URL:
                 self.raw_user, self.raw_password, self.host_subcomponent, None
             )
             val = val._replace(netloc=netloc)
-        return self._unsplit_url(val)
+        return self._unsplit_result(val)
 
     @staticmethod
-    def _unsplit_url(val: SplitResult) -> str:
+    def _unsplit_result(val: SplitResult) -> str:
         """Unsplit a URL without any normalization."""
         scheme, netloc, url, query, fragment = val
         if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
@@ -1579,7 +1579,7 @@ class URL:
             assert fragment is not None
         netloc = self._make_netloc(user, password, host, self.explicit_port)
         val = SplitResult(self._val.scheme, netloc, path, query_string, fragment)
-        return self._unsplit_url(val)
+        return self._unsplit_result(val)
 
 
 def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
