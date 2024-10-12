@@ -253,7 +253,6 @@ class URL:
         *,
         encoded: bool = False,
         strict: Union[bool, None] = None,
-        _cache: Union[_InternalURLCache, None] = None,
     ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -269,7 +268,7 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
-        cache = _cache or {}
+        cache: _InternalURLCache = {}
         if not encoded:
             host: Union[str, None]
             scheme, netloc, path, query, fragment = val
@@ -365,36 +364,31 @@ class URL:
                 '"query_string", and "fragment" args, use empty string instead.'
             )
 
-        _host: Union[str, None] = None
-        raw_user: Union[str, None] = None
-        raw_password: Union[str, None] = None
-
         if encoded:
             if authority:
                 netloc = authority
-            elif not user and not password and not host and not port:
-                netloc = ""
+            elif host:
+                if port is not None:
+                    port = None if port == DEFAULT_PORTS.get(scheme) else port
+                netloc = cls._make_netloc(user, password, host, port)
             else:
-                _host = host
-                raw_password = user or None
-                raw_user = password or None
-                _port = None if port == DEFAULT_PORTS.get(scheme) else port
-                netloc = cls._make_netloc(user, password, host, _port)
-
+                netloc = ""
         else:  # not encoded
+            _host: Union[str, None] = None
             if authority:
                 user, password, _host, port = cls._split_netloc(authority)
                 _host = cls._encode_host(_host, validate_host=False) if _host else ""
-            elif not user and not password and not host and not port:
-                netloc = ""
-            else:
+            elif host:
                 _host = cls._encode_host(host)
+            else:
+                netloc = ""
 
             if _host is not None:
-                _port = None if port == DEFAULT_PORTS.get(scheme) else port
+                if port is not None:
+                    port = None if port == DEFAULT_PORTS.get(scheme) else port
                 raw_user = None if user is None else cls._QUOTER(user)
                 raw_password = None if password is None else cls._QUOTER(password)
-                netloc = cls._make_netloc(raw_user, raw_password, _host, _port)
+                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
@@ -407,27 +401,18 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
-        cache: _InternalURLCache = {
-            "scheme": scheme,
-            "raw_query_string": query_string,
-            "raw_fragment": fragment,
-        }
-        if _host is not None:
-            # Remove brackets as host encoder adds back brackets for IPv6 addresses
-            cache["raw_host"] = _host[1:-1] if "[" in _host else _host
-            cache["raw_user"] = raw_user
-            cache["raw_password"] = raw_password
-            cache["explicit_port"] = port
-
-        url = cls(
-            SplitResult(scheme, netloc, path, query_string, fragment),
-            encoded=True,
-            _cache=cache,
-        )
-
+        url = cls._from_val(SplitResult(scheme, netloc, path, query_string, fragment))
         if query:
             return url.with_query(query)
         return url
+
+    @classmethod
+    def _from_val(cls, val: SplitResult) -> "URL":
+        """Create a new URL from a SplitResult."""
+        self = object.__new__(cls)
+        self._val = val
+        self._cache = {}
+        return self
 
     def __init_subclass__(cls):
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
