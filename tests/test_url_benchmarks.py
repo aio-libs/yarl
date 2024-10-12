@@ -12,92 +12,108 @@ SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 
 
 @pytest.mark.benchmark
-def test_url_build_with_host_and_port_performance():
-    URL.build(host="www.domain.tld", path="/req", port=1234)
+def test_url_build_with_host_and_port():
+    for _ in range(100):
+        URL.build(host="www.domain.tld", path="/req", port=1234)
 
 
 @pytest.mark.benchmark
-def test_url_build_encoded_with_host_and_port_performance():
-    URL.build(host="www.domain.tld", path="/req", port=1234, encoded=True)
+def test_url_build_encoded_with_host_and_port():
+    for _ in range(100):
+        URL.build(host="www.domain.tld", path="/req", port=1234, encoded=True)
 
 
 @pytest.mark.benchmark
-def test_url_build_with_host_performance():
-    URL.build(host="domain")
+def test_url_build_with_host():
+    for _ in range(100):
+        URL.build(host="domain")
 
 
 @pytest.mark.benchmark
-def test_url_build_with_different_hosts_performance():
+def test_url_build_with_different_hosts():
     for host in MANY_HOSTS:
         URL.build(host=host)
 
 
 @pytest.mark.benchmark
-def test_url_build_with_host_path_and_port_performance():
-    URL.build(host="www.domain.tld", port=1234)
+def test_url_build_with_host_path_and_port():
+    for _ in range(100):
+        URL.build(host="www.domain.tld", port=1234)
 
 
 @pytest.mark.benchmark
-def test_url_make_with_host_path_and_port_performance():
-    URL("http://www.domain.tld:1234/req")
+def test_url_make_with_host_path_and_port():
+    for _ in range(100):
+        URL("http://www.domain.tld:1234/req")
 
 
 @pytest.mark.benchmark
-def test_url_make_encoded_with_host_path_and_port_performance():
-    URL("http://www.domain.tld:1234/req", encoded=True)
+def test_url_make_encoded_with_host_path_and_port():
+    for _ in range(100):
+        URL("http://www.domain.tld:1234/req", encoded=True)
 
 
 @pytest.mark.benchmark
-def test_url_make_with_host_and_path_performance():
-    URL("http://www.domain.tld")
+def test_url_make_with_host_and_path():
+    for _ in range(100):
+        URL("http://www.domain.tld")
 
 
 @pytest.mark.benchmark
-def test_url_make_with_many_hosts_performance():
+def test_url_make_with_many_hosts():
     for url in MANY_URLS:
         URL(url)
 
 
 @pytest.mark.benchmark
-def test_url_make_with_ipv4_address_path_and_port_performance():
-    URL("http://127.0.0.1:1234/req")
+def test_url_make_with_ipv4_address_path_and_port():
+    for _ in range(100):
+        URL("http://127.0.0.1:1234/req")
 
 
 @pytest.mark.benchmark
-def test_url_make_with_ipv4_address_and_path_performance():
-    URL("http://127.0.0.1/req")
+def test_url_make_with_ipv4_address_and_path():
+    for _ in range(100):
+        URL("http://127.0.0.1/req")
 
 
 @pytest.mark.benchmark
-def test_url_make_with_ipv6_address_path_and_port_performance():
-    URL("http://[::1]:1234/req")
+def test_url_make_with_ipv6_address_path_and_port():
+    for _ in range(100):
+        URL("http://[::1]:1234/req")
 
 
 @pytest.mark.benchmark
-def test_url_make_with_ipv6_address_and_path_performance():
-    URL("http://[::1]/req")
+def test_url_make_with_ipv6_address_and_path():
+    for _ in range(100):
+        URL("http://[::1]/req")
 
 
 @pytest.mark.benchmark
-def test_url_make_with_query_mapping_performance():
-    BASE_URL.with_query(SIMPLE_QUERY)
+def test_url_make_with_query_mapping():
+    for _ in range(100):
+        BASE_URL.with_query(SIMPLE_QUERY)
 
 
 @pytest.mark.benchmark
-def test_url_make_with_query_sequence_mapping_performance():
-    BASE_URL.with_query(QUERY_SEQ)
+def test_url_make_with_query_sequence_mapping():
+    for _ in range(100):
+        BASE_URL.with_query(QUERY_SEQ)
 
 
 @pytest.mark.benchmark
-def test_url_to_string_performance():
-    str(BASE_URL)
+def test_url_to_string():
+    for _ in range(100):
+        str(BASE_URL)
 
 
 @pytest.mark.benchmark
-def test_url_with_path_to_string_performance():
-    str(URL_WITH_PATH)
+def test_url_with_path_to_string():
+    for _ in range(100):
+        str(URL_WITH_PATH)
 
 
 @pytest.mark.benchmark
-def test_url_with_query_to_string_performance():
-    str(QUERY_URL)
+def test_url_with_query_to_string():
+    for _ in range(100):
+        str(QUERY_URL)
