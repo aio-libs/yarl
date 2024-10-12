@@ -1097,13 +1097,11 @@ class URL:
         """
         if host is None:
             return ""
-        ret = host
-        if port is not None:
-            ret = f"{ret}:{port}"
+        ret = host if port is None else f"{host}:{port}"
         if user is None and password is None:
             return ret
         if password is not None:
-            user = f"{user or ''}:{password}"
+            return f"{user or ''}:{password}@{ret}"
         return f"{user}@{ret}" if user else ret
 
     @classmethod
