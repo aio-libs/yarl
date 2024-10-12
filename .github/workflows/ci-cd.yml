@@ -159,8 +159,8 @@ jobs:
         *-musllinux_*
         *-win32
         pp*'
-        || (matrix.tag == 'musllinux') && '*-manylinux_*'
-        || '*-musllinux_*'
+        || (matrix.tag == 'musllinux') && '*-manylinux_* pp*'
+        || '*-musllinux_* pp*'
         }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -497,8 +497,8 @@ jobs:
       wheel-tags-to-skip: >-
         ${{
         (matrix.tag == 'musllinux')
-        && '*-manylinux_*'
-        || '*-musllinux_*'
+        && '*-manylinux_* pp*'
+        || '*-musllinux_* pp*'
         }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
