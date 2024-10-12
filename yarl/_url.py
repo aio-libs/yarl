@@ -105,6 +105,7 @@ class _InternalURLCache(TypedDict, total=False):
     password: Union[str, None]
     raw_host: Union[str, None]
     host: Union[str, None]
+    host_subcomponent: Union[str, None]
     port: Union[int, None]
     explicit_port: Union[int, None]
     raw_path: str
@@ -290,6 +291,7 @@ class URL:
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(raw_user, raw_password, host, port)
                 # Remove brackets as host encoder adds back brackets for IPv6 addresses
+                cache["host_subcomponent"] = host
                 cache["raw_host"] = host[1:-1] if "[" in host else host
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
