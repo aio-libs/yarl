@@ -365,7 +365,6 @@ class URL:
 
         cache: _InternalURLCache = {}
         _host: Union[str, None] = None
-        explicit_port: Union[int, None] = None
         raw_user: Union[str, None] = None
         raw_password: Union[str, None] = None
 
@@ -375,12 +374,11 @@ class URL:
             elif not user and not password and not host and not port:
                 netloc = ""
             else:
-                explicit_port = port
                 _host = host
                 raw_password = user or None
                 raw_user = password or None
-                port = None if port == DEFAULT_PORTS.get(scheme) else port
-                netloc = cls._make_netloc(user, password, host, port)
+                _port = None if port == DEFAULT_PORTS.get(scheme) else port
+                netloc = cls._make_netloc(user, password, host, _port)
 
         else:  # not encoded
             if authority:
@@ -392,11 +390,10 @@ class URL:
                 _host = cls._encode_host(host)
 
             if _host is not None:
-                explicit_port = port
-                port = None if port == DEFAULT_PORTS.get(scheme) else port
+                _port = None if port == DEFAULT_PORTS.get(scheme) else port
                 raw_user = None if user is None else cls._QUOTER(user)
                 raw_password = None if password is None else cls._QUOTER(password)
-                netloc = cls._make_netloc(raw_user, raw_password, _host, port)
+                netloc = cls._make_netloc(raw_user, raw_password, _host, _port)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
@@ -413,7 +410,7 @@ class URL:
             cache["raw_host"] = cls._remove_brackets(_host) if "[" in _host else _host
             cache["raw_user"] = raw_user
             cache["raw_password"] = raw_password
-            cache["explicit_port"] = explicit_port
+            cache["explicit_port"] = port
         cache["scheme"] = scheme
         cache["raw_query_string"] = query_string
         cache["raw_fragment"] = fragment
