@@ -1154,13 +1154,13 @@ class URL:
             password = None
         elif isinstance(user, str):
             user = self._QUOTER(user)
-            password = val.password
+            password = self.raw_password
         else:
             raise TypeError("Invalid user type")
         if not self.absolute:
             raise ValueError("user replacement is not allowed for relative URLs")
-        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
-        netloc = self._make_netloc(user, password, encoded_host, val.port)
+        encoded_host = self.host_subcomponent or ""
+        netloc = self._make_netloc(user, password, encoded_host, self.explicit_port)
         return self._from_val(val._replace(netloc=netloc))
 
     def with_password(self, password: Union[str, None]) -> "URL":
@@ -1180,10 +1180,10 @@ class URL:
             raise TypeError("Invalid password type")
         if not self.absolute:
             raise ValueError("password replacement is not allowed for relative URLs")
-        val = self._val
-        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
-        netloc = self._make_netloc(val.username, password, encoded_host, val.port)
-        return self._from_val(val._replace(netloc=netloc))
+        encoded_host = self.host_subcomponent or ""
+        port = self.explicit_port
+        netloc = self._make_netloc(self.raw_user, password, encoded_host, port)
+        return self._from_val(self._val._replace(netloc=netloc))
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1201,9 +1201,9 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        val = self._val
         encoded_host = self._encode_host(host) if host else ""
-        netloc = self._make_netloc(val.username, val.password, encoded_host, val.port)
+        port = self.explicit_port
+        netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_val(self._val._replace(netloc=netloc))
 
     def with_port(self, port: Union[int, None]) -> "URL":
@@ -1221,8 +1221,8 @@ class URL:
         if not self.absolute:
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
-        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
-        netloc = self._make_netloc(val.username, val.password, encoded_host, port)
+        encoded_host = self.host_subcomponent or ""
+        netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_val(val._replace(netloc=netloc))
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
