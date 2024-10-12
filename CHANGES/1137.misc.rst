@@ -1,1 +1,0 @@
-Improved performance of normalizing paths -- by :user:`bdraco`.

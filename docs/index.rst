@@ -116,7 +116,7 @@ by this variable.
 Dependencies
 ------------
 
-``yarl`` requires :mod:`multidict` library.
+``yarl`` requires the :mod:`multidict` and :mod:`propcache <propcache.api>` libraries.
 
 It installs it automatically.
 

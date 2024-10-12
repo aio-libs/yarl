@@ -1,5 +1,5 @@
 from enum import Enum
-from urllib.parse import SplitResult
+from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
@@ -60,6 +60,11 @@ def test_repr():
 
 def test_origin():
     url = URL("http://user:password@example.com:8888/path/to?a=1&b=2")
+    assert URL("http://example.com:8888") == url.origin()
+
+
+def test_origin_with_no_auth():
+    url = URL("http://example.com:8888/path/to?a=1&b=2")
     assert URL("http://example.com:8888") == url.origin()
 
 
@@ -176,6 +181,24 @@ def test_raw_host():
     assert url.raw_host == url._val.hostname
 
 
+@pytest.mark.parametrize(
+    ("host"),
+    [
+        ("example.com"),
+        ("[::1]"),
+        ("xn--gnter-4ya.com"),
+    ],
+)
+def test_host_subcomponent(host: str):
+    url = URL(f"http://{host}")
+    assert url.host_subcomponent == host
+
+
+def test_host_subcomponent_return_idna_encoded_host():
+    url = URL("http://оун-упа.укр")
+    assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
@@ -286,11 +309,13 @@ def test_port_for_implicit_port():
 def test_port_for_relative_url():
     url = URL("/path/to")
     assert url.port is None
+    assert url.explicit_port is None
 
 
 def test_port_for_unknown_scheme():
     url = URL("unknown://example.com")
     assert url.port is None
+    assert url.explicit_port is None
 
 
 def test_explicit_port_for_explicit_port():
@@ -346,10 +371,46 @@ def test_path_with_spaces():
 
 
 def test_path_with_2F():
-    """Path should not decode %2F, otherwise it may look like a path separator."""
+    """Path should decode %2F."""
 
     url = URL("http://example.com/foo/bar%2fbaz")
-    assert url.path == "/foo/bar%2Fbaz"
+    assert url.path == "/foo/bar/baz"
+
+
+def test_path_safe_with_2F():
+    """Path safe should not decode %2F, otherwise it may look like a path separator."""
+
+    url = URL("http://example.com/foo/bar%2fbaz")
+    assert url.path_safe == "/foo/bar%2Fbaz"
+
+
+def test_path_safe_with_25():
+    """Path safe should not decode %25, otherwise it is prone to double unquoting."""
+
+    url = URL("http://example.com/foo/bar%252Fbaz")
+    assert url.path_safe == "/foo/bar%252Fbaz"
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == "/foo/bar%2Fbaz"
+
+
+@pytest.mark.parametrize(
+    "original_path",
+    [
+        "m+@bar/baz",
+        "m%2B@bar/baz",
+        "m%252B@bar/baz",
+        "m%2F@bar/baz",
+    ],
+)
+def test_path_safe_only_round_trips(original_path: str) -> None:
+    """Path safe can round trip with documented decode method."""
+    encoded_once = quote(original_path, safe="")
+    encoded_twice = quote(encoded_once, safe="")
+
+    url = URL(f"http://example.com/{encoded_twice}")
+    unquoted = url.path_safe.replace("%2F", "/").replace("%25", "%")
+    assert unquoted == f"/{encoded_once}"
+    assert unquote(unquoted) == f"/{original_path}"
 
 
 def test_raw_path_for_empty_url():
@@ -1419,6 +1480,14 @@ def test_is_default_port_for_unknown_scheme():
     assert not url.is_default_port()
 
 
+def test_handling_port_zero():
+    url = URL("http://example.com:0")
+    assert url.explicit_port == 0
+    assert url.explicit_port == url._val.port
+    assert str(url) == "http://example.com:0"
+    assert not url.is_default_port()
+
+
 #
 
 
@@ -2004,3 +2073,14 @@ def test_parsing_populates_cache():
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
     assert url._cache["scheme"] == "http"
+
+
+@pytest.mark.parametrize(
+    ("host", "is_authority"),
+    [
+        *(("other_gen_delim_" + c, False) for c in "[]"),
+    ],
+)
+def test_build_with_invalid_ipv6_host(host: str, is_authority: bool):
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(f"http://{host}/")

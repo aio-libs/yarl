@@ -14,6 +14,260 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.0
+======
+
+*(2024-10-11)*
+
+
+Bug fixes
+---------
+
+- Fixed validation with :py:meth:`~yarl.URL.with_scheme` when passed scheme is not lowercase -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1189`.
+
+
+Features
+--------
+
+- Started building ``armv7l`` wheels -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1204`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of constructing unencoded :class:`~yarl.URL` objects -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1188`.
+
+- Added a cache for parsing hosts to reduce overhead of encoding :class:`~yarl.URL` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1190`.
+
+- Improved performance of constructing query strings from :class:`~collections.abc.Mapping` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1193`.
+
+- Improved performance of converting :class:`~yarl.URL` objects to strings -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1198`.
+
+
+----
+
+
+1.14.0
+======
+
+*(2024-10-08)*
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Switched to using the :mod:`propcache <propcache.api>` package for property caching
+  -- by :user:`bdraco`.
+
+  The :mod:`propcache <propcache.api>` package is derived from the property caching
+  code in :mod:`yarl` and has been broken out to avoid maintaining it for multiple
+  projects.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1169`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Started testing with Hypothesis -- by :user:`webknjaz` and :user:`bdraco`.
+
+  Special thanks to :user:`Zac-HD` for helping us get started with this framework.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`860`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of :py:meth:`~yarl.URL.is_default_port` when no explicit port is set -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1168`.
+
+- Improved performance of converting :class:`~yarl.URL` to a string when no explicit port is set -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1170`.
+
+- Improved performance of the :py:meth:`~yarl.URL.origin` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1175`.
+
+- Improved performance of encoding hosts -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1176`.
+
+
+----
+
+
+1.13.1
+======
+
+*(2024-09-27)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` with ``authority`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1163`.
+
+
+----
+
+
+1.13.0
+======
+
+*(2024-09-26)*
+
+
+Bug fixes
+---------
+
+- Started rejecting ASCII hostnames with invalid characters. For host strings that
+  look like authority strings, the exception message includes advice on what to do
+  instead -- by :user:`mjpieters`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`880`, :issue:`954`.
+
+- Fixed IPv6 addresses missing brackets when the :class:`~yarl.URL` was converted to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1157`, :issue:`1158`.
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.host_subcomponent` which returns the :rfc:`3986#section-3.2.2` host subcomponent -- by :user:`bdraco`.
+
+  The only current practical difference between :attr:`~yarl.URL.raw_host` and :attr:`~yarl.URL.host_subcomponent` is that IPv6 addresses are returned bracketed.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1159`.
+
+
+----
+
+
+1.12.1
+======
+
+*(2024-09-23)*
+
+
+No significant changes.
+
+
+----
+
+
+1.12.0
+======
+
+*(2024-09-23)*
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.path_safe` to be able to fetch the path without ``%2F`` and ``%25`` decoded -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1150`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Restore decoding ``%2F`` (``/``) in ``URL.path`` -- by :user:`bdraco`.
+
+  This change restored the behavior before :issue:`1057`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1151`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of processing paths -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1143`.
+
+
+----
+
+
+1.11.1
+======
+
+*(2024-09-09)*
+
+
+Bug fixes
+---------
+
+- Allowed scheme replacement for relative URLs if the scheme does not require a host -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`280`, :issue:`1138`.
+
+- Allowed empty host for URL schemes other than the special schemes listed in the WHATWG URL spec -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1136`.
+
+
+Features
+--------
+
+- Loosened restriction on integers as query string values to allow classes that implement ``__int__`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1139`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of normalizing paths -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1137`.
+
+
+----
+
+
 1.11.0
 ======
 

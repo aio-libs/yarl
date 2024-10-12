@@ -15,9 +15,29 @@ def test_with_scheme_uppercased():
     assert str(url.with_scheme("HTTPS")) == "https://example.com"
 
 
-def test_with_scheme_for_relative_url():
-    with pytest.raises(ValueError):
-        URL("path/to").with_scheme("http")
+@pytest.mark.parametrize(
+    ("scheme"),
+    [
+        ("http"),
+        ("https"),
+        ("HTTP"),
+    ],
+)
+def test_with_scheme_for_relative_url(scheme: str) -> None:
+    """Test scheme can be set for relative URL."""
+    lower_scheme = scheme.lower()
+    msg = (
+        "scheme replacement is not allowed for "
+        f"relative URLs for the {lower_scheme} scheme"
+    )
+    with pytest.raises(ValueError, match=msg):
+        assert URL("path/to").with_scheme(scheme)
+
+
+def test_with_scheme_for_relative_file_url() -> None:
+    """Test scheme can be set for relative file URL."""
+    expected = URL("file:///absolute/path")
+    assert expected.with_scheme("file") == expected
 
 
 def test_with_scheme_invalid_type():
@@ -164,6 +184,26 @@ def test_with_host_non_ascii():
     assert url2.host == "оун-упа.укр"
     assert url2.raw_authority == "xn----8sb1bdhvc.xn--j1amh:123"
     assert url2.authority == "оун-упа.укр:123"
+
+
+@pytest.mark.parametrize(
+    ("host", "is_authority"),
+    [
+        ("user:pass@host.com", True),
+        ("user@host.com", True),
+        ("host:com", False),
+        ("not_percent_encoded%Zf", False),
+        ("still_not_percent_encoded%fZ", False),
+        *(("other_gen_delim_" + c, False) for c in "/?#[]"),
+    ],
+)
+def test_with_invalid_host(host: str, is_authority: bool):
+    url = URL("http://example.com:123")
+    match = r"Host '[^']+' cannot contain '[^']+' \(at position \d+\)"
+    if is_authority:
+        match += ", if .* use 'authority' instead of 'host'"
+    with pytest.raises(ValueError, match=f"{match}$"):
+        url.with_host(host=host)
 
 
 def test_with_host_percent_encoded():

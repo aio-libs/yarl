@@ -191,7 +191,22 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
       >>> URL('http://хост.домен').raw_host
       'xn--n1agdj.xn--d1acufc'
+      >>> URL('http://[::1]').raw_host
+      '::1'
 
+.. attribute:: URL.host_subcomponent
+
+   :rfc:`3986#section-3.2.2` host subcomponent part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   .. doctest::
+
+      >>> URL('http://хост.домен').host_subcomponent
+      'xn--n1agdj.xn--d1acufc'
+      >>> URL('http://[::1]').host_subcomponent
+      '[::1]'
+
+   .. versionadded:: 1.13
 
 .. attribute:: URL.port
 
@@ -270,6 +285,25 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://example.com').path
       '/'
 
+   .. warning::
+
+      In many situations it is important to distinguish between path separators
+      (a literal ``/``) and other forward slashes (a literal ``%2F``). Use
+      :attr:`URL.path_safe` for these cases.
+
+.. attribute:: URL.path_safe
+
+   Similar to :attr:`URL.path` except it doesn't decode ``%2F`` or ``%25``.
+   This allows to distinguish between path separators (``/``) and encoded
+   slashes (``%2F``).
+
+   Note that ``%25`` is also not decoded to avoid issues with double unquoting
+   of values. e.g. You can unquote the value with
+   ``URL.path_safe.replace("%2F", "/").replace("%25", %")`` to get the same
+   result as :meth:`URL.path`. If the ``%25`` was unquoted, it would be
+   impossible to tell the difference between ``%2F`` and ``%252F``.
+
+   .. versionadded:: 1.12
 
 .. attribute:: URL.path_qs
 
@@ -1003,19 +1037,20 @@ Default port substitution
 Cache control
 -------------
 
-IDNA conversion and IP Address parsing used for host encoding are quite expensive
-operations, that's why the ``yarl`` library caches these calls by storing
-last ``256`` results in the global LRU cache.
+IDNA conversion, host validation, and IP Address parsing used for host
+encoding are quite expensive operations, that's why the ``yarl``
+library caches these calls by storing last ``256`` results in the
+global LRU cache.
 
 .. function:: cache_clear()
 
-   Clear IDNA and IP Address caches.
+   Clear IDNA, host validation, and IP Address caches.
 
 
 .. function:: cache_info()
 
-   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, and
-   ``"ip_address"`` keys, each value
+   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, ``"ip_address"``,
+   and ``"host_validate"`` keys, each value
    points to corresponding ``CacheInfo`` structure (see :func:`functools.lru_cache` for
    details):
 
@@ -1025,12 +1060,15 @@ last ``256`` results in the global LRU cache.
       >>> yarl.cache_info()
       {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=256, currsize=5),
        'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15),
-       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=256, currsize=101)}
+       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=256, currsize=101),
+       'host_validate': CacheInfo(hits=0, misses=0, maxsize=256, currsize=0)}
 
 
-.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, ip_address_size=256)
 
-   Set the IP Address and IDNA encode and decode cache sizes (``256`` for each by default).
+.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, ip_address_size=256, host_validate_size=256)
+
+   Set the IP Address, host validation, and IDNA encode and
+   decode cache sizes (``256`` for each by default).
 
    Pass ``None`` to make the corresponding cache unbounded (may speed up host encoding
    operation a little but the memory footprint can be very high,
