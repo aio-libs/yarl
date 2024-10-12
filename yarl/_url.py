@@ -444,7 +444,7 @@ class URL:
         if query:
             url = f"{url}?{query}"
         if fragment:
-            return f"{url}?{fragment}"
+            return f"{url}#{fragment}"
         return url
 
     def __repr__(self) -> str:
