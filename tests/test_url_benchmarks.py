@@ -7,8 +7,8 @@ MANY_URLS = [f"https://www.domain{i}.tld" for i in range(512)]
 BASE_URL = URL("http://www.domain.tld")
 QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_PATH = URL("http://www.domain.tld/req")
-_QUERY_SEQ = {str(i): (str(j) for j in range(10)) for i in range(10)}
-_SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
+QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
+SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 
 
 @pytest.mark.benchmark
@@ -80,12 +80,12 @@ def test_url_make_with_ipv6_address_and_path_performance():
 
 @pytest.mark.benchmark
 def test_url_make_with_query_mapping_performance():
-    BASE_URL.with_query(_SIMPLE_QUERY)
+    BASE_URL.with_query(SIMPLE_QUERY)
 
 
 @pytest.mark.benchmark
 def test_url_make_with_query_sequence_mapping_performance():
-    BASE_URL.with_query(_QUERY_SEQ)
+    BASE_URL.with_query(QUERY_SEQ)
 
 
 @pytest.mark.benchmark
