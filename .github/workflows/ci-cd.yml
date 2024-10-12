@@ -134,13 +134,18 @@ jobs:
         - windows
         - macos
         tag:
-        - manylinux
-        - musllinux
+        - ''
+        - 'musllinux'
         exclude:
-        - tag: >-
+        - os: windows
+          tag: 'musllinux'
+        - os: macos
+          tag: 'musllinux'
+        - os: ubuntu
+          tag: >-
            ${{
            (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
-           && 'musllinux' || ''
+           && 'musllinux' || 'none'
            }}
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
@@ -154,7 +159,8 @@ jobs:
         *-musllinux_*
         *-win32
         pp*'
-        || ''
+        || (matrix.tag == 'musllinux') && '*-manylinux_* pp*'
+        || '*-musllinux_* pp*'
         }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -305,6 +311,7 @@ jobs:
     - name: Run unittests
       env:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
+        ENABLE_HYPOTHESIS_TESTS: true
       run: >-
         python -Im
         pytest
@@ -473,15 +480,21 @@ jobs:
         - s390x
         - armv7l
         tag:
-        - manylinux
+        - ''
         - musllinux
         exclude:
-        - tag: manylinux
+        - tag: ''
           qemu: armv7l
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
       tag: ${{ matrix.tag }}
+      wheel-tags-to-skip: >-
+        ${{
+        (matrix.tag == 'musllinux')
+        && '*-manylinux_* pp*'
+        || '*-musllinux_* pp*'
+        }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}

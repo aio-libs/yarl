@@ -8,7 +8,7 @@ from yarl._quoting import NO_EXTENSIONS
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
-IS_CIBUILDWHEEL = bool(os.getenv("CIBW_TYPE"))
+ENABLE_HYPOTHESIS_TESTS = bool(os.environ.get("ENABLE_HYPOTHESIS_TESTS"))
 
 if not NO_EXTENSIONS:
     from yarl._quoting_c import _Quoter as _CQuoter
@@ -473,14 +473,18 @@ def test_unquoter_path_with_plus(unquoter):
 
 
 @given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
-@pytest.mark.skipif(IS_CIBUILDWHEEL, reason="This test is too slow for cibuildwheel.")
+@pytest.mark.skipif(
+    not ENABLE_HYPOTHESIS_TESTS, reason="hypothesis tests are not enabled"
+)
 def test_fuzz__PyQuoter(safe, protected, qs, requote):
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
     assert _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
 @given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
-@pytest.mark.skipif(IS_CIBUILDWHEEL, reason="This test is too slow for cibuildwheel.")
+@pytest.mark.skipif(
+    not ENABLE_HYPOTHESIS_TESTS, reason="hypothesis tests are not enabled"
+)
 def test_fuzz__PyUnquoter(ignore, unsafe, qs):
     """Verify that _PyUnquoter can be instantiated with any valid arguments."""
     assert _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
@@ -492,7 +496,9 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
-@pytest.mark.skipif(IS_CIBUILDWHEEL, reason="This test is too slow for cibuildwheel.")
+@pytest.mark.skipif(
+    not ENABLE_HYPOTHESIS_TESTS, reason="hypothesis tests are not enabled"
+)
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter(
@@ -514,7 +520,9 @@ def test_quote_unquote_parameter(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
-@pytest.mark.skipif(IS_CIBUILDWHEEL, reason="This test is too slow for cibuildwheel.")
+@pytest.mark.skipif(
+    not ENABLE_HYPOTHESIS_TESTS, reason="hypothesis tests are not enabled"
+)
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_requote(
@@ -536,7 +544,9 @@ def test_quote_unquote_parameter_requote(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
-@pytest.mark.skipif(IS_CIBUILDWHEEL, reason="This test is too slow for cibuildwheel.")
+@pytest.mark.skipif(
+    not ENABLE_HYPOTHESIS_TESTS, reason="hypothesis tests are not enabled"
+)
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_path_safe(
