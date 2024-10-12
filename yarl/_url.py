@@ -290,7 +290,8 @@ class URL:
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(raw_user, raw_password, host, port)
-                cache["raw_host"] = cls._remove_brackets(host) if "[" in host else host
+                # Remove brackets as host encoder adds back brackets for IPv6 addresses
+                cache["raw_host"] = host[1:-1] if "[" in host else host
                 cache["raw_user"] = raw_user
                 cache["raw_password"] = raw_password
                 cache["explicit_port"] = port
@@ -412,7 +413,8 @@ class URL:
             "raw_fragment": fragment,
         }
         if _host is not None:
-            cache["raw_host"] = cls._remove_brackets(_host) if "[" in _host else _host
+            # Remove brackets as host encoder adds back brackets for IPv6 addresses
+            cache["raw_host"] = _host[1:-1] if "[" in _host else _host
             cache["raw_user"] = raw_user
             cache["raw_password"] = raw_password
             cache["explicit_port"] = port
@@ -993,16 +995,6 @@ class URL:
 
         segments = path.split("/")
         return prefix + "/".join(_normalize_path_segments(segments))
-
-    @classmethod
-    @lru_cache  # match the same size as urlsplit
-    def _remove_brackets(cls, host: str) -> str:
-        """Remove brackets from host part of URL."""
-        # Our host encoder adds back brackets for IPv6 addresses
-        # so we need to remove them here to get the raw host
-        _, _, bracketed = host.partition("[")
-        raw_host, _, _ = bracketed.partition("]")
-        return raw_host
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
