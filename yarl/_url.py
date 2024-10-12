@@ -1159,8 +1159,9 @@ class URL:
             raise TypeError("Invalid user type")
         if not self.absolute:
             raise ValueError("user replacement is not allowed for relative URLs")
-        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
-        netloc = self._make_netloc(user, password, encoded_host, val.port)
+        _, _, host, port = self._split_netloc(val.netloc)
+        host = f"[{host}]" if host and ":" in host else host
+        netloc = self._make_netloc(user, password, host, port)
         return self._from_val(val._replace(netloc=netloc))
 
     def with_password(self, password: Union[str, None]) -> "URL":
@@ -1181,8 +1182,9 @@ class URL:
         if not self.absolute:
             raise ValueError("password replacement is not allowed for relative URLs")
         val = self._val
-        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
-        netloc = self._make_netloc(val.username, password, encoded_host, val.port)
+        user, _, host, port = self._split_netloc(val.netloc)
+        host = f"[{host}]" if host and ":" in host else host
+        netloc = self._make_netloc(user, password, host, port)
         return self._from_val(val._replace(netloc=netloc))
 
     def with_host(self, host: str) -> "URL":
@@ -1221,8 +1223,9 @@ class URL:
         if not self.absolute:
             raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
-        encoded_host = self._encode_host(val.hostname) if val.hostname else ""
-        netloc = self._make_netloc(val.username, val.password, encoded_host, port)
+        user, password, host, _ = self._split_netloc(val.netloc)
+        host = f"[{host}]" if host and ":" in host else host
+        netloc = self._make_netloc(user, password, host, port)
         return self._from_val(val._replace(netloc=netloc))
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
