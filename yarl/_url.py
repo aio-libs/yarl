@@ -289,11 +289,6 @@ class URL:
                 raw_user = None if username is None else cls._REQUOTER(username)
                 raw_password = None if password is None else cls._REQUOTER(password)
                 netloc = cls._make_netloc(raw_user, raw_password, host, port)
-                # Remove brackets as host encoder adds back brackets for IPv6 addresses
-                cache["raw_host"] = host[1:-1] if "[" in host else host
-                cache["raw_user"] = raw_user
-                cache["raw_password"] = raw_password
-                cache["explicit_port"] = port
 
             if path:
                 path = cls._PATH_REQUOTER(path)
@@ -304,9 +299,6 @@ class URL:
 
             query = cls._QUERY_REQUOTER(query) if query else query
             fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
-            cache["scheme"] = scheme
-            cache["raw_query_string"] = query
-            cache["raw_fragment"] = fragment
             # There is a good chance that the SplitResult is already normalized
             # so we can avoid the extra work of creating a new SplitResult
             # if the input SplitResult is already normalized
