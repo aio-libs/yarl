@@ -9,6 +9,8 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
+    Dict,
     Iterable,
     List,
     SupportsInt,
@@ -28,7 +30,7 @@ from urllib.parse import (
 )
 
 import idna
-from multidict import MultiDict, MultiDictProxy, istr
+from multidict import CIMultiDict, MultiDict, MultiDictProxy, istr
 from propcache.api import under_cached_property as cached_property
 
 from ._quoting import _Quoter, _Unquoter
@@ -1251,9 +1253,9 @@ class URL:
             path = "/" + path
         return self._from_val(self._val._replace(path=path, query="", fragment=""))
 
-    def _get_str_query_from_sequence_iterable(
+    def _get_str_query_from_sequence_mapping(
         self,
-        items: Iterable[Tuple[Union[str, istr], QueryVariable]],
+        mapping: Mapping[Union[str, istr], QueryVariable],
     ) -> str:
         """Return a query string from a sequence of (key, value) pairs.
 
@@ -1262,6 +1264,7 @@ class URL:
         The sequence of values must be a list or tuple.
         """
         quoter = self._QUERY_PART_QUOTER
+        items = mapping.items()
         pairs = [
             f"{quoter(k)}={quoter(self._query_var(v))}"
             for k, val in items
@@ -1322,10 +1325,13 @@ class URL:
 
         if query is None:
             return None
-        if isinstance(query, Mapping):
-            return self._get_str_query_from_sequence_iterable(query.items())
-        if isinstance(query, str):
+        # Fast dispatch for non-subclassed query values
+        if dispatch := self._QUERY_PARSER_DISPATCH.get(type(query)):
+            return dispatch(self, query)
+        if type(query) is str or isinstance(query, str):
             return self._QUERY_QUOTER(query)
+        if isinstance(query, Mapping):
+            return self._get_str_query_from_sequence_mapping(query)
         if isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError(
                 "Invalid query type: bytes, bytearray and memoryview are forbidden"
@@ -1341,6 +1347,15 @@ class URL:
             "Invalid query type: only str, mapping or "
             "sequence of (key, value) pairs is allowed"
         )
+
+    _QUERY_PARSER_DISPATCH: Dict[object, Callable[["URL", Any], str]] = {
+        dict: _get_str_query_from_sequence_mapping,
+        CIMultiDict: _get_str_query_from_sequence_mapping,
+        MultiDict: _get_str_query_from_sequence_mapping,
+        MultiDictProxy: _get_str_query_from_sequence_mapping,
+        tuple: _get_str_query_from_iterable,
+        list: _get_str_query_from_iterable,
+    }
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
