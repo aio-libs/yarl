@@ -1280,6 +1280,8 @@ class URL:
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
+        if cls is int:  # Fast path for non-subclassed int
+            return str(v)
         if issubclass(cls, float):
             if TYPE_CHECKING:
                 assert isinstance(v, float)
@@ -1288,8 +1290,6 @@ class URL:
             if math.isnan(v):
                 raise ValueError("float('nan') is not supported")
             return str(float(v))
-        if cls is int:
-            return str(v)
         if cls is not bool and isinstance(cls, SupportsInt):
             return str(int(v))
         raise TypeError(
