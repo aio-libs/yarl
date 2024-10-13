@@ -1263,7 +1263,7 @@ class URL:
         """
         quoter = self._QUERY_PART_QUOTER
         pairs = [
-            f"{quoter(k)}={quoter(self._query_var(v))}"
+            f"{quoter(k)}={quoter(v if type(v) is str else self._query_var(v))}"
             for k, val in items
             for v in (
                 val
@@ -1309,7 +1309,11 @@ class URL:
         quoter = self._QUERY_PART_QUOTER
         # A listcomp is used since listcomps are inlined on CPython 3.12+ and
         # they are a bit faster than a generator expression.
-        return "&".join([f"{quoter(k)}={quoter(self._query_var(v))}" for k, v in items])
+        pairs = [
+            f"{quoter(k)}={quoter(v if type(v) is str else self._query_var(v))}"
+            for k, v in items
+        ]
+        return "&".join(pairs)
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
         query: Union[str, Mapping[str, QueryVariable], None]
