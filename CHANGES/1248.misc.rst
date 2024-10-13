@@ -1,1 +1,0 @@
-Improved performance of :py:meth:`~yarl.URL.joinpath` -- by :user:`bdraco`.
