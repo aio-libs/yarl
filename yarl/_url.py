@@ -1385,16 +1385,16 @@ class URL:
         new_query_string = self._get_str_query(*args, **kwargs)
         if not new_query_string:
             return self
-        if current_query := self._val.query:
+        if new_query := self._val.query:
             # both strings are already encoded so we can use a simple
             # string join
-            if current_query[-1] == "&":
-                combined_query = f"{current_query}{new_query_string}"
+            if new_query[-1] == "&":
+                new_query += new_query_string
             else:
-                combined_query = f"{current_query}&{new_query_string}"
+                new_query += f"&{new_query_string}"
         else:
-            combined_query = new_query_string
-        return self._from_val(self._val._replace(query=combined_query))
+            new_query = new_query_string
+        return self._from_val(self._val._replace(query=new_query))
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
