@@ -418,7 +418,7 @@ class URL:
     def __str__(self) -> str:
         val = self._val
         scheme, netloc, path, query, fragment = val
-        if not val.path and self.absolute and (val.query or val.fragment):
+        if not val.path and val.netloc and (val.query or val.fragment):
             path = "/"
         if (port := self.explicit_port) is not None and port == self._default_port:
             # port normalization - using None for default ports to remove from rendering
@@ -454,11 +454,11 @@ class URL:
             return NotImplemented
 
         val1 = self._val
-        if not val1.path and self.absolute:
+        if not val1.path and val1.netloc:
             val1 = val1._replace(path="/")
 
         val2 = other._val
-        if not val2.path and other.absolute:
+        if not val2.path and val2.netloc:
             val2 = val2._replace(path="/")
 
         return val1 == val2
@@ -467,7 +467,7 @@ class URL:
         ret = self._cache.get("hash")
         if ret is None:
             val = self._val
-            if not val.path and self.absolute:
+            if not val.path and val.netloc:
                 val = val._replace(path="/")
             ret = self._cache["hash"] = hash(val)
         return ret
@@ -501,9 +501,8 @@ class URL:
         return self.update_query(query)
 
     def __bool__(self) -> bool:
-        return bool(
-            self._val.netloc or self._val.path or self._val.query or self._val.fragment
-        )
+        val = self._val
+        return bool(val.netloc or val.path or val.query or val.fragment)
 
     def __getstate__(self) -> Tuple[SplitResult]:
         return (self._val,)
@@ -551,7 +550,7 @@ class URL:
             # If the explicit port is None, then the URL must be
             # using the default port unless its a relative URL
             # which does not have an implicit port / default port
-            return self.absolute
+            return self._val.netloc != ""
         return explicit == self._default_port
 
     def origin(self) -> "URL":
@@ -588,7 +587,7 @@ class URL:
         scheme, user, password, host and port are removed.
 
         """
-        if not self.absolute:
+        if not self._val.netloc:
             raise ValueError("URL should be absolute")
         val = self._val._replace(scheme="", netloc="")
         return self._from_val(val)
@@ -762,7 +761,7 @@ class URL:
 
         """
         ret = self._val.path
-        if not ret and self.absolute:
+        if not ret and self._val.netloc:
             ret = "/"
         return ret
 
@@ -859,7 +858,7 @@ class URL:
 
         """
         path = self._val.path
-        if self.absolute:
+        if self._val.netloc:
             return ("/", *path[1:].split("/")) if path else ("/",)
         if path and path[0] == "/":
             return ("/", *path[1:].split("/"))
@@ -893,7 +892,7 @@ class URL:
     def raw_name(self) -> str:
         """The last part of raw_parts."""
         parts = self.raw_parts
-        if self.absolute:
+        if self._val.netloc:
             parts = parts[1:]
             if not parts:
                 return ""
@@ -970,7 +969,7 @@ class URL:
             old_path_cutoff = -1 if old_path_segments[-1] == "" else None
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
-        if self.absolute:
+        if self._val.netloc:
             parsed = _normalize_path_segments(parsed) if needs_normalize else parsed
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
@@ -1148,7 +1147,7 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         lower_scheme = scheme.lower()
-        if not self.absolute and lower_scheme in SCHEME_REQUIRES_HOST:
+        if not self._val.netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (
                 "scheme replacement is not allowed for "
                 f"relative URLs for the {lower_scheme} scheme"
@@ -1173,7 +1172,7 @@ class URL:
             password = self.raw_password
         else:
             raise TypeError("Invalid user type")
-        if not self.absolute:
+        if not val.netloc:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = self._make_netloc(user, password, encoded_host, self.explicit_port)
@@ -1194,7 +1193,7 @@ class URL:
             password = self._QUOTER(password)
         else:
             raise TypeError("Invalid password type")
-        if not self.absolute:
+        if not self._val.netloc:
             raise ValueError("password replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
@@ -1213,14 +1212,15 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
-        if not self.absolute:
+        val = self._val
+        if not val.netloc:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
         encoded_host = self._encode_host(host) if host else ""
         port = self.explicit_port
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_val(self._val._replace(netloc=netloc))
+        return self._from_val(val._replace(netloc=netloc))
 
     def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
@@ -1234,9 +1234,9 @@ class URL:
                 raise TypeError(f"port should be int or None, got {type(port)}")
             if not (0 <= port <= 65535):
                 raise ValueError(f"port must be between 0 and 65535, got {port}")
-        if not self.absolute:
-            raise ValueError("port replacement is not allowed for relative URLs")
         val = self._val
+        if not val.netloc:
+            raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_val(val._replace(netloc=netloc))
@@ -1245,7 +1245,7 @@ class URL:
         """Return a new URL with path replaced."""
         if not encoded:
             path = self._PATH_QUOTER(path)
-            if self.absolute:
+            if self._val.netloc:
                 path = self._normalize_path(path) if "." in path else path
         if len(path) > 0 and path[0] != "/":
             path = "/" + path
@@ -1470,7 +1470,7 @@ class URL:
         if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
-        if self.absolute:
+        if self._val.netloc:
             if len(parts) == 1:
                 parts.append(name)
             else:
