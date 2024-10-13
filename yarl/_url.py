@@ -21,7 +21,6 @@ from urllib.parse import (
     parse_qsl,
     quote,
     urlsplit,
-    urlunsplit,
     uses_netloc,
     uses_relative,
 )
@@ -416,18 +415,31 @@ class URL:
 
     def __str__(self) -> str:
         val = self._val
+        scheme, netloc, path, query, fragment = val
         if not val.path and self.absolute and (val.query or val.fragment):
-            val = val._replace(path="/")
-        if (
-            explicit_port := self.explicit_port
-        ) is not None and explicit_port == self._default_port:
+            path = "/"
+        if (port := self.explicit_port) is not None and port == self._default_port:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
-            netloc = self._make_netloc(
-                self.raw_user, self.raw_password, self.host_subcomponent, None
-            )
-            val = val._replace(netloc=netloc)
-        return urlunsplit(val)
+            host = self.host_subcomponent
+            netloc = self._make_netloc(self.raw_user, self.raw_password, host, None)
+        return self._unsplit_result(scheme, netloc, path, query, fragment)
+
+    @staticmethod
+    def _unsplit_result(
+        scheme: str, netloc: str, url: str, query: str, fragment: str
+    ) -> str:
+        """Unsplit a URL without any normalization."""
+        if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
+            if url and url[:1] != "/":
+                url = f"//{netloc or ''}/{url}"
+            else:
+                url = f"//{netloc or ''}{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
+        if query:
+            url = f"{url}?{query}"
+        return f"{url}#{fragment}" if fragment else url
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
@@ -1560,8 +1572,8 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = self._make_netloc(user, password, host, self.explicit_port)
-        val = SplitResult(self._val.scheme, netloc, path, query_string, fragment)
-        return urlunsplit(val)
+        scheme = self._val.scheme
+        return self._unsplit_result(scheme, netloc, path, query_string, fragment)
 
 
 def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
