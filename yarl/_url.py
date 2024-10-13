@@ -1265,7 +1265,11 @@ class URL:
         pairs = [
             f"{quoter(k)}={quoter(self._query_var(v))}"
             for k, val in items
-            for v in (val if isinstance(val, (list, tuple)) else (val,))
+            for v in (
+                val
+                if type(val) is not str and isinstance(val, (list, tuple))
+                else (val,)
+            )
         ]
         return "&".join(pairs)
 
