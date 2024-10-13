@@ -7,6 +7,7 @@ from yarl import URL
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
 BASE_URL = URL("http://www.domain.tld")
+URL_WITH_NOT_DEFAULT_PORT = URL("http://www.domain.tld:1234")
 QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_PATH = URL("http://www.domain.tld/req")
 REL_URL = URL("/req")
@@ -318,3 +319,20 @@ def test_url_joinpath_with_truediv(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             BASE_URL / "req/req/req"
+
+
+def test_url_equality(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL == BASE_URL
+            BASE_URL == URL_WITH_PATH
+            URL_WITH_PATH == URL_WITH_PATH
+
+
+def test_is_default_port(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.is_default_port()
+            URL_WITH_NOT_DEFAULT_PORT.is_default_port()
