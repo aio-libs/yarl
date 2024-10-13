@@ -955,6 +955,16 @@ def test_joinpath(base, to_join, expected):
         pytest.param("path", "a/", "path/a/", id="default_trailing-empty-segment"),
         pytest.param("path", "a//", "path/a//", id="default_trailing-empty-segments"),
         pytest.param("path", "a//b", "path/a//b", id="default_embedded-empty-segment"),
+        pytest.param(
+            "path/a/b/c/d/e", "a/../../../../../../c", "path/c", id="long-backtrack"
+        ),
+        pytest.param(
+            "path/a/b/c/d/e",
+            "a/../../../././../../../c",
+            "path/c",
+            id="long-backtrack-with-dots",
+        ),
+        pytest.param("path/a/../../d/e", "a/../c", "d/e/c", id="backtrack-in-both"),
     ],
 )
 def test_joinpath_empty_segments(base, to_join, expected):
@@ -963,6 +973,14 @@ def test_joinpath_empty_segments(base, to_join, expected):
         f"http://example.com/{expected}" == str(url.joinpath(to_join))
         and str(url / to_join) == f"http://example.com/{expected}"
     )
+
+
+def test_joinpath_backtrack_to_base():
+    url = URL("http://example.com/../../c")
+    new_url = url.joinpath("../../..")
+    assert str(new_url) == "http://example.com"
+    assert new_url.path == "/"
+    assert new_url.raw_path == "/"
 
 
 def test_joinpath_single_empty_segments():

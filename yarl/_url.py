@@ -946,7 +946,8 @@ class URL:
         add paths to self._val.path, accounting for absolute vs relative paths,
         keep existing, but do not create new, empty segments
         """
-        parsed: list[str] = []
+        parsed: List[str] = []
+        needs_normalize: bool = False
         for idx, path in enumerate(reversed(paths)):
             # empty segment of last is not removed
             last = idx == 0
@@ -955,6 +956,7 @@ class URL:
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
             path = path if encoded else self._PATH_QUOTER(path)
+            needs_normalize |= "." in path
             segments = list(reversed(path.split("/")))
             # remove trailing empty segment for all but the last path
             segment_slice_start = int(not last and segments[0] == "")
@@ -966,7 +968,7 @@ class URL:
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
         if self.absolute:
-            parsed = _normalize_path_segments(parsed)
+            parsed = _normalize_path_segments(parsed) if needs_normalize else parsed
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
                 # where there was none before
