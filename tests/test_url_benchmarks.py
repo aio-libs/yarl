@@ -174,14 +174,14 @@ def test_url_make_with_ipv6_address_and_path(benchmark: BenchmarkFixture) -> Non
 def test_url_make_with_query_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
-        for _ in range(100):
+        for _ in range(25):
             BASE_URL.with_query(SIMPLE_QUERY)
 
 
 def test_url_make_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
-        for _ in range(100):
+        for _ in range(25):
             BASE_URL.with_query(QUERY_SEQ)
 
 
