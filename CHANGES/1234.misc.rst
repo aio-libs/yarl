@@ -1,1 +1,0 @@
-Improved performance of converting :class:`~yarl.URL` to a string -- by :user:`bdraco`.

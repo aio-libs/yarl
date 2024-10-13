@@ -1,1 +1,0 @@
-Improved performance of constructing query strings from :class:`~multidict.MultiDict` -- by :user:`bdraco`.
