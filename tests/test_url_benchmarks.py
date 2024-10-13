@@ -185,6 +185,13 @@ def test_url_make_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> No
             BASE_URL.with_query(QUERY_SEQ)
 
 
+def test_url_extend_query(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.extend_query(SIMPLE_QUERY)
+
+
 def test_url_to_string(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -241,6 +248,13 @@ def test_url_with_port(benchmark: BenchmarkFixture) -> None:
             BASE_URL.with_port(1234)
 
 
+def test_url_with_scheme(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_scheme("https")
+
+
 def test_url_with_path(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -260,6 +274,13 @@ def test_url_with_path_origin(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             URL_WITH_PATH.origin()
+
+
+def test_url_with_path_relative(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_PATH.relative()
 
 
 def test_url_join(benchmark: BenchmarkFixture) -> None:
