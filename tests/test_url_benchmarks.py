@@ -13,6 +13,7 @@ URL_WITH_PATH = URL("http://www.domain.tld/req")
 REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
+SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
 
 
 def test_url_build_with_host_and_port(benchmark: BenchmarkFixture) -> None:
@@ -177,6 +178,13 @@ def test_url_make_with_query_mapping(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(SIMPLE_QUERY)
+
+
+def test_url_make_with_int_query_mapping(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query(SIMPLE_INT_QUERY)
 
 
 def test_url_make_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
