@@ -1280,6 +1280,8 @@ class URL:
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
+        if cls is int:  # Fast path for non-subclassed int
+            return str(v)
         if issubclass(cls, float):
             if TYPE_CHECKING:
                 assert isinstance(v, float)
