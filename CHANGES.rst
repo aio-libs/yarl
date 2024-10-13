@@ -14,6 +14,39 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.2
+======
+
+*(2024-10-13)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of converting :class:`~yarl.URL` to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1234`.
+
+- Improved performance of :py:meth:`~yarl.URL.joinpath` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1248`, :issue:`1250`.
+
+- Improved performance of constructing query strings from :class:`~multidict.MultiDict` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1256`.
+
+- Improved performance of constructing query strings with ``int`` values -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1259`.
+
+
+----
+
+
 1.15.1
 ======
 
