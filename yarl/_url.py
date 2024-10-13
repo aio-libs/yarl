@@ -434,14 +434,14 @@ class URL:
         """Unsplit a URL without any normalization."""
         if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
             if url and url[:1] != "/":
-                url = f"//{netloc or ''}/{url}"
+                url = "//" + (netloc or "") + "/" + url
             else:
-                url = f"//{netloc or ''}{url}"
+                url = "//" + (netloc or "") + url
         if scheme:
-            url = f"{scheme}:{url}"
+            url = scheme + ":" + url
         if query:
-            url = f"{url}?{query}"
-        return f"{url}#{fragment}" if fragment else url
+            url += "?" + query
+        return url + "#" + fragment if fragment else url
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
