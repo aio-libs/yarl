@@ -203,14 +203,14 @@ cdef class _Quoter:
 
     def __call__(self, val):
         cdef Writer writer
-        if val is None:
-            return None
         if type(val) is not str:
             if isinstance(val, str):
                 # derived from str
                 val = str(val)
             else:
                 raise TypeError("Argument should be str")
+        if not val:
+            return val
         _init_writer(&writer)
         try:
             return self._do_quote(<str>val, &writer)

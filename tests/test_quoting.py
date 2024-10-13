@@ -279,7 +279,8 @@ def test_unquoting_parts(unquoter):
 
 
 def test_quote_None(quoter):
-    assert quoter()(None) is None
+    with pytest.raises(TypeError, match="Argument should be str"):
+        quoter()(None)
 
 
 def test_unquote_None(unquoter):

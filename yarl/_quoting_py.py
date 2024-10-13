@@ -34,8 +34,6 @@ class _Quoter:
         self._requote = requote
 
     def __call__(self, val: str) -> str:
-        if val is None:
-            return None
         if not isinstance(val, str):
             raise TypeError("Argument should be str")
         if not val:
