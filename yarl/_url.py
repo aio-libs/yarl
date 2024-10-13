@@ -1255,7 +1255,7 @@ class URL:
 
     def _get_str_query_from_sequence_mapping(
         self,
-        mapping: Mapping[Union[str, istr], QueryVariable],
+        mapping: "Mapping[Union[str, istr], QueryVariable]",
     ) -> str:
         """Return a query string from a sequence of (key, value) pairs.
 
