@@ -1263,16 +1263,20 @@ class URL:
         """
         quoter = self._QUERY_PART_QUOTER
         pairs = [
-            f"{quoter(k)}={quoter(self._query_var(v))}"
+            f"{quoter(k)}={quoter(v if type(v) is str else self._query_var(v))}"
             for k, val in items
-            for v in (val if isinstance(val, (list, tuple)) else (val,))
+            for v in (
+                val
+                if type(val) is not str and isinstance(val, (list, tuple))
+                else (val,)
+            )
         ]
         return "&".join(pairs)
 
     @staticmethod
     def _query_var(v: QueryVariable) -> str:
         cls = type(v)
-        if cls is str or issubclass(cls, str):
+        if issubclass(cls, str):
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
@@ -1305,7 +1309,11 @@ class URL:
         quoter = self._QUERY_PART_QUOTER
         # A listcomp is used since listcomps are inlined on CPython 3.12+ and
         # they are a bit faster than a generator expression.
-        return "&".join([f"{quoter(k)}={quoter(self._query_var(v))}" for k, v in items])
+        pairs = [
+            f"{quoter(k)}={quoter(v if type(v) is str else self._query_var(v))}"
+            for k, v in items
+        ]
+        return "&".join(pairs)
 
     def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
         query: Union[str, Mapping[str, QueryVariable], None]
