@@ -185,11 +185,27 @@ def test_url_make_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> No
             BASE_URL.with_query(QUERY_SEQ)
 
 
-def test_url_extend_query(benchmark: BenchmarkFixture) -> None:
+def test_url_extend_query_simple_query_dict(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.extend_query(SIMPLE_QUERY)
+
+
+def test_url_extend_query_existing_query_simple_query_dict(
+    benchmark: BenchmarkFixture,
+) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            QUERY_URL.extend_query(SIMPLE_QUERY)
+
+
+def test_url_extend_query_existing_query_string(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            QUERY_URL.extend_query("x=y&z=1")
 
 
 def test_url_to_string(benchmark: BenchmarkFixture) -> None:
