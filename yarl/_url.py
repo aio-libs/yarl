@@ -284,8 +284,8 @@ class URL:
                     else:
                         host = ""
                 host = cls._encode_host(host, validate_host=False)
-                raw_user = None if username is None else cls._REQUOTER(username)
-                raw_password = None if password is None else cls._REQUOTER(password)
+                raw_user = cls._REQUOTER(username) if username else username
+                raw_password = cls._REQUOTER(password) if password else password
                 netloc = cls._make_netloc(raw_user, raw_password, host, port)
                 # Remove brackets as host encoder adds back brackets for IPv6 addresses
                 cache["raw_host"] = host[1:-1] if "[" in host else host
