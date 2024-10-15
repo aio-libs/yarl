@@ -380,8 +380,8 @@ class URL:
             elif host:
                 if port is not None:
                     port = None if port == DEFAULT_PORTS.get(scheme) else port
-                if port is None and user is None and password is None:
-                    netloc = host
+                if user is None and password is None:
+                    netloc = host if port is None else f"{host}:{port}"
                 else:
                     netloc = cls._make_netloc(user, password, host, port)
             else:
@@ -399,8 +399,8 @@ class URL:
             if _host is not None:
                 if port is not None:
                     port = None if port == DEFAULT_PORTS.get(scheme) else port
-                if port is None and user is None and password is None:
-                    netloc = _host
+                if user is None and password is None:
+                    netloc = _host if port is None else f"{_host}:{port}"
                 else:
                     netloc = cls._make_netloc(user, password, _host, port, True)
 
