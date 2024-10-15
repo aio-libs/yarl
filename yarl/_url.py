@@ -284,11 +284,11 @@ class URL:
                     else:
                         host = ""
                 host = cls._encode_host(host, validate_host=False)
-                if port is None and password is None and not username:
+                if port is None and password is None and username is None:
                     # Fast path for URLs without user, password and port
-                    netloc = host
-                    raw_user = username
+                    raw_user = None
                     raw_password = None
+                    netloc = host
                 else:
                     raw_user = cls._REQUOTER(username) if username else username
                     raw_password = cls._REQUOTER(password) if password else password
