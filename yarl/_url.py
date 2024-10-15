@@ -1034,7 +1034,7 @@ class URL:
         return False, lower_host, is_ascii, "", "", ""
 
     @classmethod
-    def _encode_host(cls, host: str, validate_host: bool) -> str:
+    def _encode_host(cls, host: str, validate: bool) -> str:
         """Encode host part of URL."""
         looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
         if looks_like_ip:
