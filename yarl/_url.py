@@ -273,7 +273,12 @@ class URL:
             if not netloc:  # netloc
                 host = ""
             else:
-                username, password, host, port = cls._split_netloc(netloc)
+                if ":" in netloc or "@" in netloc or "[" in netloc:
+                    # Complex netloc
+                    username, password, host, port = cls._split_netloc(netloc)
+                else:
+                    username = password = port = None
+                    host = netloc
                 if host is None:
                     if scheme in SCHEME_REQUIRES_HOST:
                         msg = (
