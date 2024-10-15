@@ -145,6 +145,20 @@ def test_url_make_access_username_password(benchmark: BenchmarkFixture) -> None:
             url.raw_password
 
 
+def test_url_make_empty_username(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL("http://:password@www.domain.tld")
+
+
+def test_url_make_empty_password(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL("http://user:@www.domain.tld")
+
+
 def test_url_make_with_ipv4_address_path_and_port(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
