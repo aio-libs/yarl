@@ -27,14 +27,14 @@ cdef str QS = '+&=;'
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 cdef char BUFFER[BUF_SIZE]
 
-cdef inline Py_UCS4 _to_hex(uint8_t v):
+cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
         return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
     else:
         return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
 
 
-cdef inline int _from_hex(Py_UCS4 v):
+cdef inline int _from_hex(Py_UCS4 v) noexcept:
     if '0' <= v <= '9':
         return <int>(v) - 0x30  # ord('0') == 0x30
     elif 'A' <= v <= 'F':
@@ -45,11 +45,11 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-cdef inline int _is_lower_hex(Py_UCS4 v):
+cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
     return 'a' <= v <= 'f'
 
 
-cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2) noexcept:
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
         return <Py_UCS4>-1
@@ -260,7 +260,10 @@ cdef class _Quoter:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and self._requote and idx <= length - 2:
-                ch = _restore_ch(val[idx], val[idx + 1])
+                ch = _restore_ch(
+                    PyUnicode_READ(kind, data, idx),
+                    PyUnicode_READ(kind, data, idx + 1)
+                )
                 if ch != <Py_UCS4>-1:
                     idx += 2
                     if ch < 128:
@@ -274,8 +277,8 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                    changed = (_is_lower_hex(val[idx - 2]) or
-                               _is_lower_hex(val[idx - 1]))
+                    changed = (_is_lower_hex(PyUnicode_READ(kind, data, idx - 2)) or
+                               _is_lower_hex(PyUnicode_READ(kind, data, idx - 1)))
                     if _write_pct(writer, ch, changed) < 0:
                         raise
                     continue
