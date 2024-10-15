@@ -374,7 +374,10 @@ class URL:
             elif host:
                 if port is not None:
                     port = None if port == DEFAULT_PORTS.get(scheme) else port
-                netloc = cls._make_netloc(user, password, host, port)
+                if port is None and user is None and password is None:
+                    netloc = host
+                else:
+                    netloc = cls._make_netloc(user, password, host, port)
             else:
                 netloc = ""
         else:  # not encoded
@@ -390,7 +393,10 @@ class URL:
             if _host is not None:
                 if port is not None:
                     port = None if port == DEFAULT_PORTS.get(scheme) else port
-                netloc = cls._make_netloc(user, password, _host, port, True)
+                if port is None and user is None and password is None:
+                    netloc = _host
+                else:
+                    netloc = cls._make_netloc(user, password, _host, port, True)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
