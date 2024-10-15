@@ -20,14 +20,14 @@ cdef str QS = '+&=;'
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 cdef char BUFFER[BUF_SIZE]
 
-cdef inline Py_UCS4 _to_hex(uint8_t v):
+cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
         return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
     else:
         return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
 
 
-cdef inline int _from_hex(Py_UCS4 v):
+cdef inline int _from_hex(Py_UCS4 v) noexcept:
     if '0' <= v <= '9':
         return <int>(v) - 0x30  # ord('0') == 0x30
     elif 'A' <= v <= 'F':
@@ -38,11 +38,11 @@ cdef inline int _from_hex(Py_UCS4 v):
         return -1
 
 
-cdef inline int _is_lower_hex(Py_UCS4 v):
+cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
     return 'a' <= v <= 'f'
 
 
-cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2) noexcept:
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
         return <Py_UCS4>-1
@@ -56,11 +56,11 @@ cdef uint8_t ALLOWED_TABLE[16]
 cdef uint8_t ALLOWED_NOTQS_TABLE[16]
 
 
-cdef inline bint bit_at(uint8_t array[], uint64_t ch):
+cdef inline bint bit_at(uint8_t array[], uint64_t ch) noexcept:
     return array[ch >> 3] & (1 << (ch & 7))
 
 
-cdef inline void set_bit(uint8_t array[], uint64_t ch):
+cdef inline void set_bit(uint8_t array[], uint64_t ch) noexcept:
     array[ch >> 3] |= (1 << (ch & 7))
 
 
