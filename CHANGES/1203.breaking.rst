@@ -1,1 +1,0 @@
-Removed support for Python 3.8 as it has reached end of life -- by :user:`bdraco`.

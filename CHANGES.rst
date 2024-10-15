@@ -14,6 +14,44 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.3
+======
+
+*(2024-10-15)*
+
+
+Bug fixes
+---------
+
+- Fixed :py:meth:`~yarl.URL.build` failing to validate paths must start with a ``/`` when passing ``authority`` -- by :user:`bdraco`.
+
+  The validation only worked correctly when passing ``host``.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1265`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Removed support for Python 3.8 as it has reached end of life -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1203`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of constructing :class:`~yarl.URL` when the net location is only the host -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1271`.
+
+
+----
+
+
 1.15.2
 ======
 
