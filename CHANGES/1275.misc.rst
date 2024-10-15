@@ -1,1 +1,0 @@
-Improved performance of the :py:meth:`~yarl.URL.origin` method when credentials are present -- by :user:`bdraco`.
