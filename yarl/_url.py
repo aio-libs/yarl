@@ -289,9 +289,9 @@ class URL:
                 cache["explicit_port"] = port
                 if port is None and password is None and username is None:
                     # Fast path for URLs without user, password and port
+                    netloc = host
                     cache["raw_user"] = None
                     cache["raw_password"] = None
-                    netloc = host
                 else:
                     raw_user = cls._REQUOTER(username) if username else username
                     raw_password = cls._REQUOTER(password) if password else password
