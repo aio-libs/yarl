@@ -591,10 +591,8 @@ class URL:
         if "@" not in v.netloc:
             val = v._replace(path="", query="", fragment="")
         else:
-            encoded_host = (
-                self._encode_host(v.hostname, validate_host=False) if v.hostname else ""
-            )
-            netloc = self._make_netloc(None, None, encoded_host, v.port)
+            encoded_host = self.host_subcomponent
+            netloc = self._make_netloc(None, None, encoded_host, self.explicit_port)
             val = v._replace(netloc=netloc, path="", query="", fragment="")
         return self._from_val(val)
 
