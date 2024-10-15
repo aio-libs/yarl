@@ -1253,8 +1253,8 @@ class URL:
             path = self._PATH_QUOTER(path)
             if self._val.netloc:
                 path = self._normalize_path(path) if "." in path else path
-        if len(path) > 0 and path[0] != "/":
-            path = "/" + path
+        if path and path[0] != "/":
+            path = f"/{path}"
         return self._from_val(self._val._replace(path=path, query="", fragment=""))
 
     def _get_str_query_from_sequence_iterable(
