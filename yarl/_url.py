@@ -288,7 +288,7 @@ class URL:
                         raise ValueError(msg)
                     else:
                         host = ""
-                host = cls._encode_host(host, validate_host=False)
+                host = cls._encode_host(host, False)
                 # Remove brackets as host encoder adds back brackets for IPv6 addresses
                 cache["raw_host"] = host[1:-1] if "[" in host else host
                 cache["explicit_port"] = port
@@ -389,9 +389,9 @@ class URL:
             _host: Union[str, None] = None
             if authority:
                 user, password, _host, port = cls._split_netloc(authority)
-                _host = cls._encode_host(_host, validate_host=False) if _host else ""
+                _host = cls._encode_host(_host, False) if _host else ""
             elif host:
-                _host = cls._encode_host(host)
+                _host = cls._encode_host(host, True)
             else:
                 netloc = ""
 
@@ -591,7 +591,7 @@ class URL:
         if "@" not in v.netloc:
             val = v._replace(path="", query="", fragment="")
         else:
-            encoded_host = self._encode_host(v.hostname) if v.hostname else ""
+            encoded_host = self._encode_host(v.hostname, False) if v.hostname else ""
             netloc = self._make_netloc(None, None, encoded_host, v.port)
             val = v._replace(netloc=netloc, path="", query="", fragment="")
         return self._from_val(val)
@@ -1034,7 +1034,7 @@ class URL:
         return False, lower_host, is_ascii, "", "", ""
 
     @classmethod
-    def _encode_host(cls, host: str, validate_host: bool = True) -> str:
+    def _encode_host(cls, host: str, validate_host: bool) -> str:
         """Encode host part of URL."""
         looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
         if looks_like_ip:
@@ -1226,7 +1226,7 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        encoded_host = self._encode_host(host) if host else ""
+        encoded_host = self._encode_host(host, True) if host else ""
         port = self.explicit_port
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_val(val._replace(netloc=netloc))
