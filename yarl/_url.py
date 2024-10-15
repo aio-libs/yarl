@@ -292,9 +292,9 @@ class URL:
                 # Remove brackets as host encoder adds back brackets for IPv6 addresses
                 cache["raw_host"] = host[1:-1] if "[" in host else host
                 cache["explicit_port"] = port
-                if port is None and password is None and username is None:
-                    # Fast path for URLs without user, password and port
-                    netloc = host
+                if password is None and username is None:
+                    # Fast path for URLs without user, password
+                    netloc = host if port is None else f"{host}:{port}"
                     cache["raw_user"] = None
                     cache["raw_password"] = None
                 else:
