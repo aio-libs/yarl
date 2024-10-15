@@ -228,6 +228,8 @@ cdef class _Quoter:
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
 
+        # If everything in the string is in the safe
+        # table and all ASCII, we can skip quoting
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
