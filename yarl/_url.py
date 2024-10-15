@@ -298,7 +298,7 @@ class URL:
                 if netloc:
                     if "." in path:
                         path = cls._normalize_path(path)
-                    if path[-1] != "/":
+                    if path[0] != "/":
                         cls._raise_for_authority_missing_abs_path()
 
             query = cls._QUERY_REQUOTER(query) if query else query
@@ -391,7 +391,7 @@ class URL:
             if path and netloc:
                 if "." in path:
                     path = cls._normalize_path(path)
-                if path[-1] != "/":
+                if path[0] != "/":
                     cls._raise_for_authority_missing_abs_path()
 
             query_string = (
