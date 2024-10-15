@@ -1042,13 +1042,12 @@ class URL:
             #
             # IP parsing is slow, so its wrapped in an LRU
             try:
-                ip_compressed_version = _ip_compressed_version(raw_ip)
+                host, version = _ip_compressed_version(raw_ip)
             except ValueError:
                 pass
             else:
                 # These checks should not happen in the
                 # LRU to keep the cache size small
-                host, version = ip_compressed_version
                 if version == 6:
                     return f"[{host}%{zone}]" if sep else f"[{host}]"
                 return f"{host}%{zone}" if sep else host
