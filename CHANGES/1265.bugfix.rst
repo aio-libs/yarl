@@ -1,3 +1,0 @@
-Fixed :py:meth:`~yarl.URL.build` failing to validate paths must start with a ``/`` when passing ``authority`` -- by :user:`bdraco`.
-
-The validation only worked correctly when passing ``host``.
