@@ -202,7 +202,6 @@ cdef class _Quoter:
             set_bit(self._protected_table, ch)
 
     def __call__(self, val):
-        cdef Writer writer
         if val is None:
             return None
         if type(val) is not str:
@@ -211,17 +210,35 @@ cdef class _Quoter:
                 val = str(val)
             else:
                 raise TypeError("Argument should be str")
+        return self._do_quote_or_skip(<str>val)
+
+    cdef str _do_quote_or_skip(self, str val):
+        cdef Py_UCS4 ch
+        cdef int length = len(val)
+        cdef int idx = 0
+        cdef bint must_quote = 0
+        cdef Writer writer
+
+        while idx < length:
+            ch = val[idx]
+            idx += 1
+            if ch >= 128 or not bit_at(self._safe_table, ch):
+                must_quote = 1
+                break
+
+        if not must_quote:
+            return val
+
         _init_writer(&writer)
         try:
-            return self._do_quote(<str>val, &writer)
+            return self._do_quote(<str>val, length, &writer)
         finally:
             _release_writer(&writer)
 
-    cdef str _do_quote(self, str val, Writer *writer):
+    cdef str _do_quote(self, str val, int length, Writer *writer):
         cdef Py_UCS4 ch
         cdef int changed
         cdef int idx = 0
-        cdef int length = len(val)
 
         while idx < length:
             ch = val[idx]
