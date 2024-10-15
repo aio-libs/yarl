@@ -2062,13 +2062,14 @@ def test_join_encoded_url():
 def test_parsing_populates_cache():
     """Test that parsing a URL populates the cache."""
     url = URL("http://user:password@example.com:80/path?a=b#frag")
-    assert url._cache["raw_user"] == "user"
-    assert url._cache["raw_password"] == "password"
-    assert url._cache["raw_host"] == "example.com"
-    assert url._cache["explicit_port"] == 80
-    assert url._cache["raw_query_string"] == "a=b"
-    assert url._cache["raw_fragment"] == "frag"
-    assert url._cache["scheme"] == "http"
+    cache = url.__dict__
+    assert cache["raw_user"] == "user"
+    assert cache["raw_password"] == "password"
+    assert cache["raw_host"] == "example.com"
+    assert cache["explicit_port"] == 80
+    assert cache["raw_query_string"] == "a=b"
+    assert cache["raw_fragment"] == "frag"
+    assert cache["scheme"] == "http"
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"
@@ -2076,7 +2077,13 @@ def test_parsing_populates_cache():
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
     assert url.scheme == "http"
-    url._cache.clear()
+    cache.pop("raw_user")
+    cache.pop("raw_password")
+    cache.pop("raw_host")
+    cache.pop("explicit_port")
+    cache.pop("raw_query_string")
+    cache.pop("raw_fragment")
+    cache.pop("scheme")
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"
@@ -2084,13 +2091,13 @@ def test_parsing_populates_cache():
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
     assert url.scheme == "http"
-    assert url._cache["raw_user"] == "user"
-    assert url._cache["raw_password"] == "password"
-    assert url._cache["raw_host"] == "example.com"
-    assert url._cache["explicit_port"] == 80
-    assert url._cache["raw_query_string"] == "a=b"
-    assert url._cache["raw_fragment"] == "frag"
-    assert url._cache["scheme"] == "http"
+    assert cache["raw_user"] == "user"
+    assert cache["raw_password"] == "password"
+    assert cache["raw_host"] == "example.com"
+    assert cache["explicit_port"] == 80
+    assert cache["raw_query_string"] == "a=b"
+    assert cache["raw_fragment"] == "frag"
+    assert cache["scheme"] == "http"
 
 
 @pytest.mark.parametrize(

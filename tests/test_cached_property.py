@@ -1,5 +1,3 @@
-import pytest
-
 from yarl._url import cached_property
 
 
@@ -21,10 +19,3 @@ def test_reify():
 def test_reify_class():
     assert isinstance(A.prop, cached_property)
     assert "Docstring." == A.prop.__doc__
-
-
-def test_reify_assignment():
-    a = A()
-
-    with pytest.raises(AttributeError):
-        a.prop = 123

@@ -27,7 +27,7 @@ from urllib.parse import (
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
-from propcache.api import under_cached_property as cached_property
+from propcache.api import cached_property
 
 from ._quoting import _Quoter, _Unquoter
 
@@ -226,8 +226,6 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ("_cache", "_val")
-
     _QUOTER = _Quoter(requote=False)
     _REQUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
@@ -266,7 +264,8 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
-        cache: _InternalURLCache = {}
+        self = object.__new__(cls)
+        cache: _InternalURLCache = self.__dict__  # type: ignore[assignment]
         if not encoded:
             host: Union[str, None]
             scheme, netloc, path, query, fragment = val
@@ -322,9 +321,7 @@ class URL:
             ):
                 val = SplitResult(scheme, netloc, path, query, fragment)
 
-        self = object.__new__(cls)
         self._val = val
-        self._cache = cache
         return self
 
     @classmethod
@@ -419,7 +416,6 @@ class URL:
         """Create a new URL from a SplitResult."""
         self = object.__new__(cls)
         self._val = val
-        self._cache = {}
         return self
 
     def __init_subclass__(cls):
@@ -474,12 +470,13 @@ class URL:
         return val1 == val2
 
     def __hash__(self) -> int:
-        ret = self._cache.get("hash")
+        cache = self.__dict__
+        ret = cache.get("hash")
         if ret is None:
             val = self._val
             if not val.path and val.netloc:
                 val = val._replace(path="/")
-            ret = self._cache["hash"] = hash(val)
+            ret = cache["hash"] = hash(val)
         return ret
 
     def __le__(self, other: object) -> bool:
@@ -523,11 +520,10 @@ class URL:
             self._val = state[1]["_val"]
         else:
             self._val, *unused = state
-        self._cache = {}
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
-        cache = self._cache
+        cache = self.__dict__
         (
             cache["raw_user"],
             cache["raw_password"],
@@ -657,7 +653,7 @@ class URL:
         """
         # not .username
         self._cache_netloc()
-        return self._cache["raw_user"]
+        return self.__dict__["raw_user"]
 
     @cached_property
     def user(self) -> Union[str, None]:
@@ -679,7 +675,7 @@ class URL:
 
         """
         self._cache_netloc()
-        return self._cache["raw_password"]
+        return self.__dict__["raw_password"]
 
     @cached_property
     def password(self) -> Union[str, None]:
@@ -705,7 +701,7 @@ class URL:
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         self._cache_netloc()
-        return self._cache["raw_host"]
+        return self.__dict__["raw_host"]
 
     @cached_property
     def host(self) -> Union[str, None]:
@@ -761,7 +757,7 @@ class URL:
 
         """
         self._cache_netloc()
-        return self._cache["explicit_port"]
+        return self.__dict__["explicit_port"]
 
     @cached_property
     def raw_path(self) -> str:
