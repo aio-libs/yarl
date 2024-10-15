@@ -584,12 +584,11 @@ class URL:
         user, password, path, query and fragment are removed.
         """
         v = self._val
-        netloc = v.netloc
-        if not netloc:
+        if not v.netloc:
             raise ValueError("URL should be absolute")
         if not v.scheme:
             raise ValueError("URL should have scheme")
-        if "@" not in netloc:
+        if "@" not in v.netloc:
             val = v._replace(path="", query="", fragment="")
         else:
             encoded_host = self.host_subcomponent
