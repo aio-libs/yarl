@@ -266,10 +266,17 @@ class URL:
         else:
             raise TypeError("Constructor parameter should be str")
 
-        cache: _InternalURLCache = {}
+        cache: _InternalURLCache
         if not encoded:
             host: Union[str, None]
             scheme, netloc, path, query, fragment = val
+            query = cls._QUERY_REQUOTER(query) if query else query
+            fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
+            cache = {
+                "scheme": scheme,
+                "raw_query_string": query,
+                "raw_fragment": fragment,
+            }
             if not netloc:  # netloc
                 host = ""
             else:
@@ -300,11 +307,6 @@ class URL:
                         path = cls._normalize_path(path)
                     cls._validate_authority_uri_abs_path(host, path)
 
-            query = cls._QUERY_REQUOTER(query) if query else query
-            fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
-            cache["scheme"] = scheme
-            cache["raw_query_string"] = query
-            cache["raw_fragment"] = fragment
             # There is a good chance that the SplitResult is already normalized
             # so we can avoid the extra work of creating a new SplitResult
             # if the input SplitResult is already normalized
@@ -315,6 +317,8 @@ class URL:
                 or val.fragment != fragment
             ):
                 val = SplitResult(scheme, netloc, path, query, fragment)
+        else:
+            cache = {}
 
         self = object.__new__(cls)
         self._val = val
