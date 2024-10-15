@@ -254,10 +254,10 @@ class URL:
     ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
-        if type(val) is cls:
-            return val
         if type(val) is str:
             val = urlsplit(val)
+        elif type(val) is cls:
+            return val
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
@@ -273,7 +273,7 @@ class URL:
             if not netloc:  # netloc
                 host = ""
             else:
-                username, password, host, port = cls._split_netloc(val[1])
+                username, password, host, port = cls._split_netloc(netloc)
                 if host is None:
                     if scheme in SCHEME_REQUIRES_HOST:
                         msg = (
