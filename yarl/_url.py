@@ -305,16 +305,7 @@ class URL:
             cache["scheme"] = scheme
             cache["raw_query_string"] = query
             cache["raw_fragment"] = fragment
-            # There is a good chance that the SplitResult is already normalized
-            # so we can avoid the extra work of creating a new SplitResult
-            # if the input SplitResult is already normalized
-            if (
-                val.netloc != netloc
-                or val.path != path
-                or val.query != query
-                or val.fragment != fragment
-            ):
-                val = SplitResult(scheme, netloc, path, query, fragment)
+            val = SplitResult(scheme, netloc, path, query, fragment)
 
         self = object.__new__(cls)
         self._val = val
