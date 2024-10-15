@@ -1226,7 +1226,7 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        encoded_host = self._encode_host(host, True) if host else ""
+        encoded_host = self._encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_val(val._replace(netloc=netloc))
