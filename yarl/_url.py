@@ -284,6 +284,9 @@ class URL:
                     else:
                         host = ""
                 host = cls._encode_host(host, validate_host=False)
+                # Remove brackets as host encoder adds back brackets for IPv6 addresses
+                cache["raw_host"] = host[1:-1] if "[" in host else host
+                cache["explicit_port"] = port
                 if port is None and password is None and username is None:
                     # Fast path for URLs without user, password and port
                     cache["raw_user"] = None
@@ -295,9 +298,6 @@ class URL:
                     netloc = cls._make_netloc(raw_user, raw_password, host, port)
                     cache["raw_user"] = raw_user
                     cache["raw_password"] = raw_password
-                # Remove brackets as host encoder adds back brackets for IPv6 addresses
-                cache["raw_host"] = host[1:-1] if "[" in host else host
-                cache["explicit_port"] = port
 
             if path:
                 path = cls._PATH_REQUOTER(path)
