@@ -311,7 +311,6 @@ jobs:
     - name: Run unittests
       env:
         YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
-        ENABLE_HYPOTHESIS_TESTS: true
       run: >-
         python -Im
         pytest
