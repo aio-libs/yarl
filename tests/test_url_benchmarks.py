@@ -7,6 +7,7 @@ from yarl import URL
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
 BASE_URL = URL("http://www.domain.tld")
+URL_WITH_USER_PASS = URL("http://user:password@www.domain.tld")
 IPV6_QUERY_URL = URL("http://[::1]/req?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_NOT_DEFAULT_PORT = URL("http://www.domain.tld:1234")
 QUERY_URL = URL("http://www.domain.tld?query=1&query=2&query=3&query=4&query=5")
@@ -307,6 +308,13 @@ def test_url_origin(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             BASE_URL.origin()
+
+
+def test_url_origin_with_user_pass(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_USER_PASS.origin()
 
 
 def test_url_with_path_origin(benchmark: BenchmarkFixture) -> None:
