@@ -1034,9 +1034,7 @@ class URL:
         return False, lower_host, is_ascii, "", "", ""
 
     @classmethod
-    def _encode_host(
-        cls, host: str, human: bool = False, validate_host: bool = True
-    ) -> str:
+    def _encode_host(cls, host: str, validate_host: bool = True) -> str:
         """Encode host part of URL."""
         looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
         if looks_like_ip:
@@ -1080,7 +1078,7 @@ class URL:
                 _host_validate(lower_host)
             return lower_host
 
-        return lower_host if human else _idna_encode(lower_host)
+        return _idna_encode(lower_host)
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
@@ -1584,9 +1582,8 @@ class URL:
         """Return decoded human readable string for URL representation."""
         user = _human_quote(self.user, "#/:?@[]")
         password = _human_quote(self.password, "#/:?@[]")
-        host = self.host
-        if host:
-            host = self._encode_host(host, human=True)
+        if (host := self.host) and ":" in host:
+            host = f"[{host}]"
         path = _human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
