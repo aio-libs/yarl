@@ -309,7 +309,8 @@ class URL:
                 if netloc:
                     if "." in path:
                         path = cls._normalize_path(path)
-                    cls._validate_authority_uri_abs_path(host, path)
+                    if path[0] != "/":
+                        cls._raise_for_authority_missing_abs_path()
 
             query = cls._QUERY_REQUOTER(query) if query else query
             fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
@@ -407,7 +408,8 @@ class URL:
             if path and netloc:
                 if "." in path:
                     path = cls._normalize_path(path)
-                cls._validate_authority_uri_abs_path(host, path)
+                if path[0] != "/":
+                    cls._raise_for_authority_missing_abs_path()
 
             query_string = (
                 cls._QUERY_QUOTER(query_string) if query_string else query_string
@@ -947,15 +949,10 @@ class URL:
         return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
     @staticmethod
-    def _validate_authority_uri_abs_path(host: str, path: str) -> None:
-        """Ensure that path in URL with authority starts with a leading slash.
-
-        Raise ValueError if not.
-        """
-        if host and path and path[0] != "/":
-            raise ValueError(
-                "Path in a URL with authority should start with a slash ('/') if set"
-            )
+    def _raise_for_authority_missing_abs_path() -> None:
+        """Raise when he path in URL with authority starts lacks a leading slash."""
+        msg = "Path in a URL with authority should start with a slash ('/') if set"
+        raise ValueError(msg)
 
     def _make_child(self, paths: "Sequence[str]", encoded: bool = False) -> "URL":
         """
