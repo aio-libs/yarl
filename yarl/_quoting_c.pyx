@@ -6,6 +6,7 @@ from cpython.unicode cimport (
     PyUnicode_DATA,
     PyUnicode_DecodeASCII,
     PyUnicode_DecodeUTF8Stateful,
+    PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
 )
@@ -220,8 +221,8 @@ cdef class _Quoter:
 
     cdef str _do_quote_or_skip(self, str val):
         cdef Py_UCS4 ch
-        cdef int length = len(val)
-        cdef int idx = 0
+        cdef Py_ssize_t length = PyUnicode_GET_LENGTH(val)
+        cdef Py_ssize_t idx = 0
         cdef bint must_quote = 0
         cdef Writer writer
         cdef int kind = PyUnicode_KIND(val)
@@ -239,16 +240,21 @@ cdef class _Quoter:
 
         _init_writer(&writer)
         try:
-            return self._do_quote(<str>val, length, &writer)
+            return self._do_quote(<str>val, length, kind, data, &writer)
         finally:
             _release_writer(&writer)
 
-    cdef str _do_quote(self, str val, int length, Writer *writer):
+    cdef str _do_quote(
+        self,
+        str val,
+        Py_ssize_t length,
+        int kind,
+        const void *data,
+        Writer *writer
+    ):
         cdef Py_UCS4 ch
         cdef int changed
-        cdef int idx = 0
-        cdef int kind = PyUnicode_KIND(val)
-        cdef const void *data = PyUnicode_DATA(val)
+        cdef Py_ssize_t idx = 0
 
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
