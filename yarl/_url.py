@@ -1053,9 +1053,6 @@ class URL:
                     return f"[{host}%{zone}]" if sep else f"[{host}]"
                 return f"{host}%{zone}" if sep else host
 
-        if human:
-            return lower_host
-
         # IDNA encoding is slow,
         # skip it for ASCII-only strings
         # Don't move the check into _idna_encode() helper
@@ -1067,7 +1064,7 @@ class URL:
                 _host_validate(lower_host)
             return lower_host
 
-        return _idna_encode(lower_host)
+        return lower_host if human else _idna_encode(lower_host)
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
