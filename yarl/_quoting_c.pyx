@@ -2,7 +2,13 @@
 
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
-from cpython.unicode cimport PyUnicode_DecodeASCII, PyUnicode_DecodeUTF8Stateful
+from cpython.unicode cimport (
+    PyUnicode_DATA,
+    PyUnicode_DecodeASCII,
+    PyUnicode_DecodeUTF8Stateful,
+    PyUnicode_KIND,
+    PyUnicode_READ,
+)
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
@@ -218,9 +224,11 @@ cdef class _Quoter:
         cdef int idx = 0
         cdef bint must_quote = 0
         cdef Writer writer
+        cdef int kind = PyUnicode_KIND(val)
+        cdef const void *data = PyUnicode_DATA(val)
 
         while idx < length:
-            ch = val[idx]
+            ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch >= 128 or not bit_at(self._safe_table, ch):
                 must_quote = 1
@@ -239,9 +247,11 @@ cdef class _Quoter:
         cdef Py_UCS4 ch
         cdef int changed
         cdef int idx = 0
+        cdef int kind = PyUnicode_KIND(val)
+        cdef const void *data = PyUnicode_DATA(val)
 
         while idx < length:
-            ch = val[idx]
+            ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and self._requote and idx <= length - 2:
                 ch = _restore_ch(val[idx], val[idx + 1])
