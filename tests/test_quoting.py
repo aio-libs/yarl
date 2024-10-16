@@ -481,14 +481,12 @@ def test_unquoter_path_with_plus(unquoter):
 
 
 @given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
-@pytest.mark.hypothesis
 def test_fuzz__PyQuoter(safe, protected, qs, requote):
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
     assert _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
 @given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
-@pytest.mark.hypothesis
 def test_fuzz__PyUnquoter(ignore, unsafe, qs):
     """Verify that _PyUnquoter can be instantiated with any valid arguments."""
     assert _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
@@ -500,7 +498,6 @@ def test_fuzz__PyUnquoter(ignore, unsafe, qs):
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
-@pytest.mark.hypothesis
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter(
@@ -522,7 +519,6 @@ def test_quote_unquote_parameter(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
-@pytest.mark.hypothesis
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_requote(
@@ -544,7 +540,6 @@ def test_quote_unquote_parameter_requote(
         alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
     ),
 )
-@pytest.mark.hypothesis
 @pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 def test_quote_unquote_parameter_path_safe(
