@@ -14,6 +14,34 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.4
+======
+
+*(2024-10-16)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the quoter when all characters are safe -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1288`.
+
+- Improved performance of unquoting strings -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1292`, :issue:`1293`.
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1297`.
+
+
+----
+
+
 1.15.3
 ======
 
