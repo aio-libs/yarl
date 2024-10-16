@@ -346,10 +346,12 @@ cdef class _Unquoter:
         cdef Py_ssize_t start_pct
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
+        cdef bint changed = 0
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and idx <= length - 2:
+                changed = 1
                 ch = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
@@ -398,10 +400,12 @@ cdef class _Unquoter:
                 if not self._qs or ch in self._unsafe:
                     ret.append('+')
                 else:
+                    changed = 1
                     ret.append(' ')
                 continue
 
             if ch in self._unsafe:
+                changed = 1
                 ret.append('%')
                 h = hex(ord(ch)).upper()[2:]
                 for ch in h:
@@ -409,6 +413,9 @@ cdef class _Unquoter:
                 continue
 
             ret.append(ch)
+
+        if not changed:
+            return val
 
         if buflen:
             ret.append(val[length - buflen * 3 : length])
