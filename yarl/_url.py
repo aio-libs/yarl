@@ -326,6 +326,10 @@ class URL:
                 or val.query != query
                 or val.fragment != fragment
             ):
+                # Constructing the tuple directly to avoid the overhead of
+                # the lambda and arg processing since NamedTuples are constructed
+                # with a run time built lambda
+                # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
                 val = tuple.__new__(
                     SplitResult, (scheme, netloc, path, query, fragment)
                 )
@@ -422,6 +426,10 @@ class URL:
             query_string = cls._get_str_query(query) or ""
 
         url = object.__new__(cls)
+        # Constructing the tuple directly to avoid the overhead of the lambda and
+        # arg processing since NamedTuples are constructed with a run time built
+        # lambda
+        # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
         url._val = tuple.__new__(
             SplitResult, (scheme, netloc, path, query_string, fragment)
         )
