@@ -40,6 +40,7 @@ USES_RELATIVE = frozenset(uses_relative)
 SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 sentinel = object()
+_EMPTY_MULTI_DICT_PROXY: MultiDictProxy[str] = MultiDictProxy(MultiDict())
 
 # reg-name: unreserved / pct-encoded / sub-delims
 # this pattern matches anything that is *not* in those classes. and is only used
@@ -831,7 +832,9 @@ class URL:
         Empty value if URL has no query part.
 
         """
-        return MultiDictProxy(MultiDict(self._parsed_query))
+        if parsed_query := self._parsed_query:
+            return MultiDictProxy(MultiDict(parsed_query))
+        return _EMPTY_MULTI_DICT_PROXY
 
     @cached_property
     def raw_query_string(self) -> str:
