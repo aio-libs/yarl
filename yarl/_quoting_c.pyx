@@ -230,7 +230,7 @@ cdef class _Quoter:
 
         # If everything in the string is in the safe
         # table and all ASCII, we can skip quoting
-        while idx >= 0:
+        while idx:
             idx -= 1
             ch = PyUnicode_READ(kind, data, idx)
             if ch >= 128 or not bit_at(self._safe_table, ch):
