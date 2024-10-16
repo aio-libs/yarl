@@ -222,7 +222,7 @@ cdef class _Quoter:
     cdef str _do_quote_or_skip(self, str val):
         cdef Py_UCS4 ch
         cdef Py_ssize_t length = PyUnicode_GET_LENGTH(val)
-        cdef Py_ssize_t idx = 0
+        cdef Py_ssize_t idx = length
         cdef bint must_quote = 0
         cdef Writer writer
         cdef int kind = PyUnicode_KIND(val)
@@ -230,9 +230,10 @@ cdef class _Quoter:
 
         # If everything in the string is in the safe
         # table and all ASCII, we can skip quoting
-        while idx < length:
+        while idx >= 0:
+            idx -= 1
             ch = PyUnicode_READ(kind, data, idx)
-            idx += 1
+            print(ch)
             if ch >= 128 or not bit_at(self._safe_table, ch):
                 must_quote = 1
                 break
