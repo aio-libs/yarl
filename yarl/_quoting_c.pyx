@@ -343,12 +343,17 @@ cdef class _Unquoter:
         cdef Py_ssize_t idx = 0
         cdef Py_ssize_t length = len(val)
         cdef Py_ssize_t start_pct
+        cdef int kind = PyUnicode_KIND(val)
+        cdef const void *data = PyUnicode_DATA(val)
 
         while idx < length:
-            ch = val[idx]
+            ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and idx <= length - 2:
-                ch = _restore_ch(val[idx], val[idx + 1])
+                ch = _restore_ch(
+                    PyUnicode_READ(kind, data, idx),
+                    PyUnicode_READ(kind, data, idx + 1)
+                )
                 if ch != <Py_UCS4>-1:
                     idx += 2
                     assert buflen < 4
