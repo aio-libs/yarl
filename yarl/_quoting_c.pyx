@@ -332,8 +332,10 @@ cdef class _Unquoter:
         return self._do_unquote(<str>val)
 
     cdef str _do_unquote(self, str val):
-        if len(val) == 0:
+        cdef Py_ssize_t length = PyUnicode_GET_LENGTH(val)
+        if length == 0:
             return val
+
         cdef list ret = []
         cdef char buffer[4]
         cdef Py_ssize_t buflen = 0
@@ -341,14 +343,17 @@ cdef class _Unquoter:
         cdef str unquoted
         cdef Py_UCS4 ch = 0
         cdef Py_ssize_t idx = 0
-        cdef Py_ssize_t length = len(val)
         cdef Py_ssize_t start_pct
-
+        cdef int kind = PyUnicode_KIND(val)
+        cdef const void *data = PyUnicode_DATA(val)
         while idx < length:
-            ch = val[idx]
+            ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and idx <= length - 2:
-                ch = _restore_ch(val[idx], val[idx + 1])
+                ch = _restore_ch(
+                    PyUnicode_READ(kind, data, idx),
+                    PyUnicode_READ(kind, data, idx + 1)
+                )
                 if ch != <Py_UCS4>-1:
                     idx += 2
                     assert buflen < 4
