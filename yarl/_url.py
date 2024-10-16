@@ -820,7 +820,8 @@ class URL:
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
         """Parse query part of URL."""
-        return parse_qsl(self._val.query, keep_blank_values=True)
+        qs = self._val.query
+        return parse_qsl(qs, keep_blank_values=True) if qs else []
 
     @cached_property
     def query(self) -> "MultiDictProxy[str]":
@@ -848,12 +849,13 @@ class URL:
         Empty string if query is missing.
 
         """
-        return self._QS_UNQUOTER(self._val.query)
+        query_string = self._val.query
+        return self._QS_UNQUOTER(query_string) if query_string else ""
 
     @cached_property
     def path_qs(self) -> str:
         """Decoded path of URL with query."""
-        if not self.query_string:
+        if not self._val.query:
             return self.path
         return f"{self.path}?{self.query_string}"
 
