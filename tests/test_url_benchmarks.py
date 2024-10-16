@@ -379,3 +379,31 @@ def test_human_repr(benchmark: BenchmarkFixture) -> None:
             URL_WITH_NOT_DEFAULT_PORT.human_repr()
             IPV6_QUERY_URL.human_repr()
             REL_URL.human_repr()
+
+
+def test_query_string(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            QUERY_URL.query_string
+
+
+def test_empty_query_string(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.query_string
+
+
+def test_query(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            QUERY_URL.query
+
+
+def test_empty_query(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.query
