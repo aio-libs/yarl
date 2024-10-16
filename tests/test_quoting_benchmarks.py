@@ -56,15 +56,29 @@ def test_long_query_with_pct(benchmark: BenchmarkFixture) -> None:
             QUERY_QUOTER(LONG_QUERY_WITH_PCT)
 
 
-def test_quoter_quote(benchmark: BenchmarkFixture) -> None:
+def test_quoter_quote_utf8(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             QUOTER("/шлях/файл")
 
 
-def test_unquoter(benchmark: BenchmarkFixture) -> None:
+def test_unquoter_short(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             UNQUOTER("/path/to")
+
+
+def test_unquoter_long_ascii(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            UNQUOTER(LONG_QUERY)
+
+
+def test_unquoter_long_pct(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            UNQUOTER(LONG_QUERY_WITH_PCT)
