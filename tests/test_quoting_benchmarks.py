@@ -8,6 +8,7 @@ QUOTER_SLASH_SAFE = _Quoter(safe="/")
 QUOTER = _Quoter()
 UNQUOTER = _Unquoter()
 QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
+PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
 
 LONG_PATH = "/path/to" * 100
 LONG_QUERY = "a=1&b=2&c=3&d=4&e=5&f=6&g=7&h=8&i=9&j=0" * 25
@@ -32,7 +33,7 @@ def test_quote_long_path(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            QUOTER(LONG_PATH)
+            PATH_QUOTER(LONG_PATH)
 
 
 def test_quoter_pct(benchmark: BenchmarkFixture) -> None:
@@ -60,7 +61,7 @@ def test_quoter_quote_utf8(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            QUOTER("/шлях/файл")
+            PATH_QUOTER("/шлях/файл")
 
 
 def test_unquoter_short(benchmark: BenchmarkFixture) -> None:
