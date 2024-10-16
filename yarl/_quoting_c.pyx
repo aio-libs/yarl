@@ -341,7 +341,7 @@ cdef class _Unquoter:
         cdef str unquoted
         cdef Py_UCS4 ch = 0
         cdef Py_ssize_t idx = 0
-        cdef Py_ssize_t length = len(val)
+        cdef Py_ssize_t length = PyUnicode_GET_LENGTH(val)
         cdef Py_ssize_t start_pct
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
