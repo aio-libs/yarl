@@ -423,10 +423,7 @@ class URL:
             SplitResult, (scheme, netloc, path, query_string, fragment)
         )
         url._cache = {}
-
-        if query:
-            return url.with_query(query)
-        return url
+        return url.with_query(query) if query else url
 
     @classmethod
     def _from_val(cls, val: SplitResult) -> "URL":
