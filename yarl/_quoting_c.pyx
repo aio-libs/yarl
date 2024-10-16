@@ -233,7 +233,6 @@ cdef class _Quoter:
         while idx >= 0:
             idx -= 1
             ch = PyUnicode_READ(kind, data, idx)
-            print(ch)
             if ch >= 128 or not bit_at(self._safe_table, ch):
                 must_quote = 1
                 break
