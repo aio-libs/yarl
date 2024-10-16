@@ -133,9 +133,24 @@ jobs:
         - ubuntu
         - windows
         - macos
+        tag:
+        - ''
+        - 'musllinux'
+        exclude:
+        - os: windows
+          tag: 'musllinux'
+        - os: macos
+          tag: 'musllinux'
+        - os: ubuntu
+          tag: >-
+           ${{
+           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           && 'musllinux' || 'none'
+           }}
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       os: ${{ matrix.os }}
+      tag: ${{ matrix.tag }}
       wheel-tags-to-skip: >-
         ${{
         (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
@@ -144,7 +159,8 @@ jobs:
         *-musllinux_*
         *-win32
         pp*'
-        || ''
+        || (matrix.tag == 'musllinux') && '*-manylinux_* pp*'
+        || '*-musllinux_* pp*'
         }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
@@ -174,7 +190,6 @@ jobs:
         - >-
           3.10
         - 3.9
-        - 3.8
         no-extensions: ['', 'Y']
         os:
         - ubuntu-latest
@@ -192,10 +207,6 @@ jobs:
           experimental: false
           os: ubuntu-latest
         - pyver: pypy-3.9
-          no-extensions: Y
-          experimental: false
-          os: ubuntu-latest
-        - pyver: pypy-3.8
           no-extensions: Y
           experimental: false
           os: ubuntu-latest
@@ -467,9 +478,22 @@ jobs:
         - ppc64le
         - s390x
         - armv7l
+        tag:
+        - ''
+        - musllinux
+        exclude:
+        - tag: ''
+          qemu: armv7l
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
+      tag: ${{ matrix.tag }}
+      wheel-tags-to-skip: >-
+        ${{
+        (matrix.tag == 'musllinux')
+        && '*-manylinux_* pp*'
+        || '*-musllinux_* pp*'
+        }}
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}

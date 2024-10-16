@@ -14,6 +14,105 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.3
+======
+
+*(2024-10-15)*
+
+
+Bug fixes
+---------
+
+- Fixed :py:meth:`~yarl.URL.build` failing to validate paths must start with a ``/`` when passing ``authority`` -- by :user:`bdraco`.
+
+  The validation only worked correctly when passing ``host``.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1265`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Removed support for Python 3.8 as it has reached end of life -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1203`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of constructing :class:`~yarl.URL` when the net location is only the host -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1271`.
+
+
+----
+
+
+1.15.2
+======
+
+*(2024-10-13)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of converting :class:`~yarl.URL` to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1234`.
+
+- Improved performance of :py:meth:`~yarl.URL.joinpath` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1248`, :issue:`1250`.
+
+- Improved performance of constructing query strings from :class:`~multidict.MultiDict` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1256`.
+
+- Improved performance of constructing query strings with ``int`` values -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1259`.
+
+
+----
+
+
+1.15.1
+======
+
+*(2024-10-12)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1222`.
+
+- Improved performance of all :class:`~yarl.URL` methods that create new :class:`~yarl.URL` objects -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1226`.
+
+- Improved performance of :class:`~yarl.URL` methods that modify the network location -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1229`.
+
+
+----
+
+
 1.15.0
 ======
 

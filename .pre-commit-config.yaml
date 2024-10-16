@@ -74,7 +74,7 @@ repos:
   rev: 'v3.17.0'
   hooks:
   - id: pyupgrade
-    args: ['--py38-plus']
+    args: ['--py39-plus']
 - repo: https://github.com/PyCQA/flake8
   rev: '7.1.1'
   hooks:
@@ -120,6 +120,7 @@ repos:
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
+    - pytest_codspeed
     args:
     - --python-version=3.13
     - --txt-report=.tox/.tmp/.mypy/python-3.13
@@ -137,6 +138,7 @@ repos:
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
+    - pytest_codspeed
     args:
     - --python-version=3.12
     - --txt-report=.tox/.tmp/.mypy/python-3.12
@@ -156,6 +158,7 @@ repos:
     - types-setuptools  # requirement of packaging/pep517_backend/
     - types-Pygments
     - types-colorama
+    - pytest_codspeed
     args:
     - --python-version=3.10
     - --txt-report=.tox/.tmp/.mypy/python-3.10
@@ -163,8 +166,8 @@ repos:
     - --html-report=.tox/.tmp/.mypy/python-3.10
     pass_filenames: false
   - id: mypy
-    alias: mypy-py38
-    name: MyPy, for Python 3.8
+    alias: mypy-py39
+    name: MyPy, for Python 3.9
     additional_dependencies:
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
@@ -175,11 +178,12 @@ repos:
     - types-setuptools  # requirement of packaging/pep517_backend/
     - types-Pygments
     - types-colorama
+    - pytest_codspeed
     args:
-    - --python-version=3.8
-    - --txt-report=.tox/.tmp/.mypy/python-3.8
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.8
-    - --html-report=.tox/.tmp/.mypy/python-3.8
+    - --python-version=3.9
+    - --txt-report=.tox/.tmp/.mypy/python-3.9
+    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.9
+    - --html-report=.tox/.tmp/.mypy/python-3.9
     pass_filenames: false
 
 - repo: https://github.com/rhysd/actionlint.git

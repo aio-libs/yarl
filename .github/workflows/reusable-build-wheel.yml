@@ -24,6 +24,11 @@ on:
         default: ''
         required: false
         type: string
+      tag:
+        description: Build platform tag wheels
+        default: ''
+        required: false
+        type: string
       source-tarball-name:
         description: Sdist filename wildcard
         required: true
@@ -42,7 +47,8 @@ env:
 jobs:
 
   build-wheel:
-    name: Build wheels on ${{ inputs.os }} ${{ inputs.qemu }}
+    name: >-
+     Build ${{ inputs.tag }} wheels on ${{ inputs.os }} ${{ inputs.qemu }}
     runs-on: ${{ inputs.os }}-latest
     timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
@@ -83,8 +89,10 @@ jobs:
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v4
       with:
-        name: >-
-          ${{ inputs.dists-artifact-name }}-${{ inputs.os }}-${{ inputs.qemu }}
+        name: ${{ inputs.dists-artifact-name }}-
+          ${{ inputs.os }}-
+          ${{ inputs.qemu }}-
+          ${{ inputs.tag }}
         path: ./wheelhouse/*.whl
 
 ...
