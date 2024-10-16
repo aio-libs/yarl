@@ -326,9 +326,8 @@ class URL:
                 or val.query != query
                 or val.fragment != fragment
             ):
-                val = SplitResult.__new__(  # type: ignore[type-var]
-                    SplitResult, scheme, netloc, path, query, fragment
-                )
+                _val = (scheme, netloc, path, query, fragment)
+                val = tuple.__new__(SplitResult, _val)
 
         self = object.__new__(cls)
         self._val = val
@@ -418,11 +417,8 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
-        url = cls._from_val(
-            SplitResult.__new__(  # type: ignore[type-var]
-                SplitResult, scheme, netloc, path, query_string, fragment
-            )
-        )
+        val = (scheme, netloc, path, query_string, fragment)
+        url = cls._from_val(tuple.__new__(SplitResult, val))
         if query:
             return url.with_query(query)
         return url
