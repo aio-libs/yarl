@@ -326,7 +326,13 @@ class URL:
                 or val.query != query
                 or val.fragment != fragment
             ):
-                val = SplitResult(scheme, netloc, path, query, fragment)
+                # Constructing the tuple directly to avoid the overhead of
+                # the lambda and arg processing since NamedTuples are constructed
+                # with a run time built lambda
+                # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
+                val = tuple.__new__(
+                    SplitResult, (scheme, netloc, path, query, fragment)
+                )
 
         self = object.__new__(cls)
         self._val = val
@@ -416,9 +422,18 @@ class URL:
             )
             fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
 
-        url = cls._from_val(SplitResult(scheme, netloc, path, query_string, fragment))
         if query:
-            return url.with_query(query)
+            query_string = cls._get_str_query(query) or ""
+
+        url = object.__new__(cls)
+        # Constructing the tuple directly to avoid the overhead of the lambda and
+        # arg processing since NamedTuples are constructed with a run time built
+        # lambda
+        # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
+        url._val = tuple.__new__(
+            SplitResult, (scheme, netloc, path, query_string, fragment)
+        )
+        url._cache = {}
         return url
 
     @classmethod
@@ -1257,8 +1272,9 @@ class URL:
             path = f"/{path}"
         return self._from_val(self._val._replace(path=path, query="", fragment=""))
 
+    @classmethod
     def _get_str_query_from_sequence_iterable(
-        self,
+        cls,
         items: Iterable[tuple[Union[str, istr], QueryVariable]],
     ) -> str:
         """Return a query string from a sequence of (key, value) pairs.
@@ -1267,9 +1283,9 @@ class URL:
 
         The sequence of values must be a list or tuple.
         """
-        quoter = self._QUERY_PART_QUOTER
+        quoter = cls._QUERY_PART_QUOTER
         pairs = [
-            f"{quoter(k)}={quoter(v if type(v) is str else self._query_var(v))}"
+            f"{quoter(k)}={quoter(v if type(v) is str else cls._query_var(v))}"
             for k, val in items
             for v in (
                 val
@@ -1304,8 +1320,9 @@ class URL:
             "of type {}".format(v, cls)
         )
 
+    @classmethod
     def _get_str_query_from_iterable(
-        self, items: Iterable[tuple[Union[str, istr], str]]
+        cls, items: Iterable[tuple[Union[str, istr], str]]
     ) -> str:
         """Return a query string from an iterable.
 
@@ -1314,16 +1331,17 @@ class URL:
         The values are not allowed to be sequences, only single values are
         allowed. For sequences, use `_get_str_query_from_sequence_iterable`.
         """
-        quoter = self._QUERY_PART_QUOTER
+        quoter = cls._QUERY_PART_QUOTER
         # A listcomp is used since listcomps are inlined on CPython 3.12+ and
         # they are a bit faster than a generator expression.
         pairs = [
-            f"{quoter(k)}={quoter(v if type(v) is str else self._query_var(v))}"
+            f"{quoter(k)}={quoter(v if type(v) is str else cls._query_var(v))}"
             for k, v in items
         ]
         return "&".join(pairs)
 
-    def _get_str_query(self, *args: Any, **kwargs: Any) -> Union[str, None]:
+    @classmethod
+    def _get_str_query(cls, *args: Any, **kwargs: Any) -> Union[str, None]:
         query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if len(args) > 0:
@@ -1339,9 +1357,9 @@ class URL:
         if query is None:
             return None
         if isinstance(query, Mapping):
-            return self._get_str_query_from_sequence_iterable(query.items())
+            return cls._get_str_query_from_sequence_iterable(query.items())
         if isinstance(query, str):
-            return self._QUERY_QUOTER(query)
+            return cls._QUERY_QUOTER(query)
         if isinstance(query, (bytes, bytearray, memoryview)):
             raise TypeError(
                 "Invalid query type: bytes, bytearray and memoryview are forbidden"
@@ -1351,7 +1369,7 @@ class URL:
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
-            return self._get_str_query_from_iterable(query)
+            return cls._get_str_query_from_iterable(query)
 
         raise TypeError(
             "Invalid query type: only str, mapping or "
