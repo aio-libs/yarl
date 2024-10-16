@@ -25,6 +25,13 @@ def test_url_build_with_host_and_port(benchmark: BenchmarkFixture) -> None:
             URL.build(host="www.domain.tld", path="/req", port=1234)
 
 
+def test_url_build_with_simple_query(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.build(host="www.domain.tld", query=SIMPLE_QUERY)
+
+
 def test_url_build_encoded_with_host_and_port(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
