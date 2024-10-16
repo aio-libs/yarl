@@ -393,6 +393,18 @@ def test_quote_percent_non_ascii3_percent_encoded(quoter):
     assert quoter()("%🐍%3f") == "%25%F0%9F%90%8D%3F"
 
 
+def test_quote_starts_with_percent(quoter):
+    assert quoter()("%a") == "%25a"
+
+
+def test_quote_ends_with_percent(quoter):
+    assert quoter()("a%") == "a%25"
+
+
+def test_quote_all_percent(quoter):
+    assert quoter()("%%%%") == "%25%25%25%25"
+
+
 class StrLike(str):
     pass
 
