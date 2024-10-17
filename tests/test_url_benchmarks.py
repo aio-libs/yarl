@@ -247,7 +247,7 @@ def test_with_query_mapping(benchmark: BenchmarkFixture) -> None:
             BASE_URL.with_query(SIMPLE_QUERY)
 
 
-def test_with_int_query_mapping(benchmark: BenchmarkFixture) -> None:
+def test_with_query_mapping_int_values(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
