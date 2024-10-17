@@ -79,15 +79,6 @@ class CacheInfo(TypedDict):
     host_validate: _CacheInfo
 
 
-class _SplitResultDict(TypedDict, total=False):
-
-    scheme: str
-    netloc: str
-    path: str
-    query: str
-    fragment: str
-
-
 class _InternalURLCache(TypedDict, total=False):
 
     _origin: "URL"
@@ -1565,44 +1556,48 @@ class URL:
         """
         if type(url) is not URL:
             raise TypeError("url should be URL")
-        val = self._val
-        other_val = url._val
-        scheme = other_val.scheme or val.scheme
+        orig_scheme, orig_netloc, orig_path, orig_query, orig_fragment = self._val
+        join_scheme, join_netloc, join_path, join_query, join_fragment = url._val
+        scheme = join_scheme or orig_scheme
 
-        if scheme != val.scheme or scheme not in USES_RELATIVE:
+        if scheme != orig_scheme or scheme not in USES_RELATIVE:
             return url
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
-        if other_val.netloc and scheme in USES_AUTHORITY:
-            return self._from_val(other_val._replace(scheme=scheme))
+        if join_netloc and scheme in USES_AUTHORITY:
+            return self._from_val(
+                tuple.__new__(
+                    SplitResult,
+                    (scheme, join_netloc, join_path, join_query, join_fragment),
+                )
+            )
 
-        parts: _SplitResultDict = {"scheme": scheme}
-        if other_val.path or other_val.fragment:
-            parts["fragment"] = other_val.fragment
-        if other_val.path or other_val.query:
-            parts["query"] = other_val.query
+        fragment = join_fragment if join_path or join_fragment else orig_fragment
+        query = join_query if join_path or join_query else orig_query
 
-        if not other_val.path:
-            return self._from_val(val._replace(**parts))
-
-        if other_val.path[0] == "/":
-            path = other_val.path
-        elif not val.path:
-            path = f"/{other_val.path}"
-        elif val.path[-1] == "/":
-            path = f"{val.path}{other_val.path}"
+        if not join_path:
+            path = orig_path
         else:
-            # …
-            # and relativizing ".."
-            # parts[0] is / for absolute urls, this join will add a double slash there
-            path = "/".join([*self.parts[:-1], ""])
-            path += other_val.path
-            # which has to be removed
-            if val.path[0] == "/":
-                path = path[1:]
+            if join_path[0] == "/":
+                path = join_path
+            elif not orig_path:
+                path = f"/{join_path}"
+            elif orig_path[-1] == "/":
+                path = f"{orig_path}{join_path}"
+            else:
+                # …
+                # and relativizing ".."
+                # parts[0] is / for absolute urls,
+                # this join will add a double slash there
+                path = "/".join([*self.parts[:-1], ""]) + join_path
+                # which has to be removed
+                if orig_path[0] == "/":
+                    path = path[1:]
+            path = self._normalize_path(path) if "." in path else path
 
-        parts["path"] = self._normalize_path(path) if "." in path else path
-        return self._from_val(val._replace(**parts))
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, orig_netloc, path, query, fragment))
+        )
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
