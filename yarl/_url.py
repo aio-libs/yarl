@@ -1493,7 +1493,10 @@ class URL:
             raw_fragment = self._FRAGMENT_QUOTER(fragment)
         if self._val.fragment == raw_fragment:
             return self
-        return self._from_val(self._val._replace(fragment=raw_fragment))
+        scheme, netloc, path, query, _ = self._val
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, raw_fragment))
+        )
 
     def with_name(self, name: str) -> "URL":
         """Return a new URL with name (last part of path) replaced.
