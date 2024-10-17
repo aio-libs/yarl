@@ -63,6 +63,11 @@ def test_origin():
     assert URL("http://example.com:8888") == url.origin()
 
 
+def test_origin_is_self():
+    url = URL("http://example.com:8888")
+    assert url.origin() is url
+
+
 def test_origin_with_no_auth():
     url = URL("http://example.com:8888/path/to?a=1&b=2")
     assert URL("http://example.com:8888") == url.origin()
