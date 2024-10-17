@@ -20,6 +20,10 @@ SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
 
 
+class _SubClassedStr(str):
+    """A subclass of str that does nothing."""
+
+
 def test_url_build_with_host_and_port(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -224,6 +228,16 @@ def test_url_make_with_ipv6_address_and_path(benchmark: BenchmarkFixture) -> Non
     def _run() -> None:
         for _ in range(100):
             URL("http://[::1]/req")
+
+
+def test_extend_query_subclassed_str(benchmark: BenchmarkFixture) -> None:
+    """Test extending a query with a subclassed str."""
+    subclassed_query = {str(i): _SubClassedStr(i) for i in range(10)}
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query(subclassed_query)
 
 
 def test_with_query_mapping(benchmark: BenchmarkFixture) -> None:
