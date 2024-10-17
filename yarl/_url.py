@@ -983,6 +983,10 @@ class URL:
                 raise ValueError(
                     f"Appending path {path!r} starting from slash is forbidden"
                 )
+            # We need to quote the path if it is not already encoded
+            # This cannot be done at the end because the existing
+            # path is already quoted and we do not want to double quote
+            # the existing path.
             path = path if encoded else self._PATH_QUOTER(path)
             needs_normalize |= "." in path
             segments = path.split("/")
@@ -992,18 +996,26 @@ class URL:
             parsed += segments[segment_slice_start:]
         parsed.reverse()
 
-        if self._val.path and (old_path_segments := self._val.path.split("/")):
+        v = self._val
+        if v.path and (old_path_segments := v.path.split("/")):
+            # If the old path ends with a slash, the last segment is an empty string
+            # and should be removed before adding the new path segments.
             old_path_cutoff = -1 if old_path_segments[-1] == "" else None
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
-        if self._val.netloc:
+        if netloc := v.netloc:
+            # If the netloc is present, we need to ensure that the path is normalized
             parsed = _normalize_path_segments(parsed) if needs_normalize else parsed
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
                 # where there was none before
                 parsed = ["", *parsed]
+
         new_path = "/".join(parsed)
-        return self._from_val(self._val._replace(path=new_path, query="", fragment=""))
+
+        return self._from_val(
+            tuple.__new__(SplitResult, (v.scheme, netloc, new_path, "", ""))
+        )
 
     @classmethod
     def _normalize_path(cls, path: str) -> str:
