@@ -1,1 +1,0 @@
-Improved performance of the quoter when all characters are safe -- by :user:`bdraco`.

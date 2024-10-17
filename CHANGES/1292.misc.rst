@@ -1,1 +1,0 @@
-Improved performance of unquoting strings -- by :user:`bdraco`.
