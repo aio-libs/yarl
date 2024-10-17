@@ -478,11 +478,13 @@ class URL:
 
         val1 = self._val
         if not val1.path and val1.netloc:
-            val1 = val1._replace(path="/")
+            scheme, netloc, _, query, fragment = val1
+            val1 = tuple.__new__(SplitResult, (scheme, netloc, "/", query, fragment))
 
         val2 = other._val
         if not val2.path and val2.netloc:
-            val2 = val2._replace(path="/")
+            scheme, netloc, _, query, fragment = val2
+            val2 = tuple.__new__(SplitResult, (scheme, netloc, "/", query, fragment))
 
         return val1 == val2
 
