@@ -226,25 +226,39 @@ def test_url_make_with_ipv6_address_and_path(benchmark: BenchmarkFixture) -> Non
             URL("http://[::1]/req")
 
 
-def test_url_make_with_query_mapping(benchmark: BenchmarkFixture) -> None:
+def test_with_query_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(SIMPLE_QUERY)
 
 
-def test_url_make_with_int_query_mapping(benchmark: BenchmarkFixture) -> None:
+def test_with_int_query_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(SIMPLE_INT_QUERY)
 
 
-def test_url_make_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
+def test_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(QUERY_SEQ)
+
+
+def test_with_query_empty(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query({})
+
+
+def test_with_query_none(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query(None)
 
 
 def test_url_extend_query_simple_query_dict(benchmark: BenchmarkFixture) -> None:
