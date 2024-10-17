@@ -8,12 +8,14 @@ MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
 BASE_URL_STR = "http://www.domain.tld"
 BASE_URL = URL(BASE_URL_STR)
-URL_WITH_USER_PASS = URL("http://user:password@www.domain.tld")
+URL_WITH_USER_PASS_STR = "http://user:password@www.domain.tld"
+URL_WITH_USER_PASS = URL(URL_WITH_USER_PASS_STR)
 IPV6_QUERY_URL = URL("http://[::1]/req?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_NOT_DEFAULT_PORT = URL("http://www.domain.tld:1234")
 QUERY_URL_STR = "http://www.domain.tld?query=1&query=2&query=3&query=4&query=5"
 QUERY_URL = URL(QUERY_URL_STR)
-URL_WITH_PATH = URL("http://www.domain.tld/req")
+URL_WITH_PATH_STR = "http://www.domain.tld/req"
+URL_WITH_PATH = URL(URL_WITH_PATH_STR)
 REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
@@ -341,24 +343,30 @@ def test_url_with_path(benchmark: BenchmarkFixture) -> None:
 
 
 def test_url_origin(benchmark: BenchmarkFixture) -> None:
+    urls = [URL(BASE_URL_STR) for _ in range(100)]
+
     @benchmark
     def _run() -> None:
-        for _ in range(100):
-            BASE_URL.origin()
+        for url in urls:
+            url.origin()
 
 
 def test_url_origin_with_user_pass(benchmark: BenchmarkFixture) -> None:
+    urls = [URL(URL_WITH_USER_PASS_STR) for _ in range(100)]
+
     @benchmark
     def _run() -> None:
-        for _ in range(100):
-            URL_WITH_USER_PASS.origin()
+        for url in urls:
+            url.origin()
 
 
 def test_url_with_path_origin(benchmark: BenchmarkFixture) -> None:
+    urls = [URL(URL_WITH_PATH_STR) for _ in range(100)]
+
     @benchmark
     def _run() -> None:
-        for _ in range(100):
-            URL_WITH_PATH.origin()
+        for url in urls:
+            url.origin()
 
 
 def test_url_with_path_relative(benchmark: BenchmarkFixture) -> None:
