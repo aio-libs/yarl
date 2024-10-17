@@ -1313,13 +1313,13 @@ class URL:
     @staticmethod
     def _query_var(v: QueryVariable) -> str:
         cls = type(v)
+        if cls is int:  # Fast path for non-subclassed int
+            return str(v)
         if issubclass(cls, str):
             if TYPE_CHECKING:
                 assert isinstance(v, str)
             return v
-        if cls is int:  # Fast path for non-subclassed int
-            return str(v)
-        if issubclass(cls, float):
+        if cls is float or issubclass(cls, float):
             if TYPE_CHECKING:
                 assert isinstance(v, float)
             if math.isinf(v):
