@@ -611,9 +611,10 @@ class URL:
         scheme, user, password, host and port are removed.
 
         """
-        if not self._val.netloc:
+        _, netloc, path, query, fragment = self._val
+        if not netloc:
             raise ValueError("URL should be absolute")
-        val = self._val._replace(scheme="", netloc="")
+        val = tuple.__new__(SplitResult, ("", "", path, query, fragment))
         return self._from_val(val)
 
     @cached_property
