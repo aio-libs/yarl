@@ -600,18 +600,14 @@ class URL:
 
         user, password, path, query and fragment are removed.
         """
-        v = self._val
-        if not v.netloc:
+        if not (netloc := self._val.netloc):
             raise ValueError("URL should be absolute")
-        if not v.scheme:
+        if not (scheme := self._val.scheme):
             raise ValueError("URL should have scheme")
-        if "@" not in v.netloc:
-            val = v._replace(path="", query="", fragment="")
-        else:
+        if "@" in netloc:
             encoded_host = self.host_subcomponent
             netloc = self._make_netloc(None, None, encoded_host, self.explicit_port)
-            val = v._replace(netloc=netloc, path="", query="", fragment="")
-        return self._from_val(val)
+        return self._from_val(tuple.__new__(SplitResult, (scheme, netloc, "", "", "")))
 
     def relative(self) -> "URL":
         """Return a relative part of the URL.
