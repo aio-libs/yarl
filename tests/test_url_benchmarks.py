@@ -34,6 +34,20 @@ def test_url_build_with_simple_query(benchmark: BenchmarkFixture) -> None:
             URL.build(host="www.domain.tld", query=SIMPLE_QUERY)
 
 
+def test_url_build_no_netloc(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.build(path="/req/req/req")
+
+
+def test_url_build_no_netloc_relative(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.build(path="req/req/req")
+
+
 def test_url_build_encoded_with_host_and_port(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -93,6 +107,20 @@ def test_url_build_with_host_path_and_port(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             URL.build(host="www.domain.tld", port=1234)
+
+
+def test_url_make_no_netloc(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL("/req/req/req")
+
+
+def test_url_make_no_netloc_relative(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL("req/req/req")
 
 
 def test_url_make_with_host_path_and_port(benchmark: BenchmarkFixture) -> None:
