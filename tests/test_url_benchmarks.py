@@ -277,6 +277,41 @@ def test_with_query_none(benchmark: BenchmarkFixture) -> None:
             BASE_URL.with_query(None)
 
 
+def test_update_query_mapping(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.update_query(SIMPLE_QUERY)
+
+
+def test_update_query_mapping_with_existing_query(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            QUERY_URL.update_query(SIMPLE_QUERY)
+
+
+def test_update_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.update_query(QUERY_SEQ)
+
+
+def test_update_query_empty(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.update_query({})
+
+
+def test_update_query_none(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.update_query(None)
+
+
 def test_url_extend_query_simple_query_dict(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
