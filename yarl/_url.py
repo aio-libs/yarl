@@ -1452,14 +1452,16 @@ class URL:
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        s = self._get_str_query(*args, **kwargs)
-        if s is None:
-            return self._from_val(self._val._replace(query=""))
-
-        query = MultiDict(self._parsed_query)
-        query.update(parse_qsl(s, keep_blank_values=True))
-        new_str = self._get_str_query_from_iterable(query.items())
-        return self._from_val(self._val._replace(query=new_str))
+        scheme, netloc, path, _, fragment = self._val
+        if (s := self._get_str_query(*args, **kwargs)) is None:
+            query = ""
+        else:
+            q_dict = MultiDict(self._parsed_query)
+            q_dict.update(parse_qsl(s, keep_blank_values=True))
+            query = self._get_str_query_from_iterable(q_dict.items())
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
