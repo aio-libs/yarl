@@ -1410,9 +1410,11 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-
-        new_query = self._get_str_query(*args, **kwargs) or ""
-        return self._from_val(self._val._replace(query=new_query))
+        query = self._get_str_query(*args, **kwargs) or ""
+        scheme, netloc, path, _, fragment = self._val
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     @overload
     def extend_query(self, query: Query) -> "URL": ...
