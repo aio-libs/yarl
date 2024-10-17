@@ -1187,7 +1187,7 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        val = self._val
+        scheme, netloc, path, query, fragment = self._val
         if user is None:
             password = None
         elif isinstance(user, str):
@@ -1195,11 +1195,13 @@ class URL:
             password = self.raw_password
         else:
             raise TypeError("Invalid user type")
-        if not val.netloc:
+        if not netloc:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = self._make_netloc(user, password, encoded_host, self.explicit_port)
-        return self._from_val(val._replace(netloc=netloc))
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     def with_password(self, password: Union[str, None]) -> "URL":
         """Return a new URL with password replaced.
@@ -1216,12 +1218,15 @@ class URL:
             password = self._QUOTER(password)
         else:
             raise TypeError("Invalid password type")
-        if not self._val.netloc:
+        scheme, netloc, path, query, fragment = self._val
+        if not netloc:
             raise ValueError("password replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
         netloc = self._make_netloc(self.raw_user, password, encoded_host, port)
-        return self._from_val(self._val._replace(netloc=netloc))
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1235,15 +1240,17 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
-        val = self._val
-        if not val.netloc:
+        scheme, netloc, path, query, fragment = self._val
+        if not netloc:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
         encoded_host = self._encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_val(val._replace(netloc=netloc))
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
@@ -1257,12 +1264,14 @@ class URL:
                 raise TypeError(f"port should be int or None, got {type(port)}")
             if not (0 <= port <= 65535):
                 raise ValueError(f"port must be between 0 and 65535, got {port}")
-        val = self._val
-        if not val.netloc:
+        scheme, netloc, path, query, fragment = self._val
+        if not netloc:
             raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_val(val._replace(netloc=netloc))
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
         """Return a new URL with path replaced."""
