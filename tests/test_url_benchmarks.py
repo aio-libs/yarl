@@ -22,6 +22,10 @@ SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
 
 
+class _SubClassedStr(str):
+    """A subclass of str that does nothing."""
+
+
 def test_url_build_with_host_and_port(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -228,25 +232,49 @@ def test_url_make_with_ipv6_address_and_path(benchmark: BenchmarkFixture) -> Non
             URL("http://[::1]/req")
 
 
-def test_url_make_with_query_mapping(benchmark: BenchmarkFixture) -> None:
+def test_extend_query_subclassed_str(benchmark: BenchmarkFixture) -> None:
+    """Test extending a query with a subclassed str."""
+    subclassed_query = {str(i): _SubClassedStr(i) for i in range(10)}
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query(subclassed_query)
+
+
+def test_with_query_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(SIMPLE_QUERY)
 
 
-def test_url_make_with_int_query_mapping(benchmark: BenchmarkFixture) -> None:
+def test_with_query_mapping_int_values(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(SIMPLE_INT_QUERY)
 
 
-def test_url_make_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
+def test_with_query_sequence_mapping(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
             BASE_URL.with_query(QUERY_SEQ)
+
+
+def test_with_query_empty(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query({})
+
+
+def test_with_query_none(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.with_query(None)
 
 
 def test_url_extend_query_simple_query_dict(benchmark: BenchmarkFixture) -> None:
