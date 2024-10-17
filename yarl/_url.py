@@ -1416,19 +1416,18 @@ class URL:
         >>> url.extend_query(a=3, c=4)
         URL('http://example.com/?a=1&b=2&a=3&c=4')
         """
-        new_query_string = self._get_str_query(*args, **kwargs)
-        if not new_query_string:
+        if not (new_query := self._get_str_query(*args, **kwargs)):
             return self
-        if new_query := self._val.query:
+        scheme, netloc, path, query, fragment = self._val
+        if query:
             # both strings are already encoded so we can use a simple
             # string join
-            if new_query[-1] == "&":
-                new_query += new_query_string
-            else:
-                new_query += f"&{new_query_string}"
+            query += new_query if query[-1] == "&" else f"&{new_query}"
         else:
-            new_query = new_query_string
-        return self._from_val(self._val._replace(query=new_query))
+            query = new_query
+        return self._from_val(
+            tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+        )
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
