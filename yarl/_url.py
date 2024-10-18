@@ -904,7 +904,6 @@ class URL:
         fragment.
 
         """
-        path = self.raw_path
         scheme, netloc, path, query, fragment = self._val
         if not path or path == "/":
             if fragment or query:
