@@ -1492,7 +1492,7 @@ class URL:
             query = self._get_str_query_from_sequence_iterable(qm.items())
         elif isinstance(in_query, str):
             qstr: MultiDict[str] = MultiDict(self._parsed_query)
-            qstr.update(parse_qsl(self._QUERY_QUOTER(in_query), keep_blank_values=True))
+            qstr.update(parse_qsl(in_query, keep_blank_values=True))
             query = self._get_str_query_from_iterable(qstr.items())
         elif isinstance(in_query, (bytes, bytearray, memoryview)):
             raise TypeError(
