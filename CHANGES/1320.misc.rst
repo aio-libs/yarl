@@ -1,1 +1,0 @@
-Improved performance of the :py:meth:`~yarl.URL.with_name` method -- by :user:`bdraco`.

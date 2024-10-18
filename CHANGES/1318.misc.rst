@@ -1,1 +1,0 @@
-Improved performance of calculating the hash of :class:`~yarl.URL` objects -- by :user:`bdraco`.
