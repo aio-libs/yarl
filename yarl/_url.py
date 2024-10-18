@@ -905,12 +905,14 @@ class URL:
 
         """
         path = self.raw_path
+        scheme, netloc, path, query, fragment = self._val
         if not path or path == "/":
-            if self._val.fragment or self._val.query:
-                return self._from_val(self._val._replace(query="", fragment=""))
+            if fragment or query:
+                val = tuple.__new__(SplitResult, (scheme, netloc, path, "", ""))
+                return self._from_val(val)
             return self
         parts = path.split("/")
-        val = self._val._replace(path="/".join(parts[:-1]), query="", fragment="")
+        val = tuple.__new__(SplitResult, (scheme, netloc, "/".join(parts[:-1]), "", ""))
         return self._from_val(val)
 
     @cached_property
