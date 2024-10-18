@@ -1708,11 +1708,16 @@ def test_parent_for_empty_url():
 
 
 def test_parent_for_relative_url():
+    url = URL("path/to")
+    assert url.parent == URL("path")
+
+
+def test_parent_for_no_netloc_url():
     url = URL("/path/to")
     assert url.parent == URL("/path")
 
 
-def test_parent_for_top_level_relative_url():
+def test_parent_for_top_level_no_netloc_url():
     url = URL("/")
     assert url.parent == URL("/")
     assert url._val.path == "/"
