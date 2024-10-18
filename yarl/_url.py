@@ -1172,13 +1172,15 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         lower_scheme = scheme.lower()
-        if not self._val.netloc and lower_scheme in SCHEME_REQUIRES_HOST:
+        _, netloc, path, query, fragment = self._val
+        if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (
                 "scheme replacement is not allowed for "
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
-        return self._from_val(self._val._replace(scheme=lower_scheme))
+        val = tuple.__new__(SplitResult, (lower_scheme, netloc, path, query, fragment))
+        return self._from_val(val)
 
     def with_user(self, user: Union[str, None]) -> "URL":
         """Return a new URL with user replaced.
