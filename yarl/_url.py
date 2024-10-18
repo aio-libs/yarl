@@ -1342,7 +1342,7 @@ class URL:
 
     @classmethod
     def _get_str_query_from_iterable(
-        cls, items: Iterable[tuple[Union[str, istr], str]]
+        cls, items: Iterable[tuple[Union[str, istr], SimpleQuery]]
     ) -> str:
         """Return a query string from an iterable.
 
@@ -1364,7 +1364,7 @@ class URL:
     def _get_str_query(cls, *args: Any, **kwargs: Any) -> Union[str, None]:
         query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
-            if len(args) > 0:
+            if args:
                 raise ValueError(
                     "Either kwargs or single query parameter must be present"
                 )
@@ -1376,6 +1376,8 @@ class URL:
 
         if query is None:
             return None
+        if not query:
+            return ""
         if isinstance(query, Mapping):
             return cls._get_str_query_from_sequence_iterable(query.items())
         if isinstance(query, str):
