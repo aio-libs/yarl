@@ -1526,7 +1526,8 @@ class URL:
         if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
-        if self._val.netloc:
+        scheme, netloc, _, _, _ = self._val
+        if netloc:
             if len(parts) == 1:
                 parts.append(name)
             else:
@@ -1536,9 +1537,8 @@ class URL:
             parts[-1] = name
             if parts[0] == "/":
                 parts[0] = ""  # replace leading '/'
-        return self._from_val(
-            self._val._replace(path="/".join(parts), query="", fragment="")
-        )
+        val = tuple.__new__(SplitResult, (scheme, netloc, "/".join(parts), "", ""))
+        return self._from_val(val)
 
     def with_suffix(self, suffix: str) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
