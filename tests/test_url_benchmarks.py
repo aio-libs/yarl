@@ -20,6 +20,7 @@ REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
+QUERY_STRING = "x=y&z=1"
 
 
 class _SubClassedStr(str):
@@ -312,6 +313,13 @@ def test_update_query_none(benchmark: BenchmarkFixture) -> None:
             BASE_URL.update_query(None)
 
 
+def test_update_query_string(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(25):
+            BASE_URL.update_query(QUERY_STRING)
+
+
 def test_url_extend_query_simple_query_dict(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -332,7 +340,7 @@ def test_url_extend_query_existing_query_string(benchmark: BenchmarkFixture) -> 
     @benchmark
     def _run() -> None:
         for _ in range(25):
-            QUERY_URL.extend_query("x=y&z=1")
+            QUERY_URL.extend_query(QUERY_STRING)
 
 
 def test_url_to_string(benchmark: BenchmarkFixture) -> None:
