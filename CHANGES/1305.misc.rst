@@ -1,1 +1,0 @@
-Improved performance of the :py:meth:`~yarl.URL.extend_query` method -- by :user:`bdraco`.

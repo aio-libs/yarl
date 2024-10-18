@@ -14,6 +14,94 @@ Changelog
 
 .. towncrier release notes start
 
+1.15.5
+======
+
+*(2024-10-18)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the :py:meth:`~yarl.URL.joinpath` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1304`.
+
+- Improved performance of the :py:meth:`~yarl.URL.extend_query` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1305`.
+
+- Improved performance of the :py:meth:`~yarl.URL.origin` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1306`.
+
+- Improved performance of the :py:meth:`~yarl.URL.with_path` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1307`.
+
+- Improved performance of the :py:meth:`~yarl.URL.with_query` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1308`, :issue:`1328`.
+
+- Improved performance of the :py:meth:`~yarl.URL.update_query` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1309`, :issue:`1327`.
+
+- Improved performance of the :py:meth:`~yarl.URL.join` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1313`.
+
+- Improved performance of :class:`~yarl.URL` equality checks -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1315`.
+
+- Improved performance of :class:`~yarl.URL` methods that modify the network location -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1316`.
+
+- Improved performance of the :py:meth:`~yarl.URL.with_fragment` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1317`.
+
+- Improved performance of calculating the hash of :class:`~yarl.URL` objects -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1318`.
+
+- Improved performance of the :py:meth:`~yarl.URL.relative` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1319`.
+
+- Improved performance of the :py:meth:`~yarl.URL.with_name` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1320`.
+
+- Improved performance of :attr:`~yarl.URL.parent` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1321`.
+
+- Improved performance of the :py:meth:`~yarl.URL.with_scheme` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1322`.
+
+
+----
+
+
 1.15.4
 ======
 
