@@ -1484,7 +1484,7 @@ class URL:
 
         if in_query is None:
             query = ""
-        if isinstance(in_query, Mapping):
+        elif isinstance(in_query, Mapping):
             qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
             qm.update(in_query)
             query = self._get_str_query_from_sequence_iterable(qm.items())
