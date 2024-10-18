@@ -1470,12 +1470,56 @@ class URL:
         URL('http://example.com/?a=3&b=2&c=4')
         """
         scheme, netloc, path, _, fragment = self._val
-        if (s := self._get_str_query(*args, **kwargs)) is None:
-            query = ""
+        in_query: Union[
+            str,
+            Mapping[str, QueryVariable],
+            Sequence[tuple[Union[str, istr], SimpleQuery]],
+            None,
+        ]
+        if kwargs:
+            if len(args) > 0:
+                raise ValueError(
+                    "Either kwargs or single query parameter must be present"
+                )
+            in_query = kwargs
+        elif len(args) == 1:
+            in_query = args[0]
         else:
-            q_dict = MultiDict(self._parsed_query)
-            q_dict.update(parse_qsl(s, keep_blank_values=True))
-            query = self._get_str_query_from_iterable(q_dict.items())
+            raise ValueError("Either kwargs or single query parameter must be present")
+
+        if in_query is None:
+            return self._from_val(
+                tuple.__new__(SplitResult, (scheme, netloc, path, "", fragment))
+            )
+
+        if isinstance(in_query, Mapping):
+            qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
+            qm.update(in_query)
+            query = self._get_str_query_from_sequence_iterable(qm.items())
+        elif isinstance(in_query, str):
+            qstr: MultiDict[str] = MultiDict(self._parsed_query)
+            qstr.update(parse_qsl(self._QUERY_QUOTER(in_query), keep_blank_values=True))
+            query = self._get_str_query_from_iterable(qstr.items())
+        elif isinstance(in_query, (bytes, bytearray, memoryview)):
+            raise TypeError(
+                "Invalid query type: bytes, bytearray and memoryview are forbidden"
+            )
+        elif isinstance(in_query, Sequence):
+            if TYPE_CHECKING:
+                assert not isinstance(in_query, str)
+            # We don't expect sequence values if we're given a list of pairs
+            # already; only mappings like builtin `dict` which can't have the
+            # same key pointing to multiple values are allowed to use
+            # `_query_seq_pairs`.
+            qs: MultiDict[SimpleQuery] = MultiDict(self._parsed_query)
+            qs.update(in_query)
+            query = self._get_str_query_from_iterable(qs.items())
+        else:
+            raise TypeError(
+                "Invalid query type: only str, mapping or "
+                "sequence of (key, value) pairs is allowed"
+            )
+
         return self._from_val(
             tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
         )
