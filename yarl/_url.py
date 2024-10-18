@@ -1472,7 +1472,7 @@ class URL:
         scheme, netloc, path, _, fragment = self._val
         in_query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
-            if len(args) > 0:
+            if args:
                 raise ValueError(
                     "Either kwargs or single query parameter must be present"
                 )
