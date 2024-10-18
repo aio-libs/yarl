@@ -489,11 +489,11 @@ class URL:
         return val1 == val2
 
     def __hash__(self) -> int:
-        ret = self._cache.get("hash")
-        if ret is None:
+        if (ret := self._cache.get("hash")) is None:
             val = self._val
-            if not val.path and val.netloc:
-                val = val._replace(path="/")
+            scheme, netloc, path, query, fragment = val
+            if not path and netloc:
+                val = tuple.__new__(SplitResult, (scheme, netloc, "/", query, fragment))
             ret = self._cache["hash"] = hash(val)
         return ret
 
