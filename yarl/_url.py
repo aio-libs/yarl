@@ -1470,12 +1470,7 @@ class URL:
         URL('http://example.com/?a=3&b=2&c=4')
         """
         scheme, netloc, path, _, fragment = self._val
-        in_query: Union[
-            str,
-            Mapping[str, QueryVariable],
-            Sequence[tuple[Union[str, istr], SimpleQuery]],
-            None,
-        ]
+        in_query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if len(args) > 0:
                 raise ValueError(
@@ -1505,8 +1500,6 @@ class URL:
                 "Invalid query type: bytes, bytearray and memoryview are forbidden"
             )
         elif isinstance(in_query, Sequence):
-            if TYPE_CHECKING:
-                assert not isinstance(in_query, str)
             # We don't expect sequence values if we're given a list of pairs
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
