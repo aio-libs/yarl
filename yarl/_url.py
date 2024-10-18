@@ -490,7 +490,8 @@ class URL:
 
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
-            scheme, netloc, path, query, fragment = self._val
+            val = self._val
+            scheme, netloc, path, query, fragment = val
             if not path and netloc:
                 val = tuple.__new__(SplitResult, (scheme, netloc, "/", query, fragment))
             ret = self._cache["hash"] = hash(val)
