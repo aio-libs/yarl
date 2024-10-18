@@ -1365,9 +1365,8 @@ class URL:
         query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if args:
-                raise ValueError(
-                    "Either kwargs or single query parameter must be present"
-                )
+                msg = "Either kwargs or single query parameter must be present"
+                raise ValueError(msg)
             query = kwargs
         elif len(args) == 1:
             query = args[0]
@@ -1383,16 +1382,14 @@ class URL:
         if isinstance(query, str):
             return cls._QUERY_QUOTER(query)
         if isinstance(query, (bytes, bytearray, memoryview)):
-            raise TypeError(
-                "Invalid query type: bytes, bytearray and memoryview are forbidden"
-            )
+            msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
+            raise TypeError(msg)
         if isinstance(query, Sequence):
             # We don't expect sequence values if we're given a list of pairs
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
             return cls._get_str_query_from_iterable(query)
-
         raise TypeError(
             "Invalid query type: only str, mapping or "
             "sequence of (key, value) pairs is allowed"
