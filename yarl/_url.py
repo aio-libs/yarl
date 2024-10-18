@@ -1469,19 +1469,18 @@ class URL:
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        scheme, netloc, path, query, fragment = self._val
         in_query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if args:
-                raise ValueError(
-                    "Either kwargs or single query parameter must be present"
-                )
+                msg = "Either kwargs or single query parameter must be present"
+                raise ValueError(msg)
             in_query = kwargs
         elif len(args) == 1:
             in_query = args[0]
         else:
             raise ValueError("Either kwargs or single query parameter must be present")
 
+        scheme, netloc, path, query, fragment = self._val
         if in_query is None:
             query = ""
         elif not in_query:
@@ -1495,9 +1494,8 @@ class URL:
             qstr.update(parse_qsl(in_query, keep_blank_values=True))
             query = self._get_str_query_from_iterable(qstr.items())
         elif isinstance(in_query, (bytes, bytearray, memoryview)):
-            raise TypeError(
-                "Invalid query type: bytes, bytearray and memoryview are forbidden"
-            )
+            msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
+            raise TypeError(msg)
         elif isinstance(in_query, Sequence):
             # We don't expect sequence values if we're given a list of pairs
             # already; only mappings like builtin `dict` which can't have the
@@ -1511,7 +1509,6 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
-
         return self._from_val(
             tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
         )
