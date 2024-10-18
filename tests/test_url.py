@@ -1707,9 +1707,16 @@ def test_parent_for_empty_url():
     assert url is url.parent
 
 
-def test_parent_for_relative_url():
+def test_parent_for_relative_url_with_child():
     url = URL("path/to")
     assert url.parent == URL("path")
+    assert url.parent._val.path == "path"
+
+
+def test_parent_for_relative_url():
+    url = URL("path")
+    assert url.parent == URL("")
+    assert url.parent._val.path == ""
 
 
 def test_parent_for_no_netloc_url():
@@ -1720,7 +1727,7 @@ def test_parent_for_no_netloc_url():
 def test_parent_for_top_level_no_netloc_url():
     url = URL("/")
     assert url.parent == URL("/")
-    assert url._val.path == "/"
+    assert url.parent._val.path == "/"
 
 
 def test_parent_for_absolute_url():
@@ -1731,7 +1738,7 @@ def test_parent_for_absolute_url():
 def test_parent_for_top_level_absolute_url():
     url = URL("http://go.to/")
     assert url.parent == URL("http://go.to/")
-    assert url._val.path == "/"
+    assert url.parent._val.path == "/"
 
 
 def test_empty_value_for_query():
