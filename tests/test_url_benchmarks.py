@@ -398,6 +398,13 @@ def test_url_with_scheme(benchmark: BenchmarkFixture) -> None:
             BASE_URL.with_scheme("https")
 
 
+def test_url_with_name(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.with_name("other.tld")
+
+
 def test_url_with_path(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -439,6 +446,16 @@ def test_url_with_path_relative(benchmark: BenchmarkFixture) -> None:
             URL_WITH_PATH.relative()
 
 
+def test_url_with_path_parent(benchmark: BenchmarkFixture) -> None:
+    cache = URL_WITH_PATH._cache
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            cache.pop("parent", None)
+            URL_WITH_PATH.parent
+
+
 def test_url_join(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
@@ -467,6 +484,16 @@ def test_url_equality(benchmark: BenchmarkFixture) -> None:
             BASE_URL == BASE_URL
             BASE_URL == URL_WITH_PATH
             URL_WITH_PATH == URL_WITH_PATH
+
+
+def test_url_hash(benchmark: BenchmarkFixture) -> None:
+    cache = BASE_URL._cache
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            cache.pop("hash", None)
+            hash(BASE_URL)
 
 
 def test_is_default_port(benchmark: BenchmarkFixture) -> None:
