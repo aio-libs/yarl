@@ -1483,10 +1483,7 @@ class URL:
             raise ValueError("Either kwargs or single query parameter must be present")
 
         if in_query is None:
-            return self._from_val(
-                tuple.__new__(SplitResult, (scheme, netloc, path, "", fragment))
-            )
-
+            query = ""
         if isinstance(in_query, Mapping):
             qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
             qm.update(in_query)
