@@ -1469,7 +1469,7 @@ class URL:
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        scheme, netloc, path, _, fragment = self._val
+        scheme, netloc, path, query, fragment = self._val
         in_query: Union[str, Mapping[str, QueryVariable], None]
         if kwargs:
             if args:
@@ -1484,6 +1484,8 @@ class URL:
 
         if in_query is None:
             query = ""
+        elif not in_query:
+            pass
         elif isinstance(in_query, Mapping):
             qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
             qm.update(in_query)
