@@ -1707,6 +1707,28 @@ def test_parent_for_empty_url():
     assert url is url.parent
 
 
+def test_parent_for_relative_url():
+    url = URL("/path/to")
+    assert url.parent == URL("/path")
+
+
+def test_parent_for_top_level_relative_url():
+    url = URL("/")
+    assert url.parent == URL("/")
+    assert url._val.path == "/"
+
+
+def test_parent_for_absolute_url():
+    url = URL("http://go.to/path/to")
+    assert url.parent == URL("http://go.to/path")
+
+
+def test_parent_for_top_level_absolute_url():
+    url = URL("http://go.to/")
+    assert url.parent == URL("http://go.to/")
+    assert url._val.path == "/"
+
+
 def test_empty_value_for_query():
     url = URL("http://example.com/path").with_query({"a": ""})
     assert str(url) == "http://example.com/path?a="
