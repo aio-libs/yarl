@@ -841,9 +841,7 @@ class URL:
     @cached_property
     def path_qs(self) -> str:
         """Decoded path of URL with query."""
-        if not (query := self.query_string):
-            return self.path
-        return f"{self.path}?{query}"
+        return self.path if not (query := self.query_string) else f"{self.path}?{query}"
 
     @cached_property
     def raw_path_qs(self) -> str:
