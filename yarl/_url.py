@@ -909,10 +909,10 @@ class URL:
     def raw_name(self) -> str:
         """The last part of raw_parts."""
         parts = self.raw_parts
-        if self._val.netloc:
-            parts = parts[1:]
-            return parts[-1] if parts else ""
-        return parts[-1]
+        if not self._val.netloc:
+            return parts[-1]
+        parts = parts[1:]
+        return parts[-1] if parts else ""
 
     @cached_property
     def name(self) -> str:
