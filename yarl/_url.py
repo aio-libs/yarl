@@ -549,15 +549,18 @@ class URL:
             self._val, *unused = state
         self._cache = {}
 
-    def _cache_netloc(self) -> None:
-        """Cache the netloc parts of the URL."""
-        cache = self._cache
-        (
-            cache["raw_user"],
-            cache["raw_password"],
-            cache["raw_host"],
-            cache["explicit_port"],
-        ) = self._split_netloc(self._val.netloc)
+    def _cached_split_netloc(
+        self,
+    ) -> tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
+        """Cached split of the netloc parts of the URL.
+
+        Returns a tuple of the cached parts:
+        (raw_user, raw_password, raw_host, explicit_port)
+        """
+        c = self._cache
+        split_loc = self._split_netloc(self._val.netloc)
+        c["raw_user"], c["raw_password"], c["raw_host"], c["explicit_port"] = split_loc
+        return split_loc
 
     def is_absolute(self) -> bool:
         """A check for absolute URLs.
@@ -679,8 +682,7 @@ class URL:
 
         """
         # not .username
-        self._cache_netloc()
-        return self._cache["raw_user"]
+        return self._cached_split_netloc()[0]
 
     @cached_property
     def user(self) -> Union[str, None]:
@@ -700,8 +702,7 @@ class URL:
         None if password is missing.
 
         """
-        self._cache_netloc()
-        return self._cache["raw_password"]
+        return self._cached_split_netloc()[1]
 
     @cached_property
     def password(self) -> Union[str, None]:
@@ -725,8 +726,7 @@ class URL:
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
-        self._cache_netloc()
-        return self._cache["raw_host"]
+        return self._cached_split_netloc()[2]
 
     @cached_property
     def host(self) -> Union[str, None]:
@@ -781,8 +781,7 @@ class URL:
         None for relative URLs or URLs without explicit port.
 
         """
-        self._cache_netloc()
-        return self._cache["explicit_port"]
+        return self._cached_split_netloc()[3]
 
     @cached_property
     def raw_path(self) -> str:
