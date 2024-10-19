@@ -681,8 +681,7 @@ class URL:
         None if user is missing.
 
         """
-        raw_user = self.raw_user
-        if raw_user is None:
+        if (raw_user := self.raw_user) is None:
             return None
         return self._UNQUOTER(raw_user)
 
@@ -703,8 +702,7 @@ class URL:
         None if password is missing.
 
         """
-        raw_password = self.raw_password
-        if raw_password is None:
+        if (raw_password := self.raw_password) is None:
             return None
         return self._UNQUOTER(raw_password)
 
@@ -785,10 +783,9 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        ret = self._val.path
-        if not ret and self._val.netloc:
-            ret = "/"
-        return ret
+        if not (path := self._val.path) and self._val.netloc:
+            return "/"
+        return path
 
     @cached_property
     def path(self) -> str:
@@ -846,16 +843,16 @@ class URL:
     @cached_property
     def path_qs(self) -> str:
         """Decoded path of URL with query."""
-        if not self.query_string:
+        if not (query := self.query_string):
             return self.path
-        return f"{self.path}?{self.query_string}"
+        return f"{self.path}?{query}"
 
     @cached_property
     def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
-        if not self._val.query:
+        if not (query := self._val.query):
             return self.raw_path
-        return f"{self.raw_path}?{self._val.query}"
+        return f"{self.raw_path}?{query}"
 
     @cached_property
     def raw_fragment(self) -> str:
@@ -920,12 +917,8 @@ class URL:
         parts = self.raw_parts
         if self._val.netloc:
             parts = parts[1:]
-            if not parts:
-                return ""
-            else:
-                return parts[-1]
-        else:
-            return parts[-1]
+            return parts[-1] if parts else ""
+        return parts[-1]
 
     @cached_property
     def name(self) -> str:
@@ -936,10 +929,7 @@ class URL:
     def raw_suffix(self) -> str:
         name = self.raw_name
         i = name.rfind(".")
-        if 0 < i < len(name) - 1:
-            return name[i:]
-        else:
-            return ""
+        return name[i:] if 0 < i < len(name) - 1 else ""
 
     @cached_property
     def suffix(self) -> str:
