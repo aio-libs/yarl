@@ -783,9 +783,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        if not (path := self._val.path) and self._val.netloc:
-            return "/"
-        return path
+        return "/" if not (path := self._val.path) and self._val.netloc else path
 
     @cached_property
     def path(self) -> str:
