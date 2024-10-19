@@ -9,6 +9,7 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
+    Final,
     SupportsInt,
     Tuple,
     TypedDict,
@@ -235,6 +236,11 @@ class URL:
     _QS_UNQUOTER = _Unquoter(qs=True)
 
     _val: SplitResult
+
+    _SPLIT_LOC_USER: Final = 0
+    _SPLIT_LOC_PASS: Final = 1
+    _SPLIT_LOC_HOST: Final = 2
+    _SPLIT_LOC_PORT: Final = 3
 
     def __new__(
         cls,
@@ -682,7 +688,8 @@ class URL:
 
         """
         # not .username
-        return self._cached_split_netloc()[0]
+
+        return self._cached_split_netloc()[self._SPLIT_LOC_USER]
 
     @cached_property
     def user(self) -> Union[str, None]:
@@ -702,7 +709,7 @@ class URL:
         None if password is missing.
 
         """
-        return self._cached_split_netloc()[1]
+        return self._cached_split_netloc()[self._SPLIT_LOC_PASS]
 
     @cached_property
     def password(self) -> Union[str, None]:
@@ -726,7 +733,7 @@ class URL:
         """
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
-        return self._cached_split_netloc()[2]
+        return self._cached_split_netloc()[self._SPLIT_LOC_HOST]
 
     @cached_property
     def host(self) -> Union[str, None]:
@@ -781,7 +788,7 @@ class URL:
         None for relative URLs or URLs without explicit port.
 
         """
-        return self._cached_split_netloc()[3]
+        return self._cached_split_netloc()[self._SPLIT_LOC_PORT]
 
     @cached_property
     def raw_path(self) -> str:
