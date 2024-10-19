@@ -166,6 +166,16 @@ def test_url_make_access_raw_host(benchmark: BenchmarkFixture) -> None:
             url.raw_host
 
 
+def test_raw_host_empty_cache(benchmark: BenchmarkFixture) -> None:
+    url = URL("http://www.domain.tld")
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            url._cache = {}
+            url.raw_host
+
+
 def test_url_make_access_fragment(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
