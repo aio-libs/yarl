@@ -261,6 +261,10 @@ class URL:
         if not encoded:
             host: Union[str, None]
             scheme, netloc, path, query, fragment = val
+            orig_netloc = netloc
+            orig_path = path
+            orig_query = query
+            orig_fragment = fragment
             if not netloc:  # netloc
                 host = ""
             else:
@@ -312,10 +316,10 @@ class URL:
             # so we can avoid the extra work of creating a new SplitResult
             # if the input SplitResult is already normalized
             if (
-                val.netloc != netloc
-                or val.path != path
-                or val.query != query
-                or val.fragment != fragment
+                orig_netloc != netloc
+                or orig_path != path
+                or orig_query != query
+                or orig_fragment != fragment
             ):
                 # Constructing the tuple directly to avoid the overhead of
                 # the lambda and arg processing since NamedTuples are constructed
