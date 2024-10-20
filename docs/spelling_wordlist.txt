@@ -11,6 +11,7 @@ Towncrier
 Twitter
 UTF
 aiohttp
+ascii
 backend
 boolean
 booleans
