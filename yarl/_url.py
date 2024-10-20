@@ -1031,7 +1031,8 @@ class URL:
         # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
         url = url.lstrip(_WHATWG_C0_CONTROL_OR_SPACE)
         for b in _UNSAFE_URL_BYTES_TO_REMOVE:
-            url = url.replace(b, "")
+            if b in url:
+                url = url.replace(b, "")
 
         scheme = netloc = query = fragment = ""
         i = url.find(":")
