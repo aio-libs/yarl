@@ -1,0 +1,2 @@
+Added support for using the :meth:`subtraction operator <yarl.URL.__sub__>`
+to get the relative path between URLs.
