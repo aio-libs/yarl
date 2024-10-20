@@ -1056,7 +1056,7 @@ class URL:
                 has_right_bracket and not has_left_bracket
             ):
                 raise ValueError("Invalid IPv6 URL")
-            if has_left_bracket and has_right_bracket:
+            if has_left_bracket:
                 bracketed_host = netloc.partition("[")[2].partition("]")[0]
                 # Valid bracketed hosts are defined in
                 # https://www.rfc-editor.org/rfc/rfc3986#page-49
