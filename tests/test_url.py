@@ -1,9 +1,15 @@
+import sys
 from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
 from yarl import URL
+
+_WHATWG_C0_CONTROL_OR_SPACE = (
+    "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
+    "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
+)
 
 
 def test_inheritance():
@@ -289,6 +295,28 @@ def test_compressed_ipv6():
     assert url.raw_host == "1dec::1"
     assert url.host == url.raw_host
     assert url.raw_host == url._val.hostname
+
+
+def test_ipv6_missing_left_bracket():
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL("http://[1dec:0:0:0::1/")
+
+
+def test_ipv6_missing_right_bracket():
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL("http://[1dec:0:0:0::1/")
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires Python 3.11 or higher")
+def test_ipv4_brackets_not_allowed():
+    with pytest.raises(ValueError, match="An IPv4 address cannot be in brackets"):
+        URL("http://[127.0.0.1]/")
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires Python 3.11 or higher")
+def test_ipfuture_brackets_not_allowed():
+    with pytest.raises(ValueError, match="IPvFuture address is invalid"):
+        URL("http://[v10]/")
 
 
 def test_ipv4_zone():
@@ -2141,3 +2169,16 @@ def test_parsing_populates_cache():
 def test_build_with_invalid_ipv6_host(host: str, is_authority: bool):
     with pytest.raises(ValueError, match="Invalid IPv6 URL"):
         URL(f"http://{host}/")
+
+
+@pytest.mark.parametrize("byte", ["\r", "\n", "\t"])
+def test_unsafe_url_bytes_are_removed(byte: str) -> None:
+    url = URL(f"http://example.com{byte}/")
+    assert str(url) == "http://example.com/"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires Python 3.11 or higher")
+@pytest.mark.parametrize("byte", tuple(_WHATWG_C0_CONTROL_OR_SPACE))
+def test_control_chars_are_removed(byte: str) -> None:
+    url = URL(f"{byte}http://example.com/")
+    assert str(url) == "http://example.com/"
