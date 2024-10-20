@@ -1,4 +1,3 @@
-import sys
 from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
@@ -309,13 +308,11 @@ def test_ipv6_missing_right_bracket():
         URL("http://[1dec:0:0:0::1/")
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires Python 3.11 or higher")
 def test_ipv4_brackets_not_allowed():
     with pytest.raises(ValueError, match="An IPv4 address cannot be in brackets"):
         URL("http://[127.0.0.1]/")
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires Python 3.11 or higher")
 def test_ipfuture_brackets_not_allowed():
     with pytest.raises(ValueError, match="IPvFuture address is invalid"):
         URL("http://[v10]/")
@@ -2179,7 +2176,6 @@ def test_unsafe_url_bytes_are_removed(byte: str) -> None:
     assert str(url) == "http://example.com/"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires Python 3.11 or higher")
 @pytest.mark.parametrize("byte", tuple(_WHATWG_C0_CONTROL_OR_SPACE))
 def test_control_chars_are_removed(byte: str) -> None:
     url = URL(f"{byte}http://example.com/")
