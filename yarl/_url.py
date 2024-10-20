@@ -21,7 +21,6 @@ from urllib.parse import (
     parse_qsl,
     quote,
     scheme_chars,
-    urlsplit,
     uses_netloc,
     uses_relative,
 )
@@ -256,14 +255,14 @@ class URL:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            val = urlsplit(val)
+            val = cls._split_url(val)
         elif type(val) is cls:
             return val
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
         elif isinstance(val, str):
-            val = urlsplit(str(val))
+            val = cls._split_url(str(val))
         else:
             raise TypeError("Constructor parameter should be str")
 
