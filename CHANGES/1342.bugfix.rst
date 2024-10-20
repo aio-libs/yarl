@@ -1,0 +1,1 @@
+Fixed blocking I/O to load Python code when creating a new :class:`~yarl.URL` with non-ascii characters in the network location part -- by :user:`bdraco`.
