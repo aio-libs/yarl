@@ -235,7 +235,8 @@ def _check_netloc(netloc: str) -> None:
                 f"netloc '{netloc}' contains invalid "
                 "characters under NFKC normalization"
             )
-            
+
+
 @lru_cache  # match the same size as urlsplit
 def _parse_host(host: str) -> tuple[bool, str, Union[bool, None], str, str, str]:
     """Parse host into parts
