@@ -156,6 +156,77 @@ def _normalize_path_segments(segments: "Sequence[str]") -> list[str]:
     return resolved_path
 
 
+@lru_cache
+def _split_url(url: str) -> SplitResult:
+    """Split URL into parts."""
+    # Adapted from urllib.parse.urlsplit
+    # Only lstrip url as some applications rely on preserving trailing space.
+    # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
+    url = url.lstrip(_WHATWG_C0_CONTROL_OR_SPACE)
+    for b in _UNSAFE_URL_BYTES_TO_REMOVE:
+        if b in url:
+            url = url.replace(b, "")
+
+    scheme = netloc = query = fragment = ""
+    i = url.find(":")
+    if i > 0 and url[0] in scheme_chars:
+        for c in url[:i]:
+            if c not in scheme_chars:
+                break
+        else:
+            scheme, url = url[:i].lower(), url[i + 1 :]
+    if url[:2] == "//":
+        delim = len(url)  # position of end of domain part of url, default is end
+        for c in "/?#":  # look for delimiters; the order is NOT important
+            wdelim = url.find(c, 2)  # find first of this delim
+            if wdelim >= 0 and wdelim < delim:  # if found
+                delim = wdelim  # use earliest delim position
+        netloc = url[2:delim]
+        url = url[delim:]
+        has_left_bracket = "[" in netloc
+        has_right_bracket = "]" in netloc
+        if (has_left_bracket and not has_right_bracket) or (
+            has_right_bracket and not has_left_bracket
+        ):
+            raise ValueError("Invalid IPv6 URL")
+        if has_left_bracket:
+            bracketed_host = netloc.partition("[")[2].partition("]")[0]
+            # Valid bracketed hosts are defined in
+            # https://www.rfc-editor.org/rfc/rfc3986#page-49
+            # https://url.spec.whatwg.org/
+            if bracketed_host[0] == "v":
+                if not re.match(r"\Av[a-fA-F0-9]+\..+\Z", bracketed_host):
+                    raise ValueError("IPvFuture address is invalid")
+            elif ":" not in bracketed_host:
+                raise ValueError("An IPv4 address cannot be in brackets")
+    if "#" in url:
+        url, _, fragment = url.partition("#")
+    if "?" in url:
+        url, _, query = url.partition("?")
+    if netloc and not netloc.isascii():
+        _check_netloc(netloc)
+    return tuple.__new__(SplitResult, (scheme, netloc, url, query, fragment))
+
+
+def _check_netloc(netloc: str) -> None:
+    # Adapted from urllib.parse._checknetloc
+    # looking for characters like \u2100 that expand to 'a/c'
+    # IDNA uses NFKC equivalence, so normalize for this check
+
+    # ignore characters already included
+    # but not the surrounding text
+    n = netloc.replace("@", "").replace(":", "").replace("#", "").replace("?", "")
+    normalized_netloc = unicodedata.normalize("NFKC", n)
+    if n == normalized_netloc:
+        return
+    for c in "/?#@:":
+        if c in normalized_netloc:
+            raise ValueError(
+                f"netloc '{netloc}' contains invalid "
+                "characters under NFKC normalization"
+            )
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -256,14 +327,14 @@ class URL:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            val = cls._split_url(val)
+            val = _split_url(val)
         elif type(val) is cls:
             return val
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
         elif isinstance(val, str):
-            val = cls._split_url(str(val))
+            val = _split_url(str(val))
         else:
             raise TypeError("Constructor parameter should be str")
 
@@ -1021,77 +1092,6 @@ class URL:
 
         segments = path.split("/")
         return prefix + "/".join(_normalize_path_segments(segments))
-
-    @classmethod
-    @lru_cache
-    def _split_url(cls, url: str) -> SplitResult:
-        """Split URL into parts."""
-        # Adapted from urllib.parse.urlsplit
-        # Only lstrip url as some applications rely on preserving trailing space.
-        # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
-        url = url.lstrip(_WHATWG_C0_CONTROL_OR_SPACE)
-        for b in _UNSAFE_URL_BYTES_TO_REMOVE:
-            if b in url:
-                url = url.replace(b, "")
-
-        scheme = netloc = query = fragment = ""
-        i = url.find(":")
-        if i > 0 and url[0] in scheme_chars:
-            for c in url[:i]:
-                if c not in scheme_chars:
-                    break
-            else:
-                scheme, url = url[:i].lower(), url[i + 1 :]
-        if url[:2] == "//":
-            delim = len(url)  # position of end of domain part of url, default is end
-            for c in "/?#":  # look for delimiters; the order is NOT important
-                wdelim = url.find(c, 2)  # find first of this delim
-                if wdelim >= 0 and wdelim < delim:  # if found
-                    delim = wdelim  # use earliest delim position
-            netloc = url[2:delim]
-            url = url[delim:]
-            has_left_bracket = "[" in netloc
-            has_right_bracket = "]" in netloc
-            if (has_left_bracket and not has_right_bracket) or (
-                has_right_bracket and not has_left_bracket
-            ):
-                raise ValueError("Invalid IPv6 URL")
-            if has_left_bracket:
-                bracketed_host = netloc.partition("[")[2].partition("]")[0]
-                # Valid bracketed hosts are defined in
-                # https://www.rfc-editor.org/rfc/rfc3986#page-49
-                # https://url.spec.whatwg.org/
-                if bracketed_host[0] == "v":
-                    if not re.match(r"\Av[a-fA-F0-9]+\..+\Z", bracketed_host):
-                        raise ValueError("IPvFuture address is invalid")
-                elif ":" not in bracketed_host:
-                    raise ValueError("An IPv4 address cannot be in brackets")
-        if "#" in url:
-            url, _, fragment = url.partition("#")
-        if "?" in url:
-            url, _, query = url.partition("?")
-        if netloc and not netloc.isascii():
-            cls._check_netloc(netloc)
-        return tuple.__new__(SplitResult, (scheme, netloc, url, query, fragment))
-
-    @classmethod
-    def _check_netloc(cls, netloc: str) -> None:
-        # Adapted from urllib.parse._checknetloc
-        # looking for characters like \u2100 that expand to 'a/c'
-        # IDNA uses NFKC equivalence, so normalize for this check
-
-        # ignore characters already included
-        # but not the surrounding text
-        n = netloc.replace("@", "").replace(":", "").replace("#", "").replace("?", "")
-        normalized_netloc = unicodedata.normalize("NFKC", n)
-        if n == normalized_netloc:
-            return
-        for c in "/?#@:":
-            if c in normalized_netloc:
-                raise ValueError(
-                    f"netloc '{netloc}' contains invalid "
-                    "characters under NFKC normalization"
-                )
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
