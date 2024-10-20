@@ -999,8 +999,8 @@ class URL:
 
         return self._from_tup((scheme, netloc, new_path, "", ""))
 
-    @classmethod
-    def _normalize_path(cls, path: str) -> str:
+    @staticmethod
+    def _normalize_path(path: str) -> str:
         # Drop '.' and '..' from str path
         prefix = ""
         if path and path[0] == "/":
