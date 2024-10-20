@@ -1033,7 +1033,7 @@ class URL:
         for b in _UNSAFE_URL_BYTES_TO_REMOVE:
             url = url.replace(b, "")
 
-        netloc = query = fragment = ""
+        scheme = netloc = query = fragment = ""
         i = url.find(":")
         if i > 0 and url[0].isascii() and url[0].isalpha():
             for c in url[:i]:
