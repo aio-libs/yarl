@@ -1026,7 +1026,7 @@ class URL:
     @lru_cache
     def _split_url(cls, url: str) -> SplitResult:
         """Split URL into parts."""
-        # Original code from urllib.parse.urlsplit
+        # Adapted from urllib.parse.urlsplit
         # Only lstrip url as some applications rely on preserving trailing space.
         # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
         url = url.lstrip(_WHATWG_C0_CONTROL_OR_SPACE)
@@ -1073,7 +1073,7 @@ class URL:
 
     @classmethod
     def _check_netloc(cls, netloc: str) -> None:
-        # Original code from urllib.parse._checknetloc
+        # Adapted from urllib.parse._checknetloc
         # looking for characters like \u2100 that expand to 'a/c'
         # IDNA uses NFKC equivalence, so normalize for this check
 
