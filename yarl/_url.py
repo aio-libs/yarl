@@ -1049,11 +1049,13 @@ class URL:
                     delim = min(delim, wdelim)  # use earliest delim position
             netloc = url[2:delim]
             url = url[delim:]
-            if ("[" in netloc and "]" not in netloc) or (
-                "]" in netloc and "[" not in netloc
+            has_left_bracket = "[" in netloc
+            has_right_bracket = "]" in netloc
+            if (has_left_bracket and not has_right_bracket) or (
+                has_right_bracket and not has_left_bracket
             ):
                 raise ValueError("Invalid IPv6 URL")
-            if "[" in netloc and "]" in netloc:
+            if has_left_bracket and has_right_bracket:
                 bracketed_host = netloc.partition("[")[2].partition("]")[0]
                 # Valid bracketed hosts are defined in
                 # https://www.rfc-editor.org/rfc/rfc3986#page-49
