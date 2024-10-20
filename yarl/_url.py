@@ -1,6 +1,7 @@
 import math
 import re
 import sys
+import unicodedata
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import suppress
@@ -1075,7 +1076,6 @@ class URL:
         # Original code from urllib.parse._checknetloc
         # looking for characters like \u2100 that expand to 'a/c'
         # IDNA uses NFKC equivalence, so normalize for this check
-        import unicodedata
 
         # ignore characters already included
         # but not the surrounding text
