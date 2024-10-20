@@ -6,6 +6,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
+from os.path import dirname, relpath
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -530,6 +531,34 @@ class URL:
         if not isinstance(name, str):
             return NotImplemented
         return self._make_child((str(name),))
+
+    def __sub__(self, other: object) -> "URL":
+        if type(other) is not URL:
+            return NotImplemented
+
+        target = self._val
+        base = other._val
+
+        if target.scheme != base.scheme:
+            raise ValueError("Both URLs should have the same scheme")
+        if target.netloc != base.netloc:
+            raise ValueError("Both URLs should have the same netloc")
+
+        path = self._relpath(target.path, base.path)
+        return self._from_tup(("", "", path, "", ""))
+
+    @staticmethod
+    def _relpath(path: str, start: str) -> str:
+        """A wrapper over os.path.relpath()"""
+
+        if not path:
+            path = "/"
+        if not start:
+            start = "/"
+        if not start.endswith("/"):
+            start = dirname(start)
+
+        return relpath(path, start)
 
     def __mod__(self, query: Query) -> "URL":
         return self.update_query(query)
