@@ -175,9 +175,19 @@ def _split_url(url: str) -> SplitResult:
                 break
         else:
             scheme, url = url[:i].lower(), url[i + 1 :]
+    has_hash = "#" in url
+    has_question_mark = "?" in url
     if url[:2] == "//":
         delim = len(url)  # position of end of domain part of url, default is end
-        for c in "/?#":  # look for delimiters; the order is NOT important
+        if has_hash and has_question_mark:
+            delim_chars = "/?#"
+        elif has_question_mark:
+            delim_chars = "/?"
+        elif has_hash:
+            delim_chars = "/#"
+        else:
+            delim_chars = "/"
+        for c in delim_chars:  # look for delimiters; the order is NOT important
             wdelim = url.find(c, 2)  # find first of this delim
             if wdelim >= 0 and wdelim < delim:  # if found
                 delim = wdelim  # use earliest delim position
@@ -199,9 +209,9 @@ def _split_url(url: str) -> SplitResult:
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("An IPv4 address cannot be in brackets")
-    if "#" in url:
+    if has_hash:
         url, _, fragment = url.partition("#")
-    if "?" in url:
+    if has_question_mark:
         url, _, query = url.partition("?")
     if netloc and not netloc.isascii():
         _check_netloc(netloc)
