@@ -1046,8 +1046,8 @@ class URL:
             delim = len(url)  # position of end of domain part of url, default is end
             for c in "/?#":  # look for delimiters; the order is NOT important
                 wdelim = url.find(c, 2)  # find first of this delim
-                if wdelim >= 0:  # if found
-                    delim = min(delim, wdelim)  # use earliest delim position
+                if wdelim >= 0 and wdelim < delim:  # if found
+                    delim = wdelim  # use earliest delim position
             netloc = url[2:delim]
             url = url[delim:]
             has_left_bracket = "[" in netloc
