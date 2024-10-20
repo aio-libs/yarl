@@ -10,6 +10,8 @@ _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
     "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
 )
+_VERTICAL_COLON = "\ufe13"
+_FULL_WITH_NUMBER_SIGN = "\uFF03"
 
 
 def test_inheritance():
@@ -2182,3 +2184,17 @@ def test_unsafe_url_bytes_are_removed(byte: str) -> None:
 def test_control_chars_are_removed(byte: str) -> None:
     url = URL(f"{byte}http://example.com/")
     assert str(url) == "http://example.com/"
+
+
+@pytest.mark.parametrize(
+    "disallowed_unicode", [_VERTICAL_COLON, _FULL_WITH_NUMBER_SIGN]
+)
+def test_url_with_invalid_unicode(disallowed_unicode: str) -> None:
+    with pytest.raises(
+        ValueError, match="contains invalid characters under NFKC normalization"
+    ):
+        URL(f"http://example.com{disallowed_unicode}80/")
+    with pytest.raises(
+        ValueError, match="contains invalid characters under NFKC normalization"
+    ):
+        URL(f"http://example.{disallowed_unicode}.com/frag")
