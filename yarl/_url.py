@@ -146,6 +146,128 @@ def _normalize_path_segments(segments: "Sequence[str]") -> list[str]:
     return resolved_path
 
 
+@lru_cache  # match the same size as urlsplit
+def _parse_host(host: str) -> tuple[bool, str, Union[bool, None], str, str, str]:
+    """Parse host into parts
+
+    Returns a tuple of:
+    - True if the host looks like an IP address, False otherwise.
+    - Lowercased host
+    - True if the host is ASCII-only, False otherwise.
+    - Raw IP address
+    - Separator between IP address and zone
+    - Zone part of the IP address
+    """
+    lower_host = host.lower()
+    is_ascii = host.isascii()
+
+    # If the host ends with a digit or contains a colon, its likely
+    # an IP address.
+    if host and (host[-1].isdigit() or ":" in host):
+        if "%" in host:
+            return True, lower_host, is_ascii, *host.partition("%")
+        return True, lower_host, is_ascii, host, "", ""
+
+    return False, lower_host, is_ascii, "", "", ""
+
+
+def _encode_host(host: str, validate_host: bool) -> str:
+    """Encode host part of URL."""
+    looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = _parse_host(host)
+    if looks_like_ip:
+        # If it looks like an IP, we check with _ip_compressed_version
+        # and fall-through if its not an IP address. This is a performance
+        # optimization to avoid parsing IP addresses as much as possible
+        # because it is orders of magnitude slower than almost any other
+        # operation this library does.
+        # Might be an IP address, check it
+        #
+        # IP Addresses can look like:
+        # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+        # - 127.0.0.1 (last character is a digit)
+        # - 2001:db8::ff00:42:8329 (contains a colon)
+        # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
+        # - [2001:db8::ff00:42:8329] (contains a colon -- brackets should
+        #                             have been removed before it gets here)
+        # Rare IP Address formats are not supported per:
+        # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
+        #
+        # IP parsing is slow, so its wrapped in an LRU
+        try:
+            host, version = _ip_compressed_version(raw_ip)
+        except ValueError:
+            pass
+        else:
+            # These checks should not happen in the
+            # LRU to keep the cache size small
+            if version == 6:
+                return f"[{host}%{zone}]" if sep else f"[{host}]"
+            return f"{host}%{zone}" if sep else host
+
+    # IDNA encoding is slow,
+    # skip it for ASCII-only strings
+    # Don't move the check into _idna_encode() helper
+    # to reduce the cache size
+    if is_ascii:
+        # Check for invalid characters explicitly; _idna_encode() does this
+        # for non-ascii host names.
+        if validate_host:
+            _host_validate(lower_host)
+        return lower_host
+
+    return _idna_encode(lower_host)
+
+
+@lru_cache  # match the same size as urlsplit
+def _split_netloc(
+    netloc: str,
+) -> tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
+    """Split netloc into username, password, host and port."""
+    if "@" not in netloc:
+        username: Union[str, None] = None
+        password: Union[str, None] = None
+        hostinfo = netloc
+    else:
+        userinfo, _, hostinfo = netloc.rpartition("@")
+        username, have_password, password = userinfo.partition(":")
+        if not have_password:
+            password = None
+
+    if "[" in hostinfo:
+        _, _, bracketed = hostinfo.partition("[")
+        hostname, _, port_str = bracketed.partition("]")
+        _, _, port_str = port_str.partition(":")
+    else:
+        hostname, _, port_str = hostinfo.partition(":")
+
+    if not port_str:
+        return username or None, password, hostname or None, None
+
+    try:
+        port = int(port_str)
+    except ValueError:
+        raise ValueError("Invalid URL: port can't be converted to integer")
+    if not (0 <= port <= 65535):
+        raise ValueError("Port out of range 0-65535")
+    return username or None, password, hostname or None, port
+
+
+def _unsplit_result(
+    scheme: str, netloc: str, url: str, query: str, fragment: str
+) -> str:
+    """Unsplit a URL without any normalization."""
+    if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
+        if url and url[:1] != "/":
+            url = f"//{netloc or ''}/{url}"
+        else:
+            url = f"//{netloc or ''}{url}"
+    if scheme:
+        url = f"{scheme}:{url}"
+    if query:
+        url = f"{url}?{query}"
+    return f"{url}#{fragment}" if fragment else url
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -270,7 +392,7 @@ class URL:
             else:
                 if ":" in netloc or "@" in netloc or "[" in netloc:
                     # Complex netloc
-                    username, password, host, port = cls._split_netloc(netloc)
+                    username, password, host, port = _split_netloc(netloc)
                 else:
                     username = password = port = None
                     host = netloc
@@ -283,7 +405,7 @@ class URL:
                         raise ValueError(msg)
                     else:
                         host = ""
-                host = cls._encode_host(host, validate_host=False)
+                host = _encode_host(host, validate_host=False)
                 # Remove brackets as host encoder adds back brackets for IPv6 addresses
                 cache["raw_host"] = host[1:-1] if "[" in host else host
                 cache["explicit_port"] = port
@@ -390,10 +512,10 @@ class URL:
         else:  # not encoded
             _host: Union[str, None] = None
             if authority:
-                user, password, _host, port = cls._split_netloc(authority)
-                _host = cls._encode_host(_host, validate_host=False) if _host else ""
+                user, password, _host, port = _split_netloc(authority)
+                _host = _encode_host(_host, validate_host=False) if _host else ""
             elif host:
-                _host = cls._encode_host(host, validate_host=True)
+                _host = _encode_host(host, validate_host=True)
             else:
                 netloc = ""
 
@@ -457,23 +579,7 @@ class URL:
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
             netloc = self._make_netloc(self.raw_user, self.raw_password, host, None)
-        return self._unsplit_result(scheme, netloc, path, query, fragment)
-
-    @staticmethod
-    def _unsplit_result(
-        scheme: str, netloc: str, url: str, query: str, fragment: str
-    ) -> str:
-        """Unsplit a URL without any normalization."""
-        if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
-            if url and url[:1] != "/":
-                url = f"//{netloc or ''}/{url}"
-            else:
-                url = f"//{netloc or ''}{url}"
-        if scheme:
-            url = f"{scheme}:{url}"
-        if query:
-            url = f"{url}?{query}"
-        return f"{url}#{fragment}" if fragment else url
+        return _unsplit_result(scheme, netloc, path, query, fragment)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
@@ -551,13 +657,9 @@ class URL:
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
-        cache = self._cache
-        (
-            cache["raw_user"],
-            cache["raw_password"],
-            cache["raw_host"],
-            cache["explicit_port"],
-        ) = self._split_netloc(self._val.netloc)
+        c = self._cache
+        split_loc = _split_netloc(self._val.netloc)
+        c["raw_user"], c["raw_password"], c["raw_host"], c["explicit_port"] = split_loc
 
     def is_absolute(self) -> bool:
         """A check for absolute URLs.
@@ -1014,80 +1116,6 @@ class URL:
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
-    def _parse_host(
-        cls, host: str
-    ) -> tuple[bool, str, Union[bool, None], str, str, str]:
-        """Parse host into parts
-
-        Returns a tuple of:
-        - True if the host looks like an IP address, False otherwise.
-        - Lowercased host
-        - True if the host is ASCII-only, False otherwise.
-        - Raw IP address
-        - Separator between IP address and zone
-        - Zone part of the IP address
-        """
-        lower_host = host.lower()
-        is_ascii = host.isascii()
-
-        # If the host ends with a digit or contains a colon, its likely
-        # an IP address.
-        if host and (host[-1].isdigit() or ":" in host):
-            if "%" in host:
-                return True, lower_host, is_ascii, *host.partition("%")
-            return True, lower_host, is_ascii, host, "", ""
-
-        return False, lower_host, is_ascii, "", "", ""
-
-    @classmethod
-    def _encode_host(cls, host: str, validate_host: bool) -> str:
-        """Encode host part of URL."""
-        looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = cls._parse_host(host)
-        if looks_like_ip:
-            # If it looks like an IP, we check with _ip_compressed_version
-            # and fall-through if its not an IP address. This is a performance
-            # optimization to avoid parsing IP addresses as much as possible
-            # because it is orders of magnitude slower than almost any other
-            # operation this library does.
-            # Might be an IP address, check it
-            #
-            # IP Addresses can look like:
-            # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
-            # - 127.0.0.1 (last character is a digit)
-            # - 2001:db8::ff00:42:8329 (contains a colon)
-            # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
-            # - [2001:db8::ff00:42:8329] (contains a colon -- brackets should
-            #                             have been removed before it gets here)
-            # Rare IP Address formats are not supported per:
-            # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
-            #
-            # IP parsing is slow, so its wrapped in an LRU
-            try:
-                host, version = _ip_compressed_version(raw_ip)
-            except ValueError:
-                pass
-            else:
-                # These checks should not happen in the
-                # LRU to keep the cache size small
-                if version == 6:
-                    return f"[{host}%{zone}]" if sep else f"[{host}]"
-                return f"{host}%{zone}" if sep else host
-
-        # IDNA encoding is slow,
-        # skip it for ASCII-only strings
-        # Don't move the check into _idna_encode() helper
-        # to reduce the cache size
-        if is_ascii:
-            # Check for invalid characters explicitly; _idna_encode() does this
-            # for non-ascii host names.
-            if validate_host:
-                _host_validate(lower_host)
-            return lower_host
-
-        return _idna_encode(lower_host)
-
-    @classmethod
-    @lru_cache  # match the same size as urlsplit
     def _make_netloc(
         cls,
         user: Union[str, None],
@@ -1120,41 +1148,6 @@ class URL:
         elif user and encode:
             user = cls._QUOTER(user)
         return f"{user}@{ret}" if user else ret
-
-    @classmethod
-    @lru_cache  # match the same size as urlsplit
-    def _split_netloc(
-        cls,
-        netloc: str,
-    ) -> tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
-        """Split netloc into username, password, host and port."""
-        if "@" not in netloc:
-            username: Union[str, None] = None
-            password: Union[str, None] = None
-            hostinfo = netloc
-        else:
-            userinfo, _, hostinfo = netloc.rpartition("@")
-            username, have_password, password = userinfo.partition(":")
-            if not have_password:
-                password = None
-
-        if "[" in hostinfo:
-            _, _, bracketed = hostinfo.partition("[")
-            hostname, _, port_str = bracketed.partition("]")
-            _, _, port_str = port_str.partition(":")
-        else:
-            hostname, _, port_str = hostinfo.partition(":")
-
-        if not port_str:
-            return username or None, password, hostname or None, None
-
-        try:
-            port = int(port_str)
-        except ValueError:
-            raise ValueError("Invalid URL: port can't be converted to integer")
-        if not (0 <= port <= 65535):
-            raise ValueError("Port out of range 0-65535")
-        return username or None, password, hostname or None, port
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
@@ -1234,7 +1227,7 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        encoded_host = self._encode_host(host, validate_host=True) if host else ""
+        encoded_host = _encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
         netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_tup((scheme, netloc, path, query, fragment))
@@ -1636,7 +1629,7 @@ class URL:
             assert fragment is not None
         netloc = self._make_netloc(user, password, host, self.explicit_port)
         scheme = self._val.scheme
-        return self._unsplit_result(scheme, netloc, path, query_string, fragment)
+        return _unsplit_result(scheme, netloc, path, query_string, fragment)
 
 
 def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
