@@ -20,6 +20,7 @@ from urllib.parse import (
     SplitResult,
     parse_qsl,
     quote,
+    scheme_chars,
     urlsplit,
     uses_netloc,
     uses_relative,
@@ -38,6 +39,16 @@ USES_RELATIVE = frozenset(uses_relative)
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
 SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
+
+# Leading and trailing C0 control and space to be stripped per WHATWG spec.
+# == "".join([chr(i) for i in range(0, 0x20 + 1)])
+_WHATWG_C0_CONTROL_OR_SPACE = (
+    "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
+    "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
+)
+
+# Unsafe bytes to be removed per WHATWG spec
+_UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 
 sentinel = object()
 
@@ -80,7 +91,6 @@ class CacheInfo(TypedDict):
 
 
 class _InternalURLCache(TypedDict, total=False):
-
     _origin: "URL"
     absolute: bool
     scheme: str
@@ -1011,6 +1021,75 @@ class URL:
 
         segments = path.split("/")
         return prefix + "/".join(_normalize_path_segments(segments))
+
+    @classmethod
+    @lru_cache
+    def _split_url(cls, url: str) -> SplitResult:
+        """Split URL into parts."""
+        # Original code from urllib.parse.urlsplit
+        # Only lstrip url as some applications rely on preserving trailing space.
+        # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
+        url = url.lstrip(_WHATWG_C0_CONTROL_OR_SPACE)
+        for b in _UNSAFE_URL_BYTES_TO_REMOVE:
+            url = url.replace(b, "")
+
+        netloc = query = fragment = ""
+        i = url.find(":")
+        if i > 0 and url[0].isascii() and url[0].isalpha():
+            for c in url[:i]:
+                if c not in scheme_chars:
+                    break
+            else:
+                scheme, url = url[:i].lower(), url[i + 1 :]
+        if url[:2] == "//":
+            delim = len(url)  # position of end of domain part of url, default is end
+            for c in "/?#":  # look for delimiters; the order is NOT important
+                wdelim = url.find(c, 2)  # find first of this delim
+                if wdelim >= 0:  # if found
+                    delim = min(delim, wdelim)  # use earliest delim position
+            netloc = url[2:delim]
+            url = url[delim:]
+            if ("[" in netloc and "]" not in netloc) or (
+                "]" in netloc and "[" not in netloc
+            ):
+                raise ValueError("Invalid IPv6 URL")
+            if "[" in netloc and "]" in netloc:
+                bracketed_host = netloc.partition("[")[2].partition("]")[0]
+                # Valid bracketed hosts are defined in
+                # https://www.rfc-editor.org/rfc/rfc3986#page-49
+                # https://url.spec.whatwg.org/
+                if bracketed_host[0] == "v":
+                    if not re.match(r"\Av[a-fA-F0-9]+\..+\Z", bracketed_host):
+                        raise ValueError("IPvFuture address is invalid")
+                elif ":" not in bracketed_host:
+                    raise ValueError("An IPv4 address cannot be in brackets")
+        if "#" in url:
+            url, _, fragment = url.partition("#")
+        if "?" in url:
+            url, _, query = url.partition("?")
+        if netloc and not netloc.isascii():
+            cls._check_netloc(netloc)
+        return tuple.__new__(SplitResult, (scheme, netloc, url, query, fragment))
+
+    @classmethod
+    def _check_netloc(cls, netloc: str) -> None:
+        # Original code from urllib.parse._checknetloc
+        # looking for characters like \u2100 that expand to 'a/c'
+        # IDNA uses NFKC equivalence, so normalize for this check
+        import unicodedata
+
+        # ignore characters already included
+        # but not the surrounding text
+        n = netloc.replace("@", "").replace(":", "").replace("#", "").replace("?", "")
+        normalized_netloc = unicodedata.normalize("NFKC", n)
+        if n == normalized_netloc:
+            return
+        for c in "/?#@:":
+            if c in normalized_netloc:
+                raise ValueError(
+                    f"netloc '{netloc}' contains invalid "
+                    "characters under NFKC normalization"
+                )
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
