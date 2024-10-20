@@ -1036,7 +1036,7 @@ class URL:
 
         scheme = netloc = query = fragment = ""
         i = url.find(":")
-        if i > 0 and url[0].isascii() and url[0].isalpha():
+        if i > 0 and url[0] in scheme_chars:
             for c in url[:i]:
                 if c not in scheme_chars:
                     break
