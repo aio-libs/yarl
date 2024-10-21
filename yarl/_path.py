@@ -42,7 +42,7 @@ def normalize_path(path: str) -> str:
     return prefix + "/".join(normalize_path_segments(segments))
 
 
-def relative_path(path: str, start: str) -> str:
+def calculate_relative_path(path: str, start: str) -> str:
     """A wrapper over os.path.relpath()"""
 
     if not path:

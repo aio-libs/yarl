@@ -12,7 +12,7 @@ from multidict import MultiDict, MultiDictProxy
 from propcache.api import under_cached_property as cached_property
 
 from ._parse import USES_AUTHORITY, make_netloc, split_netloc, split_url, unsplit_result
-from ._path import normalize_path, normalize_path_segments, relative_path
+from ._path import calculate_relative_path, normalize_path, normalize_path_segments
 from ._query import (
     Query,
     QueryVariable,
@@ -487,7 +487,7 @@ class URL:
         if target.netloc != base.netloc:
             raise ValueError("Both URLs should have the same netloc")
 
-        path = relative_path(target.path, base.path)
+        path = calculate_relative_path(target.path, base.path)
         return self._from_tup(("", "", path, "", ""))
 
     def __mod__(self, query: Query) -> "URL":
