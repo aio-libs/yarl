@@ -4,7 +4,7 @@ import re
 import unicodedata
 from functools import lru_cache
 from typing import Union
-from urllib.parse import SplitResult, scheme_chars, uses_netloc
+from urllib.parse import scheme_chars, uses_netloc
 
 from ._quoters import QUOTER
 
@@ -20,8 +20,7 @@ UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 USES_AUTHORITY = frozenset(uses_netloc)
 
 
-@lru_cache
-def split_url(url: str) -> SplitResult:
+def split_url(url: str) -> tuple[str, str, str, str, str]:
     """Split URL into parts."""
     # Adapted from urllib.parse.urlsplit
     # Only lstrip url as some applications rely on preserving trailing space.
@@ -79,7 +78,7 @@ def split_url(url: str) -> SplitResult:
         url, _, query = url.partition("?")
     if netloc and not netloc.isascii():
         _check_netloc(netloc)
-    return tuple.__new__(SplitResult, (scheme, netloc, url, query, fragment))
+    return scheme, netloc, url, query, fragment
 
 
 def _check_netloc(netloc: str) -> None:
