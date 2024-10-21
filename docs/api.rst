@@ -1039,7 +1039,7 @@ Cache control
 
 IDNA conversion, host validation, and IP Address parsing used for host
 encoding are quite expensive operations, that's why the ``yarl``
-library caches these calls by storing last ``512`` results in the
+library caches these calls by storing last ``256`` results in the
 global LRU cache.
 
 .. function:: cache_clear()
