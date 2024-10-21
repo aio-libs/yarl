@@ -1037,7 +1037,7 @@ Default port substitution
 Cache control
 -------------
 
-IDNA conversion and host encoding encoding are quite expensive operations,
+IDNA conversion and host encoding are quite expensive operations,
 that's why the ``yarl`` library caches these calls by storing results in the
 global LRU cache.
 
