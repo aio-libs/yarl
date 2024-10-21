@@ -1977,6 +1977,19 @@ def test_split_result_encoded():
     assert str(url) == "http://example.com/path?qs#frag"
 
 
+def test_str_encoded():
+    url = URL("http://example.com/path?qs#frag%2F%2D", encoded=True)
+    assert str(url) == "http://example.com/path?qs#frag%2F%2D"
+
+
+def test_subclassed_str_encoded():
+    class S(str):
+        """Subclass of str."""
+
+    url = URL(S("http://example.com/path?qs#frag%2F%2D"), encoded=True)
+    assert str(url) == "http://example.com/path?qs#frag%2F%2D"
+
+
 def test_human_repr():
     url = URL("http://бажан:пароль@хост.домен:8080/шлях/сюди?арг=вал#фраг")
     s = url.human_repr()
