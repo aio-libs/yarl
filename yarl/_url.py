@@ -179,6 +179,13 @@ def encode_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
     return tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment)), cache
 
 
+@lru_cache
+def pre_encoded_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
+    """Pre-encoded URL."""
+    cache: _InternalURLCache = {}
+    return tuple.__new__(SplitResult, split_url(url_str)), cache
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -278,11 +285,10 @@ class URL:
             val = str(val)
         else:
             raise TypeError("Constructor parameter should be str")
-        if not encoded:
-            split_result, cache = encode_url(val)
+        if encoded:
+            split_result, cache = pre_encoded_url(val)
         else:
-            cache = {}
-            split_result = tuple.__new__(SplitResult, split_url(val))
+            split_result, cache = encode_url(val)
         self = object.__new__(cls)
         self._val = split_result
         self._cache = cache
