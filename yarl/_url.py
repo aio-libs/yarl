@@ -1678,6 +1678,14 @@ def _idna_decode(raw: str) -> str:
 
 
 @lru_cache(_MAXCACHE)
+def _idna_encode(host: str) -> str:
+    try:
+        return idna.encode(host.lower(), uts46=True).decode("ascii")
+    except UnicodeError:
+        return host.encode("idna").decode("ascii")
+
+
+@lru_cache(_MAXCACHE)
 def _encode_host(host: str, validate_host: bool) -> str:
     """Encode host part of URL."""
     # If the host ends with a digit or contains a colon, its likely
@@ -1731,15 +1739,13 @@ def _encode_host(host: str, validate_host: bool) -> str:
             ) from None
         return host.lower()
 
-    try:
-        return idna.encode(host.lower(), uts46=True).decode("ascii")
-    except UnicodeError:
-        return host.encode("idna").decode("ascii")
+    return _idna_encode(host)
 
 
 @rewrite_module
 def cache_clear() -> None:
     """Clear all LRU caches."""
+    _idna_encode.cache_clear()
     _idna_decode.cache_clear()
     _encode_host.cache_clear()
 
@@ -1748,7 +1754,7 @@ def cache_clear() -> None:
 def cache_info() -> CacheInfo:
     """Report cache statistics."""
     return {
-        "idna_encode": _encode_host.cache_info(),
+        "idna_encode": _idna_encode.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
         "ip_address": _encode_host.cache_info(),
         "host_validate": _encode_host.cache_info(),
@@ -1769,15 +1775,15 @@ def cache_configure(
     encode_host_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
-    global _idna_decode, _encode_host
-    # idna_encode_size, ip_address_size, host_validate_size are no longer
+    global _idna_decode, _idna_encode, _encode_host
+    # ip_address_size, host_validate_size are no longer
     # used, but are kept for backwards compatibility.
     if encode_host_size is not None:
-        for size in (idna_encode_size, ip_address_size, host_validate_size):
+        for size in (ip_address_size, host_validate_size):
             if size is not _SENTINEL:
                 warnings.warn(
-                    "cache_configure() no longer accepts idna_encode_size, "
-                    "ip_address_size, or host_validate_size arguments, "
+                    "cache_configure() no longer accepts the "
+                    "ip_address_size or host_validate_size arguments, "
                     "they are used to set the encode_host_size instead "
                     "and will be removed in the future",
                     DeprecationWarning,
@@ -1795,3 +1801,4 @@ def cache_configure(
 
     _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
+    _idna_encode = lru_cache(idna_decode_size)(_idna_encode.__wrapped__)

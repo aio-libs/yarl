@@ -31,6 +31,7 @@ def test_cache_configure_default() -> None:
 def test_cache_configure_None() -> None:
     yarl.cache_configure(
         idna_decode_size=None,
+        idna_encode_size=None,
         encode_host_size=None,
     )
 
@@ -38,6 +39,7 @@ def test_cache_configure_None() -> None:
 def test_cache_configure_explicit() -> None:
     yarl.cache_configure(
         idna_decode_size=128,
+        idna_encode_size=128,
         encode_host_size=128,
     )
 
