@@ -1681,7 +1681,7 @@ def _idna_decode(raw: str) -> str:
 @lru_cache(_DEFAULT_IDNA_SIZE)
 def _idna_encode(host: str) -> str:
     try:
-        return idna.encode(host.lower(), uts46=True).decode("ascii")
+        return idna.encode(host, uts46=True).decode("ascii")
     except UnicodeError:
         return host.encode("idna").decode("ascii")
 
