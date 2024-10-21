@@ -121,7 +121,7 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
-# encoded is used for the LRU cache key only do not remove it
+# encoded is used for the LRU cache key only; Do not remove it
 # as it would mean encoded and non-encoded URLs would share the same cache
 # and result in incorrect encoding for non-encoded URLs
 @lru_cache

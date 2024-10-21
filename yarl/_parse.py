@@ -78,7 +78,7 @@ def split_url(url: str) -> tuple[str, str, str, str, str]:
         url, _, query = url.partition("?")
     if netloc and not netloc.isascii():
         _check_netloc(netloc)
-    return (scheme, netloc, url, query, fragment)
+    return scheme, netloc, url, query, fragment
 
 
 def _check_netloc(netloc: str) -> None:
