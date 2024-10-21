@@ -242,31 +242,6 @@ def _check_netloc(netloc: str) -> None:
 
 
 @lru_cache  # match the same size as urlsplit
-def _parse_host(host: str) -> tuple[bool, str, Union[bool, None], str, str, str]:
-    """Parse host into parts
-
-    Returns a tuple of:
-    - True if the host looks like an IP address, False otherwise.
-    - Lowercased host
-    - True if the host is ASCII-only, False otherwise.
-    - Raw IP address
-    - Separator between IP address and zone
-    - Zone part of the IP address
-    """
-    lower_host = host.lower()
-    is_ascii = host.isascii()
-
-    # If the host ends with a digit or contains a colon, its likely
-    # an IP address.
-    if host and (host[-1].isdigit() or ":" in host):
-        if "%" in host:
-            return True, lower_host, is_ascii, *host.partition("%")
-        return True, lower_host, is_ascii, host, "", ""
-
-    return False, lower_host, is_ascii, "", "", ""
-
-
-@lru_cache  # match the same size as urlsplit
 def _split_netloc(
     netloc: str,
 ) -> tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
