@@ -6,6 +6,8 @@ from yarl import URL
 
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
+MANY_IPV4_URLS = [f"http://127.0.0.{i}" for i in range(256)]
+MANY_IPV6_URLS = [f"http://[::1{i}]" for i in range(256)]
 BASE_URL_STR = "http://www.domain.tld"
 BASE_URL = URL(BASE_URL_STR)
 URL_WITH_USER_PASS_STR = "http://user:password@www.domain.tld"
@@ -155,6 +157,20 @@ def test_url_make_with_many_hosts(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for url in MANY_URLS:
+            URL(url)
+
+
+def test_url_make_with_many_ipv4_hosts(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for url in MANY_IPV4_URLS:
+            URL(url)
+
+
+def test_url_make_with_many_ipv6_hosts(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for url in MANY_IPV6_URLS:
             URL(url)
 
 
