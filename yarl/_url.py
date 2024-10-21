@@ -157,7 +157,7 @@ def _normalize_path_segments(segments: "Sequence[str]") -> list[str]:
 
 
 @lru_cache
-def _split_url(url: str) -> SplitResult:
+def _split_url(url: str) -> tuple[str, str, str, str, str]:
     """Split URL into parts."""
     # Adapted from urllib.parse.urlsplit
     # Only lstrip url as some applications rely on preserving trailing space.
@@ -215,7 +215,7 @@ def _split_url(url: str) -> SplitResult:
         url, _, query = url.partition("?")
     if netloc and not netloc.isascii():
         _check_netloc(netloc)
-    return tuple.__new__(SplitResult, (scheme, netloc, url, query, fragment))
+    return scheme, netloc, url, query, fragment
 
 
 def _check_netloc(netloc: str) -> None:
@@ -462,25 +462,20 @@ class URL:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            val = _split_url(val)
+            scheme, netloc, path, query, fragment = _split_url(val)
         elif type(val) is cls:
             return val
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
         elif isinstance(val, str):
-            val = _split_url(str(val))
+            scheme, netloc, path, query, fragment = _split_url(str(val))
         else:
             raise TypeError("Constructor parameter should be str")
 
         cache: _InternalURLCache = {}
         if not encoded:
             host: Union[str, None]
-            scheme, netloc, path, query, fragment = val
-            orig_netloc = netloc
-            orig_path = path
-            orig_query = query
-            orig_fragment = fragment
             if not netloc:  # netloc
                 host = ""
             else:
@@ -528,23 +523,14 @@ class URL:
             cache["scheme"] = scheme
             cache["raw_query_string"] = query
             cache["raw_fragment"] = fragment
-            # There is a good chance that the SplitResult is already normalized
-            # so we can avoid the extra work of creating a new SplitResult
-            # if the input SplitResult is already normalized
-            if (
-                orig_netloc != netloc
-                or orig_path != path
-                or orig_query != query
-                or orig_fragment != fragment
-            ):
-                # Constructing the tuple directly to avoid the overhead of
-                # the lambda and arg processing since NamedTuples are constructed
-                # with a run time built lambda
-                # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
-                val = tuple.__new__(
-                    SplitResult, (scheme, netloc, path, query, fragment)
-                )
+            # Constructing the tuple directly to avoid the overhead of
+            # the lambda and arg processing since NamedTuples are constructed
+            # with a run time built lambda
+            # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
+            val = tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
 
+        if TYPE_CHECKING:
+            assert isinstance(val, SplitResult)
         self = object.__new__(cls)
         self._val = val
         self._cache = cache
