@@ -1767,13 +1767,14 @@ def cache_configure(
     idna_decode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
     ip_address_size: Union[int, None, object] = _SENTINEL,
     host_validate_size: Union[int, None, object] = _SENTINEL,
-    encode_host_size: Union[int, None] = _DEFAULT_ENCODE_SIZE,
+    encode_host_size: Union[int, None, object] = _SENTINEL,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _encode_host
     # ip_address_size, host_validate_size are no longer
     # used, but are kept for backwards compatibility.
-    if encode_host_size is not None:
+    if encode_host_size is _SENTINEL:
+        encode_host_size = _DEFAULT_ENCODE_SIZE
         for size in (ip_address_size, host_validate_size):
             if size is not _SENTINEL:
                 warnings.warn(
@@ -1790,10 +1791,12 @@ def cache_configure(
             elif size is _SENTINEL:
                 size = _DEFAULT_ENCODE_SIZE
             if TYPE_CHECKING:
-                assert isinstance(size, int)
+                assert not isinstance(size, object)
             if size > encode_host_size:
                 encode_host_size = size
 
+    if TYPE_CHECKING:
+        assert not isinstance(encode_host_size, object)
     _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
     _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
