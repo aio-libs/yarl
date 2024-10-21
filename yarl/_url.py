@@ -386,12 +386,12 @@ def _make_netloc(
         if not user:
             user = ""
         elif encode:
-            user = _QUOTER_NO_REQUOTE(user)
+            user = QUOTER(user)
         if encode:
-            password = _QUOTER_NO_REQUOTE(password)
+            password = QUOTER(password)
         user = f"{user}:{password}"
     elif user and encode:
-        user = _QUOTER_NO_REQUOTE(user)
+        user = QUOTER(user)
     return f"{user}@{ret}" if user else ret
 
 
