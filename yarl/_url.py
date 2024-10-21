@@ -24,8 +24,6 @@ from urllib.parse import (
     uses_netloc,
     uses_relative,
 )
-from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
-from urllib.parse import SplitResult, parse_qsl, quote, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
