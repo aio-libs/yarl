@@ -239,6 +239,11 @@ def test_host_subcomponent_return_idna_encoded_host():
     assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
 
 
+def test_invalid_idna_hyphen_encoding():
+    url = URL("http://x-----xn1agdj.tld")
+    assert url.host == "x-----xn1agdj.tld"
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
@@ -1992,6 +1997,11 @@ def test_empty_authority():
 def test_split_result_non_decoded():
     with pytest.raises(ValueError):
         URL(SplitResult("http", "example.com", "path", "qs", "frag"))
+
+
+def test_split_result_encoded():
+    url = URL(SplitResult("http", "example.com", "path", "qs", "frag"), encoded=True)
+    assert str(url) == "http://example.com/path?qs#frag"
 
 
 def test_human_repr():

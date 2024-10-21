@@ -122,12 +122,6 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
-def _raise_for_authority_missing_abs_path() -> None:
-    """Raise when he path in URL with authority starts lacks a leading slash."""
-    msg = "Path in a URL with authority should start with a slash ('/') if set"
-    raise ValueError(msg)
-
-
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -271,8 +265,6 @@ class URL:
                 if netloc:
                     if "." in path:
                         path = normalize_path(path)
-                    if path[0] != "/":
-                        _raise_for_authority_missing_abs_path()
 
             query = QUERY_REQUOTER(query) if query else query
             fragment = FRAGMENT_REQUOTER(fragment) if fragment else fragment
@@ -377,7 +369,11 @@ class URL:
                 if "." in path:
                     path = normalize_path(path)
                 if path[0] != "/":
-                    _raise_for_authority_missing_abs_path()
+                    msg = (
+                        "Path in a URL with authority should "
+                        "start with a slash ('/') if set"
+                    )
+                    raise ValueError(msg)
 
             query_string = QUERY_QUOTER(query_string) if query_string else query_string
             fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
@@ -1459,27 +1455,30 @@ def cache_configure(
     global _idna_decode, _idna_encode, _encode_host
     # ip_address_size, host_validate_size are no longer
     # used, but are kept for backwards compatibility.
-    if encode_host_size is _SENTINEL:
-        encode_host_size = _DEFAULT_ENCODE_SIZE
+    if ip_address_size is not _SENTINEL or host_validate_size is not _SENTINEL:
+        warnings.warn(
+            "cache_configure() no longer accepts the "
+            "ip_address_size or host_validate_size arguments, "
+            "they are used to set the encode_host_size instead "
+            "and will be removed in the future",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if encode_host_size is not None:
         for size in (ip_address_size, host_validate_size):
-            if size is not _SENTINEL:
-                warnings.warn(
-                    "cache_configure() no longer accepts the "
-                    "ip_address_size or host_validate_size arguments, "
-                    "they are used to set the encode_host_size instead "
-                    "and will be removed in the future",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
             if size is None:
                 encode_host_size = None
-                break
-            elif size is _SENTINEL:
-                size = _DEFAULT_ENCODE_SIZE
-            if TYPE_CHECKING:
-                assert not isinstance(size, object)
-            if size > encode_host_size:
-                encode_host_size = size
+            elif encode_host_size is _SENTINEL:
+                if size is not _SENTINEL:
+                    encode_host_size = size
+            elif size is not _SENTINEL:
+                if TYPE_CHECKING:
+                    assert isinstance(size, int)
+                    assert isinstance(encode_host_size, int)
+                encode_host_size = max(size, encode_host_size)
+        if encode_host_size is _SENTINEL:
+            encode_host_size = _DEFAULT_ENCODE_SIZE
 
     if TYPE_CHECKING:
         assert not isinstance(encode_host_size, object)
