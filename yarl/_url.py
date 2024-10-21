@@ -1481,9 +1481,12 @@ def cache_configure(
                 )
             if size is None:
                 encode_host_size = None
-                break
-            elif size is _SENTINEL:
-                size = _DEFAULT_ENCODE_SIZE
+                continue
+            if encode_host_size is None:
+                continue
+            if size is _SENTINEL:
+                encode_host_size = max(_DEFAULT_ENCODE_SIZE, encode_host_size)
+                continue
             if TYPE_CHECKING:
                 assert not isinstance(size, object)
             if size > encode_host_size:
