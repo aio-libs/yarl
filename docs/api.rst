@@ -1048,10 +1048,9 @@ global LRU cache.
 
 .. function:: cache_info()
 
-   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``,
-    and ``"encode_host"`` keys, each value
-   points to corresponding ``CacheInfo`` structure (see :func:`functools.lru_cache` for
-   details):
+   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, and
+   ``"encode_host"`` keys, each value points to corresponding ``CacheInfo``
+   structure (see :func:`functools.lru_cache` for details):
 
    .. doctest::
       :options: +SKIP
@@ -1063,8 +1062,8 @@ global LRU cache.
 
    .. versionchanged:: 1.16
 
-      ``ip_address``, and ``host_validate``
-      are deprecated in favor of a single ``encode_host`` cache.
+      ``ip_address``, and ``host_validate`` are deprecated
+      in favor of a single ``encode_host`` cache.
 
 .. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, encode_host_size=512)
 
