@@ -1666,7 +1666,7 @@ def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
     return "".join(c if c.isprintable() else quote(c) for c in s)
 
 
-_MAXCACHE = 512
+_MAXCACHE = 256
 
 
 @lru_cache(_MAXCACHE)
