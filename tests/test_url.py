@@ -1967,6 +1967,11 @@ def test_split_result_non_decoded():
         URL(SplitResult("http", "example.com", "path", "qs", "frag"))
 
 
+def test_split_result_encoded():
+    url = URL(SplitResult("http", "example.com", "path", "qs", "frag"), encoded=True)
+    assert str(url) == "http://example.com/path?qs#frag"
+
+
 def test_human_repr():
     url = URL("http://бажан:пароль@хост.домен:8080/шлях/сюди?арг=вал#фраг")
     s = url.human_repr()
