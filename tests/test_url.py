@@ -96,6 +96,17 @@ def test_sub_with_different_netlocs():
     assert "Both URLs should have the same netloc" == str(ctx.value)
 
 
+def test_sub_with_abs_and_rel_paths():
+    with pytest.raises(ValueError) as ctx:
+        URL("path/to") - URL("/path/from")
+    assert (
+        "It is forbidden to get the path "
+        "between the absolute and relative paths "
+        "because it is impossible "
+        "to get the current working directory." == str(ctx.value)
+    )
+
+
 def test_repr():
     url = URL("http://example.com")
     assert "URL('http://example.com')" == repr(url)

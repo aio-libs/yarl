@@ -54,4 +54,12 @@ def relative_path(path: str, start: str) -> str:
     if not start.endswith(SEPARATOR):
         start = dirname(start)
 
+    if (path.startswith(SEPARATOR) and not start.startswith(SEPARATOR)) or (
+        not path.startswith(SEPARATOR) and start.startswith(SEPARATOR)
+    ):
+        raise ValueError(
+            "It is forbidden to get the path between the absolute and relative paths "
+            "because it is impossible to get the current working directory."
+        )
+
     return relpath(path, start)
