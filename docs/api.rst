@@ -1048,8 +1048,8 @@ global LRU cache.
 
 .. function:: cache_info()
 
-   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, ``"ip_address"``,
-   ``"host_validate"``, and ``"encode_host"`` keys, each value
+   Return a dictionary with ``"idna_encode"``, ``"idna_decode"``,
+    and ``"encode_host"`` keys, each value
    points to corresponding ``CacheInfo`` structure (see :func:`functools.lru_cache` for
    details):
 
