@@ -30,7 +30,21 @@ import idna
 from multidict import MultiDict, MultiDictProxy, istr
 from propcache.api import under_cached_property as cached_property
 
-from ._quoting import _Quoter, _Unquoter
+from ._quoters import (
+    FRAGMENT_QUOTER,
+    FRAGMENT_REQUOTER,
+    PATH_QUOTER,
+    PATH_REQUOTER,
+    PATH_SAFE_UNQUOTER,
+    PATH_UNQUOTER,
+    QS_UNQUOTER,
+    QUERY_PART_QUOTER,
+    QUERY_QUOTER,
+    QUERY_REQUOTER,
+    QUOTER,
+    REQUOTER,
+    UNQUOTER,
+)
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_AUTHORITY = frozenset(uses_netloc)
@@ -72,7 +86,6 @@ Query = Union[
     None, str, "Mapping[str, QueryVariable]", "Sequence[Tuple[str, QueryVariable]]"
 ]
 _T = TypeVar("_T")
-QUOTER = _Quoter(requote=False)
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -493,21 +506,6 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_val")
 
-    _QUOTER = QUOTER
-    _REQUOTER = _Quoter()
-    _PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
-    _PATH_REQUOTER = _Quoter(safe="@:", protected="/+")
-    _QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
-    _QUERY_REQUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
-    _QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True, requote=False)
-    _FRAGMENT_QUOTER = _Quoter(safe="?/:@", requote=False)
-    _FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
-
-    _UNQUOTER = _Unquoter()
-    _PATH_UNQUOTER = _Unquoter(unsafe="+")
-    _PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%", unsafe="+")
-    _QS_UNQUOTER = _Unquoter(qs=True)
-
     _val: SplitResult
 
     def __new__(
@@ -567,22 +565,22 @@ class URL:
                     cache["raw_user"] = None
                     cache["raw_password"] = None
                 else:
-                    raw_user = cls._REQUOTER(username) if username else username
-                    raw_password = cls._REQUOTER(password) if password else password
+                    raw_user = REQUOTER(username) if username else username
+                    raw_password = REQUOTER(password) if password else password
                     netloc = _make_netloc(raw_user, raw_password, host, port)
                     cache["raw_user"] = raw_user
                     cache["raw_password"] = raw_password
 
             if path:
-                path = cls._PATH_REQUOTER(path)
+                path = PATH_REQUOTER(path)
                 if netloc:
                     if "." in path:
                         path = cls._normalize_path(path)
                     if path[0] != "/":
                         cls._raise_for_authority_missing_abs_path()
 
-            query = cls._QUERY_REQUOTER(query) if query else query
-            fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
+            query = QUERY_REQUOTER(query) if query else query
+            fragment = FRAGMENT_REQUOTER(fragment) if fragment else fragment
             cache["scheme"] = scheme
             cache["raw_query_string"] = query
             cache["raw_fragment"] = fragment
@@ -679,17 +677,15 @@ class URL:
                 else:
                     netloc = _make_netloc(user, password, _host, port, True)
 
-            path = cls._PATH_QUOTER(path) if path else path
+            path = PATH_QUOTER(path) if path else path
             if path and netloc:
                 if "." in path:
                     path = cls._normalize_path(path)
                 if path[0] != "/":
                     cls._raise_for_authority_missing_abs_path()
 
-            query_string = (
-                cls._QUERY_QUOTER(query_string) if query_string else query_string
-            )
-            fragment = cls._FRAGMENT_QUOTER(fragment) if fragment else fragment
+            query_string = QUERY_QUOTER(query_string) if query_string else query_string
+            fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
 
         if query:
             query_string = cls._get_str_query(query) or ""
@@ -945,7 +941,7 @@ class URL:
         """
         if (raw_user := self.raw_user) is None:
             return None
-        return self._UNQUOTER(raw_user)
+        return UNQUOTER(raw_user)
 
     @cached_property
     def raw_password(self) -> Union[str, None]:
@@ -966,7 +962,7 @@ class URL:
         """
         if (raw_password := self.raw_password) is None:
             return None
-        return self._UNQUOTER(raw_password)
+        return UNQUOTER(raw_password)
 
     @cached_property
     def raw_host(self) -> Union[str, None]:
@@ -1054,7 +1050,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return self._PATH_UNQUOTER(self.raw_path)
+        return PATH_UNQUOTER(self.raw_path)
 
     @cached_property
     def path_safe(self) -> str:
@@ -1065,7 +1061,7 @@ class URL:
         / (%2F) and % (%25) are not decoded
 
         """
-        return self._PATH_SAFE_UNQUOTER(self.raw_path)
+        return PATH_SAFE_UNQUOTER(self.raw_path)
 
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
@@ -1098,7 +1094,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        return self._QS_UNQUOTER(self._val.query)
+        return QS_UNQUOTER(self._val.query)
 
     @cached_property
     def path_qs(self) -> str:
@@ -1126,7 +1122,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        return self._UNQUOTER(self._val.fragment)
+        return UNQUOTER(self._val.fragment)
 
     @cached_property
     def raw_parts(self) -> tuple[str, ...]:
@@ -1149,7 +1145,7 @@ class URL:
         ('/',) for absolute URLs if *path* is missing.
 
         """
-        return tuple(self._UNQUOTER(part) for part in self.raw_parts)
+        return tuple(UNQUOTER(part) for part in self.raw_parts)
 
     @cached_property
     def parent(self) -> "URL":
@@ -1177,7 +1173,7 @@ class URL:
     @cached_property
     def name(self) -> str:
         """The last part of parts."""
-        return self._UNQUOTER(self.raw_name)
+        return UNQUOTER(self.raw_name)
 
     @cached_property
     def raw_suffix(self) -> str:
@@ -1187,7 +1183,7 @@ class URL:
 
     @cached_property
     def suffix(self) -> str:
-        return self._UNQUOTER(self.raw_suffix)
+        return UNQUOTER(self.raw_suffix)
 
     @cached_property
     def raw_suffixes(self) -> tuple[str, ...]:
@@ -1199,7 +1195,7 @@ class URL:
 
     @cached_property
     def suffixes(self) -> tuple[str, ...]:
-        return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
+        return tuple(UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
     @staticmethod
     def _raise_for_authority_missing_abs_path() -> None:
@@ -1225,7 +1221,7 @@ class URL:
             # This cannot be done at the end because the existing
             # path is already quoted and we do not want to double quote
             # the existing path.
-            path = path if encoded else self._PATH_QUOTER(path)
+            path = path if encoded else PATH_QUOTER(path)
             needs_normalize |= "." in path
             segments = path.split("/")
             segments.reverse()
@@ -1294,7 +1290,7 @@ class URL:
         if user is None:
             password = None
         elif isinstance(user, str):
-            user = self._QUOTER(user)
+            user = QUOTER(user)
             password = self.raw_password
         else:
             raise TypeError("Invalid user type")
@@ -1316,7 +1312,7 @@ class URL:
         if password is None:
             pass
         elif isinstance(password, str):
-            password = self._QUOTER(password)
+            password = QUOTER(password)
         else:
             raise TypeError("Invalid password type")
         scheme, netloc, path, query, fragment = self._val
@@ -1372,7 +1368,7 @@ class URL:
         """Return a new URL with path replaced."""
         scheme, netloc, _, _, _ = self._val
         if not encoded:
-            path = self._PATH_QUOTER(path)
+            path = PATH_QUOTER(path)
             if netloc:
                 path = self._normalize_path(path) if "." in path else path
         if path and path[0] != "/":
@@ -1390,7 +1386,7 @@ class URL:
 
         The sequence of values must be a list or tuple.
         """
-        quoter = cls._QUERY_PART_QUOTER
+        quoter = QUERY_PART_QUOTER
         pairs = [
             f"{quoter(k)}={quoter(v if type(v) is str else _query_var(v))}"
             for k, val in items
@@ -1413,7 +1409,7 @@ class URL:
         The values are not allowed to be sequences, only single values are
         allowed. For sequences, use `_get_str_query_from_sequence_iterable`.
         """
-        quoter = cls._QUERY_PART_QUOTER
+        quoter = QUERY_PART_QUOTER
         # A listcomp is used since listcomps are inlined on CPython 3.12+ and
         # they are a bit faster than a generator expression.
         pairs = [
@@ -1442,7 +1438,7 @@ class URL:
         if isinstance(query, Mapping):
             return cls._get_str_query_from_sequence_iterable(query.items())
         if isinstance(query, str):
-            return cls._QUERY_QUOTER(query)
+            return QUERY_QUOTER(query)
         if isinstance(query, (bytes, bytearray, memoryview)):
             msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
             raise TypeError(msg)
@@ -1593,7 +1589,7 @@ class URL:
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
         else:
-            raw_fragment = self._FRAGMENT_QUOTER(fragment)
+            raw_fragment = FRAGMENT_QUOTER(fragment)
         if self._val.fragment == raw_fragment:
             return self
         scheme, netloc, path, query, _ = self._val
@@ -1612,7 +1608,7 @@ class URL:
             raise TypeError("Invalid name type")
         if "/" in name:
             raise ValueError("Slash in name is not allowed")
-        name = self._PATH_QUOTER(name)
+        name = PATH_QUOTER(name)
         if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
