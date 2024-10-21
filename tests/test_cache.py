@@ -46,7 +46,7 @@ def test_cache_configure_explicit() -> None:
 
 def test_cache_configure_waring() -> None:
     msg = (
-        r"cache_configure\(\) no longer accepts idna_encode_size, ip_address_size, "
+        r"cache_configure\(\) no longer accepts the ip_address_size "
         r"or host_validate_size arguments, they are used to set the "
         r"encode_host_size instead and will be removed in the future"
     )
