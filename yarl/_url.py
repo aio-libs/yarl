@@ -122,7 +122,7 @@ def rewrite_module(obj: _T) -> _T:
 
 
 @lru_cache
-def _encode_url(url_str: str) -> "URL":
+def encode_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
     """Encode URL."""
     cache: _InternalURLCache = {}
     host: Union[str, None]
@@ -172,15 +172,11 @@ def _encode_url(url_str: str) -> "URL":
     cache["scheme"] = scheme
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
-
-    url = object.__new__(URL)
     # Constructing the tuple directly to avoid the overhead of
     # the lambda and arg processing since NamedTuples are constructed
     # with a run time built lambda
     # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
-    url._val = tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
-    url._cache = cache
-    return url
+    return tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment)), cache
 
 
 @rewrite_module
@@ -268,19 +264,25 @@ class URL:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            return _encode_url(val)
-        if type(val) is cls:
+            pass
+        elif type(val) is cls:
             return val
-        if type(val) is SplitResult:
+        elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
-            self = object.__new__(cls)
-            self._val = val
-            self._cache = {}
-            return self
-        if isinstance(val, str):
-            return _encode_url(str(val))
-        raise TypeError("Constructor parameter should be str")
+            url = object.__new__(cls)
+            url._val = val
+            url._cache = {}
+            return url
+        elif isinstance(val, str):
+            val = str(val)
+        else:
+            raise TypeError("Constructor parameter should be str")
+        split_result, cache = encode_url(val)
+        url = object.__new__(cls)
+        url._val = split_result
+        url._cache = cache.copy()
+        return url
 
     @classmethod
     def build(
