@@ -1,1 +1,1 @@
-Reworked the internal encoding cache to improve performance on cache hit -- by:user:`bdraco`.
+Reworked the internal encoding cache to improve performance on cache hit -- by :user:`bdraco`.
