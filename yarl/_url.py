@@ -154,6 +154,19 @@ def _normalize_path_segments(segments: "Sequence[str]") -> list[str]:
     return resolved_path
 
 
+def _normalize_path(path: str) -> str:
+    # Drop '.' and '..' from str path
+    prefix = ""
+    if path and path[0] == "/":
+        # preserve the "/" root element of absolute paths, copying it to the
+        # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
+        prefix = "/"
+        path = path[1:]
+
+    segments = path.split("/")
+    return prefix + "/".join(_normalize_path_segments(segments))
+
+
 @lru_cache
 def _split_url(url: str) -> SplitResult:
     """Split URL into parts."""
@@ -385,6 +398,12 @@ def _query_var(v: QueryVariable) -> str:
     )
 
 
+def _raise_for_authority_missing_abs_path() -> None:
+    """Raise when he path in URL with authority starts lacks a leading slash."""
+    msg = "Path in a URL with authority should start with a slash ('/') if set"
+    raise ValueError(msg)
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -542,9 +561,9 @@ class URL:
                 path = cls._PATH_REQUOTER(path)
                 if netloc:
                     if "." in path:
-                        path = cls._normalize_path(path)
+                        path = _normalize_path(path)
                     if path[0] != "/":
-                        cls._raise_for_authority_missing_abs_path()
+                        _raise_for_authority_missing_abs_path()
 
             query = cls._QUERY_REQUOTER(query) if query else query
             fragment = cls._FRAGMENT_REQUOTER(fragment) if fragment else fragment
@@ -647,9 +666,9 @@ class URL:
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
                 if "." in path:
-                    path = cls._normalize_path(path)
+                    path = _normalize_path(path)
                 if path[0] != "/":
-                    cls._raise_for_authority_missing_abs_path()
+                    _raise_for_authority_missing_abs_path()
 
             query_string = (
                 cls._QUERY_QUOTER(query_string) if query_string else query_string
@@ -1166,12 +1185,6 @@ class URL:
     def suffixes(self) -> tuple[str, ...]:
         return tuple(self._UNQUOTER(suffix) for suffix in self.raw_suffixes)
 
-    @staticmethod
-    def _raise_for_authority_missing_abs_path() -> None:
-        """Raise when he path in URL with authority starts lacks a leading slash."""
-        msg = "Path in a URL with authority should start with a slash ('/') if set"
-        raise ValueError(msg)
-
     def _make_child(self, paths: "Sequence[str]", encoded: bool = False) -> "URL":
         """
         add paths to self._val.path, accounting for absolute vs relative paths,
@@ -1217,19 +1230,6 @@ class URL:
         new_path = "/".join(parsed)
 
         return self._from_tup((scheme, netloc, new_path, "", ""))
-
-    @staticmethod
-    def _normalize_path(path: str) -> str:
-        # Drop '.' and '..' from str path
-        prefix = ""
-        if path and path[0] == "/":
-            # preserve the "/" root element of absolute paths, copying it to the
-            # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
-            prefix = "/"
-            path = path[1:]
-
-        segments = path.split("/")
-        return prefix + "/".join(_normalize_path_segments(segments))
 
     @classmethod
     @lru_cache  # match the same size as urlsplit
@@ -1374,7 +1374,7 @@ class URL:
         if not encoded:
             path = self._PATH_QUOTER(path)
             if netloc:
-                path = self._normalize_path(path) if "." in path else path
+                path = _normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
         return self._from_tup((scheme, netloc, path, "", ""))
@@ -1695,7 +1695,7 @@ class URL:
                 # which has to be removed
                 if orig_path[0] == "/":
                     path = path[1:]
-            path = self._normalize_path(path) if "." in path else path
+            path = _normalize_path(path) if "." in path else path
 
         return self._from_tup((scheme, orig_netloc, path, query, fragment))
 
