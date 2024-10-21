@@ -42,6 +42,9 @@ def test_cache_configure_explicit() -> None:
         idna_encode_size=128,
         encode_host_size=128,
     )
+    assert yarl.cache_info()["idna_decode"].maxsize == 128
+    assert yarl.cache_info()["idna_encode"].maxsize == 128
+    assert yarl.cache_info()["encode_host"].maxsize == 128
 
 
 def test_cache_configure_waring() -> None:

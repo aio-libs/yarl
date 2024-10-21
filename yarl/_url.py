@@ -1763,7 +1763,7 @@ _SENTINEL = object()
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Union[int, None, object] = _DEFAULT_IDNA_SIZE,
+    idna_encode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
     idna_decode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
     ip_address_size: Union[int, None, object] = _SENTINEL,
     host_validate_size: Union[int, None, object] = _SENTINEL,
@@ -1796,4 +1796,4 @@ def cache_configure(
 
     _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
-    _idna_encode = lru_cache(idna_decode_size)(_idna_encode.__wrapped__)
+    _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
