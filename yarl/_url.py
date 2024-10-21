@@ -88,6 +88,7 @@ class CacheInfo(TypedDict):
     idna_decode: _CacheInfo
     ip_address: _CacheInfo
     host_validate: _CacheInfo
+    encode_host: _CacheInfo
 
 
 class _InternalURLCache(TypedDict, total=False):
@@ -263,53 +264,6 @@ def _parse_host(host: str) -> tuple[bool, str, Union[bool, None], str, str, str]
         return True, lower_host, is_ascii, host, "", ""
 
     return False, lower_host, is_ascii, "", "", ""
-
-
-def _encode_host(host: str, validate_host: bool) -> str:
-    """Encode host part of URL."""
-    looks_like_ip, lower_host, is_ascii, raw_ip, sep, zone = _parse_host(host)
-    if looks_like_ip:
-        # If it looks like an IP, we check with _ip_compressed_version
-        # and fall-through if its not an IP address. This is a performance
-        # optimization to avoid parsing IP addresses as much as possible
-        # because it is orders of magnitude slower than almost any other
-        # operation this library does.
-        # Might be an IP address, check it
-        #
-        # IP Addresses can look like:
-        # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
-        # - 127.0.0.1 (last character is a digit)
-        # - 2001:db8::ff00:42:8329 (contains a colon)
-        # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
-        # - [2001:db8::ff00:42:8329] (contains a colon -- brackets should
-        #                             have been removed before it gets here)
-        # Rare IP Address formats are not supported per:
-        # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
-        #
-        # IP parsing is slow, so its wrapped in an LRU
-        try:
-            host, version = _ip_compressed_version(raw_ip)
-        except ValueError:
-            pass
-        else:
-            # These checks should not happen in the
-            # LRU to keep the cache size small
-            if version == 6:
-                return f"[{host}%{zone}]" if sep else f"[{host}]"
-            return f"{host}%{zone}" if sep else host
-
-    # IDNA encoding is slow,
-    # skip it for ASCII-only strings
-    # Don't move the check into _idna_encode() helper
-    # to reduce the cache size
-    if is_ascii:
-        # Check for invalid characters explicitly; _idna_encode() does this
-        # for non-ascii host names.
-        if validate_host:
-            _host_validate(lower_host)
-        return lower_host
-
-    return _idna_encode(lower_host)
 
 
 @lru_cache  # match the same size as urlsplit
@@ -1737,7 +1691,7 @@ def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
     return "".join(c if c.isprintable() else quote(c) for c in s)
 
 
-_MAXCACHE = 256
+_MAXCACHE = 512
 
 
 @lru_cache(_MAXCACHE)
@@ -1749,55 +1703,81 @@ def _idna_decode(raw: str) -> str:
 
 
 @lru_cache(_MAXCACHE)
-def _idna_encode(host: str) -> str:
+def _encode_host(host: str, validate_host: bool) -> str:
+    """Encode host part of URL."""
+    # If the host ends with a digit or contains a colon, its likely
+    # an IP address.
+    if host and (host[-1].isdigit() or ":" in host):
+        raw_ip, sep, zone = host.partition("%")
+        # If it looks like an IP, we check with _ip_compressed_version
+        # and fall-through if its not an IP address. This is a performance
+        # optimization to avoid parsing IP addresses as much as possible
+        # because it is orders of magnitude slower than almost any other
+        # operation this library does.
+        # Might be an IP address, check it
+        #
+        # IP Addresses can look like:
+        # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+        # - 127.0.0.1 (last character is a digit)
+        # - 2001:db8::ff00:42:8329 (contains a colon)
+        # - 2001:db8::ff00:42:8329%eth0 (contains a colon)
+        # - [2001:db8::ff00:42:8329] (contains a colon -- brackets should
+        #                             have been removed before it gets here)
+        # Rare IP Address formats are not supported per:
+        # https://datatracker.ietf.org/doc/html/rfc3986#section-7.4
+        #
+        # IP parsing is slow, so its wrapped in an LRU
+        try:
+            ip = ip_address(raw_ip)
+        except ValueError:
+            pass
+        else:
+            # These checks should not happen in the
+            # LRU to keep the cache size small
+            host = ip.compressed
+            if ip.version == 6:
+                return f"[{host}%{zone}]" if sep else f"[{host}]"
+            return f"{host}%{zone}" if sep else host
+
+    # IDNA encoding is slow, skip it for ASCII-only strings
+    if host.isascii():
+        # Check for invalid characters explicitly; _idna_encode() does this
+        # for non-ascii host names.
+        if validate_host and (invalid := _not_reg_name.search(host)):
+            value, pos, extra = invalid.group(), invalid.start(), ""
+            if value == "@" or (value == ":" and "@" in host[pos:]):
+                # this looks like an authority string
+                extra = (
+                    ", if the value includes a username or password, "
+                    "use 'authority' instead of 'host'"
+                )
+            raise ValueError(
+                f"Host {host!r} cannot contain {value!r} (at position " f"{pos}){extra}"
+            ) from None
+        return host.lower()
+
     try:
-        return idna.encode(host, uts46=True).decode("ascii")
+        return idna.encode(host.lower(), uts46=True).decode("ascii")
     except UnicodeError:
         return host.encode("idna").decode("ascii")
-
-
-@lru_cache(_MAXCACHE)
-def _ip_compressed_version(raw_ip: str) -> tuple[str, int]:
-    """Return compressed version of IP address and its version."""
-    ip = ip_address(raw_ip)
-    return ip.compressed, ip.version
-
-
-@lru_cache(_MAXCACHE)
-def _host_validate(host: str) -> None:
-    """Validate an ascii host name."""
-    invalid = _not_reg_name.search(host)
-    if invalid is None:
-        return
-    value, pos, extra = invalid.group(), invalid.start(), ""
-    if value == "@" or (value == ":" and "@" in host[pos:]):
-        # this looks like an authority string
-        extra = (
-            ", if the value includes a username or password, "
-            "use 'authority' instead of 'host'"
-        )
-    raise ValueError(
-        f"Host {host!r} cannot contain {value!r} (at position " f"{pos}){extra}"
-    ) from None
 
 
 @rewrite_module
 def cache_clear() -> None:
     """Clear all LRU caches."""
     _idna_decode.cache_clear()
-    _idna_encode.cache_clear()
-    _ip_compressed_version.cache_clear()
-    _host_validate.cache_clear()
+    _encode_host.cache_clear()
 
 
 @rewrite_module
 def cache_info() -> CacheInfo:
     """Report cache statistics."""
     return {
-        "idna_encode": _idna_encode.cache_info(),
+        "idna_encode": _encode_host.cache_info(),
         "idna_decode": _idna_decode.cache_info(),
-        "ip_address": _ip_compressed_version.cache_info(),
-        "host_validate": _host_validate.cache_info(),
+        "ip_address": _encode_host.cache_info(),
+        "host_validate": _encode_host.cache_info(),
+        "encode_host": _encode_host.cache_info(),
     }
 
 
@@ -1808,13 +1788,19 @@ def cache_configure(
     idna_decode_size: Union[int, None] = _MAXCACHE,
     ip_address_size: Union[int, None] = _MAXCACHE,
     host_validate_size: Union[int, None] = _MAXCACHE,
+    encode_host_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
-    global _idna_decode, _idna_encode, _ip_compressed_version, _host_validate
+    global _idna_decode, _encode_host
+    # idna_encode_size, ip_address_size, host_validate_size are no longer
+    # used, but are kept for backwards compatibility.
+    if encode_host_size is not None:
+        for size in (idna_encode_size, ip_address_size, host_validate_size):
+            if size is None:
+                encode_host_size = None
+                break
+            elif size > encode_host_size:
+                encode_host_size = size
 
-    _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
+    _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
-    _ip_compressed_version = lru_cache(ip_address_size)(
-        _ip_compressed_version.__wrapped__
-    )
-    _host_validate = lru_cache(host_validate_size)(_host_validate.__wrapped__)

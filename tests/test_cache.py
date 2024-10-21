@@ -13,7 +13,13 @@ def test_cache_clear() -> None:
 
 def test_cache_info() -> None:
     info = yarl.cache_info()
-    assert info.keys() == {"idna_encode", "idna_decode", "ip_address", "host_validate"}
+    assert info.keys() == {
+        "idna_encode",
+        "idna_decode",
+        "ip_address",
+        "host_validate",
+        "encode_host",
+    }
 
 
 def test_cache_configure_default() -> None:
