@@ -396,7 +396,7 @@ def _make_netloc(
         user = _QUOTER_NO_REQUOTE(user)
     return f"{user}@{ret}" if user else ret
 
-  
+
 def _query_var(v: QueryVariable) -> str:
     cls = type(v)
     if cls is int:  # Fast path for non-subclassed int
