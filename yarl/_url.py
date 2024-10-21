@@ -17,7 +17,6 @@ from typing import (
     Union,
     overload,
 )
-from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
 from urllib.parse import (
     SplitResult,
     parse_qsl,
