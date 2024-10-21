@@ -42,20 +42,18 @@ SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 # Leading and trailing C0 control and space to be stripped per WHATWG spec.
 # == "".join([chr(i) for i in range(0, 0x20 + 1)])
-_WHATWG_C0_CONTROL_OR_SPACE = (
+WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
     "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
 )
 
 # Unsafe bytes to be removed per WHATWG spec
-_UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
-
-sentinel = object()
+UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 
 # reg-name: unreserved / pct-encoded / sub-delims
 # this pattern matches anything that is *not* in those classes. and is only used
 # on lower-cased ASCII values.
-_not_reg_name = re.compile(
+NOT_REG_NAME = re.compile(
     r"""
         # any character not in the unreserved or sub-delims sets, plus %
         # (validated with the additional check for pct-encoded sequences below)
@@ -163,8 +161,8 @@ def _split_url(url: str) -> SplitResult:
     # Adapted from urllib.parse.urlsplit
     # Only lstrip url as some applications rely on preserving trailing space.
     # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
-    url = url.lstrip(_WHATWG_C0_CONTROL_OR_SPACE)
-    for b in _UNSAFE_URL_BYTES_TO_REMOVE:
+    url = url.lstrip(WHATWG_C0_CONTROL_OR_SPACE)
+    for b in UNSAFE_URL_BYTES_TO_REMOVE:
         if b in url:
             url = url.replace(b, "")
 
@@ -1727,7 +1725,7 @@ def _encode_host(host: str, validate_host: bool) -> str:
     if host.isascii():
         # Check for invalid characters explicitly; _idna_encode() does this
         # for non-ascii host names.
-        if validate_host and (invalid := _not_reg_name.search(host)):
+        if validate_host and (invalid := NOT_REG_NAME.search(host)):
             value, pos, extra = invalid.group(), invalid.start(), ""
             if value == "@" or (value == ":" and "@" in host[pos:]):
                 # this looks like an authority string
