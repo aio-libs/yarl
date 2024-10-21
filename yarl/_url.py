@@ -396,6 +396,31 @@ def _make_netloc(
         user = _QUOTER_NO_REQUOTE(user)
     return f"{user}@{ret}" if user else ret
 
+  
+def _query_var(v: QueryVariable) -> str:
+    cls = type(v)
+    if cls is int:  # Fast path for non-subclassed int
+        return str(v)
+    if issubclass(cls, str):
+        if TYPE_CHECKING:
+            assert isinstance(v, str)
+        return v
+    if cls is float or issubclass(cls, float):
+        if TYPE_CHECKING:
+            assert isinstance(v, float)
+        if math.isinf(v):
+            raise ValueError("float('inf') is not supported")
+        if math.isnan(v):
+            raise ValueError("float('nan') is not supported")
+        return str(float(v))
+    if cls is not bool and isinstance(cls, SupportsInt):
+        return str(int(v))
+    raise TypeError(
+        "Invalid variable type: value "
+        "should be str, int or float, got {!r} "
+        "of type {}".format(v, cls)
+    )
+
 
 @rewrite_module
 class URL:
@@ -1369,7 +1394,7 @@ class URL:
         """
         quoter = cls._QUERY_PART_QUOTER
         pairs = [
-            f"{quoter(k)}={quoter(v if type(v) is str else cls._query_var(v))}"
+            f"{quoter(k)}={quoter(v if type(v) is str else _query_var(v))}"
             for k, val in items
             for v in (
                 val
@@ -1378,31 +1403,6 @@ class URL:
             )
         ]
         return "&".join(pairs)
-
-    @staticmethod
-    def _query_var(v: QueryVariable) -> str:
-        cls = type(v)
-        if cls is int:  # Fast path for non-subclassed int
-            return str(v)
-        if issubclass(cls, str):
-            if TYPE_CHECKING:
-                assert isinstance(v, str)
-            return v
-        if cls is float or issubclass(cls, float):
-            if TYPE_CHECKING:
-                assert isinstance(v, float)
-            if math.isinf(v):
-                raise ValueError("float('inf') is not supported")
-            if math.isnan(v):
-                raise ValueError("float('nan') is not supported")
-            return str(float(v))
-        if cls is not bool and isinstance(cls, SupportsInt):
-            return str(int(v))
-        raise TypeError(
-            "Invalid variable type: value "
-            "should be str, int or float, got {!r} "
-            "of type {}".format(v, cls)
-        )
 
     @classmethod
     def _get_str_query_from_iterable(
@@ -1419,7 +1419,7 @@ class URL:
         # A listcomp is used since listcomps are inlined on CPython 3.12+ and
         # they are a bit faster than a generator expression.
         pairs = [
-            f"{quoter(k)}={quoter(v if type(v) is str else cls._query_var(v))}"
+            f"{quoter(k)}={quoter(v if type(v) is str else _query_var(v))}"
             for k, v in items
         ]
         return "&".join(pairs)
