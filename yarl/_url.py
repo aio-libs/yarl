@@ -182,8 +182,7 @@ def encode_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
 @lru_cache
 def pre_encoded_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
     """Pre-encoded URL."""
-    cache: _InternalURLCache = {}
-    return tuple.__new__(SplitResult, split_url(url_str)), cache
+    return tuple.__new__(SplitResult, split_url(url_str)), {}
 
 
 @rewrite_module
