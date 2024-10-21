@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING, Any, SupportsInt, Union
 
 from multidict import istr  # Import for case-insensitive string handling
 
-from ._quoters import QUERY_PART_QUOTER, QUERY_QUOTER  # Importing query quoters for URL encoding
+from ._quoters import (  # Importing query quoters for URL encoding
+    QUERY_PART_QUOTER,
+    QUERY_QUOTER,
+)
 
 # Define types for simple queries and query variables
 SimpleQuery = Union[str, int, float]
@@ -12,6 +15,7 @@ QueryVariable = Union[SimpleQuery, Sequence[SimpleQuery]]
 Query = Union[
     None, str, Mapping[str, QueryVariable], Sequence[tuple[str, QueryVariable]]
 ]
+
 
 # Function to convert a query variable to a string
 def query_var(v: QueryVariable) -> str:
@@ -31,13 +35,16 @@ def query_var(v: QueryVariable) -> str:
         if math.isnan(v):  # Check for NaN values
             raise ValueError("float('nan') is not supported")
         return str(float(v))  # Convert float to string
-    if cls is not bool and isinstance(cls, SupportsInt):  # Handle other integer-like objects
+    if cls is not bool and isinstance(
+        cls, SupportsInt
+    ):  # Handle other integer-like objects
         return str(int(v))
     raise TypeError(
         "Invalid variable type: value "
         "should be str, int or float, got {!r} "
         "of type {}".format(v, cls)
     )
+
 
 # Function to generate a query string from a sequence of (key, value) pairs, where values can be sequences
 def get_str_query_from_sequence_iterable(
@@ -59,6 +66,7 @@ def get_str_query_from_sequence_iterable(
     ]
     return "&".join(pairs)  # Join all key-value pairs with '&' to form the query string
 
+
 # Function to generate a query string from an iterable of key-value pairs, but the values can't be sequences
 def get_str_query_from_iterable(
     items: Iterable[tuple[Union[str, istr], SimpleQuery]]
@@ -76,11 +84,12 @@ def get_str_query_from_iterable(
     ]  # Format the key-value pairs
     return "&".join(pairs)  # Join key-value pairs with '&' to form the query string
 
+
 # Function to handle different ways of passing query parameters and return a query string
 def get_str_query(*args: Any, **kwargs: Any) -> Union[str, None]:
     """Return a query string from supported args."""
     query: Union[str, Mapping[str, QueryVariable], None]
-    
+
     # If kwargs are provided, ensure no args are provided at the same time
     if kwargs:
         if args:
@@ -97,18 +106,24 @@ def get_str_query(*args: Any, **kwargs: Any) -> Union[str, None]:
         return None  # Return None if query is None
     if not query:
         return ""  # Return an empty string for empty query
-    
+
     # Convert different types of queries to strings
-    if isinstance(query, Mapping):  # If query is a mapping (e.g., dict), handle it as key-value pairs
+    if isinstance(
+        query, Mapping
+    ):  # If query is a mapping (e.g., dict), handle it as key-value pairs
         return get_str_query_from_sequence_iterable(query.items())
     if isinstance(query, str):  # If query is a string, URL-encode it
         return QUERY_QUOTER(query)
-    if isinstance(query, (bytes, bytearray, memoryview)):  # Raise error for unsupported types
+    if isinstance(
+        query, (bytes, bytearray, memoryview)
+    ):  # Raise error for unsupported types
         msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
         raise TypeError(msg)
-    if isinstance(query, Sequence):  # If query is a sequence of pairs, handle it as key-value pairs
+    if isinstance(
+        query, Sequence
+    ):  # If query is a sequence of pairs, handle it as key-value pairs
         return get_str_query_from_iterable(query)
-    
+
     # Raise error for unsupported types
     raise TypeError(
         "Invalid query type: only str, mapping or "
