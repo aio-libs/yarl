@@ -4,8 +4,6 @@ from collections.abc import Sequence
 from contextlib import suppress
 from os.path import dirname, relpath
 
-SEPARATOR = "/"
-
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
     """Drop '.' and '..' from a sequence of str segments"""
@@ -34,28 +32,28 @@ def normalize_path_segments(segments: Sequence[str]) -> list[str]:
 def normalize_path(path: str) -> str:
     # Drop '.' and '..' from str path
     prefix = ""
-    if path and path[0] == SEPARATOR:
+    if path and path[0] == "/":
         # preserve the "/" root element of absolute paths, copying it to the
         # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
-        prefix = SEPARATOR
+        prefix = "/"
         path = path[1:]
 
-    segments = path.split(SEPARATOR)
-    return prefix + SEPARATOR.join(normalize_path_segments(segments))
+    segments = path.split("/")
+    return prefix + "/".join(normalize_path_segments(segments))
 
 
 def relative_path(path: str, start: str) -> str:
     """A wrapper over os.path.relpath()"""
 
     if not path:
-        path = SEPARATOR
+        path = "/"
     if not start:
-        start = SEPARATOR
-    if not start.endswith(SEPARATOR):
+        start = "/"
+    if not start.endswith("/"):
         start = dirname(start)
 
-    if (path.startswith(SEPARATOR) and not start.startswith(SEPARATOR)) or (
-        not path.startswith(SEPARATOR) and start.startswith(SEPARATOR)
+    if (path.startswith("/") and not start.startswith("/")) or (
+        not path.startswith("/") and start.startswith("/")
     ):
         raise ValueError(
             "It is forbidden to get the path between the absolute and relative paths "
