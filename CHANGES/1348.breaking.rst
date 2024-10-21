@@ -1,3 +1,3 @@
-Migrated to using a single cache for encoding hosts -- by :user:`bdraco`
+Migrated to using a single cache for encoding hosts -- by :user:`bdraco`.
 
 Passing ``ip_address_size`` and ``host_validate_size`` to :py:meth:`~yarl.cache_configure` is deprecated in favor of the new ``encode_host_size`` parameter and will be removed in a future release. For backwards compatibility, the old parameters affect the ``encode_host`` cache size.
