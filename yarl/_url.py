@@ -121,6 +121,68 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+@lru_cache
+def _encode_url(url_str: str) -> "URL":
+    """Encode URL."""
+    cache: _InternalURLCache = {}
+    host: Union[str, None]
+    scheme, netloc, path, query, fragment = split_url(url_str)
+    if not netloc:  # netloc
+        host = ""
+    else:
+        if ":" in netloc or "@" in netloc or "[" in netloc:
+            # Complex netloc
+            username, password, host, port = split_netloc(netloc)
+        else:
+            username = password = port = None
+            host = netloc
+        if host is None:
+            if scheme in SCHEME_REQUIRES_HOST:
+                msg = (
+                    "Invalid URL: host is required for "
+                    f"absolute urls with the {scheme} scheme"
+                )
+                raise ValueError(msg)
+            else:
+                host = ""
+        host = _encode_host(host, validate_host=False)
+        # Remove brackets as host encoder adds back brackets for IPv6 addresses
+        cache["raw_host"] = host[1:-1] if "[" in host else host
+        cache["explicit_port"] = port
+        if password is None and username is None:
+            # Fast path for URLs without user, password
+            netloc = host if port is None else f"{host}:{port}"
+            cache["raw_user"] = None
+            cache["raw_password"] = None
+        else:
+            raw_user = REQUOTER(username) if username else username
+            raw_password = REQUOTER(password) if password else password
+            netloc = make_netloc(raw_user, raw_password, host, port)
+            cache["raw_user"] = raw_user
+            cache["raw_password"] = raw_password
+
+    if path:
+        path = PATH_REQUOTER(path)
+        if netloc:
+            if "." in path:
+                path = normalize_path(path)
+
+    query = QUERY_REQUOTER(query) if query else query
+    fragment = FRAGMENT_REQUOTER(fragment) if fragment else fragment
+    cache["scheme"] = scheme
+    cache["raw_query_string"] = query
+    cache["raw_fragment"] = fragment
+
+    url = object.__new__(URL)
+    # Constructing the tuple directly to avoid the overhead of
+    # the lambda and arg processing since NamedTuples are constructed
+    # with a run time built lambda
+    # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
+    url._val = tuple.__new__(SplitResult, (scheme, netloc, path, query, fragment))
+    url._cache = cache
+    return url
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -202,95 +264,26 @@ class URL:
         *,
         encoded: bool = False,
         strict: Union[bool, None] = None,
-    ) -> Self:
+    ) -> "URL":
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            val = split_url(val)
+            pass
         elif type(val) is cls:
             return val
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
+            self = object.__new__(cls)
+            self._val = val
+            self._cache = {}
+            return self
         elif isinstance(val, str):
-            val = split_url(str(val))
+            val = str(val)
         else:
             raise TypeError("Constructor parameter should be str")
 
-        cache: _InternalURLCache = {}
-        if not encoded:
-            host: Union[str, None]
-            scheme, netloc, path, query, fragment = val
-            orig_netloc = netloc
-            orig_path = path
-            orig_query = query
-            orig_fragment = fragment
-            if not netloc:  # netloc
-                host = ""
-            else:
-                if ":" in netloc or "@" in netloc or "[" in netloc:
-                    # Complex netloc
-                    username, password, host, port = split_netloc(netloc)
-                else:
-                    username = password = port = None
-                    host = netloc
-                if host is None:
-                    if scheme in SCHEME_REQUIRES_HOST:
-                        msg = (
-                            "Invalid URL: host is required for "
-                            f"absolute urls with the {scheme} scheme"
-                        )
-                        raise ValueError(msg)
-                    else:
-                        host = ""
-                host = _encode_host(host, validate_host=False)
-                # Remove brackets as host encoder adds back brackets for IPv6 addresses
-                cache["raw_host"] = host[1:-1] if "[" in host else host
-                cache["explicit_port"] = port
-                if password is None and username is None:
-                    # Fast path for URLs without user, password
-                    netloc = host if port is None else f"{host}:{port}"
-                    cache["raw_user"] = None
-                    cache["raw_password"] = None
-                else:
-                    raw_user = REQUOTER(username) if username else username
-                    raw_password = REQUOTER(password) if password else password
-                    netloc = make_netloc(raw_user, raw_password, host, port)
-                    cache["raw_user"] = raw_user
-                    cache["raw_password"] = raw_password
-
-            if path:
-                path = PATH_REQUOTER(path)
-                if netloc:
-                    if "." in path:
-                        path = normalize_path(path)
-
-            query = QUERY_REQUOTER(query) if query else query
-            fragment = FRAGMENT_REQUOTER(fragment) if fragment else fragment
-            cache["scheme"] = scheme
-            cache["raw_query_string"] = query
-            cache["raw_fragment"] = fragment
-            # There is a good chance that the SplitResult is already normalized
-            # so we can avoid the extra work of creating a new SplitResult
-            # if the input SplitResult is already normalized
-            if (
-                orig_netloc != netloc
-                or orig_path != path
-                or orig_query != query
-                or orig_fragment != fragment
-            ):
-                # Constructing the tuple directly to avoid the overhead of
-                # the lambda and arg processing since NamedTuples are constructed
-                # with a run time built lambda
-                # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
-                val = tuple.__new__(
-                    SplitResult, (scheme, netloc, path, query, fragment)
-                )
-
-        self = object.__new__(cls)
-        self._val = val
-        self._cache = cache
-        return self
+        return _encode_url(val)
 
     @classmethod
     def build(
