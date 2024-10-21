@@ -61,6 +61,52 @@ def test_str():
     assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
 
 
+@pytest.mark.parametrize(
+    "target,base,expected",
+    [
+        ("http://example.com/path/to", "http://example.com/", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
+        ("http://example.com/path", "http://example.com/path/to/", ".."),
+        ("http://example.com/", "http://example.com/", "."),
+        ("http://example.com", "http://example.com", "."),
+        ("http://example.com/", "http://example.com", "."),
+        ("http://example.com", "http://example.com/", "."),
+        ("//example.com", "//example.com", "."),
+        ("/path/to", "/spam/", "../path/to"),
+        ("path/to", "spam/", "../path/to"),
+        ("path/to", "spam", "path/to"),
+        ("..", ".", ".."),
+        (".", "..", "."),
+    ],
+)
+def test_sub(target: str, base: str, expected: str):
+    assert URL(target) - URL(base) == URL(expected)
+
+
+def test_sub_with_different_schemes():
+    with pytest.raises(ValueError) as ctx:
+        URL("http://example.com/") - URL("https://example.com/")
+    assert "Both URLs should have the same scheme" == str(ctx.value)
+
+
+def test_sub_with_different_netlocs():
+    with pytest.raises(ValueError) as ctx:
+        URL("https://spam.com/") - URL("https://ham.com/")
+    assert "Both URLs should have the same netloc" == str(ctx.value)
+
+
+def test_sub_with_abs_and_rel_paths():
+    with pytest.raises(ValueError) as ctx:
+        URL("path/to") - URL("/path/from")
+    assert (
+        "It is forbidden to get the path "
+        "between the absolute and relative paths "
+        "because it is impossible "
+        "to get the current working directory." == str(ctx.value)
+    )
+
+
 def test_repr():
     url = URL("http://example.com")
     assert "URL('http://example.com')" == repr(url)
