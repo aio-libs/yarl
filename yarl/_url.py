@@ -279,10 +279,10 @@ class URL:
             split_result, cache = encode_url(str(val), encoded)
         else:
             raise TypeError("Constructor parameter should be str")
-        url = object.__new__(cls)
-        url._val = split_result
-        url._cache = cache
-        return url
+        self = object.__new__(cls)
+        self._val = split_result
+        self._cache = cache
+        return self
 
     @classmethod
     def build(
