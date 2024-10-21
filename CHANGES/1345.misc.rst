@@ -1,1 +1,0 @@
-Improved performance of calling :py:meth:`~yarl.URL.build` and constructing unencoded :class:`~yarl.URL` -- by :user:`bdraco`.
