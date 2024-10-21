@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from contextlib import suppress
+from os.path import dirname, relpath
 
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
@@ -39,3 +40,16 @@ def normalize_path(path: str) -> str:
 
     segments = path.split("/")
     return prefix + "/".join(normalize_path_segments(segments))
+
+
+def relative_path(path: str, start: str) -> str:
+    """A wrapper over os.path.relpath()"""
+
+    if not path:
+        path = "/"
+    if not start:
+        start = "/"
+    if not start.endswith("/"):
+        start = dirname(start)
+
+    return relpath(path, start)

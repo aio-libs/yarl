@@ -4,7 +4,6 @@ import warnings
 from collections.abc import Mapping, Sequence
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
-from os.path import dirname, relpath
 from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
 from urllib.parse import SplitResult, parse_qsl, uses_relative
 
@@ -13,7 +12,7 @@ from multidict import MultiDict, MultiDictProxy
 from propcache.api import under_cached_property as cached_property
 
 from ._parse import USES_AUTHORITY, make_netloc, split_netloc, split_url, unsplit_result
-from ._path import normalize_path, normalize_path_segments
+from ._path import normalize_path, normalize_path_segments, relative_path
 from ._query import (
     Query,
     QueryVariable,
@@ -488,21 +487,8 @@ class URL:
         if target.netloc != base.netloc:
             raise ValueError("Both URLs should have the same netloc")
 
-        path = self._relpath(target.path, base.path)
+        path = relative_path(target.path, base.path)
         return self._from_tup(("", "", path, "", ""))
-
-    @staticmethod
-    def _relpath(path: str, start: str) -> str:
-        """A wrapper over os.path.relpath()"""
-
-        if not path:
-            path = "/"
-        if not start:
-            start = "/"
-        if not start.endswith("/"):
-            start = dirname(start)
-
-        return relpath(path, start)
 
     def __mod__(self, query: Query) -> "URL":
         return self.update_query(query)
