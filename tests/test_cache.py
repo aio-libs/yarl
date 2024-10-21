@@ -36,6 +36,39 @@ def test_cache_configure_None() -> None:
     )
 
 
+def test_cache_configure_None_including_deprecated() -> None:
+    msg = (
+        r"cache_configure\(\) no longer accepts the ip_address_size "
+        r"or host_validate_size arguments, they are used to set the "
+        r"encode_host_size instead and will be removed in the future"
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
+        yarl.cache_configure(
+            idna_decode_size=None,
+            idna_encode_size=None,
+            encode_host_size=None,
+            ip_address_size=None,
+            host_validate_size=None,
+        )
+    assert yarl.cache_info()["idna_decode"].maxsize is None
+    assert yarl.cache_info()["idna_encode"].maxsize is None
+    assert yarl.cache_info()["encode_host"].maxsize is None
+
+
+def test_cache_configure_None_only_deprecated() -> None:
+    msg = (
+        r"cache_configure\(\) no longer accepts the ip_address_size "
+        r"or host_validate_size arguments, they are used to set the "
+        r"encode_host_size instead and will be removed in the future"
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
+        yarl.cache_configure(
+            ip_address_size=None,
+            host_validate_size=None,
+        )
+    assert yarl.cache_info()["encode_host"].maxsize is None
+
+
 def test_cache_configure_explicit() -> None:
     yarl.cache_configure(
         idna_decode_size=128,
