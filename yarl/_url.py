@@ -72,6 +72,7 @@ Query = Union[
     None, str, "Mapping[str, QueryVariable]", "Sequence[Tuple[str, QueryVariable]]"
 ]
 _T = TypeVar("_T")
+QUOTER = _Quoter(requote=False)
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -289,6 +290,40 @@ def _unsplit_result(
     return f"{url}#{fragment}" if fragment else url
 
 
+@lru_cache  # match the same size as urlsplit
+def _make_netloc(
+    user: Union[str, None],
+    password: Union[str, None],
+    host: Union[str, None],
+    port: Union[int, None],
+    encode: bool = False,
+) -> str:
+    """Make netloc from parts.
+
+    The user and password are encoded if encode is True.
+
+    The host must already be encoded with _encode_host.
+    """
+    if host is None:
+        return ""
+    ret = host
+    if port is not None:
+        ret = f"{ret}:{port}"
+    if user is None and password is None:
+        return ret
+    if password is not None:
+        if not user:
+            user = ""
+        elif encode:
+            user = QUOTER(user)
+        if encode:
+            password = QUOTER(password)
+        user = f"{user}:{password}"
+    elif user and encode:
+        user = QUOTER(user)
+    return f"{user}@{ret}" if user else ret
+
+
 def _query_var(v: QueryVariable) -> str:
     cls = type(v)
     if cls is int:  # Fast path for non-subclassed int
@@ -387,7 +422,7 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_val")
 
-    _QUOTER = _Quoter(requote=False)
+    _QUOTER = QUOTER
     _REQUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
     _PATH_REQUOTER = _Quoter(safe="@:", protected="/+")
@@ -463,7 +498,7 @@ class URL:
                 else:
                     raw_user = cls._REQUOTER(username) if username else username
                     raw_password = cls._REQUOTER(password) if password else password
-                    netloc = cls._make_netloc(raw_user, raw_password, host, port)
+                    netloc = _make_netloc(raw_user, raw_password, host, port)
                     cache["raw_user"] = raw_user
                     cache["raw_password"] = raw_password
 
@@ -552,7 +587,7 @@ class URL:
                 if user is None and password is None:
                     netloc = host if port is None else f"{host}:{port}"
                 else:
-                    netloc = cls._make_netloc(user, password, host, port)
+                    netloc = _make_netloc(user, password, host, port)
             else:
                 netloc = ""
         else:  # not encoded
@@ -571,7 +606,7 @@ class URL:
                 if user is None and password is None:
                     netloc = _host if port is None else f"{_host}:{port}"
                 else:
-                    netloc = cls._make_netloc(user, password, _host, port, True)
+                    netloc = _make_netloc(user, password, _host, port, True)
 
             path = cls._PATH_QUOTER(path) if path else path
             if path and netloc:
@@ -624,7 +659,7 @@ class URL:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
-            netloc = self._make_netloc(self.raw_user, self.raw_password, host, None)
+            netloc = _make_netloc(self.raw_user, self.raw_password, host, None)
         return _unsplit_result(scheme, netloc, path, query, fragment)
 
     def __repr__(self) -> str:
@@ -757,7 +792,7 @@ class URL:
             raise ValueError("URL should have scheme")
         if "@" in netloc:
             encoded_host = self.host_subcomponent
-            netloc = self._make_netloc(None, None, encoded_host, self.explicit_port)
+            netloc = _make_netloc(None, None, encoded_host, self.explicit_port)
         elif not path and not query and not fragment:
             return self
         return self._from_tup((scheme, netloc, "", "", ""))
@@ -817,7 +852,7 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return self._make_netloc(self.user, self.password, self.host, self.port)
+        return _make_netloc(self.user, self.password, self.host, self.port)
 
     @cached_property
     def raw_user(self) -> Union[str, None]:
@@ -1160,41 +1195,6 @@ class URL:
         segments = path.split("/")
         return prefix + "/".join(_normalize_path_segments(segments))
 
-    @classmethod
-    @lru_cache  # match the same size as urlsplit
-    def _make_netloc(
-        cls,
-        user: Union[str, None],
-        password: Union[str, None],
-        host: Union[str, None],
-        port: Union[int, None],
-        encode: bool = False,
-    ) -> str:
-        """Make netloc from parts.
-
-        The user and password are encoded if encode is True.
-
-        The host must already be encoded with _encode_host.
-        """
-        if host is None:
-            return ""
-        ret = host
-        if port is not None:
-            ret = f"{ret}:{port}"
-        if user is None and password is None:
-            return ret
-        if password is not None:
-            if not user:
-                user = ""
-            elif encode:
-                user = cls._QUOTER(user)
-            if encode:
-                password = cls._QUOTER(password)
-            user = f"{user}:{password}"
-        elif user and encode:
-            user = cls._QUOTER(user)
-        return f"{user}@{ret}" if user else ret
-
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
         # N.B. doesn't cleanup query/fragment
@@ -1230,7 +1230,7 @@ class URL:
         if not netloc:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
-        netloc = self._make_netloc(user, password, encoded_host, self.explicit_port)
+        netloc = _make_netloc(user, password, encoded_host, self.explicit_port)
         return self._from_tup((scheme, netloc, path, query, fragment))
 
     def with_password(self, password: Union[str, None]) -> "URL":
@@ -1253,7 +1253,7 @@ class URL:
             raise ValueError("password replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
-        netloc = self._make_netloc(self.raw_user, password, encoded_host, port)
+        netloc = _make_netloc(self.raw_user, password, encoded_host, port)
         return self._from_tup((scheme, netloc, path, query, fragment))
 
     def with_host(self, host: str) -> "URL":
@@ -1275,7 +1275,7 @@ class URL:
             raise ValueError("host removing is not allowed")
         encoded_host = _encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
-        netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
+        netloc = _make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_tup((scheme, netloc, path, query, fragment))
 
     def with_port(self, port: Union[int, None]) -> "URL":
@@ -1294,7 +1294,7 @@ class URL:
         if not netloc:
             raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
-        netloc = self._make_netloc(self.raw_user, self.raw_password, encoded_host, port)
+        netloc = _make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return self._from_tup((scheme, netloc, path, query, fragment))
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
@@ -1648,7 +1648,7 @@ class URL:
         fragment = _human_quote(self.fragment, "")
         if TYPE_CHECKING:
             assert fragment is not None
-        netloc = self._make_netloc(user, password, host, self.explicit_port)
+        netloc = _make_netloc(user, password, host, self.explicit_port)
         scheme = self._val.scheme
         return _unsplit_result(scheme, netloc, path, query_string, fragment)
 
