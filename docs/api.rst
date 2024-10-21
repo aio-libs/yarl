@@ -1069,8 +1069,8 @@ global LRU cache.
 
 .. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, encode_host_size=512)
 
-   Set the IP Address, host validation, and IDNA encode, host encode and
-   decode cache sizes.
+   Set the IDNA encode, IDNA decode, and host encode
+   cache sizes.
 
    Pass ``None`` to make the corresponding cache unbounded (may speed up host encoding
    operation a little but the memory footprint can be very high,
