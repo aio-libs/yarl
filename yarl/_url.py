@@ -2,18 +2,18 @@ import re
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
-from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from os.path import dirname, relpath
 from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
-from urllib.parse import SplitResult, parse_qsl, quote, uses_relative
+from urllib.parse import SplitResult, parse_qsl, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
 from propcache.api import under_cached_property as cached_property
 
 from ._parse import USES_AUTHORITY, make_netloc, split_netloc, split_url, unsplit_result
+from ._path import normalize_path, normalize_path_segments
 from ._query import (
     Query,
     QueryVariable,
@@ -35,6 +35,7 @@ from ._quoters import (
     QUOTER,
     REQUOTER,
     UNQUOTER,
+    human_quote,
 )
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
@@ -119,43 +120,6 @@ class _InternalURLCache(TypedDict, total=False):
 def rewrite_module(obj: _T) -> _T:
     obj.__module__ = "yarl"
     return obj
-
-
-def _normalize_path_segments(segments: "Sequence[str]") -> list[str]:
-    """Drop '.' and '..' from a sequence of str segments"""
-
-    resolved_path: list[str] = []
-
-    for seg in segments:
-        if seg == "..":
-            # ignore any .. segments that would otherwise cause an
-            # IndexError when popped from resolved_path if
-            # resolving for rfc3986
-            with suppress(IndexError):
-                resolved_path.pop()
-        elif seg != ".":
-            resolved_path.append(seg)
-
-    if segments and segments[-1] in (".", ".."):
-        # do some post-processing here.
-        # if the last segment was a relative dir,
-        # then we need to append the trailing '/'
-        resolved_path.append("")
-
-    return resolved_path
-
-
-def _normalize_path(path: str) -> str:
-    # Drop '.' and '..' from str path
-    prefix = ""
-    if path and path[0] == "/":
-        # preserve the "/" root element of absolute paths, copying it to the
-        # normalised output as per sections 5.2.4 and 6.2.2.3 of rfc3986.
-        prefix = "/"
-        path = path[1:]
-
-    segments = path.split("/")
-    return prefix + "/".join(_normalize_path_segments(segments))
 
 
 def _raise_for_authority_missing_abs_path() -> None:
@@ -306,7 +270,7 @@ class URL:
                 path = PATH_REQUOTER(path)
                 if netloc:
                     if "." in path:
-                        path = _normalize_path(path)
+                        path = normalize_path(path)
                     if path[0] != "/":
                         _raise_for_authority_missing_abs_path()
 
@@ -411,7 +375,7 @@ class URL:
             path = PATH_QUOTER(path) if path else path
             if path and netloc:
                 if "." in path:
-                    path = _normalize_path(path)
+                    path = normalize_path(path)
                 if path[0] != "/":
                     _raise_for_authority_missing_abs_path()
 
@@ -992,7 +956,7 @@ class URL:
 
         if netloc := netloc:
             # If the netloc is present, we need to ensure that the path is normalized
-            parsed = _normalize_path_segments(parsed) if needs_normalize else parsed
+            parsed = normalize_path_segments(parsed) if needs_normalize else parsed
             if parsed and parsed[0] != "":
                 # inject a leading slash when adding a path to an absolute URL
                 # where there was none before
@@ -1110,7 +1074,7 @@ class URL:
         if not encoded:
             path = PATH_QUOTER(path)
             if netloc:
-                path = _normalize_path(path) if "." in path else path
+                path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
         return self._from_tup((scheme, netloc, path, "", ""))
@@ -1353,7 +1317,7 @@ class URL:
                 # which has to be removed
                 if orig_path[0] == "/":
                     path = path[1:]
-            path = _normalize_path(path) if "." in path else path
+            path = normalize_path(path) if "." in path else path
 
         return self._from_tup((scheme, orig_netloc, path, query, fragment))
 
@@ -1363,34 +1327,23 @@ class URL:
 
     def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
-        user = _human_quote(self.user, "#/:?@[]")
-        password = _human_quote(self.password, "#/:?@[]")
+        user = human_quote(self.user, "#/:?@[]")
+        password = human_quote(self.password, "#/:?@[]")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
-        path = _human_quote(self.path, "#?")
+        path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
         query_string = "&".join(
-            "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
+            "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()
         )
-        fragment = _human_quote(self.fragment, "")
+        fragment = human_quote(self.fragment, "")
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
         scheme = self._val.scheme
         return unsplit_result(scheme, netloc, path, query_string, fragment)
-
-
-def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
-    if not s:
-        return s
-    for c in "%" + unsafe:
-        if c in s:
-            s = s.replace(c, f"%{ord(c):02X}")
-    if s.isprintable():
-        return s
-    return "".join(c if c.isprintable() else quote(c) for c in s)
 
 
 _DEFAULT_IDNA_SIZE = 256
