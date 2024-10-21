@@ -121,8 +121,10 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+# encoded is used for the LRU cache key only
+# do not remove it
 @lru_cache
-def encode_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
+def encode_url(url_str: str, encoded: bool) -> tuple[SplitResult, _InternalURLCache]:
     """Encode URL."""
     cache: _InternalURLCache = {}
     host: Union[str, None]
@@ -278,10 +280,10 @@ class URL:
             val = str(val)
         else:
             raise TypeError("Constructor parameter should be str")
-        split_result, cache = encode_url(val)
+        split_result, cache = encode_url(val, encoded)
         url = object.__new__(cls)
         url._val = split_result
-        url._cache = cache.copy()
+        url._cache = cache
         return url
 
     @classmethod
