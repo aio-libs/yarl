@@ -1,7 +1,7 @@
 Added support for using the :meth:`subtraction operator <yarl.URL.__sub__>`
 to get the relative path between URLs.
 
-Note that both URLs must have the same scheme and netloc:
+Note that both URLs must have the same scheme, user, password, host and port:
 
 .. code-block:: pycon
 
@@ -10,7 +10,7 @@ Note that both URLs must have the same scheme and netloc:
    >>> target - base
    URL('path/index.html')
 
-URLs can also be relative and have no scheme or netloc at all:
+URLs can also be relative:
 
 .. code-block:: pycon
 
