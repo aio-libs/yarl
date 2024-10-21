@@ -70,6 +70,14 @@ def test_str():
         ("http://example.com/path", "http://example.com/path/to/", ".."),
         ("http://example.com/", "http://example.com/", "."),
         ("http://example.com", "http://example.com", "."),
+        ("http://example.com/", "http://example.com", "."),
+        ("http://example.com", "http://example.com/", "."),
+        ("//example.com", "//example.com", "."),
+        ("/path/to", "/spam/", "../path/to"),
+        ("path/to", "spam/", "../path/to"),
+        ("path/to", "spam", "path/to"),
+        ("..", ".", ".."),
+        (".", "..", "."),
     ],
 )
 def test_sub(target: str, base: str, expected: str):
