@@ -212,6 +212,11 @@ def test_host_subcomponent_return_idna_encoded_host():
     assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
 
 
+def test_invalid_idna_hyphen_encoding():
+    url = URL("http://x-----xn1agdj.tld")
+    assert url.host == "x-----xn1agdj.tld"
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
