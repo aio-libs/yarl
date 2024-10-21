@@ -263,7 +263,7 @@ class URL:
         *,
         encoded: bool = False,
         strict: Union[bool, None] = None,
-    ) -> "URL":
+    ) -> Self:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
