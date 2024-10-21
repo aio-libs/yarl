@@ -72,7 +72,7 @@ Query = Union[
     None, str, "Mapping[str, QueryVariable]", "Sequence[Tuple[str, QueryVariable]]"
 ]
 _T = TypeVar("_T")
-_QUOTER_NO_REQUOTE = _Quoter(requote=False)
+QUOTER = _Quoter(requote=False)
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -493,7 +493,7 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_val")
 
-    _QUOTER = _QUOTER_NO_REQUOTE
+    _QUOTER = QUOTER
     _REQUOTER = _Quoter()
     _PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
     _PATH_REQUOTER = _Quoter(safe="@:", protected="/+")
