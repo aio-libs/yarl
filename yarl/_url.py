@@ -1727,7 +1727,7 @@ def _encode_host(host: str, validate_host: bool) -> str:
                     "use 'authority' instead of 'host'"
                 )
             raise ValueError(
-                f"Host {host!r} cannot contain {value!r} (at position " f"{pos}){extra}"
+                f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
             ) from None
         return host.lower()
 
