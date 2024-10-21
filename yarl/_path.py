@@ -52,9 +52,13 @@ def calculate_relative_path(path: str, start: str) -> str:
     if not start.endswith("/"):
         start = dirname(start)
 
-    if (path.startswith("/") and not start.startswith("/")) or (
-        not path.startswith("/") and start.startswith("/")
-    ):
+    path_has_leading_slash = path.startswith("/")
+    start_has_leading_slash = start.startswith("/")
+    both_have_leading_slash = all((path_has_leading_slash, start_has_leading_slash))
+    none_have_leading_slash = all(
+        (not path_has_leading_slash, not start_has_leading_slash)
+    )
+    if not both_have_leading_slash and not none_have_leading_slash:
         raise ValueError(
             "It is forbidden to get the path between the absolute and relative paths "
             "because it is impossible to get the current working directory."
