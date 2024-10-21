@@ -1037,9 +1037,8 @@ Default port substitution
 Cache control
 -------------
 
-IDNA conversion, host validation, and IP Address parsing used for host
-encoding are quite expensive operations, that's why the ``yarl``
-library caches these calls by storing last ``256`` results in the
+IDNA conversion and host encoding encoding are quite expensive operations,
+that's why the ``yarl`` library caches these calls by storing results in the
 global LRU cache.
 
 .. function:: cache_clear()
