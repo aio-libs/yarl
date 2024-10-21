@@ -1066,7 +1066,7 @@ global LRU cache.
 
    :: versionchanged:: 1.16
 
-      The ``idna_encode``, ``ip_address``, and ``host_validate``
+      ``idna_encode``, ``ip_address``, and ``host_validate``
       are deprecated in favor of a single ``encode_host`` cache.
 
 .. function:: cache_configure(
@@ -1087,7 +1087,7 @@ global LRU cache.
 
    :: versionchanged:: 1.16
 
-      The ``idna_encode_size``, ``ip_address_size``, and ``host_validate_size``
+      ``idna_encode_size``, ``ip_address_size``, and ``host_validate_size``
       are deprecated in favor of a single ``encode_host`` cache.
 
 References
