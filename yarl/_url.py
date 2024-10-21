@@ -123,7 +123,7 @@ def rewrite_module(obj: _T) -> _T:
 
 @lru_cache
 def encode_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
-    """Encode URL."""
+    """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: Union[str, None]
     scheme, netloc, path, query, fragment = split_url(url_str)
@@ -181,7 +181,7 @@ def encode_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
 
 @lru_cache
 def pre_encoded_url(url_str: str) -> tuple[SplitResult, _InternalURLCache]:
-    """Pre-encoded URL."""
+    """Parse pre-encoded URL."""
     return tuple.__new__(SplitResult, split_url(url_str)), {}
 
 
