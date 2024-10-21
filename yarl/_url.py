@@ -1786,12 +1786,11 @@ def cache_configure(
                     DeprecationWarning,
                     stacklevel=2,
                 )
-                real_size = _MAXCACHE
-            else:
+                size = _MAXCACHE
+            if TYPE_CHECKING:
                 assert isinstance(size, int)
-                real_size = size
-            if real_size > encode_host_size:
-                encode_host_size = real_size
+            if size > encode_host_size:
+                encode_host_size = size
 
     _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
