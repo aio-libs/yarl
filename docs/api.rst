@@ -1039,18 +1039,18 @@ Cache control
 
 IDNA conversion, host validation, and IP Address parsing used for host
 encoding are quite expensive operations, that's why the ``yarl``
-library caches these calls by storing last ``256`` results in the
+library caches these calls by storing last ``512`` results in the
 global LRU cache.
 
 .. function:: cache_clear()
 
-   Clear IDNA, host validation, and IP Address caches.
+   Clear IDNA and host encoding cache.
 
 
 .. function:: cache_info()
 
    Return a dictionary with ``"idna_encode"``, ``"idna_decode"``, ``"ip_address"``,
-   and ``"host_validate"`` keys, each value
+   ``"host_validate"``, and ``"encode_host"`` keys, each value
    points to corresponding ``CacheInfo`` structure (see :func:`functools.lru_cache` for
    details):
 
@@ -1058,21 +1058,37 @@ global LRU cache.
       :options: +SKIP
 
       >>> yarl.cache_info()
-      {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=256, currsize=5),
-       'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15),
-       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=256, currsize=101),
-       'host_validate': CacheInfo(hits=0, misses=0, maxsize=256, currsize=0)}
+      {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=512, currsize=5),
+       'idna_decode': CacheInfo(hits=24, misses=15, maxsize=512, currsize=15),
+       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=512, currsize=101),
+       'host_validate': CacheInfo(hits=0, misses=0, maxsize=512, currsize=0),
+       'encode_host': CacheInfo(hits=0, misses=0, maxsize=512, currsize=0)}
 
+   :: versionchanged:: 1.16
 
+      The ``idna_encode``, ``ip_address``, and ``host_validate``
+      are deprecated in favor of a single ``encode_host`` cache.
 
-.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, ip_address_size=256, host_validate_size=256)
+.. function:: cache_configure(
+      *,
+      idna_encode_size=512,
+      idna_decode_size=512,
+      ip_address_size=512,
+      host_validate_size=512,
+      encode_host=512
+   )
 
-   Set the IP Address, host validation, and IDNA encode and
-   decode cache sizes (``256`` for each by default).
+   Set the IP Address, host validation, and IDNA encode, host encode and
+   decode cache sizes (``512`` for each by default).
 
    Pass ``None`` to make the corresponding cache unbounded (may speed up host encoding
    operation a little but the memory footprint can be very high,
    please use with caution).
+
+   :: versionchanged:: 1.16
+
+      The ``idna_encode_size``, ``ip_address_size``, and ``host_validate_size``
+      are deprecated in favor of a single ``encode_host`` cache.
 
 References
 ----------

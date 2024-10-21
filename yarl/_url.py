@@ -1756,13 +1756,16 @@ def cache_info() -> CacheInfo:
     }
 
 
+_SENTINEL = object()
+
+
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Union[int, None] = _MAXCACHE,
+    idna_encode_size: Union[int, None, object] = _SENTINEL,
     idna_decode_size: Union[int, None] = _MAXCACHE,
-    ip_address_size: Union[int, None] = _MAXCACHE,
-    host_validate_size: Union[int, None] = _MAXCACHE,
+    ip_address_size: Union[int, None, object] = _SENTINEL,
+    host_validate_size: Union[int, None, object] = _SENTINEL,
     encode_host_size: Union[int, None] = _MAXCACHE,
 ) -> None:
     """Configure LRU cache sizes."""
@@ -1774,8 +1777,21 @@ def cache_configure(
             if size is None:
                 encode_host_size = None
                 break
-            elif size > encode_host_size:
-                encode_host_size = size
+            elif size is _SENTINEL:
+                warnings.warn(
+                    "cache_configure() no longer accepts idna_encode_size, "
+                    "ip_address_size, or host_validate_size arguments, "
+                    "they are used to set the encode_host_size instead "
+                    "and will be removed in the future",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                real_size = _MAXCACHE
+            else:
+                assert isinstance(size, int)
+                real_size = size
+            if real_size > encode_host_size:
+                encode_host_size = real_size
 
     _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
