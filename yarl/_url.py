@@ -50,8 +50,6 @@ _WHATWG_C0_CONTROL_OR_SPACE = (
 # Unsafe bytes to be removed per WHATWG spec
 _UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 
-sentinel = object()
-
 # reg-name: unreserved / pct-encoded / sub-delims
 # this pattern matches anything that is *not* in those classes. and is only used
 # on lower-cased ASCII values.
