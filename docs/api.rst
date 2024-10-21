@@ -976,7 +976,7 @@ The path is encoded if needed.
 
 The subtraction (``-``) operator creates a new URL with
 a relative *path* to the target URL from the given base URL.
-*scheme*, *user*, *password*, *host* and *port* are removed.
+*scheme*, *user*, *password*, *host*, *port*, *query* and *fragment* are removed.
 
 .. method:: URL.__sub__(url)
 
