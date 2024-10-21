@@ -1467,30 +1467,30 @@ def cache_configure(
     global _idna_decode, _idna_encode, _encode_host
     # ip_address_size, host_validate_size are no longer
     # used, but are kept for backwards compatibility.
-    if encode_host_size is _SENTINEL:
-        encode_host_size = _DEFAULT_ENCODE_SIZE
+    if ip_address_size is not _SENTINEL or host_validate_size is not _SENTINEL:
+        warnings.warn(
+            "cache_configure() no longer accepts the "
+            "ip_address_size or host_validate_size arguments, "
+            "they are used to set the encode_host_size instead "
+            "and will be removed in the future",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if encode_host_size is not None:
         for size in (ip_address_size, host_validate_size):
-            if size is not _SENTINEL:
-                warnings.warn(
-                    "cache_configure() no longer accepts the "
-                    "ip_address_size or host_validate_size arguments, "
-                    "they are used to set the encode_host_size instead "
-                    "and will be removed in the future",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
             if size is None:
                 encode_host_size = None
-                continue
-            if encode_host_size is None:
-                continue
-            if size is _SENTINEL:
-                encode_host_size = max(_DEFAULT_ENCODE_SIZE, encode_host_size)
-                continue
-            if TYPE_CHECKING:
-                assert not isinstance(size, object)
-            if size > encode_host_size:
-                encode_host_size = size
+            elif encode_host_size is _SENTINEL:
+                if size is not _SENTINEL:
+                    encode_host_size = size
+            elif size is not _SENTINEL:
+                if TYPE_CHECKING:
+                    assert isinstance(size, int)
+                    assert isinstance(encode_host_size, int)
+                encode_host_size = max(size, encode_host_size)
+        if encode_host_size is _SENTINEL:
+            encode_host_size = _DEFAULT_ENCODE_SIZE
 
     if TYPE_CHECKING:
         assert not isinstance(encode_host_size, object)
