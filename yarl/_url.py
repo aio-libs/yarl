@@ -476,6 +476,19 @@ class URL:
         return self._make_child((str(name),))
 
     def __sub__(self, other: object) -> "URL":
+        """Return a new URL with a relative path between two other URL objects.
+
+        Note that both URLs must have the same scheme and netloc.
+        The new relative URL has only path:
+        scheme, user, password, host, port, query and fragment are removed.
+
+        Example:
+        >>> target = URL("http://example.com/path/index.html")
+        >>> base = URL("http://example.com/")
+        >>> target - base
+        URL('path/index.html')
+        """
+
         if type(other) is not URL:
             return NotImplemented
 
