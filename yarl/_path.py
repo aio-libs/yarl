@@ -1,5 +1,7 @@
 """Utilities for working with paths."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from contextlib import suppress
 

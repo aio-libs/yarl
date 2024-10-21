@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import codecs
 import re
 from string import ascii_letters, ascii_lowercase, digits

@@ -1,9 +1,10 @@
 """URL parsing utilities."""
 
+from __future__ import annotations
+
 import re
 import unicodedata
 from functools import lru_cache
-from typing import Union
 from urllib.parse import SplitResult, scheme_chars, uses_netloc
 
 from ._quoters import QUOTER
@@ -107,11 +108,11 @@ def _check_netloc(netloc: str) -> None:
 @lru_cache  # match the same size as urlsplit
 def split_netloc(
     netloc: str,
-) -> tuple[Union[str, None], Union[str, None], Union[str, None], Union[int, None]]:
+) -> tuple[str | None, str | None, str | None, int | None]:
     """Split netloc into username, password, host and port."""
     if "@" not in netloc:
-        username: Union[str, None] = None
-        password: Union[str, None] = None
+        username: str | None = None
+        password: str | None = None
         hostinfo = netloc
     else:
         userinfo, _, hostinfo = netloc.rpartition("@")
@@ -156,10 +157,10 @@ def unsplit_result(
 
 @lru_cache  # match the same size as urlsplit
 def make_netloc(
-    user: Union[str, None],
-    password: Union[str, None],
-    host: Union[str, None],
-    port: Union[int, None],
+    user: str | None,
+    password: str | None,
+    host: str | None,
+    port: int | None,
     encode: bool = False,
 ) -> str:
     """Make netloc from parts.

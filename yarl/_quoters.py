@@ -1,6 +1,7 @@
 """Quoting and unquoting utilities for URL parts."""
 
-from typing import Union
+from __future__ import annotations
+
 from urllib.parse import quote
 
 from ._quoting import _Quoter, _Unquoter
@@ -21,7 +22,7 @@ PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%", unsafe="+")
 QS_UNQUOTER = _Unquoter(qs=True)
 
 
-def human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
+def human_quote(s: str | None, unsafe: str) -> str | None:
     if not s:
         return s
     for c in "%" + unsafe:
