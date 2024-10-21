@@ -2,16 +2,16 @@
 
 import math
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, SupportsInt, Tuple, Union
+from typing import TYPE_CHECKING, Any, SupportsInt, Union
 
 from multidict import istr
 
 from ._quoters import QUERY_PART_QUOTER, QUERY_QUOTER
 
 SimpleQuery = Union[str, int, float]
-QueryVariable = Union[SimpleQuery, "Sequence[SimpleQuery]"]
+QueryVariable = Union[SimpleQuery, Sequence[SimpleQuery]]
 Query = Union[
-    None, str, "Mapping[str, QueryVariable]", "Sequence[Tuple[str, QueryVariable]]"
+    None, str, Mapping[str, QueryVariable], Sequence[tuple[str, QueryVariable]]
 ]
 
 
