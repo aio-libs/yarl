@@ -280,6 +280,7 @@ def test_build_already_encoded_username_password():
         encoded=True,
     )
     assert str(u) == "http://u:p@x.org/x/y/z?x=z#any"
+    assert u.host_subcomponent == "x.org"
 
 
 def test_build_already_encoded_empty_host():
@@ -291,6 +292,7 @@ def test_build_already_encoded_empty_host():
         encoded=True,
     )
     assert str(u) == "/x/y/z?x=z#any"
+    assert u.host_subcomponent is None
 
 
 def test_build_percent_encoded():
