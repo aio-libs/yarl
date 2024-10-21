@@ -1058,10 +1058,8 @@ global LRU cache.
       :options: +SKIP
 
       >>> yarl.cache_info()
-      {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=512, currsize=5),
-       'idna_decode': CacheInfo(hits=24, misses=15, maxsize=512, currsize=15),
-       'ip_address': CacheInfo(hits=46933, misses=84, maxsize=512, currsize=101),
-       'host_validate': CacheInfo(hits=0, misses=0, maxsize=512, currsize=0),
+      {'idna_encode': CacheInfo(hits=5, misses=5, maxsize=256, currsize=5),
+       'idna_decode': CacheInfo(hits=24, misses=15, maxsize=256, currsize=15),
        'encode_host': CacheInfo(hits=0, misses=0, maxsize=512, currsize=0)}
 
    .. versionchanged:: 1.16
@@ -1069,10 +1067,10 @@ global LRU cache.
       ``ip_address``, and ``host_validate``
       are deprecated in favor of a single ``encode_host`` cache.
 
-.. function:: cache_configure(*, idna_encode_size=512, idna_decode_size=512, ip_address_size=512, host_validate_size=512, encode_host=512)
+.. function:: cache_configure(*, idna_encode_size=256, idna_decode_size=256, encode_host=512)
 
    Set the IP Address, host validation, and IDNA encode, host encode and
-   decode cache sizes (``512`` for each by default).
+   decode cache sizes.
 
    Pass ``None`` to make the corresponding cache unbounded (may speed up host encoding
    operation a little but the memory footprint can be very high,

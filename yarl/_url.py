@@ -1666,10 +1666,11 @@ def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
     return "".join(c if c.isprintable() else quote(c) for c in s)
 
 
-_MAXCACHE = 256
+_DEFAULT_IDNA_SIZE = 256
+_DEFAULT_ENCODE_SIZE = 512
 
 
-@lru_cache(_MAXCACHE)
+@lru_cache(_DEFAULT_IDNA_SIZE)
 def _idna_decode(raw: str) -> str:
     try:
         return idna.decode(raw.encode("ascii"))
@@ -1677,7 +1678,7 @@ def _idna_decode(raw: str) -> str:
         return raw.encode("ascii").decode("idna")
 
 
-@lru_cache(_MAXCACHE)
+@lru_cache(_DEFAULT_IDNA_SIZE)
 def _idna_encode(host: str) -> str:
     try:
         return idna.encode(host.lower(), uts46=True).decode("ascii")
@@ -1685,7 +1686,7 @@ def _idna_encode(host: str) -> str:
         return host.encode("idna").decode("ascii")
 
 
-@lru_cache(_MAXCACHE)
+@lru_cache(_DEFAULT_ENCODE_SIZE)
 def _encode_host(host: str, validate_host: bool) -> str:
     """Encode host part of URL."""
     # If the host ends with a digit or contains a colon, its likely
@@ -1768,11 +1769,11 @@ _SENTINEL = object()
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Union[int, None, object] = _SENTINEL,
-    idna_decode_size: Union[int, None] = _MAXCACHE,
+    idna_encode_size: Union[int, None, object] = _DEFAULT_IDNA_SIZE,
+    idna_decode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
     ip_address_size: Union[int, None, object] = _SENTINEL,
     host_validate_size: Union[int, None, object] = _SENTINEL,
-    encode_host_size: Union[int, None] = _MAXCACHE,
+    encode_host_size: Union[int, None] = _DEFAULT_ENCODE_SIZE,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _encode_host
@@ -1793,7 +1794,7 @@ def cache_configure(
                 encode_host_size = None
                 break
             elif size is _SENTINEL:
-                size = _MAXCACHE
+                size = _DEFAULT_ENCODE_SIZE
             if TYPE_CHECKING:
                 assert isinstance(size, int)
             if size > encode_host_size:
