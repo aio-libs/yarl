@@ -1064,19 +1064,12 @@ global LRU cache.
        'host_validate': CacheInfo(hits=0, misses=0, maxsize=512, currsize=0),
        'encode_host': CacheInfo(hits=0, misses=0, maxsize=512, currsize=0)}
 
-   :: versionchanged:: 1.16
+   .. versionchanged:: 1.16
 
       ``idna_encode``, ``ip_address``, and ``host_validate``
       are deprecated in favor of a single ``encode_host`` cache.
 
-.. function:: cache_configure(
-      *,
-      idna_encode_size=512,
-      idna_decode_size=512,
-      ip_address_size=512,
-      host_validate_size=512,
-      encode_host=512
-   )
+.. function:: cache_configure(*, idna_encode_size=512, idna_decode_size=512, ip_address_size=512, host_validate_size=512, encode_host=512)
 
    Set the IP Address, host validation, and IDNA encode, host encode and
    decode cache sizes (``512`` for each by default).
@@ -1085,7 +1078,7 @@ global LRU cache.
    operation a little but the memory footprint can be very high,
    please use with caution).
 
-   :: versionchanged:: 1.16
+   .. versionchanged:: 1.16
 
       ``idna_encode_size``, ``ip_address_size``, and ``host_validate_size``
       are deprecated in favor of a single ``encode_host`` cache.
