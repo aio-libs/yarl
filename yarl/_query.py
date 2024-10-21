@@ -1,5 +1,7 @@
 """Query string handling."""
 
+from __future__ import annotations
+
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, SupportsInt, Union
@@ -42,7 +44,7 @@ def query_var(v: QueryVariable) -> str:
 
 
 def get_str_query_from_sequence_iterable(
-    items: Iterable[tuple[Union[str, istr], QueryVariable]],
+    items: Iterable[tuple[str | istr, QueryVariable]],
 ) -> str:
     """Return a query string from a sequence of (key, value) pairs.
 
@@ -61,9 +63,7 @@ def get_str_query_from_sequence_iterable(
     return "&".join(pairs)
 
 
-def get_str_query_from_iterable(
-    items: Iterable[tuple[Union[str, istr], SimpleQuery]]
-) -> str:
+def get_str_query_from_iterable(items: Iterable[tuple[str | istr, SimpleQuery]]) -> str:
     """Return a query string from an iterable.
 
     The iterable must contain (key, value) pairs.
@@ -80,9 +80,9 @@ def get_str_query_from_iterable(
     return "&".join(pairs)
 
 
-def get_str_query(*args: Any, **kwargs: Any) -> Union[str, None]:
+def get_str_query(*args: Any, **kwargs: Any) -> str | None:
     """Return a query string from supported args."""
-    query: Union[str, Mapping[str, QueryVariable], None]
+    query: str | Mapping[str, QueryVariable] | None
     if kwargs:
         if args:
             msg = "Either kwargs or single query parameter must be present"
