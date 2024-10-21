@@ -6,24 +6,8 @@ from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from os.path import dirname, relpath
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    SupportsInt,
-    Tuple,
-    TypedDict,
-    TypeVar,
-    Union,
-    overload,
-)
-from urllib.parse import (
-    SplitResult,
-    parse_qsl,
-    quote,
-    scheme_chars,
-    uses_netloc,
-    uses_relative,
-)
+from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
+from urllib.parse import SplitResult, parse_qsl, quote, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
