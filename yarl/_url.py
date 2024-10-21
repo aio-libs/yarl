@@ -6,7 +6,7 @@ from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
-from urllib.parse import SplitResult, parse_qsl, quote, uses_relative
+from urllib.parse import SplitResult, parse_qsl, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -34,6 +34,7 @@ from ._quoters import (
     QUOTER,
     REQUOTER,
     UNQUOTER,
+    human_quote,
 )
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
@@ -1334,34 +1335,23 @@ class URL:
 
     def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
-        user = _human_quote(self.user, "#/:?@[]")
-        password = _human_quote(self.password, "#/:?@[]")
+        user = human_quote(self.user, "#/:?@[]")
+        password = human_quote(self.password, "#/:?@[]")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
-        path = _human_quote(self.path, "#?")
+        path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
         query_string = "&".join(
-            "{}={}".format(_human_quote(k, "#&+;="), _human_quote(v, "#&+;="))
+            "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()
         )
-        fragment = _human_quote(self.fragment, "")
+        fragment = human_quote(self.fragment, "")
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
         scheme = self._val.scheme
         return unsplit_result(scheme, netloc, path, query_string, fragment)
-
-
-def _human_quote(s: Union[str, None], unsafe: str) -> Union[str, None]:
-    if not s:
-        return s
-    for c in "%" + unsafe:
-        if c in s:
-            s = s.replace(c, f"%{ord(c):02X}")
-    if s.isprintable():
-        return s
-    return "".join(c if c.isprintable() else quote(c) for c in s)
 
 
 _DEFAULT_IDNA_SIZE = 256
