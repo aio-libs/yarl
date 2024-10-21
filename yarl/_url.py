@@ -1,22 +1,12 @@
-import math
 import re
 import sys
 import unicodedata
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    SupportsInt,
-    Tuple,
-    TypedDict,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
 from urllib.parse import (
     SplitResult,
     parse_qsl,
@@ -27,9 +17,17 @@ from urllib.parse import (
 )
 
 import idna
-from multidict import MultiDict, MultiDictProxy, istr
+from multidict import MultiDict, MultiDictProxy
 from propcache.api import under_cached_property as cached_property
 
+from ._query import (
+    Query,
+    QueryVariable,
+    SimpleQuery,
+    get_str_query,
+    get_str_query_from_iterable,
+    get_str_query_from_sequence_iterable,
+)
 from ._quoters import (
     FRAGMENT_QUOTER,
     FRAGMENT_REQUOTER,
@@ -38,7 +36,6 @@ from ._quoters import (
     PATH_SAFE_UNQUOTER,
     PATH_UNQUOTER,
     QS_UNQUOTER,
-    QUERY_PART_QUOTER,
     QUERY_QUOTER,
     QUERY_REQUOTER,
     QUOTER,
@@ -80,11 +77,6 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
-SimpleQuery = Union[str, int, float]
-QueryVariable = Union[SimpleQuery, "Sequence[SimpleQuery]"]
-Query = Union[
-    None, str, "Mapping[str, QueryVariable]", "Sequence[Tuple[str, QueryVariable]]"
-]
 _T = TypeVar("_T")
 
 if sys.version_info >= (3, 11):
@@ -350,31 +342,6 @@ def _make_netloc(
     return f"{user}@{ret}" if user else ret
 
 
-def _query_var(v: QueryVariable) -> str:
-    cls = type(v)
-    if cls is int:  # Fast path for non-subclassed int
-        return str(v)
-    if issubclass(cls, str):
-        if TYPE_CHECKING:
-            assert isinstance(v, str)
-        return v
-    if cls is float or issubclass(cls, float):
-        if TYPE_CHECKING:
-            assert isinstance(v, float)
-        if math.isinf(v):
-            raise ValueError("float('inf') is not supported")
-        if math.isnan(v):
-            raise ValueError("float('nan') is not supported")
-        return str(float(v))
-    if cls is not bool and isinstance(cls, SupportsInt):
-        return str(int(v))
-    raise TypeError(
-        "Invalid variable type: value "
-        "should be str, int or float, got {!r} "
-        "of type {}".format(v, cls)
-    )
-
-
 def _raise_for_authority_missing_abs_path() -> None:
     """Raise when he path in URL with authority starts lacks a leading slash."""
     msg = "Path in a URL with authority should start with a slash ('/') if set"
@@ -636,7 +603,7 @@ class URL:
             fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
 
         if query:
-            query_string = cls._get_str_query(query) or ""
+            query_string = get_str_query(query) or ""
 
         url = object.__new__(cls)
         # Constructing the tuple directly to avoid the overhead of the lambda and
@@ -1304,84 +1271,6 @@ class URL:
             path = f"/{path}"
         return self._from_tup((scheme, netloc, path, "", ""))
 
-    @classmethod
-    def _get_str_query_from_sequence_iterable(
-        cls,
-        items: Iterable[tuple[Union[str, istr], QueryVariable]],
-    ) -> str:
-        """Return a query string from a sequence of (key, value) pairs.
-
-        value is a single value or a sequence of values for the key
-
-        The sequence of values must be a list or tuple.
-        """
-        quoter = QUERY_PART_QUOTER
-        pairs = [
-            f"{quoter(k)}={quoter(v if type(v) is str else _query_var(v))}"
-            for k, val in items
-            for v in (
-                val
-                if type(val) is not str and isinstance(val, (list, tuple))
-                else (val,)
-            )
-        ]
-        return "&".join(pairs)
-
-    @classmethod
-    def _get_str_query_from_iterable(
-        cls, items: Iterable[tuple[Union[str, istr], SimpleQuery]]
-    ) -> str:
-        """Return a query string from an iterable.
-
-        The iterable must contain (key, value) pairs.
-
-        The values are not allowed to be sequences, only single values are
-        allowed. For sequences, use `_get_str_query_from_sequence_iterable`.
-        """
-        quoter = QUERY_PART_QUOTER
-        # A listcomp is used since listcomps are inlined on CPython 3.12+ and
-        # they are a bit faster than a generator expression.
-        pairs = [
-            f"{quoter(k)}={quoter(v if type(v) is str else _query_var(v))}"
-            for k, v in items
-        ]
-        return "&".join(pairs)
-
-    @classmethod
-    def _get_str_query(cls, *args: Any, **kwargs: Any) -> Union[str, None]:
-        query: Union[str, Mapping[str, QueryVariable], None]
-        if kwargs:
-            if args:
-                msg = "Either kwargs or single query parameter must be present"
-                raise ValueError(msg)
-            query = kwargs
-        elif len(args) == 1:
-            query = args[0]
-        else:
-            raise ValueError("Either kwargs or single query parameter must be present")
-
-        if query is None:
-            return None
-        if not query:
-            return ""
-        if isinstance(query, Mapping):
-            return cls._get_str_query_from_sequence_iterable(query.items())
-        if isinstance(query, str):
-            return QUERY_QUOTER(query)
-        if isinstance(query, (bytes, bytearray, memoryview)):
-            msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
-            raise TypeError(msg)
-        if isinstance(query, Sequence):
-            # We don't expect sequence values if we're given a list of pairs
-            # already; only mappings like builtin `dict` which can't have the
-            # same key pointing to multiple values are allowed to use
-            # `_query_seq_pairs`.
-            return cls._get_str_query_from_iterable(query)
-        raise TypeError(
-            "Invalid query type: only str, mapping or "
-            "sequence of (key, value) pairs is allowed"
-        )
-
     @overload
     def with_query(self, query: Query) -> "URL": ...
 
@@ -1402,7 +1291,7 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        query = self._get_str_query(*args, **kwargs) or ""
+        query = get_str_query(*args, **kwargs) or ""
         scheme, netloc, path, _, fragment = self._val
         return self._from_tup((scheme, netloc, path, query, fragment))
 
@@ -1422,7 +1311,7 @@ class URL:
         >>> url.extend_query(a=3, c=4)
         URL('http://example.com/?a=1&b=2&a=3&c=4')
         """
-        if not (new_query := self._get_str_query(*args, **kwargs)):
+        if not (new_query := get_str_query(*args, **kwargs)):
             return self
         scheme, netloc, path, query, fragment = self._val
         if query:
@@ -1468,11 +1357,11 @@ class URL:
         elif isinstance(in_query, Mapping):
             qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
             qm.update(in_query)
-            query = self._get_str_query_from_sequence_iterable(qm.items())
+            query = get_str_query_from_sequence_iterable(qm.items())
         elif isinstance(in_query, str):
             qstr: MultiDict[str] = MultiDict(self._parsed_query)
             qstr.update(parse_qsl(in_query, keep_blank_values=True))
-            query = self._get_str_query_from_iterable(qstr.items())
+            query = get_str_query_from_iterable(qstr.items())
         elif isinstance(in_query, (bytes, bytearray, memoryview)):
             msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
             raise TypeError(msg)
@@ -1483,7 +1372,7 @@ class URL:
             # `_query_seq_pairs`.
             qs: MultiDict[SimpleQuery] = MultiDict(self._parsed_query)
             qs.update(in_query)
-            query = self._get_str_query_from_iterable(qs.items())
+            query = get_str_query_from_iterable(qs.items())
         else:
             raise TypeError(
                 "Invalid query type: only str, mapping or "
