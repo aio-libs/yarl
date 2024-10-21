@@ -1,3 +1,5 @@
+import pytest
+
 import yarl
 
 # Don't check the actual behavior but make sure that calls are allowed
@@ -28,17 +30,34 @@ def test_cache_configure_default() -> None:
 
 def test_cache_configure_None() -> None:
     yarl.cache_configure(
-        idna_encode_size=None,
         idna_decode_size=None,
-        ip_address_size=None,
-        host_validate_size=None,
+        encode_host_size=None,
     )
 
 
 def test_cache_configure_explicit() -> None:
     yarl.cache_configure(
-        idna_encode_size=128,
         idna_decode_size=128,
-        ip_address_size=128,
-        host_validate_size=128,
+        encode_host_size=128,
     )
+
+
+def test_cache_configure_waring() -> None:
+    msg = (
+        r"cache_configure\(\) no longer accepts idna_encode_size, ip_address_size, "
+        r"or host_validate_size arguments, they are used to set the "
+        r"encode_host_size instead and will be removed in the future"
+    )
+    with pytest.warns(DeprecationWarning, match=msg):
+        yarl.cache_configure(
+            idna_encode_size=1024,
+            idna_decode_size=1024,
+            ip_address_size=1024,
+            host_validate_size=1024,
+        )
+
+    assert yarl.cache_info()["encode_host"].maxsize == 1024
+    with pytest.warns(DeprecationWarning, match=msg):
+        yarl.cache_configure(host_validate_size=None)
+
+    assert yarl.cache_info()["encode_host"].maxsize is None

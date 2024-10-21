@@ -1774,10 +1774,7 @@ def cache_configure(
     # used, but are kept for backwards compatibility.
     if encode_host_size is not None:
         for size in (idna_encode_size, ip_address_size, host_validate_size):
-            if size is None:
-                encode_host_size = None
-                break
-            elif size is _SENTINEL:
+            if size is not _SENTINEL:
                 warnings.warn(
                     "cache_configure() no longer accepts idna_encode_size, "
                     "ip_address_size, or host_validate_size arguments, "
@@ -1786,6 +1783,10 @@ def cache_configure(
                     DeprecationWarning,
                     stacklevel=2,
                 )
+            if size is None:
+                encode_host_size = None
+                break
+            elif size is _SENTINEL:
                 size = _MAXCACHE
             if TYPE_CHECKING:
                 assert isinstance(size, int)
