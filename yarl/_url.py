@@ -121,12 +121,6 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
-def _raise_for_authority_missing_abs_path() -> None:
-    """Raise when he path in URL with authority starts lacks a leading slash."""
-    msg = "Path in a URL with authority should start with a slash ('/') if set"
-    raise ValueError(msg)
-
-
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -270,8 +264,6 @@ class URL:
                 if netloc:
                     if "." in path:
                         path = normalize_path(path)
-                    if path[0] != "/":
-                        _raise_for_authority_missing_abs_path()
 
             query = QUERY_REQUOTER(query) if query else query
             fragment = FRAGMENT_REQUOTER(fragment) if fragment else fragment
@@ -376,7 +368,11 @@ class URL:
                 if "." in path:
                     path = normalize_path(path)
                 if path[0] != "/":
-                    _raise_for_authority_missing_abs_path()
+                    msg = (
+                        "Path in a URL with authority should "
+                        "start with a slash ('/') if set"
+                    )
+                    raise ValueError(msg)
 
             query_string = QUERY_QUOTER(query_string) if query_string else query_string
             fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
