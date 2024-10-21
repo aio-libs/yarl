@@ -264,18 +264,25 @@ class URL:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            split_result, cache = encode_url(val)
+            pass
         elif type(val) is cls:
             return val
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
-            split_result = val
-            cache = {}
+            self = object.__new__(cls)
+            self._val = val
+            self._cache = {}
+            return self
         elif isinstance(val, str):
-            split_result, cache = encode_url(str(val))
+            val = str(val)
         else:
             raise TypeError("Constructor parameter should be str")
+        if not encoded:
+            split_result, cache = encode_url(val)
+        else:
+            cache = {}
+            split_result = tuple.__new__(SplitResult, split_url(val))
         self = object.__new__(cls)
         self._val = split_result
         self._cache = cache
