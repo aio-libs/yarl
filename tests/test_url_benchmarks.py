@@ -18,6 +18,7 @@ QUERY_URL_STR = "http://www.domain.tld?query=1&query=2&query=3&query=4&query=5"
 QUERY_URL = URL(QUERY_URL_STR)
 URL_WITH_PATH_STR = "http://www.domain.tld/req"
 URL_WITH_PATH = URL(URL_WITH_PATH_STR)
+URL_WITH_LONGER_PATH = URL("http://www.domain.tld/req/req/req")
 REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
@@ -584,3 +585,10 @@ def test_empty_query(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for url in urls:
             url.query
+
+
+def test_url_subtract(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_LONGER_PATH - URL_WITH_PATH
