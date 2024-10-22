@@ -14,6 +14,54 @@ Changelog
 
 .. towncrier release notes start
 
+1.16.0
+======
+
+*(2024-10-21)*
+
+
+Bug fixes
+---------
+
+- Fixed blocking I/O to load Python code when creating a new :class:`~yarl.URL` with non-ascii characters in the network location part -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1342`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Migrated to using a single cache for encoding hosts -- by :user:`bdraco`.
+
+  Passing ``ip_address_size`` and ``host_validate_size`` to :py:meth:`~yarl.cache_configure` is deprecated in favor of the new ``encode_host_size`` parameter and will be removed in a future release. For backwards compatibility, the old parameters affect the ``encode_host`` cache size.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1348`, :issue:`1357`, :issue:`1363`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of constructing :class:`~yarl.URL` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1336`.
+
+- Improved performance of calling :py:meth:`~yarl.URL.build` and constructing unencoded :class:`~yarl.URL` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1345`.
+
+- Reworked the internal encoding cache to improve performance on cache hit -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1369`.
+
+
+----
+
+
 1.15.5
 ======
 

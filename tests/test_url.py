@@ -118,9 +118,9 @@ def test_origin():
     assert URL("http://example.com:8888") == url.origin()
 
 
-def test_origin_is_self():
+def test_origin_is_equal_to_self():
     url = URL("http://example.com:8888")
-    assert url.origin() is url
+    assert url.origin() == url
 
 
 def test_origin_with_no_auth():
@@ -1784,7 +1784,7 @@ def test_str_for_empty_url():
 
 def test_parent_for_empty_url():
     url = URL()
-    assert url is url.parent
+    assert url == url.parent
 
 
 def test_parent_for_relative_url_with_child():
@@ -2022,6 +2022,19 @@ def test_split_result_non_decoded():
 def test_split_result_encoded():
     url = URL(SplitResult("http", "example.com", "path", "qs", "frag"), encoded=True)
     assert str(url) == "http://example.com/path?qs#frag"
+
+
+def test_str_encoded():
+    url = URL("http://example.com/path?qs#frag%2F%2D", encoded=True)
+    assert str(url) == "http://example.com/path?qs#frag%2F%2D"
+
+
+def test_subclassed_str_encoded():
+    class S(str):
+        """Subclass of str."""
+
+    url = URL(S("http://example.com/path?qs#frag%2F%2D"), encoded=True)
+    assert str(url) == "http://example.com/path?qs#frag%2F%2D"
 
 
 def test_human_repr():
