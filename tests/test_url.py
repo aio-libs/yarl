@@ -96,13 +96,16 @@ def test_sub_with_different_netlocs():
         URL("https://spam.com/") - URL("https://ham.com/")
 
 
-def test_sub_with_abs_and_rel_paths():
-    expected_error_msg = (
-        "It is forbidden to get the path between the absolute and relative paths "
-        "because it is impossible to get the current working directory."
-    )
+def test_sub_with_different_anchors():
+    expected_error_msg = "'path/to' and '/path' have different anchors"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("path/to") - URL("/path/from")
+
+
+def test_sub_with_two_dots_in_base():
+    expected_error_msg = "'..' segment in '/path/..' cannot be walked"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("path/to") - URL("/path/../from")
 
 
 def test_repr():

@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from contextlib import suppress
-from os.path import dirname, relpath
+from pathlib import PurePath
 
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
@@ -42,26 +42,29 @@ def normalize_path(path: str) -> str:
     return prefix + "/".join(normalize_path_segments(segments))
 
 
-def calculate_relative_path(path: str, start: str) -> str:
-    """A wrapper over os.path.relpath()"""
+def calculate_relative_path(target: str, base: str) -> str:
+    """Return the relative path between two other paths.
 
-    if not path:
-        path = "/"
-    if not start:
-        start = "/"
-    if not start.endswith("/"):
-        start = dirname(start)
+    If the operation is not possible, raise ValueError.
+    """
 
-    path_has_leading_slash = path.startswith("/")
-    start_has_leading_slash = start.startswith("/")
-    both_have_leading_slash = all((path_has_leading_slash, start_has_leading_slash))
-    none_have_leading_slash = all(
-        (not path_has_leading_slash, not start_has_leading_slash)
-    )
-    if not both_have_leading_slash and not none_have_leading_slash:
+    target = target or "/"
+    base = base or "/"
+
+    target_path = PurePath(target)
+    base_path = PurePath(base)
+
+    if not base.endswith("/"):
+        base_path = base_path.parent
+
+    for step, path in enumerate([base_path] + list(base_path.parents)):
+        if target_path.is_relative_to(path):
+            break
+        elif path.name == "..":
+            raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
+    else:
         raise ValueError(
-            "It is forbidden to get the path between the absolute and relative paths "
-            "because it is impossible to get the current working directory."
+            f"{str(target_path)!r} and {str(base_path)!r} have different anchors"
         )
-
-    return relpath(path, start)
+    parts = [".."] * step + list(target_path.parts)[len(path.parts) :]
+    return str(PurePath(*parts))
