@@ -1,5 +1,6 @@
 """Utilities for working with paths."""
 
+import sys
 from collections.abc import Sequence
 from contextlib import suppress
 from pathlib import PurePosixPath
@@ -56,6 +57,9 @@ def calculate_relative_path(target: str, base: str) -> str:
 
     if not base[-1] == "/":
         base_path = base_path.parent
+
+    if sys.version_info >= (3, 12):
+        return str(target_path.relative_to(base_path, walk_up=True))
 
     for step, path in enumerate((base_path, *base_path.parents)):
         if target_path.is_relative_to(path):
