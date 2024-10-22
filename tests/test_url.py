@@ -283,6 +283,11 @@ def test_invalid_idna_hyphen_encoding():
     assert url.host == "x-----xn1agdj.tld"
 
 
+def test_invalid_idna_a_label_encoding():
+    url = URL("http://xn--d.tld")
+    assert url.raw_host == "xn--d.tld"
+
+
 def test_raw_host_non_ascii():
     url = URL("http://оун-упа.укр")
     assert "xn----8sb1bdhvc.xn--j1amh" == url.raw_host
