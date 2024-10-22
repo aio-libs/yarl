@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from contextlib import suppress
-from pathlib import PurePath
+from pathlib import PurePosixPath
 
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
@@ -51,8 +51,8 @@ def calculate_relative_path(target: str, base: str) -> str:
     target = target or "/"
     base = base or "/"
 
-    target_path = PurePath(target)
-    base_path = PurePath(base)
+    target_path = PurePosixPath(target)
+    base_path = PurePosixPath(base)
 
     if not base.endswith("/"):
         base_path = base_path.parent
@@ -68,4 +68,4 @@ def calculate_relative_path(target: str, base: str) -> str:
         )
     offset = len(path.parts)
     parts = [".."] * step + list(target_path.parts)[offset:]
-    return str(PurePath(*parts))
+    return str(PurePosixPath(*parts))
