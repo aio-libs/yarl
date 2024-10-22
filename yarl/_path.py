@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from contextlib import suppress
+from itertools import chain
 from pathlib import PurePosixPath
 
 
@@ -57,9 +58,8 @@ def calculate_relative_path(target: str, base: str) -> str:
     if base[-1] != "/":
         base_path = base_path.parent
 
-    target_paths = {target_path, *target_path.parents}
-    for step, path in enumerate((base_path, *base_path.parents)):
-        if path in target_paths:
+    for step, path in enumerate(chain((base_path,), base_path.parents)):
+        if path == target_path or path in target_path.parents:
             break
         elif path.name == "..":
             raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
