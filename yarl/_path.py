@@ -57,8 +57,9 @@ def calculate_relative_path(target: str, base: str) -> str:
     if not base[-1] == "/":
         base_path = base_path.parent
 
+    target_paths = {target_path, *target_path.parents}
     for step, path in enumerate((base_path, *base_path.parents)):
-        if path == target_path or path in target_path.parents:
+        if path in target_paths:
             break
         elif path.name == "..":
             raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
