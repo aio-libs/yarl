@@ -592,3 +592,16 @@ def test_url_subtract(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             URL_WITH_LONGER_PATH - URL_WITH_PATH
+
+
+def test_url_host_port_subcomponent(benchmark: BenchmarkFixture) -> None:
+    cache_non_default = URL_WITH_NOT_DEFAULT_PORT._cache
+    cache = BASE_URL._cache
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            cache.pop("host_port_subcomponent", None)
+            cache_non_default.pop("host_port_subcomponent", None)
+            URL_WITH_NOT_DEFAULT_PORT.host_port_subcomponent
+            BASE_URL.host_port_subcomponent

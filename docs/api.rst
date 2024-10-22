@@ -208,6 +208,29 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    .. versionadded:: 1.13
 
+.. attribute:: URL.host_port_subcomponent
+
+   :rfc:`3986#section-3.2.2` host and :rfc:`3986#section-3.2.3` port subcomponent part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   Trailing dots are stripped from the host to ensure
+   this value can be used for an HTTP Host header.
+
+   The port is omitted if it is the default port for the scheme.
+
+   .. doctest::
+
+      >>> URL('http://хост.домен:81').host_port_subcomponent
+      'xn--n1agdj.xn--d1acufc:81'
+      >>> URL('https://[::1]:8443').host_port_subcomponent
+      '[::1]:8443'
+      >>> URL('http://example.com./').host_port_subcomponent
+      'example.com'
+      >>> URL('http://[::1]').host_port_subcomponent
+      '[::1]'
+
+   .. versionadded:: 1.17
+
 .. attribute:: URL.port
 
    *port* part of URL, with scheme-based fallback.
