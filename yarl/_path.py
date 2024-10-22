@@ -61,6 +61,7 @@ def calculate_relative_path(target: str, base: str) -> str:
     if sys.version_info >= (3, 12):
         return str(target_path.relative_to(base_path, walk_up=True))
 
+    # For Python 3.11 and below, we need to implement the walk_up logic ourselves
     for step, path in enumerate((base_path, *base_path.parents)):
         if target_path.is_relative_to(path):
             break
