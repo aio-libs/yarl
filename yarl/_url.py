@@ -93,6 +93,7 @@ class _InternalURLCache(TypedDict, total=False):
     raw_host: Union[str, None]
     host: Union[str, None]
     host_subcomponent: Union[str, None]
+    host_port_subcomponent: Union[str, None]
     port: Union[int, None]
     explicit_port: Union[int, None]
     raw_path: str
