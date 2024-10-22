@@ -493,15 +493,15 @@ class URL:
         if type(other) is not URL:
             return NotImplemented
 
-        target = self._val
-        base = other._val
+        target_scheme, target_netloc, target_path, _, _ = self._val
+        base_scheme, base_netloc, base_path, _, _ = other._val
 
-        if target.scheme != base.scheme:
+        if target_scheme != base_scheme:
             raise ValueError("Both URLs should have the same scheme")
-        if target.netloc != base.netloc:
+        if target_netloc != base_netloc:
             raise ValueError("Both URLs should have the same netloc")
 
-        path = calculate_relative_path(target.path, base.path)
+        path = calculate_relative_path(target_path, base_path)
         return self._from_tup(("", "", path, "", ""))
 
     def __mod__(self, query: Query) -> "URL":
