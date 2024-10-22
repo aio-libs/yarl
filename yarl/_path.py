@@ -66,5 +66,6 @@ def calculate_relative_path(target: str, base: str) -> str:
         raise ValueError(
             f"{str(target_path)!r} and {str(base_path)!r} have different anchors"
         )
-    parts = [".."] * step + list(target_path.parts)[len(path.parts) :]
+    offset = len(path.parts)
+    parts = [".."] * step + list(target_path.parts)[offset:]
     return str(PurePath(*parts))
