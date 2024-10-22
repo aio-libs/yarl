@@ -257,6 +257,7 @@ def test_host_subcomponent(host: str):
 @pytest.mark.parametrize(
     ("input", "result"),
     [
+        ("/", None),
         ("http://example.com", "example.com"),
         ("http://[::1]", "[::1]"),
         ("http://xn--gnter-4ya.com", "xn--gnter-4ya.com"),
