@@ -61,6 +61,53 @@ def test_str():
     assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
 
 
+@pytest.mark.parametrize(
+    ("target", "base", "expected"),
+    [
+        ("http://example.com/path/to", "http://example.com/", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
+        ("http://example.com/path", "http://example.com/path/to/", ".."),
+        ("http://example.com/", "http://example.com/", "."),
+        ("http://example.com", "http://example.com", "."),
+        ("http://example.com/", "http://example.com", "."),
+        ("http://example.com", "http://example.com/", "."),
+        ("//example.com", "//example.com", "."),
+        ("/path/to", "/spam/", "../path/to"),
+        ("path/to", "spam/", "../path/to"),
+        ("path/to", "spam", "path/to"),
+        ("..", ".", ".."),
+        (".", "..", "."),
+    ],
+)
+def test_sub(target: str, base: str, expected: str):
+    assert URL(target) - URL(base) == URL(expected)
+
+
+def test_sub_with_different_schemes():
+    expected_error_msg = "Both URLs should have the same scheme"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("http://example.com/") - URL("https://example.com/")
+
+
+def test_sub_with_different_netlocs():
+    expected_error_msg = "Both URLs should have the same netloc"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("https://spam.com/") - URL("https://ham.com/")
+
+
+def test_sub_with_different_anchors():
+    expected_error_msg = "'path/to' and '/path' have different anchors"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("path/to") - URL("/path/from")
+
+
+def test_sub_with_two_dots_in_base():
+    expected_error_msg = "'..' segment in '/path/..' cannot be walked"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("path/to") - URL("/path/../from")
+
+
 def test_repr():
     url = URL("http://example.com")
     assert "URL('http://example.com')" == repr(url)
