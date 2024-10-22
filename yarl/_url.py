@@ -12,7 +12,7 @@ from multidict import MultiDict, MultiDictProxy
 from propcache.api import under_cached_property as cached_property
 
 from ._parse import USES_AUTHORITY, make_netloc, split_netloc, split_url, unsplit_result
-from ._path import normalize_path, normalize_path_segments
+from ._path import calculate_relative_path, normalize_path, normalize_path_segments
 from ._query import (
     Query,
     QueryVariable,
@@ -475,6 +475,34 @@ class URL:
         if not isinstance(name, str):
             return NotImplemented
         return self._make_child((str(name),))
+
+    def __sub__(self, other: object) -> "URL":
+        """Return a new URL with a relative path between two other URL objects.
+
+        Note that both URLs must have the same scheme and netloc.
+        The new relative URL has only path:
+        scheme, user, password, host, port, query and fragment are removed.
+
+        Example:
+        >>> target = URL("http://example.com/path/index.html")
+        >>> base = URL("http://example.com/")
+        >>> target - base
+        URL('path/index.html')
+        """
+
+        if type(other) is not URL:
+            return NotImplemented
+
+        target = self._val
+        base = other._val
+
+        if target.scheme != base.scheme:
+            raise ValueError("Both URLs should have the same scheme")
+        if target.netloc != base.netloc:
+            raise ValueError("Both URLs should have the same netloc")
+
+        path = calculate_relative_path(target.path, base.path)
+        return self._from_tup(("", "", path, "", ""))
 
     def __mod__(self, query: Query) -> "URL":
         return self.update_query(query)
