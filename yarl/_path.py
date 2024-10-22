@@ -54,7 +54,7 @@ def calculate_relative_path(target: str, base: str) -> str:
     target_path = PurePosixPath(target)
     base_path = PurePosixPath(base)
 
-    if not base[-1] == "/":
+    if base[-1] != "/":
         base_path = base_path.parent
 
     target_paths = {target_path, *target_path.parents}
