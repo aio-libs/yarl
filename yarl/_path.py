@@ -54,10 +54,10 @@ def calculate_relative_path(target: str, base: str) -> str:
     target_path = PurePosixPath(target)
     base_path = PurePosixPath(base)
 
-    if not base.endswith("/"):
+    if not base[-1] == "/":
         base_path = base_path.parent
 
-    for step, path in enumerate([base_path] + list(base_path.parents)):
+    for step, path in enumerate((base_path, *base_path.parents)):
         if target_path.is_relative_to(path):
             break
         elif path.name == "..":
