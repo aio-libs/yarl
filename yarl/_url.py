@@ -706,6 +706,44 @@ class URL:
         return f"[{raw}]" if ":" in raw else raw
 
     @cached_property
+    def host_port_subcomponent(self) -> Union[str, None]:
+        """Return the host and port subcomponent part of URL.
+
+        Trailing dots are removed from the host part.
+
+        This value is suitable for use in the Host header of an HTTP request.
+
+        None for relative URLs.
+
+        https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+        `IP-literal = "[" ( IPv6address / IPvFuture  ) "]"`
+        https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.3
+        port        = *DIGIT
+
+        Examples:
+        - `http://example.com:8080` -> `example.com:8080`
+        - `http://example.com:80` -> `example.com`
+        - `http://example.com.:80` -> `example.com`
+        - `https://127.0.0.1:8443` -> `127.0.0.1:8443`
+        - `https://[::1]:8443` -> `[::1]:8443`
+        - `http://[::1]` -> `[::1]`
+
+        """
+        if (raw := self.raw_host) is None:
+            return None
+        port = self.explicit_port
+        if raw[-1] == ".":
+            # Remove all trailing dots from the netloc as while
+            # they are valid FQDNs in DNS, TLS validation fails.
+            # See https://github.com/aio-libs/aiohttp/issues/3636.
+            # To avoid string manipulation we only call rstrip if
+            # the last character is a dot.
+            raw = raw.rstrip(".")
+        if port is None or port == self._default_port:
+            return f"[{raw}]" if ":" in raw else raw
+        return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
+
+    @cached_property
     def port(self) -> Union[int, None]:
         """Port part of URL, with scheme-based fallback.
 

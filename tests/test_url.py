@@ -207,6 +207,24 @@ def test_host_subcomponent(host: str):
     assert url.host_subcomponent == host
 
 
+@pytest.mark.parametrize(
+    ("input", "result"),
+    [
+        ("http://example.com", "example.com"),
+        ("http://[::1]", "[::1]"),
+        ("http://xn--gnter-4ya.com", "xn--gnter-4ya.com"),
+        ("http://example.com.", "example.com"),
+        ("https://example.com.", "example.com"),
+        ("http://example.com:80", "example.com"),
+        ("http://example.com:8080", "example.com:8080"),
+        ("http://[::1]:8080", "[::1]:8080"),
+    ],
+)
+def test_host_port_subcomponent(input: str, result: str):
+    url = URL(input)
+    assert url.host_port_subcomponent == result
+
+
 def test_host_subcomponent_return_idna_encoded_host():
     url = URL("http://оун-упа.укр")
     assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
