@@ -66,6 +66,18 @@ def test_str():
     [
         ("http://example.com/path/to", "http://example.com/", "path/to"),
         ("http://example.com/path/to", "http://example.com/spam", "path/to"),
+        (
+            "http://example.com/////path/////to",
+            "http://example.com/////spam",
+            "path/to",
+        ),
+        ("http://example.com/this/is/a/test", "http://example.com/this/", "is/a/test"),
+        (
+            "http://example.com/this/./is/a/test",
+            "http://example.com/this/",
+            "is/a/test",
+        ),
+        ("http://example.com/this/is/../a//test", "http://example.com/this/", "a/test"),
         ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
         ("http://example.com/path", "http://example.com/path/to/", ".."),
         ("http://example.com/", "http://example.com/", "."),
