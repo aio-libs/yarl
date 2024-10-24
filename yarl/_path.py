@@ -63,12 +63,27 @@ def calculate_relative_path(target: str, base: str) -> str:
     for step, path in enumerate(chain((base_path,), base_path.parents)):
         if path == target_path:
             break
-        if target_path_parents is None:
-            target_path_parents = list(target_path.parents)
-        if path in target_path_parents:
-            break
-        elif path.name == "..":
-            raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
+        # If the target_path_parents is already build use the quick path
+        if target_path_parents is not None:
+            if path in target_path_parents:
+                break
+            elif path.name == "..":
+                raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
+            continue
+        target_path_parents = []
+        # We check one at a time because enumerating parents
+        # builds the value on demand, and we want to stop
+        # as soon as we find the common parent
+        for parent in target_path.parents:
+            if parent == base_path:
+                break
+            target_path_parents.append(parent)
+        else:
+            # If we didn't break, it means we didn't find a common parent
+            if path.name == "..":
+                raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
+            continue
+        break
     else:
         raise ValueError(
             f"{str(target_path)!r} and {str(base_path)!r} have different anchors"
