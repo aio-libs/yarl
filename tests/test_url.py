@@ -2,6 +2,8 @@ from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
 
 from yarl import URL
 
@@ -106,6 +108,21 @@ def test_sub_with_two_dots_in_base():
     expected_error_msg = r"^'..' segment in '/path/..' cannot be walked$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("path/to") - URL("/path/../from")
+
+
+absolute_path_strategy = st.from_regex(r"^(?:\/[a-zA-Z0-9_-]+)+$")
+
+
+@example("/0", "/0/0")
+@given(target_path=absolute_path_strategy, base_path=absolute_path_strategy)
+def test_sub_combined_with_join(target_path: str, base_path: str):
+    target = URL(target_path)
+    base = URL(base_path)
+    rel = target - base
+    expected = base.join(rel)
+    if expected.path[-1] == "/":
+        expected = expected.with_path(expected.path[:-1])
+    assert target == expected
 
 
 def test_repr():
