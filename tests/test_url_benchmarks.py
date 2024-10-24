@@ -24,6 +24,8 @@ QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
 QUERY_STRING = "x=y&z=1"
+URL_VERY_LONG_PATH = URL("http://www.domain.tld/" + "req/" * 100)
+URL_LONG_PATH = URL("http://www.domain.tld/" + "req/" * 30)
 
 
 class _SubClassedStr(str):
@@ -592,6 +594,13 @@ def test_url_subtract(benchmark: BenchmarkFixture) -> None:
     def _run() -> None:
         for _ in range(100):
             URL_WITH_LONGER_PATH - URL_WITH_PATH
+
+
+def test_url_subtract_long_urls(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_VERY_LONG_PATH - URL_LONG_PATH
 
 
 def test_url_host_port_subcomponent(benchmark: BenchmarkFixture) -> None:
