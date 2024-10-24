@@ -19,4 +19,4 @@ URLs can also be relative:
   >>> target - base
   URL('..')
 
--- by :user:`oleksbabieiev`.
+-- by :user:`oleksbabieiev`

@@ -2,6 +2,8 @@ from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
 import pytest
+from hypothesis import example, given
+from hypothesis import strategies as st
 
 from yarl import URL
 
@@ -97,27 +99,42 @@ def test_sub(target: str, base: str, expected: str):
 
 
 def test_sub_with_different_schemes():
-    expected_error_msg = "Both URLs should have the same scheme"
+    expected_error_msg = r"^Both URLs should have the same scheme$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("http://example.com/") - URL("https://example.com/")
 
 
 def test_sub_with_different_netlocs():
-    expected_error_msg = "Both URLs should have the same netloc"
+    expected_error_msg = r"^Both URLs should have the same netloc$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("https://spam.com/") - URL("https://ham.com/")
 
 
 def test_sub_with_different_anchors():
-    expected_error_msg = "'path/to' and '/path' have different anchors"
+    expected_error_msg = r"^'path/to' and '/path' have different anchors$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("path/to") - URL("/path/from")
 
 
 def test_sub_with_two_dots_in_base():
-    expected_error_msg = "'..' segment in '/path/..' cannot be walked"
+    expected_error_msg = r"^'..' segment in '/path/..' cannot be walked$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("path/to") - URL("/path/../from")
+
+
+absolute_path_strategy = st.from_regex(r"^(?:\/[a-zA-Z0-9_-]+)+$")
+
+
+@example("/0", "/0/0")
+@given(target_path=absolute_path_strategy, base_path=absolute_path_strategy)
+def test_sub_combined_with_join(target_path: str, base_path: str):
+    target = URL(target_path)
+    base = URL(base_path)
+    rel = target - base
+    expected = base.join(rel)
+    if expected.path[-1] == "/":
+        expected = expected.with_path(expected.path[:-1])
+    assert target == expected
 
 
 def test_repr():
