@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from contextlib import suppress
 from itertools import chain
 from pathlib import PurePosixPath
+from typing import Union
 
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
@@ -58,8 +59,13 @@ def calculate_relative_path(target: str, base: str) -> str:
     if base[-1] != "/":
         base_path = base_path.parent
 
+    target_path_parents: Union[list[PurePosixPath], None] = None
     for step, path in enumerate(chain((base_path,), base_path.parents)):
-        if path == target_path or path in target_path.parents:
+        if path == target_path:
+            break
+        if target_path_parents is None:
+            target_path_parents = list(target_path.parents)
+        if path in target_path_parents:
             break
         elif path.name == "..":
             raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
