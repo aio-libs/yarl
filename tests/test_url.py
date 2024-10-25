@@ -93,9 +93,7 @@ def test_str():
     ],
 )
 def test_sub(target: str, base: str, expected: str):
-    expected_result = URL(expected)
-    result = URL(target) - URL(base)
-    assert result == expected_result
+    assert URL(target) - URL(base) == URL(expected)
 
 
 def test_sub_with_different_schemes():
