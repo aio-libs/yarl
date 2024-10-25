@@ -43,13 +43,20 @@ def normalize_path(path: str) -> str:
     return prefix + "/".join(normalize_path_segments(segments))
 
 
-class _URLPath:
+class URLPath:
 
     __slots__ = ("_tail", "_root", "path")
 
-    _tail: list[str]
-    _root: str
-    path: str
+    def __init__(self, path: str, strip_tail: bool = False) -> None:
+        """Initialize a URLPath object."""
+        tail = [x for x in path.split("/") if x and x != "."]
+        if strip_tail:
+            if path[-1] != "/" and tail:
+                tail.pop()
+        root = "/" if path[0] == "/" else ""
+        self.path = (root + "/".join(tail)) or "."
+        self._tail = tail
+        self._root = root
 
     @property
     def name(self) -> str:
@@ -66,39 +73,17 @@ class _URLPath:
         """Return the parts of the path."""
         return [self._root, *self._tail] if self._root else self._tail
 
-    def parents(self) -> Generator["URLParentPath", None, None]:
+    def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
         root = self._root
         tail = self._tail
         for i in range(len(tail) - 1, -1, -1):
-            yield URLParentPath(root, tail[:i])
-
-
-class URLParentPath(_URLPath):
-
-    __slots__ = ()
-
-    def __init__(self, root: str, tail: list[str]) -> None:
-        """Initialize a URLParentPath object."""
-        self.path = (root + "/".join(tail)) or "."
-        self._tail = tail
-        self._root = root
-
-
-class URLPath(_URLPath):
-
-    __slots__ = ()
-
-    def __init__(self, path: str, strip_tail: bool = False) -> None:
-        """Initialize a URLPath object."""
-        tail = [x for x in path.split("/") if x and x != "."]
-        if strip_tail:
-            if path[-1] != "/" and tail:
-                tail.pop()
-        root = "/" if path[0] == "/" else ""
-        self.path = (root + "/".join(tail)) or "."
-        self._tail = tail
-        self._root = root
+            parent_tail = tail[:i]
+            url_path = object.__new__(URLPath)
+            url_path.path = (root + "/".join(parent_tail)) or "."
+            url_path._tail = parent_tail
+            url_path._root = root
+            yield url_path
 
 
 def calculate_relative_path(target: str, base: str) -> str:
