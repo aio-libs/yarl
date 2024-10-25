@@ -80,6 +80,7 @@ def test_str():
         ("http://example.com/this/is/../a//test", "http://example.com/this/", "a/test"),
         ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
         ("http://example.com/path", "http://example.com/path/to/", ".."),
+        ("http://example.com/path", "http://example.com/other/../path/to/", ".."),
         ("http://example.com/", "http://example.com/", "."),
         ("http://example.com", "http://example.com", "."),
         ("http://example.com/", "http://example.com", "."),
@@ -87,13 +88,19 @@ def test_str():
         ("//example.com", "//example.com", "."),
         ("/path/to", "/spam/", "../path/to"),
         ("path/to", "spam/", "../path/to"),
+        ("path/../to", "path/", "../to"),
+        ("path/..", ".", "path/.."),
+        ("path/../replace/me", "path/../replace", "replace/me"),
+        ("path/../replace/me", "path/../replace/", "me"),
         ("path/to", "spam", "path/to"),
         ("..", ".", ".."),
         (".", "..", "."),
     ],
 )
 def test_sub(target: str, base: str, expected: str):
-    assert URL(target) - URL(base) == URL(expected)
+    expected_url = URL(expected)
+    result_url = URL(target) - URL(base)
+    assert result_url == expected_url
 
 
 def test_sub_with_different_schemes():
