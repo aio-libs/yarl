@@ -502,6 +502,11 @@ class URL:
         if target_netloc != base_netloc:
             raise ValueError("Both URLs should have the same netloc")
 
+        if target_netloc and not target_path:
+            target_path = "/"
+        if base_netloc and not base_path:
+            base_path = "/"
+
         path = calculate_relative_path(target_path, base_path)
         return self._from_tup(("", "", path, "", ""))
 

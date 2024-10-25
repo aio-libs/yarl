@@ -80,8 +80,8 @@ def calculate_relative_path(target: str, base: str) -> str:
 
     If the operation is not possible, raise ValueError.
     """
-    target_path = URLPath(target or "/")
-    base_path = URLPath(base or "/", strip_tail=True)
+    target_path = URLPath(target)
+    base_path = URLPath(base, strip_tail=True)
 
     target_path_parts: Union[set[str], None] = None
     target_path_path = target_path.path
