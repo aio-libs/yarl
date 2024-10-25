@@ -95,8 +95,9 @@ def calculate_relative_path(target: str, base: str) -> str:
     base_path = URLPath(base or "/", strip_tail=True)
 
     target_path_parts: Union[set[str], None] = None
+    target_path_path = target_path.path
     for step, base_walk in enumerate(chain((base_path,), base_path.parents())):
-        if base_walk.path == target_path.path:
+        if base_walk.path == target_path_path:
             break
         # If the target_path_parent_strs is already built use the quick path
         if target_path_parts is not None:
@@ -120,7 +121,7 @@ def calculate_relative_path(target: str, base: str) -> str:
             continue
         break
     else:
-        msg = f"{target_path.path!r} and {base_path.path!r} have different anchors"
+        msg = f"{target_path_path!r} and {base_path.path!r} have different anchors"
         raise ValueError(msg)
 
     return (
