@@ -1,11 +1,10 @@
 """Utilities for working with paths."""
 
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from contextlib import suppress
 from itertools import chain
 from pathlib import PurePosixPath
 from typing import Union
-from collections.abc import Generator
 
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
@@ -46,7 +45,6 @@ def normalize_path(path: str) -> str:
 
 
 class SimplePath:
-
     __slots__ = ("parts", "root", "trailer", "normalized")
 
     def __init__(self, path: str, strip_root: bool = False) -> None:
@@ -61,10 +59,20 @@ class SimplePath:
         self.trailer = "." if not path else ""
         self.normalized = self.root + "/".join(self.parts) or self.trailer
 
-    def parents(self) -> Generator[str, None, None]:
+    @property
+    def name(self) -> str:
+        """Return the last part of the path."""
+        return (self.parts[-1] if self.parts else "") or self.trailer
+
+    def parents(self) -> Generator["SimplePath", None, None]:
         """Return a list of parent paths for a given path."""
         for i in range(len(self.parts) - 1, -1, -1):
-            yield self.root + ("/".join(self.parts[:i]) or self.trailer)
+            parent = object.__new__(SimplePath)
+            parent.parts = self.parts[:i]
+            parent.root = self.root
+            parent.trailer = self.trailer
+            parent.normalized = self.root + ("/".join(parent.parts) or self.trailer)
+            yield parent
 
 
 def calculate_relative_path(target: str, base: str) -> str:
@@ -80,21 +88,14 @@ def calculate_relative_path(target: str, base: str) -> str:
     base_path = SimplePath(base, strip_root=True)
 
     target_path_parent_strs: Union[set[str], None] = None
-    for step, path_str in enumerate(
-        chain((base_path.normalized,), base_path.parents())
-    ):
-        if path_str == target_path.normalized:
+    for step, path in enumerate(chain((base_path,), base_path.parents())):
+        if path.normalized == target_path.normalized:
             break
         # If the target_path_parent_strs is already built use the quick path
         if target_path_parent_strs is not None:
-            if path_str in target_path_parent_strs:
+            if path.normalized in target_path_parent_strs:
                 break
-            elif (
-                path_str
-                and path_str[-1] == "."
-                and len(path_str) > 1
-                and path_str[-2] == "."
-            ):
+            elif path.name == "..":
                 raise ValueError(
                     f"'..' segment in {base_path.normalized!r} cannot be walked"
                 )
@@ -104,27 +105,24 @@ def calculate_relative_path(target: str, base: str) -> str:
         # builds the value on demand, and we want to stop
         # as soon as we find the common parent
         for parent in target_path.parents():
-            if parent == base_path.normalized:
+            if parent.normalized == base_path.normalized:
                 break
-            target_path_parent_strs.add(parent)
+            target_path_parent_strs.add(parent.normalized)
         else:
             # If we didn't break, it means we didn't find a common parent
-            if (
-                path_str
-                and path_str[-1] == "."
-                and len(path_str) > 1
-                and path_str[-2] == "."
-            ):
+            if path.name == "..":
                 raise ValueError(
                     f"'..' segment in {base_path.normalized!r} cannot be walked"
                 )
             continue
         break
     else:
-        raise ValueError(
-            f"{target_path.normalized!r} and {base_path.normalized!r} have different anchors"
+        msg = (
+            f"{target_path.normalized!r} and {base_path.normalized!r} "
+            "have different anchors"
         )
-    offset = len(PurePosixPath(path_str).parts)
+        raise ValueError(msg)
+    offset = len(PurePosixPath(path.normalized).parts)
     return str(
         PurePosixPath(
             *("..",) * step, *PurePosixPath(target_path.normalized).parts[offset:]
