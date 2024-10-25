@@ -64,11 +64,6 @@ class URLPath:
         self.path = "/".join(parts) or "."
         self.parts = parts
 
-    @property
-    def name(self) -> str:
-        """Return the last part of the path."""
-        return self.parts[-1] if self.parts else ""
-
     def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
         parts = self.parts
@@ -105,7 +100,7 @@ def calculate_relative_path(target: str, base: str) -> str:
         if target_path_parts is not None:
             if base_walk.path in target_path_parts:
                 break
-            elif base_walk.name == "..":
+            elif base_walk.parts[-1] == "..":
                 raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
         target_path_parts = set()
@@ -118,7 +113,7 @@ def calculate_relative_path(target: str, base: str) -> str:
             target_path_parts.add(target_parent.path)
         else:
             # If we didn't break, it means we didn't find a common parent
-            if base_walk.name == "..":
+            if base_walk.parts[-1] == "..":
                 raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
         break
