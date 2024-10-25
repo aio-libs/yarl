@@ -44,7 +44,7 @@ def normalize_path(path: str) -> str:
 
 
 class URLPath:
-    __slots__ = ("_tail", "_root", "_trailer", "path")
+    __slots__ = ("_tail", "_root", "path")
 
     def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
@@ -55,13 +55,12 @@ class URLPath:
                 self._tail.pop()
 
         self._root = "/" if path[0] == "/" else ""
-        self._trailer = "." if not path else ""
-        self.path = self._root + "/".join(self._tail) or self._trailer
+        self.path = (self._root + "/".join(self._tail)) or "."
 
     @property
     def name(self) -> str:
         """Return the last part of the path."""
-        return (self._tail[-1] if self._tail else "") or self._trailer
+        return self._tail[-1] if self._tail else ""
 
     @property
     def parts_count(self) -> int:
@@ -78,12 +77,13 @@ class URLPath:
 
     def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
+        root = self._root
+        tail = self._tail
         for i in range(len(self._tail) - 1, -1, -1):
             parent = object.__new__(URLPath)
-            parent._tail = self._tail[:i]
-            parent._root = self._root
-            parent._trailer = self._trailer
-            parent.path = self._root + ("/".join(parent._tail) or self._trailer)
+            parent._tail = tail[:i]
+            parent._root = root
+            parent.path = (root + "/".join(parent._tail)) or "."
             yield parent
 
 
