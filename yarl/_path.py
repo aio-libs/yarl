@@ -48,14 +48,15 @@ class URLPath:
 
     def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
-        self._tail = [x for x in path.split("/") if x and x != "."]
-
+        tail = [x for x in path.split("/") if x and x != "."]
         if strip_tail:
-            if path[-1] != "/" and self._tail:
-                self._tail.pop()
+            if path[-1] != "/" and tail:
+                tail.pop()
 
-        self._root = "/" if path[0] == "/" else ""
-        self.path = (self._root + "/".join(self._tail)) or "."
+        root = "/" if path[0] == "/" else ""
+        self.path = (root + "/".join(tail)) or "."
+        self._tail = tail
+        self._root = root
 
     @property
     def name(self) -> str:
@@ -68,12 +69,9 @@ class URLPath:
         return len(self._tail) + bool(self._root)
 
     @property
-    def parts(self):
-        """An object providing sequence-like access to the
-        components in the filesystem path."""
-        if self._root:
-            return (self._root,) + tuple(self._tail)
-        return tuple(self._tail)
+    def parts(self) -> list[str]:
+        """Return the parts of the path."""
+        return [self._root, *self._tail] if self._root else self._tail
 
     def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
