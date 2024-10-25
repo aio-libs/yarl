@@ -52,7 +52,6 @@ class URLPath:
         if strip_tail:
             if path[-1] != "/" and tail:
                 tail.pop()
-
         root = "/" if path[0] == "/" else ""
         self.path = (root + "/".join(tail)) or "."
         self._tail = tail
