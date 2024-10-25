@@ -18,14 +18,11 @@ QUERY_URL_STR = "http://www.domain.tld?query=1&query=2&query=3&query=4&query=5"
 QUERY_URL = URL(QUERY_URL_STR)
 URL_WITH_PATH_STR = "http://www.domain.tld/req"
 URL_WITH_PATH = URL(URL_WITH_PATH_STR)
-URL_WITH_LONGER_PATH = URL("http://www.domain.tld/req/req/req")
 REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
 QUERY_STRING = "x=y&z=1"
-URL_VERY_LONG_PATH = URL("http://www.domain.tld/" + "req/" * 100)
-URL_LONG_PATH = URL("http://www.domain.tld/" + "req/" * 30)
 
 
 class _SubClassedStr(str):
