@@ -44,6 +44,7 @@ def normalize_path(path: str) -> str:
 
 
 class URLPath:
+    """A class for working with URL paths."""
 
     __slots__ = ("_tail", "_root", "path")
 
