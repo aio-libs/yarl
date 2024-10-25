@@ -64,6 +64,11 @@ class SimplePath:
         """Return the last part of the path."""
         return (self._tail[-1] if self._tail else "") or self._trailer
 
+    @property
+    def parts_count(self) -> int:
+        """Return the number of parts in the path."""
+        return len(self._tail) + bool(self._root)
+
     def parents(self) -> Generator["SimplePath", None, None]:
         """Return a list of parent paths for a given path."""
         for i in range(len(self._tail) - 1, -1, -1):
@@ -122,7 +127,7 @@ def calculate_relative_path(target: str, base: str) -> str:
             "have different anchors"
         )
         raise ValueError(msg)
-    offset = len(PurePosixPath(path.normalized).parts)
+    offset = path.parts_count
     return str(
         PurePosixPath(
             *("..",) * step, *PurePosixPath(target_path.normalized).parts[offset:]
