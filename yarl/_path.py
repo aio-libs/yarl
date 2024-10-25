@@ -69,6 +69,14 @@ class SimplePath:
         """Return the number of parts in the path."""
         return len(self._tail) + bool(self._root)
 
+    @property
+    def parts(self):
+        """An object providing sequence-like access to the
+        components in the filesystem path."""
+        if self._root:
+            return (self._root,) + tuple(self._tail)
+        return tuple(self._tail)
+
     def parents(self) -> Generator["SimplePath", None, None]:
         """Return a list of parent paths for a given path."""
         for i in range(len(self._tail) - 1, -1, -1):
@@ -127,9 +135,6 @@ def calculate_relative_path(target: str, base: str) -> str:
             "have different anchors"
         )
         raise ValueError(msg)
+
     offset = path.parts_count
-    return str(
-        PurePosixPath(
-            *("..",) * step, *PurePosixPath(target_path.normalized).parts[offset:]
-        )
-    )
+    return str(PurePosixPath(*("..",) * step, *target_path.parts[offset:]))
