@@ -101,7 +101,7 @@ def calculate_relative_path(target: str, base: str) -> str:
     for step, base_walk in enumerate(chain((base_path,), base_path.parents())):
         if base_walk.path == target_path_path:
             break
-        # If the target_path_parent_strs is already built use the quick path
+        # If the target_path_parts is already built we can use a fast path
         if target_path_parts is not None:
             if base_walk.path in target_path_parts:
                 break
