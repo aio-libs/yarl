@@ -50,11 +50,27 @@ class URLPath:
 
     def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
-        tail = [x for x in path.split("/") if x and x != "."]
-        if strip_tail:
-            if path[-1] != "/" and tail:
-                tail.pop()
-        root = "/" if path[0] == "/" else ""
+        remove_tail = strip_tail and path and path[-1] != "/"
+
+        # Strip leading slash
+        if path and path[0] == "/":
+            root = "/"
+            path = path[1:]
+        else:
+            root = ""
+
+        # Strip trailing slash
+        if path and path[-1] == "/":
+            path = path[:-1]
+
+        if "." in path:
+            # Strip '.' segments
+            tail = [x for x in path.split("/") if x != "."]
+        else:
+            tail = path.split("/")
+
+        if remove_tail and tail:
+            tail.pop()
         self.path = (root + "/".join(tail)) or "."
         self._tail = tail
         self._root = root
