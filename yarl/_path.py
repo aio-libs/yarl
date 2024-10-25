@@ -86,9 +86,7 @@ def calculate_relative_path(target: str, base: str) -> str:
     target_path_parts: Union[set[str], None] = None
     target_path_path = target_path.path
 
-    target_path_is_absolute = target[0] == "/" if target else True
-    base_path_is_absolute = base[0] == "/" if base else True
-    if target_path_is_absolute != base_path_is_absolute:
+    if (target and target[0] == "/") != (base and base[0] == "/"):
         raise ValueError(
             f"{target_path_path!r} and {base_path.path!r} have different anchors"
         )
