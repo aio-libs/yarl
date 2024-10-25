@@ -46,7 +46,7 @@ def normalize_path(path: str) -> str:
 class URLPath:
     """A class for working with URL paths."""
 
-    __slots__ = ("_tail", "path")
+    __slots__ = ("parts", "path")
 
     def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
@@ -56,37 +56,27 @@ class URLPath:
             path = path[:-1]
         if "." in path:
             # Strip '.' segments
-            tail = [x for x in path.split("/") if x != "."]
+            parts = [x for x in path.split("/") if x != "."]
         else:
-            tail = path.split("/")
-        if remove_tail and tail:
-            tail.pop()
-        self.path = "/".join(tail) or "."
-        self._tail = tail
+            parts = path.split("/")
+        if remove_tail and parts:
+            parts.pop()
+        self.path = "/".join(parts) or "."
+        self.parts = parts
 
     @property
     def name(self) -> str:
         """Return the last part of the path."""
-        return self._tail[-1] if self._tail else ""
-
-    @property
-    def parts_count(self) -> int:
-        """Return the number of parts in the path."""
-        return len(self._tail)
-
-    @property
-    def parts(self) -> list[str]:
-        """Return the parts of the path."""
-        return self._tail
+        return self.parts[-1] if self.parts else ""
 
     def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
-        tail = self._tail
-        for i in range(len(tail) - 1, -1, -1):
-            parent_tail = tail[:i]
+        parts = self.parts
+        for i in range(len(parts) - 1, -1, -1):
+            parent_parts = parts[:i]
             url_path = object.__new__(URLPath)
-            url_path.path = "/".join(parent_tail) or "."
-            url_path._tail = parent_tail
+            url_path.path = "/".join(parent_parts) or "."
+            url_path.parts = parent_parts
             yield url_path
 
 
@@ -133,6 +123,5 @@ def calculate_relative_path(target: str, base: str) -> str:
             continue
         break
 
-    return (
-        "/".join((*("..",) * step, *target_path.parts[base_walk.parts_count :])) or "."
-    )
+    offset = len(base_walk.parts)
+    return "/".join((*("..",) * step, *target_path.parts[offset:])) or "."
