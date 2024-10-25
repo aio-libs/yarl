@@ -43,11 +43,11 @@ def normalize_path(path: str) -> str:
     return prefix + "/".join(normalize_path_segments(segments))
 
 
-class SimplePath:
+class URLPath:
     __slots__ = ("_tail", "_root", "_trailer", "normalized")
 
     def __init__(self, path: str, strip_root: bool = False) -> None:
-        """Initialize a SimplePath object."""
+        """Initialize a URLPath object."""
         self._tail = [x for x in path.split("/") if x and x != "."]
 
         if strip_root:
@@ -76,10 +76,10 @@ class SimplePath:
             return (self._root,) + tuple(self._tail)
         return tuple(self._tail)
 
-    def parents(self) -> Generator["SimplePath", None, None]:
+    def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
         for i in range(len(self._tail) - 1, -1, -1):
-            parent = object.__new__(SimplePath)
+            parent = object.__new__(URLPath)
             parent._tail = self._tail[:i]
             parent._root = self._root
             parent._trailer = self._trailer
@@ -96,8 +96,8 @@ def calculate_relative_path(target: str, base: str) -> str:
     target = target or "/"
     base = base or "/"
 
-    target_path = SimplePath(target)
-    base_path = SimplePath(base, strip_root=True)
+    target_path = URLPath(target)
+    base_path = URLPath(base, strip_root=True)
 
     target_path_parent_strs: Union[set[str], None] = None
     for step, path in enumerate(chain((base_path,), base_path.parents())):
