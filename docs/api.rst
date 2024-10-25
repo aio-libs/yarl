@@ -997,21 +997,6 @@ The path is encoded if needed.
          >>> base.join(URL('//python.org/page.html'))
          URL('http://python.org/page.html')
 
-The subtraction (``-``) operator creates a new URL with
-a relative *path* to the target URL from the given base URL.
-*scheme*, *user*, *password*, *host*, *port*, *query* and *fragment* are removed.
-
-.. method:: URL.__sub__(url)
-
-   Returns a new URL with a relative *path* between two other URL objects.
-
-   .. doctest::
-
-      >>> target = URL('http://example.com/path/index.html')
-      >>> base = URL('http://example.com/')
-      >>> target - base
-      URL('path/index.html')
-
 Human readable representation
 -----------------------------
 
