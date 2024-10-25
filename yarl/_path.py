@@ -46,12 +46,12 @@ def normalize_path(path: str) -> str:
 class URLPath:
     __slots__ = ("_tail", "_root", "_trailer", "normalized")
 
-    def __init__(self, path: str, strip_root: bool = False) -> None:
+    def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
         self._tail = [x for x in path.split("/") if x and x != "."]
 
-        if strip_root:
-            if path[-1] != "/" and len(self._tail) > 0:
+        if strip_tail:
+            if path[-1] != "/" and self._tail:
                 self._tail.pop()
 
         self._root = "/" if path[0] == "/" else ""
@@ -97,7 +97,7 @@ def calculate_relative_path(target: str, base: str) -> str:
     base = base or "/"
 
     target_path = URLPath(target)
-    base_path = URLPath(base, strip_root=True)
+    base_path = URLPath(base, strip_tail=True)
 
     target_path_parent_strs: Union[set[str], None] = None
     for step, path in enumerate(chain((base_path,), base_path.parents())):
