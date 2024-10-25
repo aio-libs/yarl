@@ -3,7 +3,6 @@
 from collections.abc import Generator, Sequence
 from contextlib import suppress
 from itertools import chain
-from pathlib import PurePosixPath
 from typing import Union
 
 
@@ -136,5 +135,4 @@ def calculate_relative_path(target: str, base: str) -> str:
         )
         raise ValueError(msg)
 
-    offset = path.parts_count
-    return str(PurePosixPath(*("..",) * step, *target_path.parts[offset:]))
+    return "/".join((*("..",) * step, *target_path.parts[path.parts_count :])) or "."
