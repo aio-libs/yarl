@@ -112,10 +112,10 @@ def calculate_relative_path(target: str, base: str) -> str:
         # We check one at a time because enumerating parents
         # builds the value on demand, and we want to stop
         # as soon as we find the common parent
-        for parent in target_path.parents():
-            if parent.path == base_path.path:
+        for target_parent in target_path.parents():
+            if target_parent.path == base_path.path:
                 break
-            target_path_parts.add(parent.path)
+            target_path_parts.add(target_parent.path)
         else:
             # If we didn't break, it means we didn't find a common parent
             if base_walk.name == "..":
