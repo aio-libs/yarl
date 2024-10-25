@@ -44,7 +44,7 @@ def normalize_path(path: str) -> str:
 
 
 class URLPath:
-    __slots__ = ("_tail", "_root", "_trailer", "normalized")
+    __slots__ = ("_tail", "_root", "_trailer", "path")
 
     def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
@@ -56,7 +56,7 @@ class URLPath:
 
         self._root = "/" if path[0] == "/" else ""
         self._trailer = "." if not path else ""
-        self.normalized = self._root + "/".join(self._tail) or self._trailer
+        self.path = self._root + "/".join(self._tail) or self._trailer
 
     @property
     def name(self) -> str:
@@ -83,7 +83,7 @@ class URLPath:
             parent._tail = self._tail[:i]
             parent._root = self._root
             parent._trailer = self._trailer
-            parent.normalized = self._root + ("/".join(parent._tail) or self._trailer)
+            parent.path = self._root + ("/".join(parent._tail) or self._trailer)
             yield parent
 
 
@@ -101,38 +101,31 @@ def calculate_relative_path(target: str, base: str) -> str:
 
     target_path_parent_strs: Union[set[str], None] = None
     for step, path in enumerate(chain((base_path,), base_path.parents())):
-        if path.normalized == target_path.normalized:
+        if path.path == target_path.path:
             break
         # If the target_path_parent_strs is already built use the quick path
         if target_path_parent_strs is not None:
-            if path.normalized in target_path_parent_strs:
+            if path.path in target_path_parent_strs:
                 break
             elif path.name == "..":
-                raise ValueError(
-                    f"'..' segment in {base_path.normalized!r} cannot be walked"
-                )
+                raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
         target_path_parent_strs = set()
         # We check one at a time because enumerating parents
         # builds the value on demand, and we want to stop
         # as soon as we find the common parent
         for parent in target_path.parents():
-            if parent.normalized == base_path.normalized:
+            if parent.path == base_path.path:
                 break
-            target_path_parent_strs.add(parent.normalized)
+            target_path_parent_strs.add(parent.path)
         else:
             # If we didn't break, it means we didn't find a common parent
             if path.name == "..":
-                raise ValueError(
-                    f"'..' segment in {base_path.normalized!r} cannot be walked"
-                )
+                raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
         break
     else:
-        msg = (
-            f"{target_path.normalized!r} and {base_path.normalized!r} "
-            "have different anchors"
-        )
+        msg = f"{target_path.path!r} and {base_path.path!r} have different anchors"
         raise ValueError(msg)
 
     return "/".join((*("..",) * step, *target_path.parts[path.parts_count :])) or "."
