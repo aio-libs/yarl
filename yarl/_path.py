@@ -45,33 +45,33 @@ def normalize_path(path: str) -> str:
 
 
 class SimplePath:
-    __slots__ = ("parts", "root", "trailer", "normalized")
+    __slots__ = ("_tail", "_root", "_trailer", "normalized")
 
     def __init__(self, path: str, strip_root: bool = False) -> None:
         """Initialize a SimplePath object."""
-        self.parts = [x for x in path.split("/") if x and x != "."]
+        self._tail = [x for x in path.split("/") if x and x != "."]
 
         if strip_root:
-            if path[-1] != "/" and len(self.parts) > 0:
-                self.parts.pop()
+            if path[-1] != "/" and len(self._tail) > 0:
+                self._tail.pop()
 
-        self.root = "/" if path[0] == "/" else ""
-        self.trailer = "." if not path else ""
-        self.normalized = self.root + "/".join(self.parts) or self.trailer
+        self._root = "/" if path[0] == "/" else ""
+        self._trailer = "." if not path else ""
+        self.normalized = self._root + "/".join(self._tail) or self._trailer
 
     @property
     def name(self) -> str:
         """Return the last part of the path."""
-        return (self.parts[-1] if self.parts else "") or self.trailer
+        return (self._tail[-1] if self._tail else "") or self._trailer
 
     def parents(self) -> Generator["SimplePath", None, None]:
         """Return a list of parent paths for a given path."""
-        for i in range(len(self.parts) - 1, -1, -1):
+        for i in range(len(self._tail) - 1, -1, -1):
             parent = object.__new__(SimplePath)
-            parent.parts = self.parts[:i]
-            parent.root = self.root
-            parent.trailer = self.trailer
-            parent.normalized = self.root + ("/".join(parent.parts) or self.trailer)
+            parent._tail = self._tail[:i]
+            parent._root = self._root
+            parent._trailer = self._trailer
+            parent.normalized = self._root + ("/".join(parent._tail) or self._trailer)
             yield parent
 
 
