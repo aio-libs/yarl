@@ -46,12 +46,11 @@ def normalize_path(path: str) -> str:
 class URLPath:
     """A class for working with URL paths."""
 
-    __slots__ = ("_tail", "_root", "path")
+    __slots__ = ("_tail", "path")
 
     def __init__(self, path: str, strip_tail: bool = False) -> None:
         """Initialize a URLPath object."""
-        remove_tail = strip_tail and path and path[-1] != "/"
-        root = "/" if path and path[0] == "/" else ""
+        remove_tail = strip_tail and path[-1] != "/"
         # Strip trailing slash
         if path and path[-1] == "/":
             path = path[:-1]
@@ -62,9 +61,8 @@ class URLPath:
             tail = path.split("/")
         if remove_tail and tail:
             tail.pop()
-        self.path = (root + "/".join(tail)) or "."
+        self.path = "/".join(tail) or "."
         self._tail = tail
-        self._root = root
 
     @property
     def name(self) -> str:
@@ -74,23 +72,21 @@ class URLPath:
     @property
     def parts_count(self) -> int:
         """Return the number of parts in the path."""
-        return len(self._tail) + bool(self._root)
+        return len(self._tail)
 
     @property
     def parts(self) -> list[str]:
         """Return the parts of the path."""
-        return [self._root, *self._tail] if self._root else self._tail
+        return self._tail
 
     def parents(self) -> Generator["URLPath", None, None]:
         """Return a list of parent paths for a given path."""
-        root = self._root
         tail = self._tail
         for i in range(len(tail) - 1, -1, -1):
             parent_tail = tail[:i]
             url_path = object.__new__(URLPath)
-            url_path.path = (root + "/".join(parent_tail)) or "."
+            url_path.path = "/".join(parent_tail) or "."
             url_path._tail = parent_tail
-            url_path._root = root
             yield url_path
 
 
@@ -104,6 +100,14 @@ def calculate_relative_path(target: str, base: str) -> str:
 
     target_path_parts: Union[set[str], None] = None
     target_path_path = target_path.path
+
+    target_path_is_absolute = target[0] == "/" if target else True
+    base_path_is_absolute = base[0] == "/" if base else True
+    if target_path_is_absolute != base_path_is_absolute:
+        raise ValueError(
+            f"{target_path_path!r} and {base_path.path!r} have different anchors"
+        )
+
     for step, base_walk in enumerate(chain((base_path,), base_path.parents())):
         if base_walk.path == target_path_path:
             break
@@ -128,9 +132,6 @@ def calculate_relative_path(target: str, base: str) -> str:
                 raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
         break
-    else:
-        msg = f"{target_path_path!r} and {base_path.path!r} have different anchors"
-        raise ValueError(msg)
 
     return (
         "/".join((*("..",) * step, *target_path.parts[base_walk.parts_count :])) or "."

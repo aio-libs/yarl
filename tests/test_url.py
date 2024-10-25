@@ -142,9 +142,9 @@ def test_sub_with_different_anchors():
 
 
 def test_sub_with_two_dots_in_base():
-    expected_error_msg = "'..' segment in '/path/..' cannot be walked"
+    expected_error_msg = "'..' segment in 'path/..' cannot be walked"
     with pytest.raises(ValueError, match=expected_error_msg):
-        URL("path/to") - URL("/path/../from")
+        URL("path/to") - URL("path/../from")
 
 
 def test_repr():
