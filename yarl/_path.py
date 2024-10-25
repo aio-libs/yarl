@@ -91,35 +91,31 @@ def calculate_relative_path(target: str, base: str) -> str:
 
     If the operation is not possible, raise ValueError.
     """
+    target_path = URLPath(target or "/")
+    base_path = URLPath(base or "/", strip_tail=True)
 
-    target = target or "/"
-    base = base or "/"
-
-    target_path = URLPath(target)
-    base_path = URLPath(base, strip_tail=True)
-
-    target_path_parent_strs: Union[set[str], None] = None
-    for step, path in enumerate(chain((base_path,), base_path.parents())):
-        if path.path == target_path.path:
+    target_path_parts: Union[set[str], None] = None
+    for step, base_walk in enumerate(chain((base_path,), base_path.parents())):
+        if base_walk.path == target_path.path:
             break
         # If the target_path_parent_strs is already built use the quick path
-        if target_path_parent_strs is not None:
-            if path.path in target_path_parent_strs:
+        if target_path_parts is not None:
+            if base_walk.path in target_path_parts:
                 break
-            elif path.name == "..":
+            elif base_walk.name == "..":
                 raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
-        target_path_parent_strs = set()
+        target_path_parts = set()
         # We check one at a time because enumerating parents
         # builds the value on demand, and we want to stop
         # as soon as we find the common parent
         for parent in target_path.parents():
             if parent.path == base_path.path:
                 break
-            target_path_parent_strs.add(parent.path)
+            target_path_parts.add(parent.path)
         else:
             # If we didn't break, it means we didn't find a common parent
-            if path.name == "..":
+            if base_walk.name == "..":
                 raise ValueError(f"'..' segment in {base_path.path!r} cannot be walked")
             continue
         break
@@ -127,4 +123,6 @@ def calculate_relative_path(target: str, base: str) -> str:
         msg = f"{target_path.path!r} and {base_path.path!r} have different anchors"
         raise ValueError(msg)
 
-    return "/".join((*("..",) * step, *target_path.parts[path.parts_count :])) or "."
+    return (
+        "/".join((*("..",) * step, *target_path.parts[base_walk.parts_count :])) or "."
+    )
