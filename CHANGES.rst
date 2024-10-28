@@ -14,6 +14,24 @@ Changelog
 
 .. towncrier release notes start
 
+1.17.0
+======
+
+*(2024-10-28)*
+
+
+Features
+--------
+
+- Added :attr:`~yarl.URL.host_port_subcomponent` which returns the :rfc:`3986#section-3.2.2` host and :rfc:`3986#section-3.2.3` port subcomponent -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1375`.
+
+
+----
+
+
 1.16.0
 ======
 
