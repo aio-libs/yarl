@@ -120,7 +120,7 @@ repos:
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
-    - pytest_codspeed
+    - pytest_codspeed==3.0.0
     args:
     - --python-version=3.13
     - --txt-report=.tox/.tmp/.mypy/python-3.13
@@ -138,7 +138,7 @@ repos:
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
-    - pytest_codspeed
+    - pytest_codspeed==3.0.0
     args:
     - --python-version=3.12
     - --txt-report=.tox/.tmp/.mypy/python-3.12
@@ -158,7 +158,7 @@ repos:
     - types-setuptools  # requirement of packaging/pep517_backend/
     - types-Pygments
     - types-colorama
-    - pytest_codspeed
+    - pytest_codspeed==3.0.0
     args:
     - --python-version=3.10
     - --txt-report=.tox/.tmp/.mypy/python-3.10
@@ -178,7 +178,7 @@ repos:
     - types-setuptools  # requirement of packaging/pep517_backend/
     - types-Pygments
     - types-colorama
-    - pytest_codspeed
+    - pytest_codspeed==3.0.0
     args:
     - --python-version=3.9
     - --txt-report=.tox/.tmp/.mypy/python-3.9
