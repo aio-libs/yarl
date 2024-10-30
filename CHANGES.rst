@@ -14,6 +14,29 @@ Changelog
 
 .. towncrier release notes start
 
+1.17.1
+======
+
+*(2024-10-30)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of many :class:`~yarl.URL` methods -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1396`, :issue:`1397`, :issue:`1398`.
+
+- Improved performance of passing a `dict` or `str` to :py:meth:`~yarl.URL.extend_query` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1401`.
+
+
+----
+
+
 1.17.0
 ======
 
