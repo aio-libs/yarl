@@ -527,7 +527,7 @@ class URL:
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
         c = self._cache
-        split_loc = split_netloc(c["raw_netloc"])
+        split_loc = split_netloc(self._netloc)
         c["raw_user"], c["raw_password"], c["raw_host"], c["explicit_port"] = split_loc
 
     def is_absolute(self) -> bool:
@@ -555,7 +555,7 @@ class URL:
             # If the explicit port is None, then the URL must be
             # using the default port unless its a relative URL
             # which does not have an implicit port / default port
-            return self._cache["raw_netloc"] != ""
+            return self._netloc != ""
         return explicit == self._default_port
 
     def origin(self) -> "URL":
