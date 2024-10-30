@@ -836,7 +836,7 @@ class URL:
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
         """Parse query part of URL."""
-        return parse_qsl(self._cache["raw_query_string"], keep_blank_values=True)
+        return parse_qsl(self._query, keep_blank_values=True)
 
     @cached_property
     def query(self) -> "MultiDictProxy[str]":
@@ -1458,7 +1458,7 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
-        scheme = self._cache["scheme"]
+        scheme = self._scheme
         return unsplit_result(scheme, netloc, path, query_string, fragment)
 
 
