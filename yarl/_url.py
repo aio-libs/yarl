@@ -441,17 +441,11 @@ class URL:
         path1 = "/" if not self._path and self._netloc else self._path
         path2 = "/" if not other._path and other._netloc else other._path
         return (
-            self._scheme,
-            self._netloc,
-            path1,
-            self._query,
-            self._fragment,
-        ) == (
-            other._scheme,
-            other._netloc,
-            path2,
-            other._query,
-            other._fragment,
+            self._scheme == other._scheme
+            and self._netloc == other._netloc
+            and path1 == path2
+            and self._query == other._query
+            and self._fragment == other._fragment
         )
 
     def __hash__(self) -> int:
