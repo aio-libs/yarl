@@ -425,7 +425,9 @@ class URL:
         )
 
     @classmethod
-    def _from_tup(cls, val: SplitURL) -> "URL":
+    def _from_parts(
+        cls, scheme: str, netloc: str, path: str, query: str, fragment: str
+    ) -> "URL":
         """Create a new URL from a tuple.
 
         The tuple should be in the form of a SplitURL.
@@ -433,15 +435,13 @@ class URL:
         (scheme, netloc, path, query, fragment)
         """
         self = object.__new__(cls)
-        c: _InternalURLCache = {}
-        (
-            c["scheme"],
-            c["raw_netloc"],
-            c["raw_path_real"],
-            c["raw_query_string"],
-            c["raw_fragment"],
-        ) = val
-        self._cache = c
+        self._cache = {
+            "scheme": scheme,
+            "raw_netloc": netloc,
+            "raw_path_real": path,
+            "raw_query_string": query,
+            "raw_fragment": fragment,
+        }
         return self
 
     def __init_subclass__(cls):
@@ -627,7 +627,7 @@ class URL:
             netloc = make_netloc(None, None, encoded_host, self.explicit_port)
         elif not path and not query and not fragment:
             return self
-        return self._from_tup((scheme, netloc, "", "", ""))
+        return self._from_parts(scheme, netloc, "", "", "")
 
     def relative(self) -> "URL":
         """Return a relative part of the URL.
@@ -638,8 +638,8 @@ class URL:
         c = self._cache
         if not c["raw_netloc"]:
             raise ValueError("URL should be absolute")
-        return self._from_tup(
-            ("", "", c["raw_path_real"], c["raw_path_real"], c["raw_fragment"])
+        return self._from_parts(
+            "", "", c["raw_path_real"], c["raw_path_real"], c["raw_fragment"]
         )
 
     @cached_property
@@ -970,10 +970,10 @@ class URL:
         fragment = c["raw_fragment"]
         if not path or path == "/":
             if fragment or query:
-                return self._from_tup((scheme, netloc, path, "", ""))
+                return self._from_parts(scheme, netloc, path, "", "")
             return self
         parts = path.split("/")
-        return self._from_tup((scheme, netloc, "/".join(parts[:-1]), "", ""))
+        return self._from_parts(scheme, netloc, "/".join(parts[:-1]), "", "")
 
     @cached_property
     def raw_name(self) -> str:
@@ -1059,7 +1059,7 @@ class URL:
 
         new_path = "/".join(parsed)
 
-        return self._from_tup((scheme, netloc, new_path, "", ""))
+        return self._from_parts(scheme, netloc, new_path, "", "")
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
@@ -1075,14 +1075,12 @@ class URL:
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
-        return self._from_tup(
-            (
-                lower_scheme,
-                netloc,
-                c["raw_path_real"],
-                c["raw_query_string"],
-                c["raw_fragment"],
-            )
+        return self._from_parts(
+            lower_scheme,
+            netloc,
+            c["raw_path_real"],
+            c["raw_query_string"],
+            c["raw_fragment"],
         )
 
     def with_user(self, user: Union[str, None]) -> "URL":
@@ -1111,7 +1109,7 @@ class URL:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(user, password, encoded_host, self.explicit_port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     def with_password(self, password: Union[str, None]) -> "URL":
         """Return a new URL with password replaced.
@@ -1139,7 +1137,7 @@ class URL:
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, password, encoded_host, port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1166,7 +1164,7 @@ class URL:
         encoded_host = _encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
@@ -1190,7 +1188,7 @@ class URL:
             raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
         """Return a new URL with path replaced."""
@@ -1203,7 +1201,7 @@ class URL:
                 path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
-        return self._from_tup((scheme, netloc, path, "", ""))
+        return self._from_parts(scheme, netloc, path, "", "")
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
@@ -1231,7 +1229,7 @@ class URL:
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
         fragment = c["raw_fragment"]
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     @overload
     def extend_query(self, query: Query) -> "URL": ...
@@ -1263,7 +1261,7 @@ class URL:
             query += new_query if query[-1] == "&" else f"&{new_query}"
         else:
             query = new_query
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1326,7 +1324,7 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_parts(scheme, netloc, path, query, fragment)
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
@@ -1364,7 +1362,7 @@ class URL:
         fragment = c["raw_fragment"]
         if fragment == raw_fragment:
             return self
-        return self._from_tup((scheme, netloc, path, query, raw_fragment))
+        return self._from_parts(scheme, netloc, path, query, raw_fragment)
 
     def with_name(self, name: str) -> "URL":
         """Return a new URL with name (last part of path) replaced.
@@ -1396,7 +1394,7 @@ class URL:
             parts[-1] = name
             if parts[0] == "/":
                 parts[0] = ""  # replace leading '/'
-        return self._from_tup((scheme, netloc, "/".join(parts), "", ""))
+        return self._from_parts(scheme, netloc, "/".join(parts), "", "")
 
     def with_suffix(self, suffix: str) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
@@ -1449,8 +1447,8 @@ class URL:
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
         if join_netloc and scheme in USES_AUTHORITY:
-            return self._from_tup(
-                (scheme, join_netloc, join_path, join_query, join_fragment)
+            return self._from_parts(
+                scheme, join_netloc, join_path, join_query, join_fragment
             )
 
         fragment = join_fragment if join_path or join_fragment else orig_fragment
@@ -1476,7 +1474,7 @@ class URL:
                     path = path[1:]
             path = normalize_path(path) if "." in path else path
 
-        return self._from_tup((scheme, orig_netloc, path, query, fragment))
+        return self._from_parts(scheme, orig_netloc, path, query, fragment)
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
