@@ -191,12 +191,12 @@ def encode_url(url_str: str) -> "URL":
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
     self = object.__new__(URL)
-    self._cache = cache
     self._scheme = scheme
     self._netloc = netloc
     self._path = path
     self._query = query
     self._fragment = fragment
+    self._cache = cache
     return self
 
 
@@ -300,33 +300,27 @@ class URL:
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
-            pass
-        elif type(val) is cls:
+            return pre_encoded_url(val) if encoded else encode_url(val)
+        if type(val) is cls:
             return val
-        elif type(val) is SplitResult:
+        if type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
             self = object.__new__(URL)
             self._scheme, self._netloc, self._path, self._query, self._fragment = val
             self._cache = {}
             return self
-        elif isinstance(val, str):
-            val = str(val)
-        elif val is UNDEFINED:
+        if isinstance(val, str):
+            return pre_encoded_url(str(val)) if encoded else encode_url(str(val))
+        if val is UNDEFINED:
             # Special case for UNDEFINED since it might be unpickling and we do
             # not want to cache as the `__set_state__` call would mutate the URL
             # object in the `pre_encoded_url` or `encoded_url` caches.
             self = object.__new__(URL)
-            self._scheme = ""
-            self._netloc = ""
-            self._path = ""
-            self._query = ""
-            self._fragment = ""
+            self._scheme = self._netloc = self._path = self._query = self._fragment = ""
             self._cache = {}
             return self
-        else:
-            raise TypeError("Constructor parameter should be str")
-        return pre_encoded_url(val) if encoded else encode_url(val)
+        raise TypeError("Constructor parameter should be str")
 
     @classmethod
     def build(
@@ -1409,8 +1403,7 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
-        scheme = self._scheme
-        return unsplit_result(scheme, netloc, path, query_string, fragment)
+        return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
 
 _DEFAULT_IDNA_SIZE = 256
