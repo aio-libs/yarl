@@ -642,7 +642,7 @@ class URL:
         if not c["raw_netloc"]:
             raise ValueError("URL should be absolute")
         return self._from_parts(
-            "", "", c["raw_path_real"], c["raw_path_real"], c["raw_fragment"]
+            "", "", c["raw_path_real"], c["raw_query_string"], c["raw_fragment"]
         )
 
     @cached_property

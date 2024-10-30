@@ -2185,7 +2185,7 @@ def test_parsing_populates_cache():
     assert c["raw_fragment"] == "frag"
     assert c["scheme"] == "http"
     assert c["raw_netloc"] == "user:password@example.com:80"
-    assert c["_path"] == "/path"
+    assert c["raw_path_real"] == "/path"
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"
