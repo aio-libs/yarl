@@ -185,10 +185,6 @@ def encode_url(url_str: str) -> tuple[SplitURL, _InternalURLCache]:
     cache["scheme"] = scheme
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
-    # Constructing the tuple directly to avoid the overhead of
-    # the lambda and arg processing since NamedTuples are constructed
-    # with a run time built lambda
-    # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
     return (scheme, netloc, path, query, fragment), cache
 
 
@@ -395,10 +391,6 @@ class URL:
             query_string = get_str_query(query) or ""
 
         url = object.__new__(cls)
-        # Constructing the tuple directly to avoid the overhead of the lambda and
-        # arg processing since NamedTuples are constructed with a run time built
-        # lambda
-        # https://github.com/python/cpython/blob/d83fcf8371f2f33c7797bc8f5423a8bca8c46e5c/Lib/collections/__init__.py#L441
         url._val = (scheme, netloc, path, query_string, fragment)
         url._cache = {}
         return url
