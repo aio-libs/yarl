@@ -2,6 +2,7 @@ import re
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
+from enum import Enum
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
@@ -76,6 +77,15 @@ else:
     Self = Any
 
 
+class UndefinedType(Enum):
+    """Singleton type for use with not set sentinel values."""
+
+    _singleton = 0
+
+
+UNDEFINED = UndefinedType._singleton
+
+
 class CacheInfo(TypedDict):
     """Host encoding cache."""
 
@@ -130,7 +140,7 @@ def rewrite_module(obj: _T) -> _T:
 
 
 @lru_cache
-def encode_url(url_str: str) -> tuple[SplitURL, _InternalURLCache]:
+def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: Union[str, None]
@@ -180,13 +190,24 @@ def encode_url(url_str: str) -> tuple[SplitURL, _InternalURLCache]:
     cache["scheme"] = scheme
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
-    return (scheme, netloc, path, query, fragment), cache
+    self = object.__new__(URL)
+    self._cache = cache
+    self._scheme = scheme
+    self._netloc = netloc
+    self._path = path
+    self._query = query
+    self._fragment = fragment
+    return self
 
 
 @lru_cache
-def pre_encoded_url(url_str: str) -> tuple[SplitURL, _InternalURLCache]:
+def pre_encoded_url(url_str: str) -> "URL":
     """Parse pre-encoded URL."""
-    return split_url(url_str), {}
+    self = object.__new__(URL)
+    val = split_url(url_str)
+    self._scheme, self._netloc, self._path, self._query, self._fragment = val
+    self._cache = {}
+    return self
 
 
 @rewrite_module
@@ -271,11 +292,11 @@ class URL:
 
     def __new__(
         cls,
-        val: Union[str, SplitResult, "URL"] = "",
+        val: Union[str, SplitResult, "URL", UndefinedType] = UNDEFINED,
         *,
         encoded: bool = False,
         strict: Union[bool, None] = None,
-    ) -> Self:
+    ) -> "URL":
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
         if type(val) is str:
@@ -285,23 +306,27 @@ class URL:
         elif type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
-            self = object.__new__(cls)
-            c: _InternalURLCache = {}
+            self = object.__new__(URL)
             self._scheme, self._netloc, self._path, self._query, self._fragment = val
-            self._cache = c
+            self._cache = {}
             return self
         elif isinstance(val, str):
             val = str(val)
+        elif val is UNDEFINED:
+            # Special case for undefined
+            # since it might be unpickling
+            # and we do not want to cache
+            self = object.__new__(URL)
+            self._scheme = ""
+            self._netloc = ""
+            self._path = ""
+            self._query = ""
+            self._fragment = ""
+            self._cache = {}
+            return self
         else:
             raise TypeError("Constructor parameter should be str")
-        self = object.__new__(cls)
-        if encoded:
-            split_url, cache = pre_encoded_url(val)
-        else:
-            split_url, cache = encode_url(val)
-        self._cache = cache
-        self._scheme, self._netloc, self._path, self._query, self._fragment = split_url
-        return self
+        return pre_encoded_url(val) if encoded else encode_url(val)
 
     @classmethod
     def build(
@@ -1479,23 +1504,20 @@ def cache_info() -> CacheInfo:
     }
 
 
-_SENTINEL = object()
-
-
 @rewrite_module
 def cache_configure(
     *,
     idna_encode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
     idna_decode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
-    ip_address_size: Union[int, None, object] = _SENTINEL,
-    host_validate_size: Union[int, None, object] = _SENTINEL,
-    encode_host_size: Union[int, None, object] = _SENTINEL,
+    ip_address_size: Union[int, None, UndefinedType] = UNDEFINED,
+    host_validate_size: Union[int, None, UndefinedType] = UNDEFINED,
+    encode_host_size: Union[int, None, UndefinedType] = UNDEFINED,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _encode_host
     # ip_address_size, host_validate_size are no longer
     # used, but are kept for backwards compatibility.
-    if ip_address_size is not _SENTINEL or host_validate_size is not _SENTINEL:
+    if ip_address_size is not UNDEFINED or host_validate_size is not UNDEFINED:
         warnings.warn(
             "cache_configure() no longer accepts the "
             "ip_address_size or host_validate_size arguments, "
@@ -1509,15 +1531,15 @@ def cache_configure(
         for size in (ip_address_size, host_validate_size):
             if size is None:
                 encode_host_size = None
-            elif encode_host_size is _SENTINEL:
-                if size is not _SENTINEL:
+            elif encode_host_size is UNDEFINED:
+                if size is not UNDEFINED:
                     encode_host_size = size
-            elif size is not _SENTINEL:
+            elif size is not UNDEFINED:
                 if TYPE_CHECKING:
                     assert isinstance(size, int)
                     assert isinstance(encode_host_size, int)
                 encode_host_size = max(size, encode_host_size)
-        if encode_host_size is _SENTINEL:
+        if encode_host_size is UNDEFINED:
             encode_host_size = _DEFAULT_ENCODE_SIZE
 
     if TYPE_CHECKING:
