@@ -19,10 +19,10 @@ WHATWG_C0_CONTROL_OR_SPACE = (
 UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 USES_AUTHORITY = frozenset(uses_netloc)
 
-SplitURL = tuple[str, str, str, str, str]
+SplitURLType = tuple[str, str, str, str, str]
 
 
-def split_url(url: str) -> SplitURL:
+def split_url(url: str) -> SplitURLType:
     """Split URL into parts."""
     # Adapted from urllib.parse.urlsplit
     # Only lstrip url as some applications rely on preserving trailing space.

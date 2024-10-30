@@ -14,7 +14,7 @@ from propcache.api import under_cached_property as cached_property
 
 from ._parse import (
     USES_AUTHORITY,
-    SplitURL,
+    SplitURLType,
     make_netloc,
     split_netloc,
     split_url,
@@ -97,6 +97,7 @@ class CacheInfo(TypedDict):
 
 
 class _InternalURLCache(TypedDict, total=False):
+    _val: SplitURLType
     _origin: "URL"
     absolute: bool
     scheme: str
@@ -419,10 +420,6 @@ class URL:
         url._cache = {}
         return url
 
-    @cached_property
-    def _val(self) -> SplitURL:
-        return (self._scheme, self._netloc, self._path, self._query, self._fragment)
-
     @classmethod
     def _from_parts(
         cls, scheme: str, netloc: str, path: str, query: str, fragment: str
@@ -567,6 +564,10 @@ class URL:
         """
         # TODO: add a keyword-only option for keeping user/pass maybe?
         return self._origin
+
+    @cached_property
+    def _val(self) -> SplitURLType:
+        return (self._scheme, self._netloc, self._path, self._query, self._fragment)
 
     @cached_property
     def _origin(self) -> "URL":
