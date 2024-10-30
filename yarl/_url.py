@@ -191,10 +191,10 @@ def encode_url(url_str: str) -> "URL":
         query = QUERY_REQUOTER(query)
     if fragment:
         fragment = FRAGMENT_REQUOTER(fragment)
-
     cache["scheme"] = scheme
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
+
     self = object.__new__(URL)
     self._scheme = scheme
     self._netloc = netloc
