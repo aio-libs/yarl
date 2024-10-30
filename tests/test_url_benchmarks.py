@@ -1,6 +1,6 @@
 """codspeed benchmarks for yarl.URL."""
 
-from pytest_codspeed import BenchmarkFixture  # type: ignore[import-untyped]
+from pytest_codspeed import BenchmarkFixture
 
 from yarl import URL
 

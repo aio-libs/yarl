@@ -1,6 +1,6 @@
 """codspeed benchmark for yarl._quoting module."""
 
-from pytest_codspeed import BenchmarkFixture  # type: ignore[import-untyped]
+from pytest_codspeed import BenchmarkFixture
 
 from yarl._quoting import _Quoter, _Unquoter
 
