@@ -4,14 +4,25 @@ import warnings
 from collections.abc import Mapping, Sequence
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
-from typing import TYPE_CHECKING, Any, Final, TypedDict, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
 from urllib.parse import SplitResult, parse_qsl, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
 from propcache.api import under_cached_property as cached_property
 
-from ._parse import USES_AUTHORITY, make_netloc, split_netloc, split_url, unsplit_result
+from ._parse import (
+    FRAGMENT,
+    NETLOC,
+    QUERY,
+    SCHEME,
+    USES_AUTHORITY,
+    SplitURL,
+    make_netloc,
+    split_netloc,
+    split_url,
+    unsplit_result,
+)
 from ._path import normalize_path, normalize_path_segments
 from ._query import (
     Query,
@@ -62,12 +73,7 @@ NOT_REG_NAME = re.compile(
 )
 
 _T = TypeVar("_T")
-SplitURL = tuple[str, str, str, str, str]
-SCHEME: Final[int] = 0
-NETLOC: Final[int] = 1
-PATH: Final[int] = 2
-QUERY: Final[int] = 3
-FRAGMENT: Final[int] = 4
+
 
 if sys.version_info >= (3, 11):
     from typing import Self

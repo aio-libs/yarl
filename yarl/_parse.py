@@ -3,7 +3,7 @@
 import re
 import unicodedata
 from functools import lru_cache
-from typing import Union
+from typing import Final, Union
 from urllib.parse import scheme_chars, uses_netloc
 
 from ._quoters import QUOTER
@@ -19,8 +19,15 @@ WHATWG_C0_CONTROL_OR_SPACE = (
 UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 USES_AUTHORITY = frozenset(uses_netloc)
 
+SplitURL = tuple[str, str, str, str, str]
+SCHEME: Final[int] = 0
+NETLOC: Final[int] = 1
+PATH: Final[int] = 2
+QUERY: Final[int] = 3
+FRAGMENT: Final[int] = 4
 
-def split_url(url: str) -> tuple[str, str, str, str, str]:
+
+def split_url(url: str) -> SplitURL:
     """Split URL into parts."""
     # Adapted from urllib.parse.urlsplit
     # Only lstrip url as some applications rely on preserving trailing space.
