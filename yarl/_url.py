@@ -191,12 +191,12 @@ def encode_url(url_str: str) -> "URL":
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
     self = object.__new__(URL)
-    self._cache = cache
     self._scheme = scheme
     self._netloc = netloc
     self._path = path
     self._query = query
     self._fragment = fragment
+    self._cache = cache
     return self
 
 
@@ -1403,8 +1403,7 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
-        scheme = self._scheme
-        return unsplit_result(scheme, netloc, path, query_string, fragment)
+        return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
 
 _DEFAULT_IDNA_SIZE = 256
