@@ -318,6 +318,7 @@ class URL:
             # object in the `pre_encoded_url` or `encoded_url` caches.
             self = object.__new__(URL)
             self._scheme = self._netloc = self._path = self._query = self._fragment = ""
+            self._cache = {}
             return self
         raise TypeError("Constructor parameter should be str")
 
