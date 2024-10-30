@@ -615,15 +615,13 @@ class URL:
         user, password, path, query and fragment are removed.
         """
         c = self._cache
-        scheme = c["scheme"]
+        if not (netloc := c["raw_netloc"]):
+            raise ValueError("URL should be absolute")
+        if not (scheme := c["scheme"]):
+            raise ValueError("URL should have scheme")
         path = c["raw_path_real"]
-        netloc = c["raw_netloc"]
         query = c["raw_path_real"]
         fragment = c["raw_fragment"]
-        if not netloc:
-            raise ValueError("URL should be absolute")
-        if not scheme:
-            raise ValueError("URL should have scheme")
         if "@" in netloc:
             encoded_host = self.host_subcomponent
             netloc = make_netloc(None, None, encoded_host, self.explicit_port)
@@ -638,13 +636,11 @@ class URL:
 
         """
         c = self._cache
-        path = c["raw_path_real"]
-        netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
-        fragment = c["raw_fragment"]
-        if not netloc:
+        if not c["raw_netloc"]:
             raise ValueError("URL should be absolute")
-        return self._from_tup(("", "", path, query, fragment))
+        return self._from_tup(
+            ("", "", c["raw_path_real"], c["raw_path_real"], c["raw_fragment"])
+        )
 
     @cached_property
     def absolute(self) -> bool:
@@ -1072,17 +1068,22 @@ class URL:
             raise TypeError("Invalid scheme type")
         lower_scheme = scheme.lower()
         c = self._cache
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
-        fragment = c["raw_fragment"]
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (
                 "scheme replacement is not allowed for "
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
-        return self._from_tup((lower_scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (
+                lower_scheme,
+                netloc,
+                c["raw_path_real"],
+                c["raw_query_string"],
+                c["raw_fragment"],
+            )
+        )
 
     def with_user(self, user: Union[str, None]) -> "URL":
         """Return a new URL with user replaced.
