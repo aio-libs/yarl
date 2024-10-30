@@ -1,1 +1,1 @@
-Improved performance of passing a non-subclassed `dict` or `str` to :py:meth:`~yarl.URL.extend_query` -- by :user:`bdraco`.
+Improved performance of passing a `dict` or `str` to :py:meth:`~yarl.URL.extend_query` -- by :user:`bdraco`.
