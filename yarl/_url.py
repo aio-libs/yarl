@@ -1097,8 +1097,8 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if user is None:
@@ -1131,8 +1131,8 @@ class URL:
             raise TypeError("Invalid password type")
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not netloc:
@@ -1156,8 +1156,8 @@ class URL:
             raise TypeError("Invalid host type")
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not netloc:
@@ -1183,8 +1183,8 @@ class URL:
                 raise ValueError(f"port must be between 0 and 65535, got {port}")
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not netloc:
@@ -1229,8 +1229,8 @@ class URL:
         query = get_str_query(*args, **kwargs) or ""
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         fragment = c["raw_fragment"]
         return self._from_parts(scheme, netloc, path, query, fragment)
 
@@ -1254,8 +1254,8 @@ class URL:
             return self
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if query:
@@ -1295,8 +1295,8 @@ class URL:
 
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if in_query is None:
@@ -1359,8 +1359,8 @@ class URL:
             raw_fragment = FRAGMENT_QUOTER(fragment)
         c = self._cache
         scheme = c["scheme"]
-        path = c["raw_path_real"]
         netloc = c["raw_netloc"]
+        path = c["raw_path_real"]
         query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if fragment == raw_fragment:
@@ -1433,14 +1433,14 @@ class URL:
             raise TypeError("url should be URL")
         c = self._cache
         orig_scheme = c["scheme"]
-        orig_netloc = c["raw_path_real"]
-        orig_path = c["raw_netloc"]
+        orig_netloc = c["raw_netloc"]
+        orig_path = c["raw_path_real"]
         orig_query = c["raw_query_string"]
         orig_fragment = c["raw_fragment"]
         urlc = url._cache
         join_scheme = urlc["scheme"]
-        join_netloc = urlc["raw_path_real"]
-        join_path = urlc["raw_netloc"]
+        join_netloc = urlc["raw_netloc"]
+        join_path = urlc["raw_path_real"]
         join_query = urlc["raw_query_string"]
         join_fragment = urlc["raw_fragment"]
         scheme = join_scheme or orig_scheme
