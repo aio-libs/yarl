@@ -430,11 +430,13 @@ class URL:
         if type(other) is not URL:
             return NotImplemented
 
-        scheme1, netloc1, path1, query1, fragment1 = self._val
+        val1 = self._val
+        scheme1, netloc1, path1, query1, fragment1 = val1
         if not path1 and netloc1:
             val1 = (scheme1, netloc1, "/", query1, fragment1)
 
-        scheme2, netloc2, path2, query2, fragment2 = other._val
+        val2 = other._val
+        scheme2, netloc2, path2, query2, fragment2 = val2
         if not path2 and netloc2:
             val2 = (scheme2, netloc2, "/", query2, fragment2)
 
