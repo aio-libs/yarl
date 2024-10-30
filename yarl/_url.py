@@ -74,7 +74,6 @@ NOT_REG_NAME = re.compile(
 
 _T = TypeVar("_T")
 
-
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
