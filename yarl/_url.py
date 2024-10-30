@@ -4,7 +4,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
-from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Any, Final, TypedDict, TypeVar, Union, overload
 from urllib.parse import SplitResult, parse_qsl, uses_relative
 
 import idna
@@ -62,7 +62,12 @@ NOT_REG_NAME = re.compile(
 )
 
 _T = TypeVar("_T")
-_SplitTuple = tuple[str, str, str, str, str]
+SplitURL = tuple[str, str, str, str, str]
+SCHEME: Final[int] = 0
+NETLOC: Final[int] = 1
+PATH: Final[int] = 2
+QUERY: Final[int] = 3
+FRAGMENT: Final[int] = 4
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -124,7 +129,7 @@ def rewrite_module(obj: _T) -> _T:
 
 
 @lru_cache
-def encode_url(url_str: str) -> tuple[_SplitTuple, _InternalURLCache]:
+def encode_url(url_str: str) -> tuple[SplitURL, _InternalURLCache]:
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: Union[str, None]
@@ -182,7 +187,7 @@ def encode_url(url_str: str) -> tuple[_SplitTuple, _InternalURLCache]:
 
 
 @lru_cache
-def pre_encoded_url(url_str: str) -> tuple[_SplitTuple, _InternalURLCache]:
+def pre_encoded_url(url_str: str) -> tuple[SplitURL, _InternalURLCache]:
     """Parse pre-encoded URL."""
     return split_url(url_str), {}
 
@@ -260,7 +265,7 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_val")
 
-    _val: _SplitTuple
+    _val: SplitURL
 
     def __new__(
         cls,
@@ -393,7 +398,7 @@ class URL:
         return url
 
     @classmethod
-    def _from_tup(cls, val: _SplitTuple) -> "URL":
+    def _from_tup(cls, val: SplitURL) -> "URL":
         """Create a new URL from a tuple.
 
         The tuple should be in the form of a SplitResult.
@@ -497,8 +502,7 @@ class URL:
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
         c = self._cache
-        _, netloc, _, _, _ = self._val
-        split_loc = split_netloc(netloc)
+        split_loc = split_netloc(self._val[NETLOC])
         c["raw_user"], c["raw_password"], c["raw_host"], c["explicit_port"] = split_loc
 
     def is_absolute(self) -> bool:
@@ -526,8 +530,7 @@ class URL:
             # If the explicit port is None, then the URL must be
             # using the default port unless its a relative URL
             # which does not have an implicit port / default port
-            _, netloc, _, _, _ = self._val
-            return netloc != ""
+            return self._val[NETLOC] != ""
         return explicit == self._default_port
 
     def origin(self) -> "URL":
@@ -580,8 +583,7 @@ class URL:
         # Checking `netloc` is faster than checking `hostname`
         # because `hostname` is a property that does some extra work
         # to parse the host from the `netloc`
-        _, netloc, _, _, _ = self._val
-        return netloc != ""
+        return self._val[NETLOC] != ""
 
     @cached_property
     def scheme(self) -> str:
@@ -590,8 +592,7 @@ class URL:
         Empty string for relative URLs or URLs starting with //
 
         """
-        scheme, _, _, _, _ = self._val
-        return scheme
+        return self._val[SCHEME]
 
     @cached_property
     def raw_authority(self) -> str:
@@ -600,14 +601,12 @@ class URL:
         Empty string for relative URLs.
 
         """
-        _, netloc, _, _, _ = self._val
-        return netloc
+        return self._val[NETLOC]
 
     @cached_property
     def _default_port(self) -> Union[int, None]:
         """Default port for the scheme or None if not known."""
-        scheme, _, _, _, _ = self._val
-        return DEFAULT_PORTS.get(scheme)
+        return DEFAULT_PORTS.get(self._val[SCHEME])
 
     @cached_property
     def authority(self) -> str:
@@ -802,8 +801,7 @@ class URL:
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
         """Parse query part of URL."""
-        _, _, _, query, _ = self._val
-        return parse_qsl(query, keep_blank_values=True)
+        return parse_qsl(self._val[QUERY], keep_blank_values=True)
 
     @cached_property
     def query(self) -> "MultiDictProxy[str]":
@@ -822,8 +820,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        _, _, _, query, _ = self._val
-        return query
+        return self._val[QUERY]
 
     @cached_property
     def query_string(self) -> str:
@@ -832,8 +829,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        _, _, _, query, _ = self._val
-        return QS_UNQUOTER(query)
+        return QS_UNQUOTER(self._val[QUERY])
 
     @cached_property
     def path_qs(self) -> str:
@@ -843,7 +839,7 @@ class URL:
     @cached_property
     def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
-        _, _, _, query, _ = self._val
+        query = self._val[QUERY]
         return self.raw_path if not query else f"{self.raw_path}?{query}"
 
     @cached_property
@@ -853,8 +849,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        _, _, _, _, fragment = self._val
-        return fragment
+        return self._val[FRAGMENT]
 
     @cached_property
     def fragment(self) -> str:
@@ -863,8 +858,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        _, _, _, _, fragment = self._val
-        return UNQUOTER(fragment)
+        return UNQUOTER(self._val[FRAGMENT])
 
     @cached_property
     def raw_parts(self) -> tuple[str, ...]:
@@ -907,8 +901,7 @@ class URL:
     def raw_name(self) -> str:
         """The last part of raw_parts."""
         parts = self.raw_parts
-        _, netloc, _, _, _ = self._val
-        if not netloc:
+        if not self._val[NETLOC]:
             return parts[-1]
         parts = parts[1:]
         return parts[-1] if parts else ""
@@ -1362,7 +1355,7 @@ class URL:
         if TYPE_CHECKING:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
-        scheme, _, _, _, _ = self._val
+        scheme = self._val[SCHEME]
         return unsplit_result(scheme, netloc, path, query_string, fragment)
 
 
