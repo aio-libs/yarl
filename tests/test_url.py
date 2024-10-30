@@ -2176,14 +2176,13 @@ def test_join_encoded_url():
 def test_parsing_populates_cache():
     """Test that parsing a URL populates the cache."""
     url = URL("http://user:password@example.com:80/path?a=b#frag")
-    c = url._cache
-    assert c["raw_user"] == "user"
-    assert c["raw_password"] == "password"
-    assert c["raw_host"] == "example.com"
-    assert c["explicit_port"] == 80
-    assert c["raw_query_string"] == "a=b"
-    assert c["raw_fragment"] == "frag"
-    assert c["scheme"] == "http"
+    assert url._cache["raw_user"] == "user"
+    assert url._cache["raw_password"] == "password"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["explicit_port"] == 80
+    assert url._cache["raw_query_string"] == "a=b"
+    assert url._cache["raw_fragment"] == "frag"
+    assert url._cache["scheme"] == "http"
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"
@@ -2191,6 +2190,21 @@ def test_parsing_populates_cache():
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
     assert url.scheme == "http"
+    url._cache.clear()
+    assert url.raw_user == "user"
+    assert url.raw_password == "password"
+    assert url.raw_host == "example.com"
+    assert url.explicit_port == 80
+    assert url.raw_query_string == "a=b"
+    assert url.raw_fragment == "frag"
+    assert url.scheme == "http"
+    assert url._cache["raw_user"] == "user"
+    assert url._cache["raw_password"] == "password"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["explicit_port"] == 80
+    assert url._cache["raw_query_string"] == "a=b"
+    assert url._cache["raw_fragment"] == "frag"
+    assert url._cache["scheme"] == "http"
 
 
 @pytest.mark.parametrize(
