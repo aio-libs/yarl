@@ -911,19 +911,13 @@ class URL:
         fragment.
 
         """
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
+        netloc, path = self._netloc, self._path
         if not path or path == "/":
-            if fragment or query:
-                return self._from_tup((scheme, netloc, path, "", ""))
+            if self._fragment or self._query:
+                return self._from_tup((self._scheme, netloc, path, "", ""))
             return self
         parts = path.split("/")
-        return self._from_tup((scheme, netloc, "/".join(parts[:-1]), "", ""))
+        return self._from_tup((self._scheme, netloc, "/".join(parts[:-1]), "", ""))
 
     @cached_property
     def raw_name(self) -> str:
