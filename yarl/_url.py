@@ -451,7 +451,7 @@ class URL:
         c = self._cache
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not path and netloc and (query or fragment):
             path = "/"
@@ -486,11 +486,13 @@ class URL:
         fragment2 = c2["raw_fragment"]
 
         if not path1 and netloc1:
-            val1 = (scheme1, netloc1, "/", query1, fragment1)
+            path1 = "/"
 
         if not path2 and netloc2:
-            val2 = (scheme2, netloc2, "/", query2, fragment2)
+            path2 = "/"
 
+        val1 = (scheme1, netloc1, path1, query1, fragment1)
+        val2 = (scheme2, netloc2, path2, query2, fragment2)
         return val1 == val2
 
     def __hash__(self) -> int:
@@ -542,7 +544,7 @@ class URL:
         c = self._cache
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         return bool(netloc or path or query or fragment)
 
@@ -620,7 +622,7 @@ class URL:
         if not (scheme := c["scheme"]):
             raise ValueError("URL should have scheme")
         path = c["raw_path_real"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if "@" in netloc:
             encoded_host = self.host_subcomponent
@@ -966,7 +968,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not path or path == "/":
             if fragment or query:
@@ -1096,7 +1098,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if user is None:
             password = None
@@ -1130,7 +1132,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not netloc:
             raise ValueError("password replacement is not allowed for relative URLs")
@@ -1155,7 +1157,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not netloc:
             raise ValueError("host replacement is not allowed for relative URLs")
@@ -1182,7 +1184,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if not netloc:
             raise ValueError("port replacement is not allowed for relative URLs")
@@ -1253,7 +1255,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if query:
             # both strings are already encoded so we can use a simple
@@ -1294,7 +1296,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if in_query is None:
             query = ""
@@ -1358,7 +1360,7 @@ class URL:
         scheme = c["scheme"]
         path = c["raw_path_real"]
         netloc = c["raw_netloc"]
-        query = c["raw_path_real"]
+        query = c["raw_query_string"]
         fragment = c["raw_fragment"]
         if fragment == raw_fragment:
             return self
@@ -1432,13 +1434,13 @@ class URL:
         orig_scheme = c["scheme"]
         orig_netloc = c["raw_path_real"]
         orig_path = c["raw_netloc"]
-        orig_query = c["raw_path_real"]
+        orig_query = c["raw_query_string"]
         orig_fragment = c["raw_fragment"]
         urlc = url._cache
         join_scheme = urlc["scheme"]
         join_netloc = urlc["raw_path_real"]
         join_path = urlc["raw_netloc"]
-        join_query = urlc["raw_path_real"]
+        join_query = urlc["raw_query_string"]
         join_fragment = urlc["raw_fragment"]
         scheme = join_scheme or orig_scheme
 
