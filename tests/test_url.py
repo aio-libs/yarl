@@ -2183,6 +2183,7 @@ def test_parsing_populates_cache():
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
     assert url._cache["scheme"] == "http"
+    assert url._cache["raw_path"] == "/path"
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"
@@ -2198,6 +2199,7 @@ def test_parsing_populates_cache():
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
     assert url.scheme == "http"
+    assert url.raw_path == "/path"
     assert url._cache["raw_user"] == "user"
     assert url._cache["raw_password"] == "password"
     assert url._cache["raw_host"] == "example.com"
@@ -2205,6 +2207,26 @@ def test_parsing_populates_cache():
     assert url._cache["raw_query_string"] == "a=b"
     assert url._cache["raw_fragment"] == "frag"
     assert url._cache["scheme"] == "http"
+    assert url._cache["raw_path"] == "/path"
+
+
+def test_relative_url_populates_cache():
+    """Test that parsing a relative URL populates the cache."""
+    url = URL(".")
+    assert url._cache["raw_query_string"] == ""
+    assert url._cache["raw_fragment"] == ""
+    assert url._cache["scheme"] == ""
+    assert url._cache["raw_path"] == "."
+
+
+def test_parsing_populates_cache_for_single_dot():
+    """Test that parsing a URL populates the cache for a single dot path."""
+    url = URL("http://example.com/.")
+    # raw_path should be normalized to "/"
+    assert url._cache["raw_path"] == "/"
+    assert url._cache["raw_host"] == "example.com"
+    assert url._cache["scheme"] == "http"
+    assert url.raw_path == "/"
 
 
 @pytest.mark.parametrize(

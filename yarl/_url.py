@@ -182,15 +182,18 @@ def encode_url(url_str: str) -> "URL":
 
     if path:
         path = PATH_REQUOTER(path)
-        if netloc:
-            if "." in path:
-                path = normalize_path(path)
+        if netloc and "." in path:
+            path = normalize_path(path)
+    if query:
+        query = QUERY_REQUOTER(query)
+    if fragment:
+        fragment = FRAGMENT_REQUOTER(fragment)
 
-    query = QUERY_REQUOTER(query) if query else query
-    fragment = FRAGMENT_REQUOTER(fragment) if fragment else fragment
     cache["scheme"] = scheme
+    cache["raw_path"] = "/" if not path and netloc else path
     cache["raw_query_string"] = query
     cache["raw_fragment"] = fragment
+
     self = object.__new__(URL)
     self._scheme = scheme
     self._netloc = netloc
