@@ -31,6 +31,12 @@ def test_empty_url_is_not_cached():
 
 
 def test_pickle_does_not_pollute_cache():
+    """Verify the unpickling does not pollute the cache.
+
+    Since unpickle will call URL.__new__ with default
+    args, we need to make sure that default args never
+    end up in the pre_encoded_url or encode_url cache.
+    """
     u1 = URL.__new__(URL)
     u1._scheme = "this"
     u1._netloc = "never.appears.any.where.else.in.tests"
@@ -47,4 +53,7 @@ def test_pickle_does_not_pollute_cache():
     assert u2._path == ""
     assert u2._query == ""
     assert u2._fragment == ""
+    # Verify unpickling did not the cache wrong scheme
+    # for empty args.
+    assert URL().scheme == ""
     assert URL("").scheme == ""
