@@ -281,7 +281,7 @@ class URL:
                 raise ValueError("Cannot apply decoding to SplitResult")
             self = object.__new__(cls)
             c: _InternalURLCache = {}
-            (self._scheme, self._netloc, self._path, self._query, self._fragment) = val
+            self._scheme, self._netloc, self._path, self._query, self._fragment = val
             self._cache = c
             return self
         elif isinstance(val, str):
