@@ -1,6 +1,6 @@
 """codspeed benchmarks for yarl.URL."""
 
-from pytest_codspeed import BenchmarkFixture  # type: ignore[import-untyped]
+from pytest_codspeed import BenchmarkFixture
 
 from yarl import URL
 
@@ -191,7 +191,7 @@ def test_raw_host_empty_cache(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            url._cache = {}
+            url._cache.pop("raw_host", None)
             url.raw_host
 
 

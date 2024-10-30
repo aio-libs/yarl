@@ -1,1 +1,0 @@
-Added :attr:`~yarl.URL.host_port_subcomponent` which returns the :rfc:`3986#section-3.2.2` host and :rfc:`3986#section-3.2.3` port subcomponent -- by :user:`bdraco`.
