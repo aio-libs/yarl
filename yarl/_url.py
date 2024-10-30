@@ -476,13 +476,13 @@ class URL:
         scheme1 = c1["scheme"]
         netloc1 = c1["raw_path_real"]
         path1 = c1["raw_netloc"]
-        query1 = c1["raw_path_real"]
+        query1 = c1["raw_query_string"]
         fragment1 = c1["raw_fragment"]
         c2 = other._cache
         scheme2 = c2["scheme"]
         netloc2 = c2["raw_path_real"]
         path2 = c2["raw_netloc"]
-        query2 = c2["raw_path_real"]
+        query2 = c2["raw_query_string"]
         fragment2 = c2["raw_fragment"]
 
         if not path1 and netloc1:
