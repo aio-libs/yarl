@@ -1009,13 +1009,6 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
         if user is None:
             password = None
         elif isinstance(user, str):
@@ -1023,11 +1016,13 @@ class URL:
             password = self.raw_password
         else:
             raise TypeError("Invalid user type")
-        if not netloc:
+        if not (netloc := self._netloc):
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(user, password, encoded_host, self.explicit_port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (self._scheme, netloc, self._path, self._query, self._fragment)
+        )
 
     def with_password(self, password: Union[str, None]) -> "URL":
         """Return a new URL with password replaced.
@@ -1044,19 +1039,14 @@ class URL:
             password = QUOTER(password)
         else:
             raise TypeError("Invalid password type")
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if not netloc:
+        if not (netloc := self._netloc):
             raise ValueError("password replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, password, encoded_host, port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (self._scheme, netloc, self._path, self._query, self._fragment)
+        )
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1070,21 +1060,16 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(host, str):
             raise TypeError("Invalid host type")
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if not netloc:
+        if not (netloc := self._netloc):
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
         encoded_host = _encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (self._scheme, netloc, self._path, self._query, self._fragment)
+        )
 
     def with_port(self, port: Union[int, None]) -> "URL":
         """Return a new URL with port replaced.
@@ -1098,29 +1083,24 @@ class URL:
                 raise TypeError(f"port should be int or None, got {type(port)}")
             if not (0 <= port <= 65535):
                 raise ValueError(f"port must be between 0 and 65535, got {port}")
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if not netloc:
+        if not (netloc := self._netloc):
             raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (self._scheme, netloc, self._path, self._query, self._fragment)
+        )
 
     def with_path(self, path: str, *, encoded: bool = False) -> "URL":
         """Return a new URL with path replaced."""
-        scheme, netloc = self._scheme, self._netloc
+        netloc = self._netloc
         if not encoded:
             path = PATH_QUOTER(path)
             if netloc:
                 path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
-        return self._from_tup((scheme, netloc, path, "", ""))
+        return self._from_tup((self._scheme, netloc, path, "", ""))
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
@@ -1143,13 +1123,9 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         query = get_str_query(*args, **kwargs) or ""
-        scheme, netloc, path, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._fragment,
+        return self._from_tup(
+            (self._scheme, self._netloc, self._path, query, self._fragment)
         )
-        return self._from_tup((scheme, netloc, path, query, fragment))
 
     @overload
     def extend_query(self, query: Query) -> "URL": ...
@@ -1169,20 +1145,15 @@ class URL:
         """
         if not (new_query := get_str_query(*args, **kwargs)):
             return self
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if query:
+        if query := self._query:
             # both strings are already encoded so we can use a simple
             # string join
             query += new_query if query[-1] == "&" else f"&{new_query}"
         else:
             query = new_query
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (self._scheme, self._netloc, self._path, query, self._fragment)
+        )
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1211,17 +1182,10 @@ class URL:
         else:
             raise ValueError("Either kwargs or single query parameter must be present")
 
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
         if in_query is None:
             query = ""
         elif not in_query:
-            pass
+            query = self._query
         elif isinstance(in_query, Mapping):
             qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
             qm.update(in_query)
@@ -1246,7 +1210,9 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
-        return self._from_tup((scheme, netloc, path, query, fragment))
+        return self._from_tup(
+            (self._scheme, self._netloc, self._path, query, self._fragment)
+        )
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
@@ -1276,16 +1242,11 @@ class URL:
             raise TypeError("Invalid fragment type")
         else:
             raw_fragment = FRAGMENT_QUOTER(fragment)
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if fragment == raw_fragment:
+        if self._fragment == raw_fragment:
             return self
-        return self._from_tup((scheme, netloc, path, query, raw_fragment))
+        return self._from_tup(
+            (self._scheme, self._netloc, self._path, self._query, raw_fragment)
+        )
 
     def with_name(self, name: str) -> "URL":
         """Return a new URL with name (last part of path) replaced.
