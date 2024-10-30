@@ -11,6 +11,7 @@ def test_pickle():
     v = pickle.dumps(u1)
     u2 = pickle.loads(v)
     assert u1._cache
+    assert not u2._cache
     assert hash(u1) == hash(u2)
 
 
