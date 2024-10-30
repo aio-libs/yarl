@@ -544,7 +544,7 @@ class URL:
             raise ValueError("Both URLs should have the same netloc")
 
         path = calculate_relative_path(target_path, base_path)
-        return self._from_tup(("", "", path, "", ""))
+        return self._from_parts("", "", path, "", "")
 
     def __bool__(self) -> bool:
         return bool(self._netloc or self._path or self._query or self._fragment)
