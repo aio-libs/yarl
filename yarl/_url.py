@@ -892,13 +892,15 @@ class URL:
         fragment.
 
         """
-        netloc, path = self._netloc, self._path
+        path = self._path
         if not path or path == "/":
             if self._fragment or self._query:
-                return self._from_tup((self._scheme, netloc, path, "", ""))
+                return self._from_tup((self._scheme, self._netloc, path, "", ""))
             return self
         parts = path.split("/")
-        return self._from_tup((self._scheme, netloc, "/".join(parts[:-1]), "", ""))
+        return self._from_tup(
+            (self._scheme, self._netloc, "/".join(parts[:-1]), "", "")
+        )
 
     @cached_property
     def raw_name(self) -> str:
@@ -964,14 +966,14 @@ class URL:
             parsed += segments[segment_slice_start:]
         parsed.reverse()
 
-        scheme, netloc, path = self._scheme, self._netloc, self._path
+        path = self._path
         if path and (old_path_segments := path.split("/")):
             # If the old path ends with a slash, the last segment is an empty string
             # and should be removed before adding the new path segments.
             old_path_cutoff = -1 if old_path_segments[-1] == "" else None
             parsed = [*old_path_segments[:old_path_cutoff], *parsed]
 
-        if netloc := netloc:
+        if netloc := self._netloc:
             # If the netloc is present, we need to ensure that the path is normalized
             parsed = normalize_path_segments(parsed) if needs_normalize else parsed
             if parsed and parsed[0] != "":
@@ -981,7 +983,7 @@ class URL:
 
         new_path = "/".join(parsed)
 
-        return self._from_tup((scheme, netloc, new_path, "", ""))
+        return self._from_tup((self._scheme, netloc, new_path, "", ""))
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
@@ -1310,20 +1312,16 @@ class URL:
         """
         if type(url) is not URL:
             raise TypeError("url should be URL")
-        orig_scheme, orig_netloc, orig_path, orig_query, orig_fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        join_scheme, join_netloc, join_path, join_query, join_fragment = (
-            url._scheme,
-            url._netloc,
-            url._path,
-            url._query,
-            url._fragment,
-        )
+        orig_scheme = self._scheme
+        orig_netloc = self._netloc
+        orig_path = self._path
+        orig_query = self._query
+        orig_fragment = self._fragment
+        join_scheme = url._scheme
+        join_netloc = url._netloc
+        join_path = url._path
+        join_query = url._query
+        join_fragment = url._fragment
         scheme = join_scheme or orig_scheme
 
         if scheme != orig_scheme or scheme not in USES_RELATIVE:
