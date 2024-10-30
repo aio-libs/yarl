@@ -263,6 +263,12 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_scheme", "_netloc", "_path", "_query", "_fragment")
 
+    _scheme: str
+    _netloc: str
+    _path: str
+    _query: str
+    _fragment: str
+
     def __new__(
         cls,
         val: Union[str, SplitResult, "URL"] = "",
