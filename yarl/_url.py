@@ -1306,17 +1306,16 @@ class URL:
         """
         if type(url) is not URL:
             raise TypeError("url should be URL")
+
         orig_scheme = self._scheme
-        orig_netloc = self._netloc
         orig_path = self._path
         orig_query = self._query
         orig_fragment = self._fragment
-        join_scheme = url._scheme
         join_netloc = url._netloc
         join_path = url._path
         join_query = url._query
         join_fragment = url._fragment
-        scheme = join_scheme or orig_scheme
+        scheme = url._scheme or orig_scheme
 
         if scheme != orig_scheme or scheme not in USES_RELATIVE:
             return url
@@ -1350,7 +1349,7 @@ class URL:
                     path = path[1:]
             path = normalize_path(path) if "." in path else path
 
-        return self._from_tup((scheme, orig_netloc, path, query, fragment))
+        return self._from_tup((scheme, self._netloc, path, query, fragment))
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
