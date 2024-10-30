@@ -441,30 +441,21 @@ class URL:
         if type(other) is not URL:
             return NotImplemented
 
-        scheme1, netloc1, path1, query1, fragment1 = (
+        path1 = "/" if not self._path and self._netloc else self._path
+        path2 = "/" if not other._path and other._netloc else other._path
+        return (
             self._scheme,
             self._netloc,
-            self._path,
+            path1,
             self._query,
             self._fragment,
-        )
-        scheme2, netloc2, path2, query2, fragment2 = (
+        ) == (
             other._scheme,
             other._netloc,
-            other._path,
+            path2,
             other._query,
             other._fragment,
         )
-
-        if not path1 and netloc1:
-            path1 = "/"
-
-        if not path2 and netloc2:
-            path2 = "/"
-
-        val1 = (scheme1, netloc1, path1, query1, fragment1)
-        val2 = (scheme2, netloc2, path2, query2, fragment2)
-        return val1 == val2
 
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
