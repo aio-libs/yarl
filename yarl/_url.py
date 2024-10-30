@@ -573,21 +573,14 @@ class URL:
 
         user, password, path, query and fragment are removed.
         """
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if not netloc:
+        if not (netloc := self._netloc):
             raise ValueError("URL should be absolute")
-        if not scheme:
+        if not (scheme := self._scheme):
             raise ValueError("URL should have scheme")
         if "@" in netloc:
             encoded_host = self.host_subcomponent
             netloc = make_netloc(None, None, encoded_host, self.explicit_port)
-        elif not path and not query and not fragment:
+        elif not self._path and not self._query and not self._fragment:
             return self
         return self._from_tup((scheme, netloc, "", "", ""))
 
@@ -597,15 +590,9 @@ class URL:
         scheme, user, password, host and port are removed.
 
         """
-        netloc, path, query, fragment = (
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if not netloc:
+        if not self._netloc:
             raise ValueError("URL should be absolute")
-        return self._from_tup(("", "", path, query, fragment))
+        return self._from_tup(("", "", self._path, self._query, self._fragment))
 
     @cached_property
     def absolute(self) -> bool:
