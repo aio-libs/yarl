@@ -415,21 +415,18 @@ class URL:
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
     def __str__(self) -> str:
-        scheme, netloc, path, query, fragment = (
-            self._scheme,
-            self._netloc,
-            self._path,
-            self._query,
-            self._fragment,
-        )
-        if not path and netloc and (query or fragment):
+        if not self._path and self._netloc and (self._query or self._fragment):
             path = "/"
+        else:
+            path = self._path
         if (port := self.explicit_port) is not None and port == self._default_port:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
             netloc = make_netloc(self.raw_user, self.raw_password, host, None)
-        return unsplit_result(scheme, netloc, path, query, fragment)
+        else:
+            netloc = self._netloc
+        return unsplit_result(self._scheme, netloc, path, self._query, self._fragment)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{str(self)}')"
