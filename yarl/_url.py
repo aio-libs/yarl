@@ -311,8 +311,7 @@ class URL:
             self._cache = {}
             return self
         if isinstance(val, str):
-            val = str(val)
-            return pre_encoded_url(val) if encoded else encode_url(val)
+            return pre_encoded_url(str(val)) if encoded else encode_url(str(val))
         if val is UNDEFINED:
             # Special case for UNDEFINED since it might be unpickling and we do
             # not want to cache as the `__set_state__` call would mutate the URL
