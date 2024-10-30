@@ -1384,7 +1384,14 @@ class URL:
                     path = path[1:]
             path = normalize_path(path) if "." in path else path
 
-        return self._from_tup((scheme, self._netloc, path, query, fragment))
+        url = object.__new__(URL)
+        url._scheme = scheme
+        url._netloc = self._netloc
+        url._path = path
+        url._query = query
+        url._fragment = fragment
+        url._cache = {}
+        return url
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
