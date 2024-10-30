@@ -184,6 +184,9 @@ def encode_url(url_str: str) -> "URL":
         path = PATH_REQUOTER(path)
         if netloc and "." in path:
             path = normalize_path(path)
+        cache["raw_path"] = path
+    else:
+        cache["raw_path"] = "/" if netloc else ""
     if query:
         query = QUERY_REQUOTER(query)
     if fragment:
