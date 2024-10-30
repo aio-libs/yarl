@@ -18,15 +18,7 @@ def test_pickle():
 def test_default_style_state():
     u = URL("test")
     hash(u)
-    u.__setstate__(
-        (
-            None,
-            {
-                "_val": ("test", "test", "test", "test", "test"),
-                "_strict": False,
-                "_cache": {"hash": 1},
-            },
-        )
-    )
+    val = ("test", "test", "test", "test", "test")
+    u.__setstate__((None, {"_val": val, "_strict": False, "_cache": {"hash": 1}}))
     assert not u._cache
-    assert u._val == ("test", "test", "test", "test", "test")
+    assert u._val == val

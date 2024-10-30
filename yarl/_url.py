@@ -398,7 +398,7 @@ class URL:
     def _from_tup(cls, val: SplitURL) -> "URL":
         """Create a new URL from a tuple.
 
-        The tuple should be in the form of a SplitResult.
+        The tuple should be in the form of a SplitURL.
 
         (scheme, netloc, path, query, fragment)
         """
