@@ -188,7 +188,7 @@ def test_raw_host_empty_cache(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            url._cache = {}
+            url._cache.pop("raw_host", None)
             url.raw_host
 
 
