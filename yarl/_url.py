@@ -459,17 +459,10 @@ class URL:
 
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
-            val = self._val
-            scheme, netloc, path, query, fragment = (
-                self._scheme,
-                self._netloc,
-                self._path,
-                self._query,
-                self._fragment,
+            path = "/" if not self._path and self._netloc else self._path
+            ret = self._cache["hash"] = hash(
+                (self._scheme, self._netloc, path, self._query, self._fragment)
             )
-            if not path and netloc:
-                val = (scheme, netloc, "/", query, fragment)
-            ret = self._cache["hash"] = hash(val)
         return ret
 
     def __le__(self, other: object) -> bool:
