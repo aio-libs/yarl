@@ -313,9 +313,13 @@ class URL:
         elif isinstance(val, str):
             val = str(val)
         elif val is UNDEFINED:
-            # Special case for undefined
+            # Special case for UNDEFINED
             # since it might be unpickling
             # and we do not want to cache
+            # as the `__set_state__` call would
+            # mutate the URL object in the
+            # `pre_encoded_url` or `encoded_url`
+            # caches
             self = object.__new__(URL)
             self._scheme = ""
             self._netloc = ""
