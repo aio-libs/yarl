@@ -313,13 +313,9 @@ class URL:
         elif isinstance(val, str):
             val = str(val)
         elif val is UNDEFINED:
-            # Special case for UNDEFINED
-            # since it might be unpickling
-            # and we do not want to cache
-            # as the `__set_state__` call would
-            # mutate the URL object in the
-            # `pre_encoded_url` or `encoded_url`
-            # caches
+            # Special case for UNDEFINED since it might be unpickling and we do
+            # not want to cache as the `__set_state__` call would mutate the URL
+            # object in the `pre_encoded_url` or `encoded_url` caches.
             self = object.__new__(URL)
             self._scheme = ""
             self._netloc = ""
@@ -970,8 +966,7 @@ class URL:
 
     def _make_child(self, paths: "Sequence[str]", encoded: bool = False) -> "URL":
         """
-        add paths to self._path, accounting
-        for absolute vs relative paths,
+        add paths to self._path, accounting for absolute vs relative paths,
         keep existing, but do not create new, empty segments
         """
         parsed: list[str] = []
@@ -1297,8 +1292,7 @@ class URL:
         if name in (".", ".."):
             raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
-        scheme, netloc = self._scheme, self._netloc
-        if netloc:
+        if netloc := self._netloc:
             if len(parts) == 1:
                 parts.append(name)
             else:
@@ -1308,7 +1302,7 @@ class URL:
             parts[-1] = name
             if parts[0] == "/":
                 parts[0] = ""  # replace leading '/'
-        return self._from_parts(scheme, netloc, "/".join(parts), "", "")
+        return self._from_parts(self._scheme, netloc, "/".join(parts), "", "")
 
     def with_suffix(self, suffix: str) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
