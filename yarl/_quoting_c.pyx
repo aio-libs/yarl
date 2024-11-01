@@ -102,7 +102,7 @@ cdef inline void _release_writer(Writer* writer):
         PyMem_Free(writer.buf)
 
 
-cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
+cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed) noexcept:
     cdef char * buf
     cdef Py_ssize_t size
 
@@ -112,13 +112,11 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
         if writer.buf == BUFFER:
             buf = <char*>PyMem_Malloc(size)
             if buf == NULL:
-                PyErr_NoMemory()
                 return -1
             memcpy(buf, writer.buf, writer.size)
         else:
             buf = <char*>PyMem_Realloc(writer.buf, size)
             if buf == NULL:
-                PyErr_NoMemory()
                 return -1
         writer.buf = buf
         writer.size = size
@@ -128,7 +126,7 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
     return 0
 
 
-cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed):
+cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed) noexcept:
     if _write_char(writer, '%', changed) < 0:
         return -1
     if _write_char(writer, _to_hex(<uint8_t>ch >> 4), changed) < 0:
@@ -136,7 +134,7 @@ cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed):
     return _write_char(writer, _to_hex(<uint8_t>ch & 0x0f), changed)
 
 
-cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
+cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol) noexcept:
     cdef uint64_t utf = <uint64_t> symbol
 
     if utf < 0x80:
@@ -169,6 +167,10 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
             return -1
         return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
 
+
+cdef inline void _out_of_memory():
+    PyErr_NoMemory()
+    raise
 
 # --------------------- end writer --------------------------
 
@@ -271,24 +273,24 @@ cdef class _Quoter:
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
                             if _write_pct(writer, ch, True) < 0:
-                                raise
+                                _out_of_memory()
                             continue
 
                         if bit_at(self._safe_table, ch):
                             if _write_char(writer, ch, True) < 0:
-                                raise
+                                _out_of_memory()
                             continue
 
                     changed = (_is_lower_hex(PyUnicode_READ(kind, data, idx - 2)) or
                                _is_lower_hex(PyUnicode_READ(kind, data, idx - 1)))
                     if _write_pct(writer, ch, changed) < 0:
-                        raise
+                        _out_of_memory()
                     continue
                 else:
                     ch = '%'
 
             if self._write(writer, ch) < 0:
-                raise
+                _out_of_memory()
 
         if not writer.changed:
             return val
