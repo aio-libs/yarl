@@ -1,0 +1,2 @@
+Fixed a bug causing ``URL.port`` to return the default port when the given port was zero
+-- by :user:`gmacon`.
