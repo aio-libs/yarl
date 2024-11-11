@@ -1,0 +1,2 @@
+Make error messages include details of incorrect type when ``port`` is not int in :py:meth:`~yarl.URL.build`.
+-- by :user:`Cycloctane`.
