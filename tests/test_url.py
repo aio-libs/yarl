@@ -380,6 +380,12 @@ def test_port_for_unknown_scheme():
     assert url.explicit_port is None
 
 
+def test_explicit_zero_port():
+    url = URL("http://example.com:0")
+    assert url.explicit_port == 0
+    assert url.port == 0
+
+
 def test_explicit_port_for_explicit_port():
     url = URL("http://example.com:8888")
     assert 8888 == url.explicit_port

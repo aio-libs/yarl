@@ -784,7 +784,10 @@ class URL:
         scheme without default port substitution.
 
         """
-        return self.explicit_port or self._default_port
+        port = self.explicit_port
+        if port is None:
+            port = self._default_port
+        return port
 
     @cached_property
     def explicit_port(self) -> Union[int, None]:
