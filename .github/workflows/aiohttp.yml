@@ -1,0 +1,64 @@
+---
+    
+name: Aiohttp
+
+
+on:
+  merge_group:
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+  pull_request:
+    branches:
+    - master
+
+
+env:
+  COLOR: yes
+
+
+jobs:
+
+  test-aiohttp:
+    name: Aiohttp tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout aiohttp
+      uses: actions/checkout@v4
+      with:
+        repository: aio-libs/aiohttp
+        submodules: true
+    - name: Checkout yarl
+      uses: actions/checkout@v4
+      with:
+        path: vendor/yarl
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.x
+        cache: pip
+        cache-dependency-path: requirements/*.txt
+    - name: Update pip, wheel, setuptools, build, twine
+      run: |
+        python -m pip install -U pip wheel setuptools build twine
+    - name: Provision the dev env
+      run: make .develop
+    - name: Cythonize yarl
+      working-directory: vendor/yarl
+      run: make cythonize
+    - name: Install yarl
+      working-directory: vendor/yarl
+      run: >-
+        python -m pip install -e .
+    - name: Ensure version
+      run: python -m pip list
+    - name: Run tests
+      run: python -m pytest
+      shell: bash
+    - name: Run dev_mode tests
+      run: python -X dev -m pytest -m dev_mode
+      shell: bash
+
+...
