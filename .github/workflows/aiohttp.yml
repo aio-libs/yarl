@@ -17,6 +17,8 @@ on:
 
 env:
   COLOR: yes
+  FORCE_COLOR: 1
+  PY_COLORS: 1
 
 
 jobs:
