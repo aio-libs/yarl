@@ -1,0 +1,1 @@
+Add aiohttp tests to CI. -- by :user:`Cycloctane`.
