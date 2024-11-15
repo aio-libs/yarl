@@ -34,7 +34,7 @@ for the users to understand what it means.
 combined with others, it will be a part of the "news digest"
 telling the readers **what changed** in a specific version of
 the library *since the previous version*. You should also use
-reStructuredText syntax for highlighting code (inline or block),
+*reStructuredText* syntax for highlighting code (inline or block),
 linking parts of the docs or external sites.
 If you wish to sign your change, feel free to add ``-- by
 :user:`github-username``` at the end (replace ``github-username``
