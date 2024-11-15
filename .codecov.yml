@@ -29,6 +29,10 @@ coverage:
         paths:
         - yarl/
         target: 97.91%
+      packaging:
+        paths:
+        - packaging/
+        target: 75.24%
       tests:
         flags:
         - pytest
