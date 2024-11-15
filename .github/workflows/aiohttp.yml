@@ -52,8 +52,6 @@ jobs:
       working-directory: vendor/yarl
       run: >-
         python -m pip install -e .
-    - name: Ensure version
-      run: python -m pip list
     - name: Run tests
       run: python -m pytest
       shell: bash
