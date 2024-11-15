@@ -70,7 +70,7 @@ jobs:
         flags: >-
           CI-GHA,
           MyPy
-        fail_ci_if_error: false
+        fail_ci_if_error: true
     - name: Install spell checker
       run: |
         sudo apt install libenchant-2-dev
