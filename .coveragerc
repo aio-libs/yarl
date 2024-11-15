@@ -4,9 +4,7 @@ skip_covered = false
 
 [paths]
 _site-packages-to-src-mapping =
-  src
-  */src
-  *\src
+  .
   */lib/pypy*/site-packages
   */lib/python*/site-packages
   *\Lib\site-packages
