@@ -119,7 +119,7 @@ jobs:
   lint:
     uses: ./.github/workflows/reusable-linters.yml
     secrets:
-      codecov-token: 26f4a393-24a9-48d9-8fa4-f1344d930846
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   build-wheels-for-tested-arches:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
@@ -347,7 +347,7 @@ jobs:
         !cancelled()
       uses: codecov/codecov-action@v4
       with:
-        token: 26f4a393-24a9-48d9-8fa4-f1344d930846
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
         flags: >-
           CI-GHA,
