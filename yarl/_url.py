@@ -997,20 +997,19 @@ class URL:
             parsed += old
 
         # If the netloc is present, inject a leading slash when adding a
-        # path to an absolute URL where there was none before. If we need
-        # to normalize the path, we need to reverse the segments before
-        # adding the leading slash instead of after.
-        if (netloc := self._netloc) and needs_normalize:
-            parsed.reverse()
-            parsed = normalize_path_segments(parsed)
-            if parsed and parsed[0] != "":
-                parsed = ["", *parsed]
-        else:
-            if netloc and parsed and parsed[-1] != "":
-                parsed.append("")
-            parsed.reverse()
+        # path to an absolute URL where there was none before.
+        if (netloc := self._netloc) and parsed and parsed[-1] != "":
+            parsed.append("")
 
-        return self._from_parts(self._scheme, netloc, "/".join(parsed), "", "")
+        parsed.reverse()
+        if not netloc or not needs_normalize:
+            return self._from_parts(self._scheme, netloc, "/".join(parsed), "", "")
+
+        path = "/".join(normalize_path_segments(parsed))
+        # If normalizing the path segments removed the leading slash, add it back.
+        if path and path[0] != "/":
+            path = f"/{path}"
+        return self._from_parts(self._scheme, netloc, path, "", "")
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
