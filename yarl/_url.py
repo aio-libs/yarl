@@ -999,7 +999,7 @@ class URL:
         # If the netloc is present, inject a leading slash when adding a
         # path to an absolute URL where there was none before. If we need
         # to normalize the path, we need to reverse the segments before
-        # adding the leading slash.
+        # adding the leading slash instead of after.
         if (netloc := self._netloc) and needs_normalize:
             parsed.reverse()
             parsed = normalize_path_segments(parsed)
