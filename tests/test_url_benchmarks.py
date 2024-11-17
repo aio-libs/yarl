@@ -517,7 +517,6 @@ def test_url_joinpath(benchmark: BenchmarkFixture) -> None:
         for _ in range(100):
             BASE_URL.joinpath("req", encoded=False)
 
-            
 
 def test_url_joinpath_with_truediv(benchmark: BenchmarkFixture) -> None:
     @benchmark
