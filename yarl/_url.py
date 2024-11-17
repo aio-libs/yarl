@@ -1130,12 +1130,10 @@ class URL:
         return self._from_parts(self._scheme, netloc, path, "", "")
 
     @overload
-    def with_query(self, query: Query) -> "URL":
-        ...
+    def with_query(self, query: Query) -> "URL": ...
 
     @overload
-    def with_query(self, **kwargs: QueryVariable) -> "URL":
-        ...
+    def with_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def with_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part replaced.
@@ -1157,12 +1155,10 @@ class URL:
         )
 
     @overload
-    def extend_query(self, query: Query) -> "URL":
-        ...
+    def extend_query(self, query: Query) -> "URL": ...
 
     @overload
-    def extend_query(self, **kwargs: QueryVariable) -> "URL":
-        ...
+    def extend_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def extend_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part combined with the existing.
@@ -1187,12 +1183,10 @@ class URL:
         )
 
     @overload
-    def update_query(self, query: Query) -> "URL":
-        ...
+    def update_query(self, query: Query) -> "URL": ...
 
     @overload
-    def update_query(self, **kwargs: QueryVariable) -> "URL":
-        ...
+    def update_query(self, **kwargs: QueryVariable) -> "URL": ...
 
     def update_query(self, *args: Any, **kwargs: Any) -> "URL":
         """Return a new URL with query part updated.
