@@ -216,7 +216,6 @@ def pre_encoded_url(url_str: str) -> "URL":
 
 @rewrite_module
 class URL:
-
     # Don't derive from str
     # follow pathlib.Path design
     # probably URL will not suffer from pathlib problems:
@@ -1338,31 +1337,18 @@ class URL:
         if type(url) is not URL:
             raise TypeError("url should be URL")
 
-        orig_scheme = self._scheme
-        orig_path = self._path
-        orig_query = self._query
-        orig_fragment = self._fragment
-        join_netloc = url._netloc
-        join_path = url._path
-        join_query = url._query
-        join_fragment = url._fragment
-        scheme = url._scheme or orig_scheme
-
-        if scheme != orig_scheme or scheme not in USES_RELATIVE:
+        scheme = url._scheme or self._scheme
+        if scheme != self._scheme or scheme not in USES_RELATIVE:
             return url
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
-        if join_netloc and scheme in USES_AUTHORITY:
+        if (join_netloc := url._netloc) and scheme in USES_AUTHORITY:
             return self._from_parts(
-                scheme, join_netloc, join_path, join_query, join_fragment
+                scheme, join_netloc, url._path, url._query, url._fragment
             )
 
-        fragment = join_fragment if join_path or join_fragment else orig_fragment
-        query = join_query if join_path or join_query else orig_query
-
-        if not join_path:
-            path = orig_path
-        else:
+        orig_path = self._path
+        if join_path := url._path:
             if join_path[0] == "/":
                 path = join_path
             elif not orig_path:
@@ -1379,15 +1365,19 @@ class URL:
                 if orig_path[0] == "/":
                     path = path[1:]
             path = normalize_path(path) if "." in path else path
+        else:
+            path = orig_path
 
-        url = object.__new__(URL)
-        url._scheme = scheme
-        url._netloc = self._netloc
-        url._path = path
-        url._query = query
-        url._fragment = fragment
-        url._cache = {}
-        return url
+        new_url = object.__new__(URL)
+        new_url._scheme = scheme
+        new_url._netloc = self._netloc
+        new_url._path = path
+        new_url._query = url._query if join_path or url._query else self._query
+        new_url._fragment = (
+            url._fragment if join_path or url._fragment else self._fragment
+        )
+        new_url._cache = {}
+        return new_url
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
