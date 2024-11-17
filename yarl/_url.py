@@ -987,12 +987,13 @@ class URL:
             segments = path.split("/")
             segments.reverse()
             # remove trailing empty segment for all but the last path
-            segment_slice_start = int(not last and segments[0] == "")
-            parsed += segments[segment_slice_start:]
+            if not last and segments[0] == "":
+                parsed += segments[1:]
+            else:
+                parsed += segments
         parsed.reverse()
 
-        path = self._path
-        if path and (old_path_segments := path.split("/")):
+        if (path := self._path) and (old_path_segments := path.split("/")):
             # If the old path ends with a slash, the last segment is an empty string
             # and should be removed before adding the new path segments.
             old_path_cutoff = -1 if old_path_segments[-1] == "" else None
@@ -1006,9 +1007,7 @@ class URL:
                 # where there was none before
                 parsed = ["", *parsed]
 
-        new_path = "/".join(parsed)
-
-        return self._from_parts(self._scheme, netloc, new_path, "", "")
+        return self._from_parts(self._scheme, netloc, "/".join(parsed), "", "")
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
