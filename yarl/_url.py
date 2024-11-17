@@ -1368,14 +1368,14 @@ class URL:
         else:
             path = orig_path
 
-        url = object.__new__(URL)
-        url._scheme = scheme
-        url._netloc = self._netloc
-        url._path = path
-        url._query = url._query if join_path or url._query else self._query
-        url._fragment = url._fragment if join_path or url._fragment else self._fragment
-        url._cache = {}
-        return url
+        new_url = object.__new__(URL)
+        new_url._scheme = scheme
+        new_url._netloc = self._netloc
+        new_url._path = path
+        new_url._query = url._query if join_path or url._query else self._query
+        new_url._fragment = url._fragment if join_path or url._fragment else self._fragment
+        new_url._cache = {}
+        return new_url
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
