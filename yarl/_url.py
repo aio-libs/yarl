@@ -988,21 +988,27 @@ class URL:
             segments.reverse()
             # remove trailing empty segment for all but the last path
             parsed += segments[1:] if not last and segments[0] == "" else segments
-        parsed.reverse()
 
         if (path := self._path) and (old_segments := path.split("/")):
             # If the old path ends with a slash, the last segment is an empty string
             # and should be removed before adding the new path segments.
             old = old_segments[:-1] if old_segments[-1] == "" else old_segments
-            parsed = [*old, *parsed]
+            old.reverse()
+            parsed += old
 
-        if netloc := self._netloc:
-            # If the netloc is present, we need to ensure that the path is normalized
-            parsed = normalize_path_segments(parsed) if needs_normalize else parsed
+        # If the netloc is present, inject a leading slash when adding a
+        # path to an absolute URL where there was none before. If we need
+        # to normalize the path, we need to reverse the segments before
+        # adding the leading slash.
+        if (netloc := self._netloc) and needs_normalize:
+            parsed.reverse()
+            parsed = normalize_path_segments(parsed)
             if parsed and parsed[0] != "":
-                # inject a leading slash when adding a path to an absolute URL
-                # where there was none before
                 parsed = ["", *parsed]
+        else:
+            if netloc and parsed and parsed[-1] != "":
+                parsed.append("")
+            parsed.reverse()
 
         return self._from_parts(self._scheme, netloc, "/".join(parsed), "", "")
 
