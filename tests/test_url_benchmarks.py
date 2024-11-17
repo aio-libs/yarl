@@ -508,7 +508,9 @@ def test_url_joinpath_encoded_long(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            BASE_URL.joinpath("req/req/req/req/req/req/req/req/req/req/req/req/req/req", encoded=True)
+            BASE_URL.joinpath(
+                "req/req/req/req/req/req/req/req/req/req/req/req/req/req", encoded=True
+            )
 
 
 def test_url_joinpath(benchmark: BenchmarkFixture) -> None:
