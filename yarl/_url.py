@@ -987,10 +987,7 @@ class URL:
             segments = path.split("/")
             segments.reverse()
             # remove trailing empty segment for all but the last path
-            if not last and segments[0] == "":
-                parsed += segments[1:]
-            else:
-                parsed += segments
+            parsed += segments[1:] if not last and segments[0] == "" else segments
         parsed.reverse()
 
         if (path := self._path) and (old_path_segments := path.split("/")):
