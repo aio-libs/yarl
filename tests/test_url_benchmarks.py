@@ -504,13 +504,20 @@ def test_url_joinpath_encoded(benchmark: BenchmarkFixture) -> None:
             BASE_URL.joinpath("req", encoded=True)
 
 
+def test_url_joinpath_encoded_long(benchmark: BenchmarkFixture) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.joinpath("req/req/req/req/req/req/req/req/req/req/req/req/req/req", encoded=True)
+
+
 def test_url_joinpath(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             BASE_URL.joinpath("req", encoded=False)
 
-
+            
 
 def test_url_joinpath_with_truediv(benchmark: BenchmarkFixture) -> None:
     @benchmark
