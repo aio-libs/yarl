@@ -14,6 +14,62 @@ Changelog
 
 .. towncrier release notes start
 
+1.17.2
+======
+
+*(2024-11-17)*
+
+
+Bug fixes
+---------
+
+- Stopped implicitly allowing the use of Cython pre-release versions when
+  building the distribution package -- by :user:`ajsanchezsanz` and
+  :user:`markgreene74`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1411`, :issue:`1412`.
+
+- Fixed a bug causing :attr:`~yarl.URL.port` to return the default port when the given port was zero
+  -- by :user:`gmacon`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1413`.
+
+
+Features
+--------
+
+- Make error messages include details of incorrect type when ``port`` is not int in :py:meth:`~yarl.URL.build`.
+  -- by :user:`Cycloctane`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1414`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Stopped implicitly allowing the use of Cython pre-release versions when
+  building the distribution package -- by :user:`ajsanchezsanz` and
+  :user:`markgreene74`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1411`, :issue:`1412`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the :py:meth:`~yarl.URL.joinpath` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1418`.
+
+
+----
+
+
 1.17.1
 ======
 

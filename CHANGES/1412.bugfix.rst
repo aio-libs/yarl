@@ -1,3 +1,0 @@
-Stopped implicitly allowing the use of Cython pre-release versions when
-building the distribution package -- by :user:`ajsanchezsanz` and
-:user:`markgreene74`.
