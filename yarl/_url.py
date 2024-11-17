@@ -990,11 +990,11 @@ class URL:
             parsed += segments[1:] if not last and segments[0] == "" else segments
         parsed.reverse()
 
-        if (path := self._path) and (old_path_segments := path.split("/")):
+        if (path := self._path) and (old_segments := path.split("/")):
             # If the old path ends with a slash, the last segment is an empty string
             # and should be removed before adding the new path segments.
-            old_path_cutoff = -1 if old_path_segments[-1] == "" else None
-            parsed = [*old_path_segments[:old_path_cutoff], *parsed]
+            old = old_segments[:-1] if old_segments[-1] == "" else old_segments
+            parsed = [*old, *parsed]
 
         if netloc := self._netloc:
             # If the netloc is present, we need to ensure that the path is normalized
