@@ -987,28 +987,29 @@ class URL:
             segments = path.split("/")
             segments.reverse()
             # remove trailing empty segment for all but the last path
-            segment_slice_start = int(not last and segments[0] == "")
-            parsed += segments[segment_slice_start:]
-        parsed.reverse()
+            parsed += segments[1:] if not last and segments[0] == "" else segments
 
-        path = self._path
-        if path and (old_path_segments := path.split("/")):
+        if (path := self._path) and (old_segments := path.split("/")):
             # If the old path ends with a slash, the last segment is an empty string
             # and should be removed before adding the new path segments.
-            old_path_cutoff = -1 if old_path_segments[-1] == "" else None
-            parsed = [*old_path_segments[:old_path_cutoff], *parsed]
+            old = old_segments[:-1] if old_segments[-1] == "" else old_segments
+            old.reverse()
+            parsed += old
 
-        if netloc := self._netloc:
-            # If the netloc is present, we need to ensure that the path is normalized
-            parsed = normalize_path_segments(parsed) if needs_normalize else parsed
-            if parsed and parsed[0] != "":
-                # inject a leading slash when adding a path to an absolute URL
-                # where there was none before
-                parsed = ["", *parsed]
+        # If the netloc is present, inject a leading slash when adding a
+        # path to an absolute URL where there was none before.
+        if (netloc := self._netloc) and parsed and parsed[-1] != "":
+            parsed.append("")
 
-        new_path = "/".join(parsed)
+        parsed.reverse()
+        if not netloc or not needs_normalize:
+            return self._from_parts(self._scheme, netloc, "/".join(parsed), "", "")
 
-        return self._from_parts(self._scheme, netloc, new_path, "", "")
+        path = "/".join(normalize_path_segments(parsed))
+        # If normalizing the path segments removed the leading slash, add it back.
+        if path and path[0] != "/":
+            path = f"/{path}"
+        return self._from_parts(self._scheme, netloc, path, "", "")
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
