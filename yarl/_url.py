@@ -1373,7 +1373,9 @@ class URL:
         new_url._netloc = self._netloc
         new_url._path = path
         new_url._query = url._query if join_path or url._query else self._query
-        new_url._fragment = url._fragment if join_path or url._fragment else self._fragment
+        new_url._fragment = (
+            url._fragment if join_path or url._fragment else self._fragment
+        )
         new_url._cache = {}
         return new_url
 
