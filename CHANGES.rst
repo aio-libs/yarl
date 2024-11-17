@@ -30,7 +30,7 @@ Bug fixes
   *Related issues and pull requests on GitHub:*
   :issue:`1411`, :issue:`1412`.
 
-- Fixed a bug causing ``URL.port`` to return the default port when the given port was zero
+- Fixed a bug causing :attr:`~yarl.URL.port` to return the default port when the given port was zero
   -- by :user:`gmacon`.
 
   *Related issues and pull requests on GitHub:*
