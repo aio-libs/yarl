@@ -1,1 +1,1 @@
-Fixed an issue where replacing the path would also replace the query and fragment.
+Added `keep_query` and `keep_fragment` flags in the `URL.with_path`, allowing users to optionally retain the query string and fragment in the resulting URL when replacing the path.
