@@ -1135,12 +1135,8 @@ class URL:
                 path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
-        query = ""
-        fragment = ""
-        if with_query:
-            query = self._query
-        if with_fragment:
-            fragment = self._fragment
+        query = self._query if with_query else ""
+        fragment = self._fragment if with_fragment else ""
         return self._from_parts(self._scheme, netloc, path, query, fragment)
 
     @overload
