@@ -1119,7 +1119,14 @@ class URL:
             self._scheme, netloc, self._path, self._query, self._fragment
         )
 
-    def with_path(self, path: str, *, encoded: bool = False) -> "URL":
+    def with_path(
+        self,
+        path: str,
+        *,
+        encoded: bool = False,
+        with_query: bool = False,
+        with_fragment: bool = False,
+    ) -> "URL":
         """Return a new URL with path replaced."""
         netloc = self._netloc
         if not encoded:
@@ -1128,7 +1135,13 @@ class URL:
                 path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
-        return self._from_parts(self._scheme, netloc, path, "", "")
+        query = ""
+        fragment = ""
+        if with_query:
+            query = self._query
+        if with_fragment:
+            fragment = self._fragment
+        return self._from_parts(self._scheme, netloc, path, query, fragment)
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
