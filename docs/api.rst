@@ -652,9 +652,11 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com:8888').with_port(None)
       URL('http://example.com')
 
-.. method:: URL.with_path(path)
+.. method:: URL.with_path(path, keep_query=False, keep_fragment=False)
 
    Return a new URL with *path* replaced, encode *path* if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
 
    .. doctest::
 
