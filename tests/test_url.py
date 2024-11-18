@@ -1237,7 +1237,7 @@ def test_with_path_query():
 
 def test_with_path_keep_query():
     url = URL("http://example.com?a=b")
-    url2 = url.with_path("/test", with_query=True)
+    url2 = url.with_path("/test", keep_query=True)
     assert str(url2) == "http://example.com/test?a=b"
 
 
@@ -1248,14 +1248,20 @@ def test_with_path_fragment():
 
 def test_with_path_keep_fragment():
     url = URL("http://example.com#frag")
-    url2 = url.with_path("/test", with_fragment=True)
+    url2 = url.with_path("/test", keep_fragment=True)
     assert str(url2) == "http://example.com/test#frag"
 
 
 def test_with_path_keep_fragment_and_query():
     url = URL("http://example.com?a=b#frag")
-    url2 = url.with_path("/test", with_query=True, with_fragment=True)
+    url2 = url.with_path("/test", keep_query=True, keep_fragment=True)
     assert str(url2) == "http://example.com/test?a=b#frag"
+
+
+def test_with_path_keep_fragment_and_query_false():
+    url = URL("http://example.com?a=b#frag")
+    url2 = url.with_path("/test", keep_query=False, keep_fragment=False)
+    assert str(url2) == "http://example.com/test"
 
 
 def test_with_path_empty():

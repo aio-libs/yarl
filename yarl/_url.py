@@ -1124,8 +1124,8 @@ class URL:
         path: str,
         *,
         encoded: bool = False,
-        with_query: bool = False,
-        with_fragment: bool = False,
+        keep_query: bool = False,
+        keep_fragment: bool = False,
     ) -> "URL":
         """Return a new URL with path replaced."""
         netloc = self._netloc
@@ -1135,8 +1135,8 @@ class URL:
                 path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
-        query = self._query if with_query else ""
-        fragment = self._fragment if with_fragment else ""
+        query = self._query if keep_query else ""
+        fragment = self._fragment if keep_fragment else ""
         return self._from_parts(self._scheme, netloc, path, query, fragment)
 
     @overload
