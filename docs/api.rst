@@ -661,6 +661,7 @@ section generates a new :class:`URL` instance.
    .. versionchanged:: 1.18
 
       Added *keep_query* and *keep_fragment* parameters.
+
    .. doctest::
 
       >>> URL('http://example.com/').with_path('/path/to')
