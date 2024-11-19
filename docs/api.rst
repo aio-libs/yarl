@@ -870,6 +870,12 @@ section generates a new :class:`URL` instance.
 
    Name is encoded if needed.
 
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
+
    .. doctest::
 
       >>> URL('http://example.com/path/to?arg#frag').with_name('new')
@@ -883,6 +889,12 @@ section generates a new :class:`URL` instance.
    cleaned up *query* and *fragment* parts.
 
    Name is encoded if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 
