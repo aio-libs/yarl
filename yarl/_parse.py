@@ -146,10 +146,8 @@ def unsplit_result(
     if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
         if url and url[:1] != "/":
             url = f"{scheme}://{netloc}/{url}" if scheme else f"{scheme}:{url}"
-        elif scheme:
-            url = f"{scheme}://{netloc}{url}"
         else:
-            url = f"//{netloc}{url}"
+            url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
     elif scheme:
         url = f"{scheme}:{url}"
     if query:
