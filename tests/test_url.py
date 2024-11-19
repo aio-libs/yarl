@@ -1235,33 +1235,26 @@ def test_with_path_query():
     assert str(url.with_path("/test")) == "http://example.com/test"
 
 
-def test_with_path_keep_query():
-    url = URL("http://example.com?a=b")
-    url2 = url.with_path("/test", keep_query=True)
-    assert str(url2) == "http://example.com/test?a=b"
-
-
 def test_with_path_fragment():
     url = URL("http://example.com#frag")
     assert str(url.with_path("/test")) == "http://example.com/test"
 
 
-def test_with_path_keep_fragment():
-    url = URL("http://example.com#frag")
-    url2 = url.with_path("/test", keep_fragment=True)
-    assert str(url2) == "http://example.com/test#frag"
-
-
-def test_with_path_keep_fragment_and_query():
-    url = URL("http://example.com?a=b#frag")
-    url2 = url.with_path("/test", keep_query=True, keep_fragment=True)
-    assert str(url2) == "http://example.com/test?a=b#frag"
-
-
-def test_with_path_keep_fragment_and_query_false():
-    url = URL("http://example.com?a=b#frag")
-    url2 = url.with_path("/test", keep_query=False, keep_fragment=False)
-    assert str(url2) == "http://example.com/test"
+@pytest.mark.parametrize(
+    "original_url, keep_query, keep_fragment, expected_url",
+    [
+        ("http://example.com?a=b#frag", True, False, "http://example.com/test?a=b"),
+        ("http://example.com?a=b#frag", False, True, "http://example.com/test#frag"),
+        ("http://example.com?a=b#frag", True, True, "http://example.com/test?a=b#frag"),
+        ("http://example.com?a=b#frag", False, False, "http://example.com/test"),
+    ],
+)
+def test_with_path_keep_query_keep_fragment_flags(
+    original_url, keep_query, keep_fragment, expected_url
+):
+    url = URL(original_url)
+    url2 = url.with_path("/test", keep_query=keep_query, keep_fragment=keep_fragment)
+    assert str(url2) == expected_url
 
 
 def test_with_path_empty():
@@ -1343,28 +1336,41 @@ def test_with_name():
     assert url2.path == "/a/c"
 
 
-def test_with_name_keep_query():
-    url = URL("http://example.com/path/to?a=b")
-    url2 = url.with_name("newname", keep_query=True)
-    assert str(url2) == "http://example.com/path/newname?a=b"
-
-
-def test_with_name_keep_fragment():
-    url = URL("http://example.com/path/to#frag")
-    url2 = url.with_name("newname", keep_fragment=True)
-    assert str(url2) == "http://example.com/path/newname#frag"
-
-
-def test_with_name_keep_fragment_and_query():
-    url = URL("http://example.com/path/to?a=b#frag")
-    url2 = url.with_name("newname", keep_query=True, keep_fragment=True)
-    assert str(url2) == "http://example.com/path/newname?a=b#frag"
-
-
-def test_with_name_keep_fragment_and_query_false():
-    url = URL("http://example.com/path/to?a=b#frag")
-    url2 = url.with_name("newname", keep_query=False, keep_fragment=False)
-    assert str(url2) == "http://example.com/path/newname"
+@pytest.mark.parametrize(
+    "original_url, keep_query, keep_fragment, expected_url",
+    [
+        (
+            "http://example.com/path/to?a=b#frag",
+            True,
+            False,
+            "http://example.com/path/newname?a=b",
+        ),
+        (
+            "http://example.com/path/to?a=b#frag",
+            False,
+            True,
+            "http://example.com/path/newname#frag",
+        ),
+        (
+            "http://example.com/path/to?a=b#frag",
+            True,
+            True,
+            "http://example.com/path/newname?a=b#frag",
+        ),
+        (
+            "http://example.com/path/to?a=b#frag",
+            False,
+            False,
+            "http://example.com/path/newname",
+        ),
+    ],
+)
+def test_with_name_keep_query_keep_fragment_flags(
+    original_url, keep_query, keep_fragment, expected_url
+):
+    url = URL(original_url)
+    url2 = url.with_name("newname", keep_query=keep_query, keep_fragment=keep_fragment)
+    assert str(url2) == expected_url
 
 
 def test_with_name_for_naked_path():
@@ -1457,28 +1463,41 @@ def test_with_suffix():
     assert url2.path == "/a/b.c"
 
 
-def test_with_suffix_keep_query():
-    url = URL("http://example.com/path/to.txt?a=b")
-    url2 = url.with_suffix(".md", keep_query=True)
-    assert str(url2) == "http://example.com/path/to.md?a=b"
-
-
-def test_with_suffix_keep_fragment():
-    url = URL("http://example.com/path/to.txt#frag")
-    url2 = url.with_suffix(".md", keep_fragment=True)
-    assert str(url2) == "http://example.com/path/to.md#frag"
-
-
-def test_with_suffix_keep_fragment_and_query():
-    url = URL("http://example.com/path/to.txt?a=b#frag")
-    url2 = url.with_suffix(".md", keep_query=True, keep_fragment=True)
-    assert str(url2) == "http://example.com/path/to.md?a=b#frag"
-
-
-def test_with_suffix_keep_fragment_and_query_false():
-    url = URL("http://example.com/path/to.txt?a=b#frag")
-    url2 = url.with_suffix(".md", keep_query=False, keep_fragment=False)
-    assert str(url2) == "http://example.com/path/to.md"
+@pytest.mark.parametrize(
+    "original_url, keep_query, keep_fragment, expected_url",
+    [
+        (
+            "http://example.com/path/to.txt?a=b#frag",
+            True,
+            False,
+            "http://example.com/path/to.md?a=b",
+        ),
+        (
+            "http://example.com/path/to.txt?a=b#frag",
+            False,
+            True,
+            "http://example.com/path/to.md#frag",
+        ),
+        (
+            "http://example.com/path/to.txt?a=b#frag",
+            True,
+            True,
+            "http://example.com/path/to.md?a=b#frag",
+        ),
+        (
+            "http://example.com/path/to.txt?a=b#frag",
+            False,
+            False,
+            "http://example.com/path/to.md",
+        ),
+    ],
+)
+def test_with_suffix_keep_query_keep_fragment_flags(
+    original_url, keep_query, keep_fragment, expected_url
+):
+    url = URL(original_url)
+    url2 = url.with_suffix(".md", keep_query=keep_query, keep_fragment=keep_fragment)
+    assert str(url2) == expected_url
 
 
 def test_with_suffix_for_naked_path():
