@@ -1285,7 +1285,12 @@ class URL:
             self._scheme, self._netloc, self._path, self._query, raw_fragment
         )
 
-    def with_name(self, name: str) -> "URL":
+    def with_name(
+        self,
+        name: str,
+        keep_query: bool = False,
+        keep_fragment: bool = False,
+    ) -> "URL":
         """Return a new URL with name (last part of path) replaced.
 
         Query and fragment parts are cleaned up.
@@ -1312,9 +1317,17 @@ class URL:
             parts[-1] = name
             if parts[0] == "/":
                 parts[0] = ""  # replace leading '/'
-        return self._from_parts(self._scheme, netloc, "/".join(parts), "", "")
 
-    def with_suffix(self, suffix: str) -> "URL":
+        query = self._query if keep_query else ""
+        fragment = self._fragment if keep_fragment else ""
+        return self._from_parts(self._scheme, netloc, "/".join(parts), query, fragment)
+
+    def with_suffix(
+        self,
+        suffix: str,
+        keep_query: bool = False,
+        keep_fragment: bool = False,
+    ) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
 
         Query and fragment parts are cleaned up.
@@ -1330,7 +1343,8 @@ class URL:
             raise ValueError(f"{self!r} has an empty name")
         old_suffix = self.raw_suffix
         name = name + suffix if not old_suffix else name[: -len(old_suffix)] + suffix
-        return self.with_name(name)
+
+        return self.with_name(name, keep_query=keep_query, keep_fragment=keep_fragment)
 
     def join(self, url: "URL") -> "URL":
         """Join URLs

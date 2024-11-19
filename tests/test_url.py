@@ -10,7 +10,7 @@ _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
 )
 _VERTICAL_COLON = "\ufe13"  # normalizes to ":"
-_FULL_WITH_NUMBER_SIGN = "\uFF03"  # normalizes to "#"
+_FULL_WITH_NUMBER_SIGN = "\uff03"  # normalizes to "#"
 _ACCOUNT_OF = "\u2100"  # normalizes to "a/c"
 
 
@@ -1343,6 +1343,30 @@ def test_with_name():
     assert url2.path == "/a/c"
 
 
+def test_with_name_keep_query():
+    url = URL("http://example.com/path/to?a=b")
+    url2 = url.with_name("newname", keep_query=True)
+    assert str(url2) == "http://example.com/path/newname?a=b"
+
+
+def test_with_name_keep_fragment():
+    url = URL("http://example.com/path/to#frag")
+    url2 = url.with_name("newname", keep_fragment=True)
+    assert str(url2) == "http://example.com/path/newname#frag"
+
+
+def test_with_name_keep_fragment_and_query():
+    url = URL("http://example.com/path/to?a=b#frag")
+    url2 = url.with_name("newname", keep_query=True, keep_fragment=True)
+    assert str(url2) == "http://example.com/path/newname?a=b#frag"
+
+
+def test_with_name_keep_fragment_and_query_false():
+    url = URL("http://example.com/path/to?a=b#frag")
+    url2 = url.with_name("newname", keep_query=False, keep_fragment=False)
+    assert str(url2) == "http://example.com/path/newname"
+
+
 def test_with_name_for_naked_path():
     url = URL("http://example.com")
     url2 = url.with_name("a")
@@ -1431,6 +1455,30 @@ def test_with_suffix():
     assert url2.parts == ("/", "a", "b.c")
     assert url2.raw_path == "/a/b.c"
     assert url2.path == "/a/b.c"
+
+
+def test_with_suffix_keep_query():
+    url = URL("http://example.com/path/to.txt?a=b")
+    url2 = url.with_suffix(".md", keep_query=True)
+    assert str(url2) == "http://example.com/path/to.md?a=b"
+
+
+def test_with_suffix_keep_fragment():
+    url = URL("http://example.com/path/to.txt#frag")
+    url2 = url.with_suffix(".md", keep_fragment=True)
+    assert str(url2) == "http://example.com/path/to.md#frag"
+
+
+def test_with_suffix_keep_fragment_and_query():
+    url = URL("http://example.com/path/to.txt?a=b#frag")
+    url2 = url.with_suffix(".md", keep_query=True, keep_fragment=True)
+    assert str(url2) == "http://example.com/path/to.md?a=b#frag"
+
+
+def test_with_suffix_keep_fragment_and_query_false():
+    url = URL("http://example.com/path/to.txt?a=b#frag")
+    url2 = url.with_suffix(".md", keep_query=False, keep_fragment=False)
+    assert str(url2) == "http://example.com/path/to.md"
 
 
 def test_with_suffix_for_naked_path():
