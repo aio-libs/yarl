@@ -527,9 +527,7 @@ class URL:
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
-        c = self._cache
-        split_loc = split_netloc(self._netloc)
-        c["raw_user"], c["raw_password"], c["raw_host"], c["explicit_port"] = split_loc
+        self._cache.update(_split_netloc_to_cache(self._netloc))
 
     def is_absolute(self) -> bool:
         """A check for absolute URLs.
@@ -1401,6 +1399,18 @@ class URL:
 
 _DEFAULT_IDNA_SIZE = 256
 _DEFAULT_ENCODE_SIZE = 512
+
+
+@lru_cache
+def _split_netloc_to_cache(netloc: str) -> dict[str, Any]:
+    """Split netloc into cache."""
+    user, password, host, port = split_netloc(netloc)
+    return {
+        "raw_user": user,
+        "raw_password": password,
+        "raw_host": host,
+        "explicit_port": port,
+    }
 
 
 @lru_cache(_DEFAULT_IDNA_SIZE)
