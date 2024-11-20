@@ -102,7 +102,6 @@ class _InternalURLCache(TypedDict, total=False):
     absolute: bool
     scheme: str
     raw_authority: str
-    _default_port: Union[int, None]
     authority: str
     raw_user: Union[str, None]
     user: Union[str, None]
@@ -444,7 +443,9 @@ class URL:
             path = "/"
         else:
             path = self._path
-        if (port := self.explicit_port) is not None and port == self._default_port:
+        if (port := self.explicit_port) is not None and port == DEFAULT_PORTS.get(
+            self._scheme
+        ):
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
@@ -556,7 +557,7 @@ class URL:
             # using the default port unless its a relative URL
             # which does not have an implicit port / default port
             return self._netloc != ""
-        return explicit == self._default_port
+        return explicit == DEFAULT_PORTS.get(self._scheme)
 
     def origin(self) -> "URL":
         """Return an URL with scheme, host and port parts only.
@@ -629,11 +630,6 @@ class URL:
 
         """
         return self._netloc
-
-    @cached_property
-    def _default_port(self) -> Union[int, None]:
-        """Default port for the scheme or None if not known."""
-        return DEFAULT_PORTS.get(self._scheme)
 
     @cached_property
     def authority(self) -> str:
@@ -771,7 +767,7 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
-        if port is None or port == self._default_port:
+        if port is None or port == DEFAULT_PORTS.get(self._scheme):
             return f"[{raw}]" if ":" in raw else raw
         return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
 
@@ -783,10 +779,9 @@ class URL:
         scheme without default port substitution.
 
         """
-        port = self.explicit_port
-        if port is None:
-            port = self._default_port
-        return port
+        if (explicit_port := self.explicit_port) is not None:
+            return explicit_port
+        return DEFAULT_PORTS.get(self._scheme)
 
     @cached_property
     def explicit_port(self) -> Union[int, None]:
