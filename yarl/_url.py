@@ -1288,6 +1288,7 @@ class URL:
     def with_name(
         self,
         name: str,
+        *,
         keep_query: bool = False,
         keep_fragment: bool = False,
     ) -> "URL":
@@ -1325,6 +1326,7 @@ class URL:
     def with_suffix(
         self,
         suffix: str,
+        *,
         keep_query: bool = False,
         keep_fragment: bool = False,
     ) -> "URL":
