@@ -1241,12 +1241,36 @@ def test_with_path_fragment():
 
 
 @pytest.mark.parametrize(
-    "original_url, keep_query, keep_fragment, expected_url",
+    ("original_url", "keep_query", "keep_fragment", "expected_url"),
     [
-        ("http://example.com?a=b#frag", True, False, "http://example.com/test?a=b"),
-        ("http://example.com?a=b#frag", False, True, "http://example.com/test#frag"),
-        ("http://example.com?a=b#frag", True, True, "http://example.com/test?a=b#frag"),
-        ("http://example.com?a=b#frag", False, False, "http://example.com/test"),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            True,
+            False,
+            "http://example.com/test?a=b",
+            id="query-only",
+        ),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            False,
+            True,
+            "http://example.com/test#frag",
+            id="fragment-only",
+        ),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            True,
+            True,
+            "http://example.com/test?a=b#frag",
+            id="all",
+        ),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            False,
+            False,
+            "http://example.com/test",
+            id="none",
+        ),
     ],
 )
 def test_with_path_keep_query_keep_fragment_flags(
@@ -1337,31 +1361,35 @@ def test_with_name():
 
 
 @pytest.mark.parametrize(
-    "original_url, keep_query, keep_fragment, expected_url",
+    ("original_url", "keep_query", "keep_fragment", "expected_url"),
     [
-        (
+        pytest.param(
             "http://example.com/path/to?a=b#frag",
             True,
             False,
             "http://example.com/path/newname?a=b",
+            id="query-only",
         ),
-        (
+        pytest.param(
             "http://example.com/path/to?a=b#frag",
             False,
             True,
             "http://example.com/path/newname#frag",
+            id="fragment-only",
         ),
-        (
+        pytest.param(
             "http://example.com/path/to?a=b#frag",
             True,
             True,
             "http://example.com/path/newname?a=b#frag",
+            id="all",
         ),
-        (
+        pytest.param(
             "http://example.com/path/to?a=b#frag",
             False,
             False,
             "http://example.com/path/newname",
+            id="none",
         ),
     ],
 )
@@ -1464,31 +1492,35 @@ def test_with_suffix():
 
 
 @pytest.mark.parametrize(
-    "original_url, keep_query, keep_fragment, expected_url",
+    ("original_url", "keep_query", "keep_fragment", "expected_url"),
     [
-        (
+        pytest.param(
             "http://example.com/path/to.txt?a=b#frag",
             True,
             False,
             "http://example.com/path/to.md?a=b",
+            id="query-only",
         ),
-        (
+        pytest.param(
             "http://example.com/path/to.txt?a=b#frag",
             False,
             True,
             "http://example.com/path/to.md#frag",
+            id="fragment-only",
         ),
-        (
+        pytest.param(
             "http://example.com/path/to.txt?a=b#frag",
             True,
             True,
             "http://example.com/path/to.md?a=b#frag",
+            id="all",
         ),
-        (
+        pytest.param(
             "http://example.com/path/to.txt?a=b#frag",
             False,
             False,
             "http://example.com/path/to.md",
+            id="none",
         ),
     ],
 )
