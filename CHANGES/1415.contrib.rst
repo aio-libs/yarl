@@ -1,1 +1,0 @@
-Started running downstream ``aiohttp`` tests in CI -- by :user:`Cycloctane`.

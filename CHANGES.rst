@@ -14,6 +14,42 @@ Changelog
 
 .. towncrier release notes start
 
+1.18.0
+======
+
+*(2024-11-21)*
+
+
+Features
+--------
+
+- Added ``keep_query`` and ``keep_fragment`` flags in the :py:meth:`yarl.URL.with_path`, :py:meth:`yarl.URL.with_name` and :py:meth:`yarl.URL.with_suffix` methods, allowing users to optionally retain the query string and fragment in the resulting URL when replacing the path -- by :user:`paul-nameless`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`111`, :issue:`1421`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Started running downstream ``aiohttp`` tests in CI -- by :user:`Cycloctane`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1415`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of converting :class:`~yarl.URL` to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1422`.
+
+
+----
+
+
 1.17.2
 ======
 
