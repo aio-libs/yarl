@@ -863,7 +863,7 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path#frag').with_fragment(None)
       URL('http://example.com/path')
 
-.. method:: URL.with_name(name, keep_query=False, keep_fragment=False)
+.. method:: URL.with_name(name, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *name* (last part of *path*) replaced and
    cleaned up *query* and *fragment* parts.
