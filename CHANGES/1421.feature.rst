@@ -1,0 +1,1 @@
+Added ``keep_query`` and ``keep_fragment`` flags in the :py:meth:`yarl.URL.with_path`, :py:meth:`yarl.URL.with_name` and :py:meth:`yarl.URL.with_suffix` methods, allowing users to optionally retain the query string and fragment in the resulting URL when replacing the path -- by :user:`paul-nameless`.

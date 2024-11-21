@@ -11,7 +11,6 @@ from pathlib import Path
 from shutil import copytree
 from sys import implementation as _system_implementation
 from sys import stderr as _standard_error_stream
-from sys import version_info as _python_version_tuple
 from tempfile import TemporaryDirectory
 from warnings import warn as _warn_that
 
@@ -81,9 +80,6 @@ PURE_PYTHON_CONFIG_SETTING = 'pure-python'
 
 PURE_PYTHON_ENV_VAR = 'YARL_NO_EXTENSIONS'
 """Environment variable name toggle used to opt out of making C-exts."""
-
-IS_PY3_12_PLUS = _python_version_tuple[:2] >= (3, 12)
-"""A flag meaning that the current runtime is Python 3.12 or higher."""
 
 IS_CPYTHON = _system_implementation.name == "cpython"
 """A flag meaning that the current interpreter implementation is CPython."""
@@ -378,8 +374,8 @@ def get_requires_for_build_wheel(
         )
 
     c_ext_build_deps = [] if is_pure_python_build else [
-        'Cython >= 3.0.0b3' if IS_PY3_12_PLUS  # Only Cython 3+ is compatible
-        else 'Cython',
+        'Cython ~= 3.0.0; python_version >= "3.12"',
+        'Cython; python_version < "3.12"',
     ]
 
     return _setuptools_get_requires_for_build_wheel(

@@ -59,7 +59,7 @@ jobs:
       run: |
         make lint
     - name: Send coverage data to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.codecov-token }}
         files: >-
@@ -70,7 +70,7 @@ jobs:
         flags: >-
           CI-GHA,
           MyPy
-        fail_ci_if_error: false
+        fail_ci_if_error: true
     - name: Install spell checker
       run: |
         sudo apt install libenchant-2-dev

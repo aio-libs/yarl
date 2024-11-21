@@ -10,7 +10,7 @@ _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f "
 )
 _VERTICAL_COLON = "\ufe13"  # normalizes to ":"
-_FULL_WITH_NUMBER_SIGN = "\uFF03"  # normalizes to "#"
+_FULL_WITH_NUMBER_SIGN = "\uff03"  # normalizes to "#"
 _ACCOUNT_OF = "\u2100"  # normalizes to "a/c"
 
 
@@ -1240,6 +1240,47 @@ def test_with_path_fragment():
     assert str(url.with_path("/test")) == "http://example.com/test"
 
 
+@pytest.mark.parametrize(
+    ("original_url", "keep_query", "keep_fragment", "expected_url"),
+    [
+        pytest.param(
+            "http://example.com?a=b#frag",
+            True,
+            False,
+            "http://example.com/test?a=b",
+            id="query-only",
+        ),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            False,
+            True,
+            "http://example.com/test#frag",
+            id="fragment-only",
+        ),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            True,
+            True,
+            "http://example.com/test?a=b#frag",
+            id="all",
+        ),
+        pytest.param(
+            "http://example.com?a=b#frag",
+            False,
+            False,
+            "http://example.com/test",
+            id="none",
+        ),
+    ],
+)
+def test_with_path_keep_query_keep_fragment_flags(
+    original_url, keep_query, keep_fragment, expected_url
+):
+    url = URL(original_url)
+    url2 = url.with_path("/test", keep_query=keep_query, keep_fragment=keep_fragment)
+    assert str(url2) == expected_url
+
+
 def test_with_path_empty():
     url = URL("http://example.com/test")
     assert str(url.with_path("")) == "http://example.com"
@@ -1317,6 +1358,47 @@ def test_with_name():
     assert url2.parts == ("/", "a", "c")
     assert url2.raw_path == "/a/c"
     assert url2.path == "/a/c"
+
+
+@pytest.mark.parametrize(
+    ("original_url", "keep_query", "keep_fragment", "expected_url"),
+    [
+        pytest.param(
+            "http://example.com/path/to?a=b#frag",
+            True,
+            False,
+            "http://example.com/path/newname?a=b",
+            id="query-only",
+        ),
+        pytest.param(
+            "http://example.com/path/to?a=b#frag",
+            False,
+            True,
+            "http://example.com/path/newname#frag",
+            id="fragment-only",
+        ),
+        pytest.param(
+            "http://example.com/path/to?a=b#frag",
+            True,
+            True,
+            "http://example.com/path/newname?a=b#frag",
+            id="all",
+        ),
+        pytest.param(
+            "http://example.com/path/to?a=b#frag",
+            False,
+            False,
+            "http://example.com/path/newname",
+            id="none",
+        ),
+    ],
+)
+def test_with_name_keep_query_keep_fragment_flags(
+    original_url, keep_query, keep_fragment, expected_url
+):
+    url = URL(original_url)
+    url2 = url.with_name("newname", keep_query=keep_query, keep_fragment=keep_fragment)
+    assert str(url2) == expected_url
 
 
 def test_with_name_for_naked_path():
@@ -1407,6 +1489,47 @@ def test_with_suffix():
     assert url2.parts == ("/", "a", "b.c")
     assert url2.raw_path == "/a/b.c"
     assert url2.path == "/a/b.c"
+
+
+@pytest.mark.parametrize(
+    ("original_url", "keep_query", "keep_fragment", "expected_url"),
+    [
+        pytest.param(
+            "http://example.com/path/to.txt?a=b#frag",
+            True,
+            False,
+            "http://example.com/path/to.md?a=b",
+            id="query-only",
+        ),
+        pytest.param(
+            "http://example.com/path/to.txt?a=b#frag",
+            False,
+            True,
+            "http://example.com/path/to.md#frag",
+            id="fragment-only",
+        ),
+        pytest.param(
+            "http://example.com/path/to.txt?a=b#frag",
+            True,
+            True,
+            "http://example.com/path/to.md?a=b#frag",
+            id="all",
+        ),
+        pytest.param(
+            "http://example.com/path/to.txt?a=b#frag",
+            False,
+            False,
+            "http://example.com/path/to.md",
+            id="none",
+        ),
+    ],
+)
+def test_with_suffix_keep_query_keep_fragment_flags(
+    original_url, keep_query, keep_fragment, expected_url
+):
+    url = URL(original_url)
+    url2 = url.with_suffix(".md", keep_query=keep_query, keep_fragment=keep_fragment)
+    assert str(url2) == expected_url
 
 
 def test_with_suffix_for_naked_path():

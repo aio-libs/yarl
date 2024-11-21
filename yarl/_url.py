@@ -102,7 +102,6 @@ class _InternalURLCache(TypedDict, total=False):
     absolute: bool
     scheme: str
     raw_authority: str
-    _default_port: Union[int, None]
     authority: str
     raw_user: Union[str, None]
     user: Union[str, None]
@@ -216,7 +215,6 @@ def pre_encoded_url(url_str: str) -> "URL":
 
 @rewrite_module
 class URL:
-
     # Don't derive from str
     # follow pathlib.Path design
     # probably URL will not suffer from pathlib problems:
@@ -445,7 +443,9 @@ class URL:
             path = "/"
         else:
             path = self._path
-        if (port := self.explicit_port) is not None and port == self._default_port:
+        if (port := self.explicit_port) is not None and port == DEFAULT_PORTS.get(
+            self._scheme
+        ):
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
@@ -557,7 +557,7 @@ class URL:
             # using the default port unless its a relative URL
             # which does not have an implicit port / default port
             return self._netloc != ""
-        return explicit == self._default_port
+        return explicit == DEFAULT_PORTS.get(self._scheme)
 
     def origin(self) -> "URL":
         """Return an URL with scheme, host and port parts only.
@@ -630,11 +630,6 @@ class URL:
 
         """
         return self._netloc
-
-    @cached_property
-    def _default_port(self) -> Union[int, None]:
-        """Default port for the scheme or None if not known."""
-        return DEFAULT_PORTS.get(self._scheme)
 
     @cached_property
     def authority(self) -> str:
@@ -772,7 +767,7 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
-        if port is None or port == self._default_port:
+        if port is None or port == DEFAULT_PORTS.get(self._scheme):
             return f"[{raw}]" if ":" in raw else raw
         return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
 
@@ -784,10 +779,9 @@ class URL:
         scheme without default port substitution.
 
         """
-        port = self.explicit_port
-        if port is None:
-            port = self._default_port
-        return port
+        if (explicit_port := self.explicit_port) is not None:
+            return explicit_port
+        return DEFAULT_PORTS.get(self._scheme)
 
     @cached_property
     def explicit_port(self) -> Union[int, None]:
@@ -988,28 +982,29 @@ class URL:
             segments = path.split("/")
             segments.reverse()
             # remove trailing empty segment for all but the last path
-            segment_slice_start = int(not last and segments[0] == "")
-            parsed += segments[segment_slice_start:]
-        parsed.reverse()
+            parsed += segments[1:] if not last and segments[0] == "" else segments
 
-        path = self._path
-        if path and (old_path_segments := path.split("/")):
+        if (path := self._path) and (old_segments := path.split("/")):
             # If the old path ends with a slash, the last segment is an empty string
             # and should be removed before adding the new path segments.
-            old_path_cutoff = -1 if old_path_segments[-1] == "" else None
-            parsed = [*old_path_segments[:old_path_cutoff], *parsed]
+            old = old_segments[:-1] if old_segments[-1] == "" else old_segments
+            old.reverse()
+            parsed += old
 
-        if netloc := self._netloc:
-            # If the netloc is present, we need to ensure that the path is normalized
-            parsed = normalize_path_segments(parsed) if needs_normalize else parsed
-            if parsed and parsed[0] != "":
-                # inject a leading slash when adding a path to an absolute URL
-                # where there was none before
-                parsed = ["", *parsed]
+        # If the netloc is present, inject a leading slash when adding a
+        # path to an absolute URL where there was none before.
+        if (netloc := self._netloc) and parsed and parsed[-1] != "":
+            parsed.append("")
 
-        new_path = "/".join(parsed)
+        parsed.reverse()
+        if not netloc or not needs_normalize:
+            return self._from_parts(self._scheme, netloc, "/".join(parsed), "", "")
 
-        return self._from_parts(self._scheme, netloc, new_path, "", "")
+        path = "/".join(normalize_path_segments(parsed))
+        # If normalizing the path segments removed the leading slash, add it back.
+        if path and path[0] != "/":
+            path = f"/{path}"
+        return self._from_parts(self._scheme, netloc, path, "", "")
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
@@ -1119,7 +1114,14 @@ class URL:
             self._scheme, netloc, self._path, self._query, self._fragment
         )
 
-    def with_path(self, path: str, *, encoded: bool = False) -> "URL":
+    def with_path(
+        self,
+        path: str,
+        *,
+        encoded: bool = False,
+        keep_query: bool = False,
+        keep_fragment: bool = False,
+    ) -> "URL":
         """Return a new URL with path replaced."""
         netloc = self._netloc
         if not encoded:
@@ -1128,7 +1130,9 @@ class URL:
                 path = normalize_path(path) if "." in path else path
         if path and path[0] != "/":
             path = f"/{path}"
-        return self._from_parts(self._scheme, netloc, path, "", "")
+        query = self._query if keep_query else ""
+        fragment = self._fragment if keep_fragment else ""
+        return self._from_parts(self._scheme, netloc, path, query, fragment)
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
@@ -1276,7 +1280,13 @@ class URL:
             self._scheme, self._netloc, self._path, self._query, raw_fragment
         )
 
-    def with_name(self, name: str) -> "URL":
+    def with_name(
+        self,
+        name: str,
+        *,
+        keep_query: bool = False,
+        keep_fragment: bool = False,
+    ) -> "URL":
         """Return a new URL with name (last part of path) replaced.
 
         Query and fragment parts are cleaned up.
@@ -1303,9 +1313,18 @@ class URL:
             parts[-1] = name
             if parts[0] == "/":
                 parts[0] = ""  # replace leading '/'
-        return self._from_parts(self._scheme, netloc, "/".join(parts), "", "")
 
-    def with_suffix(self, suffix: str) -> "URL":
+        query = self._query if keep_query else ""
+        fragment = self._fragment if keep_fragment else ""
+        return self._from_parts(self._scheme, netloc, "/".join(parts), query, fragment)
+
+    def with_suffix(
+        self,
+        suffix: str,
+        *,
+        keep_query: bool = False,
+        keep_fragment: bool = False,
+    ) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
 
         Query and fragment parts are cleaned up.
@@ -1321,7 +1340,8 @@ class URL:
             raise ValueError(f"{self!r} has an empty name")
         old_suffix = self.raw_suffix
         name = name + suffix if not old_suffix else name[: -len(old_suffix)] + suffix
-        return self.with_name(name)
+
+        return self.with_name(name, keep_query=keep_query, keep_fragment=keep_fragment)
 
     def join(self, url: "URL") -> "URL":
         """Join URLs
@@ -1338,31 +1358,18 @@ class URL:
         if type(url) is not URL:
             raise TypeError("url should be URL")
 
-        orig_scheme = self._scheme
-        orig_path = self._path
-        orig_query = self._query
-        orig_fragment = self._fragment
-        join_netloc = url._netloc
-        join_path = url._path
-        join_query = url._query
-        join_fragment = url._fragment
-        scheme = url._scheme or orig_scheme
-
-        if scheme != orig_scheme or scheme not in USES_RELATIVE:
+        scheme = url._scheme or self._scheme
+        if scheme != self._scheme or scheme not in USES_RELATIVE:
             return url
 
         # scheme is in uses_authority as uses_authority is a superset of uses_relative
-        if join_netloc and scheme in USES_AUTHORITY:
+        if (join_netloc := url._netloc) and scheme in USES_AUTHORITY:
             return self._from_parts(
-                scheme, join_netloc, join_path, join_query, join_fragment
+                scheme, join_netloc, url._path, url._query, url._fragment
             )
 
-        fragment = join_fragment if join_path or join_fragment else orig_fragment
-        query = join_query if join_path or join_query else orig_query
-
-        if not join_path:
-            path = orig_path
-        else:
+        orig_path = self._path
+        if join_path := url._path:
             if join_path[0] == "/":
                 path = join_path
             elif not orig_path:
@@ -1379,15 +1386,19 @@ class URL:
                 if orig_path[0] == "/":
                     path = path[1:]
             path = normalize_path(path) if "." in path else path
+        else:
+            path = orig_path
 
-        url = object.__new__(URL)
-        url._scheme = scheme
-        url._netloc = self._netloc
-        url._path = path
-        url._query = query
-        url._fragment = fragment
-        url._cache = {}
-        return url
+        new_url = object.__new__(URL)
+        new_url._scheme = scheme
+        new_url._netloc = self._netloc
+        new_url._path = path
+        new_url._query = url._query if join_path or url._query else self._query
+        new_url._fragment = (
+            url._fragment if join_path or url._fragment else self._fragment
+        )
+        new_url._cache = {}
+        return new_url
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
