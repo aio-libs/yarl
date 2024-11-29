@@ -432,6 +432,7 @@ class URL:
         url._query = query_string
         url._fragment = fragment
         url._cache = {}
+        url._hash = None
         return url
 
     @classmethod
@@ -1418,6 +1419,7 @@ class URL:
             url._fragment if join_path or url._fragment else self._fragment
         )
         new_url._cache = {}
+        new_url._hash = None
         return new_url
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
