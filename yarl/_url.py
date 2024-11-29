@@ -222,7 +222,7 @@ def build_pre_encoded_url(
     host: str,
     port: Union[int, None],
     path: str,
-    query_string: str,
+    qs: str,
     fragment: str,
     quote_query: bool,
 ) -> "URL":
@@ -241,7 +241,7 @@ def build_pre_encoded_url(
     else:
         self._netloc = ""
     self._path = path
-    self._query = query_string
+    self._query = qs
     self._fragment = fragment
     self._cache = {}
     return self
@@ -256,7 +256,7 @@ def build_unencoded_url(
     host: str,
     port: Union[int, None],
     path: str,
-    query_string: str,
+    qs: str,
     fragment: str,
     quote_query: bool,
 ) -> "URL":
@@ -291,9 +291,7 @@ def build_unencoded_url(
             raise ValueError(msg)
 
     self._path = path
-    self._query = (
-        QUERY_QUOTER(query_string) if quote_query and query_string else query_string
-    )
+    self._query = QUERY_QUOTER(qs) if quote_query and qs else qs
     self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
     self._cache = {}
     return self
