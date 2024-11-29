@@ -412,7 +412,6 @@ class URL:
                 path,
                 query_string,
                 fragment,
-                not query,
             )
 
         self = object.__new__(URL)
