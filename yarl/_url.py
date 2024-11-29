@@ -422,7 +422,14 @@ class URL:
         if query:
             query_string = get_str_query(query) or ""
 
-        return from_parts(scheme, netloc, path, query_string, fragment)
+        url = object.__new__(cls)
+        url._scheme = scheme
+        url._netloc = netloc
+        url._path = path
+        url._query = query_string
+        url._fragment = fragment
+        url._cache = {}
+        return url
 
     def __init_subclass__(cls):
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
