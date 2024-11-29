@@ -224,6 +224,7 @@ def build_pre_encoded_url(
     path: str,
     query_string: str,
     fragment: str,
+    quote_query: bool,
 ) -> "URL":
     """Build a pre-encoded URL from parts."""
     self = object.__new__(URL)
@@ -257,6 +258,7 @@ def build_unencoded_url(
     path: str,
     query_string: str,
     fragment: str,
+    quote_query: bool,
 ) -> "URL":
     """Build an unencoded URL from parts."""
     self = object.__new__(URL)
@@ -289,7 +291,9 @@ def build_unencoded_url(
             raise ValueError(msg)
 
     self._path = path
-    self._query = QUERY_QUOTER(query_string) if query_string else query_string
+    self._query = (
+        QUERY_QUOTER(query_string) if quote_query and query_string else query_string
+    )
     self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
     self._cache = {}
     return self
@@ -461,6 +465,7 @@ class URL:
             path,
             query_string,
             fragment,
+            not query,
         )
 
     @classmethod
