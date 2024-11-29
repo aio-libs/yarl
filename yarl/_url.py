@@ -213,6 +213,39 @@ def pre_encoded_url(url_str: str) -> "URL":
     return self
 
 
+@lru_cache
+def build_pre_encoded_url(
+    scheme: str,
+    authority: str,
+    user: Union[str, None],
+    password: Union[str, None],
+    host: str,
+    port: Union[int, None],
+    path: str,
+    query_string: str,
+    fragment: str,
+) -> "URL":
+    """Build a pre-encoded URL from parts."""
+    self = object.__new__(URL)
+    self._scheme = scheme
+    if authority:
+        self._netloc = authority
+    elif host:
+        if port is not None:
+            port = None if port == DEFAULT_PORTS.get(scheme) else port
+        if user is None and password is None:
+            self._netloc = host if port is None else f"{host}:{port}"
+        else:
+            self._netloc = make_netloc(user, password, host, port)
+    else:
+        self._netloc = ""
+    self._path = path
+    self._query = query_string
+    self._fragment = fragment
+    self._cache = {}
+    return self
+
+
 @rewrite_module
 class URL:
     # Don't derive from str
@@ -365,61 +398,59 @@ class URL:
                 '"query_string", and "fragment" args, use empty string instead.'
             )
 
-        if encoded:
-            if authority:
-                netloc = authority
-            elif host:
-                if port is not None:
-                    port = None if port == DEFAULT_PORTS.get(scheme) else port
-                if user is None and password is None:
-                    netloc = host if port is None else f"{host}:{port}"
-                else:
-                    netloc = make_netloc(user, password, host, port)
-            else:
-                netloc = ""
-        else:  # not encoded
-            _host: Union[str, None] = None
-            if authority:
-                user, password, _host, port = split_netloc(authority)
-                _host = _encode_host(_host, validate_host=False) if _host else ""
-            elif host:
-                _host = _encode_host(host, validate_host=True)
-            else:
-                netloc = ""
-
-            if _host is not None:
-                if port is not None:
-                    port = None if port == DEFAULT_PORTS.get(scheme) else port
-                if user is None and password is None:
-                    netloc = _host if port is None else f"{_host}:{port}"
-                else:
-                    netloc = make_netloc(user, password, _host, port, True)
-
-            path = PATH_QUOTER(path) if path else path
-            if path and netloc:
-                if "." in path:
-                    path = normalize_path(path)
-                if path[0] != "/":
-                    msg = (
-                        "Path in a URL with authority should "
-                        "start with a slash ('/') if set"
-                    )
-                    raise ValueError(msg)
-
-            query_string = QUERY_QUOTER(query_string) if query_string else query_string
-            fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
-
         if query:
             query_string = get_str_query(query) or ""
 
-        url = object.__new__(cls)
-        url._scheme = scheme
-        url._netloc = netloc
-        url._path = path
-        url._query = query_string
-        url._fragment = fragment
-        url._cache = {}
-        return url
+        if encoded:
+            return build_pre_encoded_url(
+                scheme,
+                authority,
+                user,
+                password,
+                host,
+                port,
+                path,
+                query_string,
+                fragment,
+            )
+
+        self = object.__new__(URL)
+        self._scheme = scheme
+        _host: Union[str, None] = None
+        if authority:
+            user, password, _host, port = split_netloc(authority)
+            _host = _encode_host(_host, validate_host=False) if _host else ""
+        elif host:
+            _host = _encode_host(host, validate_host=True)
+        else:
+            self._netloc = ""
+
+        if _host is not None:
+            if port is not None:
+                port = None if port == DEFAULT_PORTS.get(scheme) else port
+            if user is None and password is None:
+                self._netloc = _host if port is None else f"{_host}:{port}"
+            else:
+                self._netloc = make_netloc(user, password, _host, port, True)
+
+        path = PATH_QUOTER(path) if path else path
+        if path and self._netloc:
+            if "." in path:
+                path = normalize_path(path)
+            if path[0] != "/":
+                msg = (
+                    "Path in a URL with authority should "
+                    "start with a slash ('/') if set"
+                )
+                raise ValueError(msg)
+
+        self._path = path
+        if not query and query_string:
+            query_string = QUERY_QUOTER(query_string)
+        self._query = query_string
+        self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
+        self._cache = {}
+        return self
 
     @classmethod
     def _from_parts(
