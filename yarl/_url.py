@@ -222,9 +222,8 @@ def build_pre_encoded_url(
     host: str,
     port: Union[int, None],
     path: str,
-    qs: str,
+    query_string: str,
     fragment: str,
-    quote_query: bool,
 ) -> "URL":
     """Build a pre-encoded URL from parts."""
     self = object.__new__(URL)
@@ -241,58 +240,8 @@ def build_pre_encoded_url(
     else:
         self._netloc = ""
     self._path = path
-    self._query = qs
+    self._query = query_string
     self._fragment = fragment
-    self._cache = {}
-    return self
-
-
-@lru_cache
-def build_unencoded_url(
-    scheme: str,
-    authority: str,
-    user: Union[str, None],
-    password: Union[str, None],
-    host: str,
-    port: Union[int, None],
-    path: str,
-    qs: str,
-    fragment: str,
-    quote_query: bool,
-) -> "URL":
-    """Build an unencoded URL from parts."""
-    self = object.__new__(URL)
-    self._scheme = scheme
-    _host: Union[str, None] = None
-    if authority:
-        user, password, _host, port = split_netloc(authority)
-        _host = _encode_host(_host, validate_host=False) if _host else ""
-    elif host:
-        _host = _encode_host(host, validate_host=True)
-    else:
-        self._netloc = ""
-
-    if _host is not None:
-        if port is not None:
-            port = None if port == DEFAULT_PORTS.get(scheme) else port
-        if user is None and password is None:
-            self._netloc = _host if port is None else f"{_host}:{port}"
-        else:
-            self._netloc = make_netloc(user, password, _host, port, True)
-
-    path = PATH_QUOTER(path) if path else path
-    if path and self._netloc:
-        if "." in path:
-            path = normalize_path(path)
-        if path[0] != "/":
-            msg = (
-                "Path in a URL with authority should " "start with a slash ('/') if set"
-            )
-            raise ValueError(msg)
-
-    self._path = path
-    self._query = QUERY_QUOTER(qs) if quote_query and qs else qs
-    self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
     self._cache = {}
     return self
 
@@ -452,19 +401,57 @@ class URL:
         if query:
             query_string = get_str_query(query) or ""
 
-        builder = build_pre_encoded_url if encoded else build_unencoded_url
-        return builder(
-            scheme,
-            authority,
-            user,
-            password,
-            host,
-            port,
-            path,
-            query_string,
-            fragment,
-            not query,
-        )
+        if encoded:
+            return build_pre_encoded_url(
+                scheme,
+                authority,
+                user,
+                password,
+                host,
+                port,
+                path,
+                query_string,
+                fragment,
+                not query,
+            )
+
+        self = object.__new__(URL)
+        self._scheme = scheme
+        _host: Union[str, None] = None
+        if authority:
+            user, password, _host, port = split_netloc(authority)
+            _host = _encode_host(_host, validate_host=False) if _host else ""
+        elif host:
+            _host = _encode_host(host, validate_host=True)
+        else:
+            self._netloc = ""
+
+        if _host is not None:
+            if port is not None:
+                port = None if port == DEFAULT_PORTS.get(scheme) else port
+            if user is None and password is None:
+                self._netloc = _host if port is None else f"{_host}:{port}"
+            else:
+                self._netloc = make_netloc(user, password, _host, port, True)
+
+        path = PATH_QUOTER(path) if path else path
+        if path and self._netloc:
+            if "." in path:
+                path = normalize_path(path)
+            if path[0] != "/":
+                msg = (
+                    "Path in a URL with authority should "
+                    "start with a slash ('/') if set"
+                )
+                raise ValueError(msg)
+
+        self._path = path
+        if not query and query_string:
+            query_string = QUERY_QUOTER(query_string)
+        self._query = query_string
+        self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
+        self._cache = {}
+        return self
 
     @classmethod
     def _from_parts(
