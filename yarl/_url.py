@@ -246,8 +246,9 @@ def build_pre_encoded_url(
     return self
 
 
-@lru_cache
-def from_parts(scheme: str, netloc: str, path: str, query: str, fragment: str) -> "URL":
+def from_parts_uncached(
+    scheme: str, netloc: str, path: str, query: str, fragment: str
+) -> "URL":
     """Create a new URL from parts."""
     self = object.__new__(URL)
     self._scheme = scheme
@@ -257,6 +258,9 @@ def from_parts(scheme: str, netloc: str, path: str, query: str, fragment: str) -
     self._fragment = fragment
     self._cache = {}
     return self
+
+
+from_parts = lru_cache(from_parts_uncached)
 
 
 @rewrite_module
@@ -1170,7 +1174,9 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         query = get_str_query(*args, **kwargs) or ""
-        return from_parts(self._scheme, self._netloc, self._path, query, self._fragment)
+        return from_parts_uncached(
+            self._scheme, self._netloc, self._path, query, self._fragment
+        )
 
     @overload
     def extend_query(self, query: Query) -> "URL": ...
@@ -1196,7 +1202,9 @@ class URL:
             query += new_query if query[-1] == "&" else f"&{new_query}"
         else:
             query = new_query
-        return from_parts(self._scheme, self._netloc, self._path, query, self._fragment)
+        return from_parts_uncached(
+            self._scheme, self._netloc, self._path, query, self._fragment
+        )
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1253,7 +1261,9 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
-        return from_parts(self._scheme, self._netloc, self._path, query, self._fragment)
+        return from_parts_uncached(
+            self._scheme, self._netloc, self._path, query, self._fragment
+        )
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
