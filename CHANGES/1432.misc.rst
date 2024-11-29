@@ -1,1 +1,0 @@
-Improved cache performance when :class:`~yarl.URL` objects are constructed from :py:meth:`~yarl.URL.build` with ``encoded=True`` -- by :user:`bdraco`.
