@@ -1,0 +1,1 @@
+Improved cache performance for operations that modify the :class:`~yarl.URL` object -- by :user:`bdraco`.
