@@ -14,6 +14,18 @@ Changelog
 
 .. towncrier release notes start
 
+1.18.2
+======
+
+*(2024-11-29)*
+
+
+No significant changes.
+
+
+----
+
+
 1.18.1
 ======
 
