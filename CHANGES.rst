@@ -14,6 +14,29 @@ Changelog
 
 .. towncrier release notes start
 
+1.18.1
+======
+
+*(2024-11-29)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved cache performance when :class:`~yarl.URL` objects are constructed from :py:meth:`~yarl.URL.build` with ``encoded=True`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1432`.
+
+- Improved cache performance for operations that produce a new :class:`~yarl.URL` object -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1434`, :issue:`1436`.
+
+
+----
+
+
 1.18.0
 ======
 
