@@ -1357,7 +1357,12 @@ class URL:
         """
         if type(url) is not URL:
             raise TypeError("url should be URL")
+        # Make sure the argument is a URL so we do not pollute the cache
+        # with invalid URLs
+        return self._join(url)
 
+    @lru_cache
+    def _join(self, url: "URL") -> "URL":
         scheme = url._scheme or self._scheme
         if scheme != self._scheme or scheme not in USES_RELATIVE:
             return url
