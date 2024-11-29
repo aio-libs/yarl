@@ -200,6 +200,7 @@ def encode_url(url_str: str) -> "URL":
     self._query = query
     self._fragment = fragment
     self._cache = cache
+    self._hash = None
     return self
 
 
@@ -210,6 +211,7 @@ def pre_encoded_url(url_str: str) -> "URL":
     val = split_url(url_str)
     self._scheme, self._netloc, self._path, self._query, self._fragment = val
     self._cache = {}
+    self._hash = None
     return self
 
 
@@ -284,13 +286,22 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ("_cache", "_scheme", "_netloc", "_path", "_query", "_fragment")
+    __slots__ = (
+        "_cache",
+        "_scheme",
+        "_netloc",
+        "_path",
+        "_query",
+        "_fragment",
+        "_hash",
+    )
 
     _scheme: str
     _netloc: str
     _path: str
     _query: str
     _fragment: str
+    _hash: Union[int, None]
 
     def __new__(
         cls,
@@ -311,6 +322,7 @@ class URL:
             self = object.__new__(URL)
             self._scheme, self._netloc, self._path, self._query, self._fragment = val
             self._cache = {}
+            self._hash = None
             return self
         if isinstance(val, str):
             return pre_encoded_url(str(val)) if encoded else encode_url(str(val))
@@ -321,6 +333,7 @@ class URL:
             self = object.__new__(URL)
             self._scheme = self._netloc = self._path = self._query = self._fragment = ""
             self._cache = {}
+            self._hash = None
             return self
         raise TypeError("Constructor parameter should be str")
 
@@ -433,6 +446,7 @@ class URL:
         self._query = query
         self._fragment = fragment
         self._cache = {}
+        self._hash = None
         return self
 
     def __init_subclass__(cls):
@@ -475,9 +489,9 @@ class URL:
         )
 
     def __hash__(self) -> int:
-        if (ret := self._cache.get("hash")) is None:
+        if (ret := self._hash) is None:
             path = "/" if not self._path and self._netloc else self._path
-            ret = self._cache["hash"] = hash(
+            ret = self._hash = hash(
                 (self._scheme, self._netloc, path, self._query, self._fragment)
             )
         return ret
@@ -524,6 +538,7 @@ class URL:
             val, *unused = state
         self._scheme, self._netloc, self._path, self._query, self._fragment = val
         self._cache = {}
+        self._hash = None
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
