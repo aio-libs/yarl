@@ -1,0 +1,1 @@
+Fixed uppercase ascii host names being rejected -- by :user:`bdraco`.
