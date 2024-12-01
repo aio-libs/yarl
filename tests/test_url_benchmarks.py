@@ -584,6 +584,15 @@ def test_empty_query_string(benchmark: BenchmarkFixture) -> None:
             url.query_string
 
 
+def test_empty_query_string_uncached(benchmark: BenchmarkFixture) -> None:
+    urls = [URL(BASE_URL_STR) for _ in range(100)]
+
+    @benchmark
+    def _run() -> None:
+        for url in urls:
+            URL.query_string.wrapped(url)
+
+
 def test_query(benchmark: BenchmarkFixture) -> None:
     urls = [URL(QUERY_URL_STR) for _ in range(100)]
 
@@ -613,3 +622,111 @@ def test_url_host_port_subcomponent(benchmark: BenchmarkFixture) -> None:
             cache_non_default.pop("host_port_subcomponent", None)
             URL_WITH_NOT_DEFAULT_PORT.host_port_subcomponent
             BASE_URL.host_port_subcomponent
+
+
+def test_empty_path(benchmark: BenchmarkFixture) -> None:
+    """Test accessing empty path."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.path
+
+
+def test_empty_path_uncached(benchmark: BenchmarkFixture) -> None:
+    """Test accessing empty path without cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.path.wrapped(BASE_URL)
+
+
+def test_empty_path_safe(benchmark: BenchmarkFixture) -> None:
+    """Test accessing empty path safe."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.path_safe
+
+
+def test_empty_path_safe_uncached(benchmark: BenchmarkFixture) -> None:
+    """Test accessing empty path safe without cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.path_safe.wrapped(BASE_URL)
+
+
+def test_path_safe(benchmark: BenchmarkFixture) -> None:
+    """Test accessing path safe."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_PATH.path_safe
+
+
+def test_path_safe_uncached(benchmark: BenchmarkFixture) -> None:
+    """Test accessing path safe without cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.path_safe.wrapped(URL_WITH_PATH)
+
+
+def test_empty_raw_path_qs(benchmark: BenchmarkFixture) -> None:
+    """Test accessing empty raw path with query."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            BASE_URL.raw_path_qs
+
+
+def test_empty_raw_path_qs_uncached(benchmark: BenchmarkFixture) -> None:
+    """Test accessing empty raw path with query without cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.raw_path_qs.wrapped(BASE_URL)
+
+
+def test_raw_path_qs(benchmark: BenchmarkFixture) -> None:
+    """Test accessing raw path qs without query."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_PATH.raw_path_qs
+
+
+def test_raw_path_qs_uncached(benchmark: BenchmarkFixture) -> None:
+    """Test accessing raw path qs without query and without cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.raw_path_qs.wrapped(URL_WITH_PATH)
+
+
+def test_raw_path_qs_with_query(benchmark: BenchmarkFixture) -> None:
+    """Test accessing raw path qs with query."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            IPV6_QUERY_URL.raw_path_qs
+
+
+def test_raw_path_qs_with_query_uncached(benchmark: BenchmarkFixture) -> None:
+    """Test accessing raw path qs with query and without cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL.raw_path_qs.wrapped(IPV6_QUERY_URL)
