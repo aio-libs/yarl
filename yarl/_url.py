@@ -798,9 +798,7 @@ class URL:
             # the last character is a dot.
             raw = raw.rstrip(".")
         port = self.explicit_port
-        if (port := self.explicit_port) is None or port == DEFAULT_PORTS.get(
-            self._scheme
-        ):
+        if port is None or port == DEFAULT_PORTS.get(self._scheme):
             return f"[{raw}]" if ":" in raw else raw
         return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
 
