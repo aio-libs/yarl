@@ -1,0 +1,1 @@
+Fixed uppercase ASCII hosts being rejected by :meth:`URL.build() <yarl.URL.build>` and :py:meth:`~yarl.URL.with_host` -- by :user:`bdraco`.

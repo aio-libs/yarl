@@ -1499,6 +1499,7 @@ def _encode_host(host: str, validate_host: bool) -> str:
     if host.isascii():
         # Check for invalid characters explicitly; _idna_encode() does this
         # for non-ascii host names.
+        host = host.lower()
         if validate_host and (invalid := NOT_REG_NAME.search(host)):
             value, pos, extra = invalid.group(), invalid.start(), ""
             if value == "@" or (value == ":" and "@" in host[pos:]):
@@ -1510,7 +1511,7 @@ def _encode_host(host: str, validate_host: bool) -> str:
             raise ValueError(
                 f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
             ) from None
-        return host.lower()
+        return host
 
     return _idna_encode(host)
 
