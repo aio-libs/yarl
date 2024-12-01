@@ -797,6 +797,7 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
+        port = self.explicit_port
         if (port := self.explicit_port) is None or port == DEFAULT_PORTS.get(
             self._scheme
         ):
@@ -852,11 +853,9 @@ class URL:
         / (%2F) and % (%25) are not decoded
 
         """
-        return (
-            PATH_SAFE_UNQUOTER(self._path)
-            if self._path
-            else "/" if self._netloc else ""
-        )
+        if self._path:
+            return PATH_SAFE_UNQUOTER(self._path)
+        return "/" if self._netloc else ""
 
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
