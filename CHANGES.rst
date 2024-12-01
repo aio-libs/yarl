@@ -14,6 +14,33 @@ Changelog
 
 .. towncrier release notes start
 
+1.18.3
+======
+
+*(2024-12-01)*
+
+
+Bug fixes
+---------
+
+- Fixed uppercase ASCII hosts being rejected by :meth:`URL.build() <yarl.URL.build>` and :py:meth:`~yarl.URL.with_host` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`954`, :issue:`1442`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performances of multiple path properties on cache miss -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1443`.
+
+
+----
+
+
 1.18.2
 ======
 
