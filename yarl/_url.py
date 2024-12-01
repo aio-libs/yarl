@@ -790,7 +790,6 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        port = self.explicit_port
         if raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
@@ -798,7 +797,9 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
-        if port is None or port == DEFAULT_PORTS.get(self._scheme):
+        if (port := self.explicit_port) is None or port == DEFAULT_PORTS.get(
+            self._scheme
+        ):
             return f"[{raw}]" if ":" in raw else raw
         return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
 
@@ -831,7 +832,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return "/" if not self._path and self._netloc else self._path
+        return self._path if self._path or not self._netloc else "/"
 
     @cached_property
     def path(self) -> str:
@@ -840,7 +841,7 @@ class URL:
         / for absolute URLs without path part.
 
         """
-        return PATH_UNQUOTER(self.raw_path)
+        return PATH_UNQUOTER(self._path) if self._path else "/" if self._netloc else ""
 
     @cached_property
     def path_safe(self) -> str:
@@ -851,7 +852,11 @@ class URL:
         / (%2F) and % (%25) are not decoded
 
         """
-        return PATH_SAFE_UNQUOTER(self.raw_path)
+        return (
+            PATH_SAFE_UNQUOTER(self._path)
+            if self._path
+            else "/" if self._netloc else ""
+        )
 
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
@@ -884,7 +889,7 @@ class URL:
         Empty string if query is missing.
 
         """
-        return QS_UNQUOTER(self._query)
+        return QS_UNQUOTER(self._query) if self._query else ""
 
     @cached_property
     def path_qs(self) -> str:
@@ -894,8 +899,7 @@ class URL:
     @cached_property
     def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
-        query = self._query
-        return self.raw_path if not query else f"{self.raw_path}?{query}"
+        return self.raw_path if not (q := self._query) else f"{self.raw_path}?{q}"
 
     @cached_property
     def raw_fragment(self) -> str:
@@ -913,7 +917,7 @@ class URL:
         Empty string if fragment is missing.
 
         """
-        return UNQUOTER(self._fragment)
+        return UNQUOTER(self._fragment) if self._fragment else ""
 
     @cached_property
     def raw_parts(self) -> tuple[str, ...]:
