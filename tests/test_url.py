@@ -461,6 +461,17 @@ def test_path_safe_with_25():
     assert unquoted == "/foo/bar%2Fbaz"
 
 
+def test_path_safe_with_no_netloc():
+    """Path safe should not decode %2F, otherwise it may look like a path separator."""
+
+    url = URL("/foo/bar%2fbaz")
+    assert url.path_safe == "/foo/bar%2Fbaz"
+    url = URL("")
+    assert url.path_safe == ""
+    url = URL("http://example.com")
+    assert url.path_safe == "/"
+
+
 @pytest.mark.parametrize(
     "original_path",
     [
@@ -513,6 +524,12 @@ def test_path_qs():
     assert url.path_qs == "/?б=в&ю=к"
     url = URL("http://example.com/path?б=в&ю=к")
     assert url.path_qs == "/path?б=в&ю=к"
+    url = URL("/path?б=в&ю=к")
+    assert url.path_qs == "/path?б=в&ю=к"
+    url = URL("")
+    assert url.path_qs == ""
+    url = URL("http://example.com")
+    assert url.path_qs == "/"
 
 
 def test_raw_path_qs():
@@ -524,6 +541,12 @@ def test_raw_path_qs():
     assert url.raw_path_qs == "/path?%D0%B1=%D0%B2&%D1%8E=%D0%BA"
     url = URL("http://example.com/шлях?a=1&b=2")
     assert url.raw_path_qs == "/%D1%88%D0%BB%D1%8F%D1%85?a=1&b=2"
+    url = URL("/шлях?a=1&b=2")
+    assert url.raw_path_qs == "/%D1%88%D0%BB%D1%8F%D1%85?a=1&b=2"
+    url = URL("")
+    assert url.raw_path_qs == ""
+    url = URL("http://example.com")
+    assert url.raw_path_qs == "/"
 
 
 def test_query_string_spaces():
