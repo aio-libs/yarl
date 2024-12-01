@@ -32,7 +32,7 @@ Bug fixes
 Miscellaneous internal changes
 ------------------------------
 
-- Improved performances of multiple path method on cache miss -- by :user:`bdraco`.
+- Improved performances of multiple path properties on cache miss -- by :user:`bdraco`.
 
   *Related issues and pull requests on GitHub:*
   :issue:`1443`.
