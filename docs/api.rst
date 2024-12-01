@@ -208,6 +208,29 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    .. versionadded:: 1.13
 
+.. attribute:: URL.host_port_subcomponent
+
+   :rfc:`3986#section-3.2.2` host and :rfc:`3986#section-3.2.3` port subcomponent part of URL, ``None`` for relative URLs
+   (:ref:`yarl-api-relative-urls`).
+
+   Trailing dots are stripped from the host to ensure
+   this value can be used for an HTTP Host header.
+
+   The port is omitted if it is the default port for the scheme.
+
+   .. doctest::
+
+      >>> URL('http://хост.домен:81').host_port_subcomponent
+      'xn--n1agdj.xn--d1acufc:81'
+      >>> URL('https://[::1]:8443').host_port_subcomponent
+      '[::1]:8443'
+      >>> URL('http://example.com./').host_port_subcomponent
+      'example.com'
+      >>> URL('http://[::1]').host_port_subcomponent
+      '[::1]'
+
+   .. versionadded:: 1.17
+
 .. attribute:: URL.port
 
    *port* part of URL, with scheme-based fallback.
@@ -629,9 +652,15 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com:8888').with_port(None)
       URL('http://example.com')
 
-.. method:: URL.with_path(path)
+.. method:: URL.with_path(path, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *path* replaced, encode *path* if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 
@@ -834,12 +863,18 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path#frag').with_fragment(None)
       URL('http://example.com/path')
 
-.. method:: URL.with_name(name)
+.. method:: URL.with_name(name, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *name* (last part of *path*) replaced and
    cleaned up *query* and *fragment* parts.
 
    Name is encoded if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 
@@ -848,12 +883,18 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path/to').with_name("ім'я")
       URL('http://example.com/path/%D1%96%D0%BC%27%D1%8F')
 
-.. method:: URL.with_suffix(suffix)
+.. method:: URL.with_suffix(suffix, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *suffix* (file extension of *name*) replaced and
    cleaned up *query* and *fragment* parts.
 
    Name is encoded if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 
@@ -973,21 +1014,6 @@ The path is encoded if needed.
          >>> base = URL('http://example.com/path/index.html')
          >>> base.join(URL('//python.org/page.html'))
          URL('http://python.org/page.html')
-
-The subtraction (``-``) operator creates a new URL with
-a relative *path* to the target URL from the given base URL.
-*scheme*, *user*, *password*, *host*, *port*, *query* and *fragment* are removed.
-
-.. method:: URL.__sub__(url)
-
-   Returns a new URL with a relative *path* between two other URL objects.
-
-   .. doctest::
-
-      >>> target = URL('http://example.com/path/index.html')
-      >>> base = URL('http://example.com/')
-      >>> target - base
-      URL('path/index.html')
 
 Human readable representation
 -----------------------------
