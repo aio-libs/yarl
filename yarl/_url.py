@@ -898,7 +898,9 @@ class URL:
     @cached_property
     def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
-        return self.raw_path if not (q := self._query) else f"{self.raw_path}?{q}"
+        if q := self._query:
+            return f"{self._path}?{q}" if self._path or not self._netloc else f"/?{q}"
+        return self._path if self._path or not self._netloc else "/"
 
     @cached_property
     def raw_fragment(self) -> str:
