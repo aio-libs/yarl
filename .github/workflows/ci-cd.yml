@@ -167,7 +167,7 @@ jobs:
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
   test:
-    name: Test
+    name: Run test without extension
     needs:
     - build-pure-python-dists  # transitive, for accessing settings
     - build-wheels-for-tested-arches
@@ -187,11 +187,9 @@ jobs:
         experimental: [false]
         include:
         - pyver: pypy-3.10
-          no-extensions: Y
           experimental: false
           os: ubuntu-latest
         - pyver: pypy-3.9
-          no-extensions: Y
           experimental: false
           os: ubuntu-latest
       fail-fast: false
@@ -279,7 +277,7 @@ jobs:
       shell: bash
     - name: Run unittests
       env:
-        YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
+        YARL_NO_EXTENSIONS: 'Y'
       run: >-
         python -Im
         pytest
@@ -305,7 +303,7 @@ jobs:
         !cancelled()
         && failure()
       env:
-        YARL_NO_EXTENSIONS: ${{ matrix.no-extensions }}
+        YARL_NO_EXTENSIONS: 'Y'
       run: >-  # `exit 1` makes sure that the job remains red with flaky runs
         python -Im
         pytest --no-cov -vvvvv --lf -rA
