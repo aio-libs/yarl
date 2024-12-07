@@ -91,7 +91,11 @@ if not pure_py
         input: quoting_c_patched,
         output: 'copy_c',
         build_by_default: false,
-        command: ['cp','@INPUT@',join_paths(meson.project_source_root(), 'yarl/')],
+        command: [
+            'cp',
+            '@INPUT@',
+            join_paths(meson.project_source_root(), 'yarl/'),
+        ],
     )
 
     # support for in-tree build
