@@ -10,7 +10,7 @@ to build a wheel:
 
     $ build .
 
-to build extension module inplace:
+to build extension module in-place:
 
 .. code-block:: console
 
