@@ -352,7 +352,7 @@ jobs:
         path: requirements/test.txt
 
     - run: |
-        meson setup build -Ddebug=true
+        meson setup build -Dcython-trace=enabled
         meson compile -C build --verbose
         ninja -C build copy
       shell: bash

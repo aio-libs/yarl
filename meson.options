@@ -1,1 +1,2 @@
 option('pure-python', type: 'feature', value: 'disabled')
+option('cython-trace', type: 'feature', value: 'disabled')

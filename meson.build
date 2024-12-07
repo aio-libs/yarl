@@ -48,7 +48,7 @@ if not pure_py
 
     cython_args = ['-3']
 
-    if get_option('debug')
+    if get_option('cython-trace').enabled()
         cython_args += ['-X', 'linetrace=True']
         add_global_arguments('-DCYTHON_TRACE=1', language: 'c')
     endif
@@ -58,8 +58,6 @@ if not pure_py
         output: ['@BASENAME@.c_unpatched'],
         arguments: ['@INPUT@', '--output-file', '@OUTPUT0@'] + cython_args,
     )
-
-    fs = import('fs')
 
     rewrite_pyx_path = generator(
         py_inter,
