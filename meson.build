@@ -51,22 +51,13 @@ if not pure_py
     if get_option('cython-trace').enabled()
         cython_args += ['-X', 'linetrace=True']
         add_global_arguments('-DCYTHON_TRACE=1', language: 'c')
+        add_global_arguments('-DCYTHON_USE_SYS_MONITORING=0', language: 'c')
     endif
 
     cython_gen = generator(
         cython,
-        output: ['@BASENAME@.c_unpatched'],
-        arguments: ['@INPUT@', '--output-file', '@OUTPUT0@'] + cython_args,
-    )
-
-    rewrite_pyx_path = generator(
-        py_inter,
         output: ['@BASENAME@.c'],
-        arguments: [
-            join_paths(meson.project_source_root(), 'patch_source.py'),
-            '@INPUT@',
-            '@OUTPUT0@',
-        ],
+        arguments: ['@INPUT@', '--output-file', '@OUTPUT0@'] + cython_args,
     )
 
     quoting_c = cython_gen.process(
@@ -74,11 +65,9 @@ if not pure_py
         preserve_path_from: meson.current_source_dir(),
     )
 
-    quoting_c_patched = rewrite_pyx_path.process(quoting_c)
-
     out = py.extension_module(
         '_quoting_c',
-        quoting_c_patched,
+        quoting_c,
         subdir: 'yarl',
         install: true,
         dependencies: py.dependency(),
@@ -86,7 +75,7 @@ if not pure_py
 
     copy_c = custom_target(
         'copy generated c file back to source tree',
-        input: quoting_c_patched,
+        input: quoting_c,
         output: 'copy_c',
         build_by_default: false,
         command: [

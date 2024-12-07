@@ -31,5 +31,3 @@ source =
   .
 source_pkgs =
   yarl
-omit =
-  patch_source.py

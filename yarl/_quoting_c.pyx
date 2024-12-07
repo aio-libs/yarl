@@ -49,14 +49,14 @@ cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
     return 'a' <= v <= 'f'
 
 
-cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+cdef inline (Py_UCS4, uint8_t) _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
-        return <Py_UCS4>-1
+        return 0, 0
     cdef int digit2 = _from_hex(d2)
     if digit2 < 0:
-        return <Py_UCS4>-1
-    return <Py_UCS4>(digit1 << 4 | digit2)
+        return <Py_UCS4>0 , 0
+    return <Py_UCS4>(digit1 << 4 | digit2), 1
 
 
 cdef uint8_t ALLOWED_TABLE[16]
@@ -262,11 +262,11 @@ cdef class _Quoter:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and self._requote and idx <= length - 2:
-                ch = _restore_ch(
+                ch, ok = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
                 )
-                if ch != <Py_UCS4>-1:
+                if ok:
                     idx += 2
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
@@ -352,11 +352,11 @@ cdef class _Unquoter:
             idx += 1
             if ch == '%' and idx <= length - 2:
                 changed = 1
-                ch = _restore_ch(
+                ch, ok = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
                 )
-                if ch != <Py_UCS4>-1:
+                if ok:
                     idx += 2
                     assert buflen < 4
                     buffer[buflen] = ch
