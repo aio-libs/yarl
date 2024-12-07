@@ -1,1 +1,3 @@
 cython==3.0.11
+meson
+ninja

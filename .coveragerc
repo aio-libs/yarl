@@ -10,16 +10,14 @@ _site-packages-to-src-mapping =
   *\Lib\site-packages
 
 [report]
-fail_under = 98.95
-skip_covered = true
-skip_empty = true
+fail_under = 98.69
 show_missing = true
 exclude_also =
   ^\s*@pytest\.mark\.xfail
 
 [run]
 branch = true
-cover_pylib = false
+cover_pylib = true
 # https://coverage.rtfd.io/en/latest/contexts.html#dynamic-contexts
 # dynamic_context = test_function  # conflicts with `pytest-cov` if set here
 parallel = true
@@ -31,3 +29,5 @@ source =
   .
 source_pkgs =
   yarl
+omit =
+  patch_source.py

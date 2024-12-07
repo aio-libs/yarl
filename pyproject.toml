@@ -1,69 +1,64 @@
 [build-system]
 requires = [
-  # NOTE: The following build dependencies are necessary for initial
-  # NOTE: provisioning of the in-tree build backend located under
-  # NOTE: `packaging/pep517_backend/`.
-  "expandvars",
-  "setuptools >= 47",  # Minimum required for `version = attr:`
-  "tomli; python_version < '3.11'",
+  'cython ; implementation_name == "cpython"',
+  "meson[ninja]",
+  "meson-python",
 ]
-backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
-build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
+build-backend = "mesonpy"
 
-[tool.local.cythonize]
-# This attr can contain multiple globs
-src = ["yarl/*.pyx"]
+[project]
+name = 'yarl'
+version = '1.18.4.dev0'
+readme = "README.rst"
+description = 'Yet another URL library'
+authors = [
+  { name = 'Andrew Svetlov', email = 'andrew.svetlov@gmail.com' },
+]
+maintainers = [
+  { name = 'aiohttp team', email = 'team@aiohttp.org' },
+]
+requires-python = "~=3.9"
+keywords = ['cython', 'cext', 'yarl']
+license = { file = "LICENSE" }
+classifiers = [
+  'Development Status :: 5 - Production/Stable',
 
-[tool.local.cythonize.env]
-# Env vars provisioned during cythonize call
-#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
-#LDFLAGS = "${LDFLAGS}"
+  'Intended Audience :: Developers',
 
-[tool.local.cythonize.flags]
-# This section can contain the following booleans:
-# * annotate — generate annotated HTML page for source files
-# * build — build extension modules using distutils
-# * inplace — build extension modules in place using distutils (implies -b)
-# * force — force recompilation
-# * quiet — be less verbose during compilation
-# * lenient — increase Python compat by ignoring some compile time errors
-# * keep-going — compile as much as possible, ignore compilation failures
-annotate = false
-build = false
-inplace = true
-force = true
-quiet = false
-lenient = false
-keep-going = false
+  'License :: OSI Approved :: Apache Software License',
 
-[tool.local.cythonize.kwargs]
-# This section can contain args that have values:
-# * exclude=PATTERN      exclude certain file patterns from the compilation
-# * parallel=N    run builds in N parallel jobs (default: calculated per system)
-# exclude = "**.py"
-# parallel = 12
+  'Programming Language :: Cython',
+  'Programming Language :: Python',
+  'Programming Language :: Python :: 3',
+  'Programming Language :: Python :: 3.9',
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
 
-[tool.local.cythonize.kwargs.directive]
-# This section can contain compiler directives. Ref:
-# https://cython.rtfd.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
-embedsignature = "True"
-emit_code_comments = "True"
-linetrace = "True"  # Implies `profile=True`
+  'Topic :: Internet :: WWW/HTTP',
+  'Topic :: Software Development :: Libraries :: Python Modules',
+]
 
-[tool.local.cythonize.kwargs.compile-time-env]
-# This section can contain compile time env vars
+dependencies = [
+  'idna >= 2.0',
+  'multidict >= 4.0',
+  'propcache >= 0.2.0',
+]
 
-[tool.local.cythonize.kwargs.option]
-# This section can contain cythonize options
-# Ref: https://github.com/cython/cython/blob/d6e6de9/Cython/Compiler/Options.py#L694-L730
-#docstrings = "True"
-#embed_pos_in_docstring = "True"
-#warning_errors = "True"
-#error_on_unknown_names = "True"
-#error_on_uninitialized = "True"
+[project.urls]
+'Chat: Matrix' = 'https://matrix.to/#/#aio-libs:matrix.org'
+'Chat: Matrix Space' = 'https://matrix.to/#/#aio-libs-space:matrix.org'
+'CI: GitHub Workflows' = 'https://github.com/aio-libs/yarl/actions?query=branch:master'
+'Code of Conduct' = 'https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md'
+'Coverage: codecov' = 'https://codecov.io/github/aio-libs/yarl'
+'Docs: Changelog' = 'https://yarl.aio-libs.org/en/latest/changes/'
+'Docs: RTD' = 'https://yarl.aio-libs.org'
+'GitHub: issues' = 'https://github.com/aio-libs/yarl/issues'
+'GitHub: repo' = 'https://github.com/aio-libs/yarl'
 
 [tool.cibuildwheel]
-build-frontend = "build"
+build-frontend = "build[uv]"
 before-test = [
   # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
   # NOTE: constraints unset. The hope is that pip will cache that wheel
@@ -71,7 +66,7 @@ before-test = [
   # NOTE: said cache rather than attempting to build it with a conflicting.
   # NOTE: Version of Cython.
   # Ref: https://github.com/pypa/cibuildwheel/issues/1666
-  "PIP_CONSTRAINT= pip install PyYAML",
+  # "uv pip install PyYAML",
 ]
 test-requires = "-r requirements/test.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
@@ -82,12 +77,8 @@ skip = "pp*"
 COLOR = "yes"
 FORCE_COLOR = "1"
 MYPY_FORCE_COLOR = "1"
-PIP_CONSTRAINT = "requirements/cython.txt"
 PRE_COMMIT_COLOR = "always"
 PY_COLORS = "1"
 
-[tool.cibuildwheel.config-settings]
-pure-python = "false"
-
 [tool.cibuildwheel.windows]
-before-test = []  # Windows cmd has different syntax and pip chooses wheels
+before-test = [] # Windows cmd has different syntax and pip chooses wheels

@@ -9,11 +9,6 @@ on:
         description: Workflow artifact name containing dists
         required: true
         type: string
-      cython-tracing:
-        description: Whether to build Cython modules with line tracing
-        default: '0'
-        required: false
-        type: string
       os:
         description: VM OS to use, without version suffix
         default: ubuntu
@@ -58,6 +53,12 @@ jobs:
         source-tarball-name: ${{ inputs.source-tarball-name }}
         workflow-artifact-name: ${{ inputs.dists-artifact-name }}
 
+    - name: Install the latest version of uv
+      if: ${{ runner.os != 'Linux' }}
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+
     - name: Set up QEMU
       if: inputs.qemu
       uses: docker/setup-qemu-action@v3
@@ -72,6 +73,18 @@ jobs:
         echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
       shell: bash
 
+    - name: Restore cached Primes
+      if: ${{ runner.os != 'Linux' }}
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~\AppData\Local\pypa\cibuildwheel\Cache
+          ~/Library/Caches/cibuildwheel
+          ~/.cache/cibuildwheel
+        key: "cibuildwheel-${{ runner.os }}"
+
+
     - name: Skip building some wheel tags
       if: inputs.wheel-tags-to-skip
       run: |
@@ -82,9 +95,9 @@ jobs:
       uses: pypa/cibuildwheel@v2.22.0
       env:
         CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-        CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
-          pure-python=false
-          with-cython-tracing=${{ inputs.cython-tracing }}
+        # Cython line tracing for coverage collection
+        CIBW_CONFIG_SETTINGS: >-
+          setup-args=-Dpure-python=disabled
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v4

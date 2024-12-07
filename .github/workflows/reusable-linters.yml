@@ -55,9 +55,10 @@ jobs:
     - name: Self-install
       run: |
         pip install .
-    - name: Run linters
-      run: |
-        make lint
+    - uses: pre-commit/action@v3.0.1
+    # - name: Run linters
+    #   run: |
+    #     make lint
     - name: Send coverage data to Codecov
       uses: codecov/codecov-action@v5
       with:
@@ -81,7 +82,7 @@ jobs:
     - name: Prepare twine checker
       run: |
         pip install -U build twine
-        python -m build --config-setting=pure-python=true
+        python -m build --config-setting=setup-args=-Dpure-python=enabled
     - name: Run twine checker
       run: |
         twine check --strict dist/*

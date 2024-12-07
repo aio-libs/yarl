@@ -87,7 +87,7 @@ jobs:
     - name: Build sdists and pure-python wheel
       env:
         PIP_CONSTRAINT: requirements/cython.txt
-      run: python -Im build --config-setting=pure-python=true
+      run: python -Im build --config-setting=setup-args=-Dpure-python=enabled
     - name: Determine actual created filenames
       id: dist-filenames-detection
       run: >-
@@ -165,15 +165,6 @@ jobs:
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
-      cython-tracing: >-  # Cython line tracing for coverage collection
-        ${{
-          (
-            github.event_name == 'push'
-            && contains(github.ref, 'refs/tags/')
-          )
-          && 'false'
-          || 'true'
-        }}
 
   test:
     name: Test
@@ -184,23 +175,16 @@ jobs:
     strategy:
       matrix:
         pyver:
-        - 3.13
-        - 3.12
-        - 3.11
-        - >-
-          3.10
-        - 3.9
-        no-extensions: ['', 'Y']
+        - '3.13'
+        - '3.12'
+        - '3.11'
+        - '3.10'
+        - '3.9'
         os:
         - ubuntu-latest
         - macos-latest
         - windows-latest
         experimental: [false]
-        exclude:
-        - os: macos-latest
-          no-extensions: Y
-        - os: windows-latest
-          no-extensions: Y
         include:
         - pyver: pypy-3.10
           no-extensions: Y
@@ -282,21 +266,6 @@ jobs:
       shell: bash
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
-    - name: Produce the C-files for the Coverage.py Cython plugin
-      if: >-  # Only works if the dists were built with line tracing
-        !matrix.no-extensions
-        && (
-          github.event_name != 'push'
-          || !contains(github.ref, 'refs/tags/')
-        )
-      env:
-        PYTHONPATH: packaging/
-      run: |
-        set -eEuo pipefail
-
-        python -Im pip install expandvars
-        python -m pep517_backend.cli translate-cython
-      shell: bash
     - name: Disable the Cython.Coverage Produce plugin
       if: >-  # Only works if the dists were built with line tracing
         matrix.no-extensions
@@ -341,6 +310,80 @@ jobs:
         python -Im
         pytest --no-cov -vvvvv --lf -rA
         && exit 1
+      shell: bash
+    - name: Send coverage data to Codecov
+      if: >-
+        !cancelled()
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        flags: >-
+          CI-GHA,
+          pytest,
+          OS-${{ runner.os }},
+          VM-${{ matrix.os }},
+          Py-${{ steps.python-install.outputs.python-version }}
+        fail_ci_if_error: true
+
+  test-pyx-cov:
+    name: test-pyx-cov
+    strategy:
+      matrix:
+        pyver:
+        - '3.13'
+        - '3.12'
+        - '3.11'
+        - '3.10'
+        - '3.9'
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v4
+    - name: Setup Python ${{ matrix.pyver }}
+      id: python-install
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.pyver }}
+        allow-prereleases: true
+        cache: pip
+        cache-dependency-path: requirements/*.txt
+    - name: Install dependencies
+      uses: py-actions/py-dependency-install@v4
+      with:
+        path: requirements/test.txt
+
+    - run: |
+        meson setup build -Ddebug=true
+        meson compile -C build --verbose
+        ninja -C build copy
+      shell: bash
+    - name: Run unittests
+      run: >-
+        python -m
+        pytest
+        -v
+        --cov-report xml
+        --junitxml=.test-results/pytest/test.xml
+    - name: Produce markdown test summary from JUnit
+      if: >-
+        !cancelled()
+      uses: test-summary/action@v2.4
+      with:
+        paths: .test-results/pytest/test.xml
+    - name: Append coverage results to Job Summary
+      if: >-
+        !cancelled()
+      continue-on-error: true
+      run: >-
+        python -Im coverage report --format=markdown
+        >> "${GITHUB_STEP_SUMMARY}"
       shell: bash
     - name: Send coverage data to Codecov
       if: >-
