@@ -1,4 +1,4 @@
-Use meson-python as build backend and packaing tool.
+Use meson-python as build backend and packaging tool.
 
 to build a wheel:
 

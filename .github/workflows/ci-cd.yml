@@ -265,12 +265,6 @@ jobs:
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
     - name: Disable the Cython.Coverage Produce plugin
-      if: >-  # Only works if the dists were built with line tracing
-        matrix.no-extensions
-        || (
-          github.event_name == 'push'
-          && contains(github.ref, 'refs/tags/')
-        )
       run: |
         set -eEuo pipefail
         sed -i.bak 's/^\s\{2\}Cython\.Coverage$//g' .coveragerc
