@@ -1,0 +1,30 @@
+Use meson-python as build backend and packaing tool.
+
+to build a wheel:
+
+.. code-block:: console
+
+    $ pip wheel .
+
+    or
+
+    $ build .
+
+to build extension module inplace:
+
+.. code-block:: console
+
+    $ meson setup build
+    $ meson compile -C build --verbose
+    $ ninja -C build copy
+
+Ninja will copy extension back to source tree.
+
+For pyx coverage collection:
+
+.. code-block:: console
+
+    $ meson setup build -Ddebug=true
+    $ meson compile -C build --verbose
+    $ ninja -C build copy
+    $ python -m pytest --cov
