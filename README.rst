@@ -7,8 +7,9 @@ The module provides handy URL class for URL parsing and changing.
    :target: https://github.com/aio-libs/yarl/actions?query=workflow%3ACI
    :align: right
 
-.. image:: https://codecov.io/gh/aio-libs/yarl/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/aio-libs/yarl
+.. image:: https://codecov.io/gh/aio-libs/yarl/graph/badge.svg?flag=pytest
+   :target: https://app.codecov.io/gh/aio-libs/yarl?flags[]=pytest
+   :alt: Codecov coverage for the pytest-driven measurements
 
 .. image:: https://img.shields.io/endpoint?url=https://codspeed.io/badge.json
    :target: https://codspeed.io/aio-libs/yarl
