@@ -25,7 +25,6 @@ cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
-cdef char BUFFER[BUF_SIZE]
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
@@ -49,14 +48,14 @@ cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
     return 'a' <= v <= 'f'
 
 
-cdef inline Py_UCS4 _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
-        return <Py_UCS4>-1
+        return -1
     cdef int digit2 = _from_hex(d2)
     if digit2 < 0:
-        return <Py_UCS4>-1
-    return <Py_UCS4>(digit1 << 4 | digit2)
+        return -1
+    return digit1 << 4 | digit2
 
 
 cdef uint8_t ALLOWED_TABLE[16]
@@ -91,15 +90,18 @@ cdef struct Writer:
 
 
 cdef inline void _init_writer(Writer* writer):
-    writer.buf = &BUFFER[0]
+    cdef char *buf = <char *> PyMem_Malloc(BUF_SIZE)
+    if buf == NULL:
+        PyErr_NoMemory()
+        return
+    writer.buf = buf
     writer.size = BUF_SIZE
     writer.pos = 0
     writer.changed = 0
 
 
 cdef inline void _release_writer(Writer* writer):
-    if writer.buf != BUFFER:
-        PyMem_Free(writer.buf)
+    PyMem_Free(writer.buf)
 
 
 cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
@@ -109,17 +111,10 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
     if writer.pos == writer.size:
         # reallocate
         size = writer.size + BUF_SIZE
-        if writer.buf == BUFFER:
-            buf = <char*>PyMem_Malloc(size)
-            if buf == NULL:
-                PyErr_NoMemory()
-                return -1
-            memcpy(buf, writer.buf, writer.size)
-        else:
-            buf = <char*>PyMem_Realloc(writer.buf, size)
-            if buf == NULL:
-                PyErr_NoMemory()
-                return -1
+        buf = <char*>PyMem_Realloc(writer.buf, size)
+        if buf == NULL:
+            PyErr_NoMemory()
+            return -1
         writer.buf = buf
         writer.size = size
     writer.buf[writer.pos] = <char>ch
@@ -255,6 +250,7 @@ cdef class _Quoter:
         Writer *writer
     ):
         cdef Py_UCS4 ch
+        cdef long chl
         cdef int changed
         cdef Py_ssize_t idx = 0
 
@@ -262,11 +258,12 @@ cdef class _Quoter:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and self._requote and idx <= length - 2:
-                ch = _restore_ch(
+                chl = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
                 )
-                if ch != <Py_UCS4>-1:
+                if chl != -1:
+                    ch = <Py_UCS4>chl
                     idx += 2
                     if ch < 128:
                         if bit_at(self._protected_table, ch):
@@ -342,6 +339,7 @@ cdef class _Unquoter:
         cdef Py_ssize_t consumed
         cdef str unquoted
         cdef Py_UCS4 ch = 0
+        cdef long chl = 0
         cdef Py_ssize_t idx = 0
         cdef Py_ssize_t start_pct
         cdef int kind = PyUnicode_KIND(val)
@@ -352,11 +350,12 @@ cdef class _Unquoter:
             idx += 1
             if ch == '%' and idx <= length - 2:
                 changed = 1
-                ch = _restore_ch(
+                chl = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
                 )
-                if ch != <Py_UCS4>-1:
+                if chl != -1:
+                    ch = <Py_UCS4>chl
                     idx += 2
                     assert buflen < 4
                     buffer[buflen] = ch
