@@ -12,6 +12,7 @@ graft docs
 graft CHANGES
 graft requirements
 graft tests
+graft scripts
 global-exclude *.pyc
 global-exclude *.cache
 exclude yarl/*.c
