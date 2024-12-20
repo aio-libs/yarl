@@ -49,7 +49,6 @@ keep-going = false
 embedsignature = "True"
 emit_code_comments = "True"
 linetrace = "True"  # Implies `profile=True`
-freethreading_compatible = "True"
 
 [tool.local.cythonize.kwargs.compile-time-env]
 # This section can contain compile time env vars
@@ -96,5 +95,5 @@ before-test = []  # Windows cmd has different syntax and pip chooses wheels
 
 [[tool.cibuildwheel.overrides]]
 select = "cp313t-*"
-build-frontend = "build; --no-isolation"
+build-frontend = "build; args: --no-isolation"
 before-build = "bash {package}/scripts/cibw_before_build.sh"
