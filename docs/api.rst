@@ -1027,7 +1027,7 @@ The path is encoded if needed.
       >>> target - base
       URL('path/index.html')
 
-   .. versionadded:: 1.18
+   .. versionadded:: 1.19
 
 Human readable representation
 -----------------------------
