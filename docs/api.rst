@@ -652,9 +652,15 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com:8888').with_port(None)
       URL('http://example.com')
 
-.. method:: URL.with_path(path)
+.. method:: URL.with_path(path, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *path* replaced, encode *path* if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 
@@ -857,12 +863,18 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path#frag').with_fragment(None)
       URL('http://example.com/path')
 
-.. method:: URL.with_name(name)
+.. method:: URL.with_name(name, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *name* (last part of *path*) replaced and
    cleaned up *query* and *fragment* parts.
 
    Name is encoded if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 
@@ -871,12 +883,18 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path/to').with_name("ім'я")
       URL('http://example.com/path/%D1%96%D0%BC%27%D1%8F')
 
-.. method:: URL.with_suffix(suffix)
+.. method:: URL.with_suffix(suffix, *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *suffix* (file extension of *name*) replaced and
    cleaned up *query* and *fragment* parts.
 
    Name is encoded if needed.
+
+   If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
+
+   .. versionchanged:: 1.18
+
+      Added *keep_query* and *keep_fragment* parameters.
 
    .. doctest::
 

@@ -1,1 +1,0 @@
-Improved performance many :class:`~yarl.URL` methods -- by :user:`bdraco`.

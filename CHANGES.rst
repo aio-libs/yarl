@@ -14,6 +14,183 @@ Changelog
 
 .. towncrier release notes start
 
+1.18.3
+======
+
+*(2024-12-01)*
+
+
+Bug fixes
+---------
+
+- Fixed uppercase ASCII hosts being rejected by :meth:`URL.build() <yarl.URL.build>` and :py:meth:`~yarl.URL.with_host` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`954`, :issue:`1442`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performances of multiple path properties on cache miss -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1443`.
+
+
+----
+
+
+1.18.2
+======
+
+*(2024-11-29)*
+
+
+No significant changes.
+
+
+----
+
+
+1.18.1
+======
+
+*(2024-11-29)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved cache performance when :class:`~yarl.URL` objects are constructed from :py:meth:`~yarl.URL.build` with ``encoded=True`` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1432`.
+
+- Improved cache performance for operations that produce a new :class:`~yarl.URL` object -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1434`, :issue:`1436`.
+
+
+----
+
+
+1.18.0
+======
+
+*(2024-11-21)*
+
+
+Features
+--------
+
+- Added ``keep_query`` and ``keep_fragment`` flags in the :py:meth:`yarl.URL.with_path`, :py:meth:`yarl.URL.with_name` and :py:meth:`yarl.URL.with_suffix` methods, allowing users to optionally retain the query string and fragment in the resulting URL when replacing the path -- by :user:`paul-nameless`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`111`, :issue:`1421`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Started running downstream ``aiohttp`` tests in CI -- by :user:`Cycloctane`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1415`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of converting :class:`~yarl.URL` to a string -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1422`.
+
+
+----
+
+
+1.17.2
+======
+
+*(2024-11-17)*
+
+
+Bug fixes
+---------
+
+- Stopped implicitly allowing the use of Cython pre-release versions when
+  building the distribution package -- by :user:`ajsanchezsanz` and
+  :user:`markgreene74`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1411`, :issue:`1412`.
+
+- Fixed a bug causing :attr:`~yarl.URL.port` to return the default port when the given port was zero
+  -- by :user:`gmacon`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1413`.
+
+
+Features
+--------
+
+- Make error messages include details of incorrect type when ``port`` is not int in :py:meth:`~yarl.URL.build`.
+  -- by :user:`Cycloctane`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1414`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Stopped implicitly allowing the use of Cython pre-release versions when
+  building the distribution package -- by :user:`ajsanchezsanz` and
+  :user:`markgreene74`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1411`, :issue:`1412`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the :py:meth:`~yarl.URL.joinpath` method -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1418`.
+
+
+----
+
+
+1.17.1
+======
+
+*(2024-10-30)*
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of many :class:`~yarl.URL` methods -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1396`, :issue:`1397`, :issue:`1398`.
+
+- Improved performance of passing a `dict` or `str` to :py:meth:`~yarl.URL.extend_query` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1401`.
+
+
+----
+
+
 1.17.0
 ======
 
