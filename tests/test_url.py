@@ -98,7 +98,14 @@ def test_relative_to(target: str, base: str, expected: str):
     assert result_url == expected_url
 
 
-@pytest.mark.xfail(reason="Empty segments are not preserved")
+@pytest.mark.xfail(
+    reason="""
+    Empty segments are not preserved
+    because URLs are converted to PurePosixPath during calculation.
+
+    See https://github.com/aio-libs/yarl/pull/1388#issuecomment-2437346012
+    """
+)
 @pytest.mark.parametrize(
     ("target", "base", "expected"),
     [
