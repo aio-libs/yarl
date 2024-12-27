@@ -541,32 +541,6 @@ class URL:
     def __mod__(self, query: Query) -> "URL":
         return self.update_query(query)
 
-    def __sub__(self, other: object) -> "URL":
-        """Return a new URL with a relative path between two other URL objects.
-
-        Note that both URLs must have the same scheme and netloc.
-
-        Example:
-        >>> target = URL("http://example.com/path/index.html")
-        >>> base = URL("http://example.com/")
-        >>> target - base
-        URL('path/index.html')
-        """
-
-        if type(other) is not URL:
-            return NotImplemented
-
-        target_scheme, target_netloc, target_path, _, _ = self._val
-        base_scheme, base_netloc, base_path, _, _ = other._val
-
-        if target_scheme != base_scheme:
-            raise ValueError("Both URLs should have the same scheme")
-        if target_netloc != base_netloc:
-            raise ValueError("Both URLs should have the same netloc")
-
-        path = calculate_relative_path(target_path, base_path)
-        return self._from_parts("", "", path, "", "")
-
     def __bool__(self) -> bool:
         return bool(self._netloc or self._path or self._query or self._fragment)
 
@@ -1390,6 +1364,34 @@ class URL:
         name = name + suffix if not old_suffix else name[: -len(old_suffix)] + suffix
 
         return self.with_name(name, keep_query=keep_query, keep_fragment=keep_fragment)
+
+    def relative_to(self, other: object) -> "URL":
+        """Return a new URL with a relative path between two other URL objects.
+
+        Note that both URLs must have the same scheme and netloc.
+
+        Example:
+        >>> target = URL("http://example.com/path/index.html")
+        >>> base = URL("http://example.com/")
+        >>> target.relative_to(base)
+        URL('path/index.html')
+        >>> base.relative_to(target)
+        URL('..')
+        """
+
+        if type(other) is not URL:
+            return NotImplemented
+
+        target_scheme, target_netloc, target_path, _, _ = self._val
+        base_scheme, base_netloc, base_path, _, _ = other._val
+
+        if target_scheme != base_scheme:
+            raise ValueError("Both URLs should have the same scheme")
+        if target_netloc != base_netloc:
+            raise ValueError("Both URLs should have the same netloc")
+
+        path = calculate_relative_path(target_path, base_path)
+        return from_parts("", "", path, "", "")
 
     def join(self, url: "URL") -> "URL":
         """Join URLs

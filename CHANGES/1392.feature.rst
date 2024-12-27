@@ -1,4 +1,4 @@
-Added support for using the :meth:`subtraction operator <yarl.URL.__sub__>`
+Added a new method :py:meth:`~yarl.URL.relative_to`
 to get the relative path between URLs.
 
 Note that both URLs must have the same scheme, user, password, host and port:
@@ -7,16 +7,20 @@ Note that both URLs must have the same scheme, user, password, host and port:
 
    >>> target = URL("http://example.com/path/index.html")
    >>> base = URL("http://example.com/")
-   >>> target - base
+   >>> target.relative_to(base)
    URL('path/index.html')
+   >>> base.relative_to(target)
+   URL('..')
 
 URLs can also be relative:
 
 .. code-block:: pycon
 
-   >>> target = URL("/")
-   >>> base = URL("/path/index.html")
-   >>> target - base
+   >>> target = URL("/path/index.html")
+   >>> base = URL("/")
+   >>> target.relative_to(base)
+   URL('path/index.html')
+   >>> base.relative_to(target)
    URL('..')
 
 -- by :user:`oleksbabieiev`

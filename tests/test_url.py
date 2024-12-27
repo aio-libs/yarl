@@ -92,9 +92,9 @@ def test_str():
         (".", "..", "."),
     ],
 )
-def test_sub(target: str, base: str, expected: str):
+def test_relative_to(target: str, base: str, expected: str):
     expected_url = URL(expected)
-    result_url = URL(target) - URL(base)
+    result_url = URL(target).relative_to(URL(base))
     assert result_url == expected_url
 
 
@@ -114,34 +114,34 @@ def test_sub(target: str, base: str, expected: str):
         ),
     ],
 )
-def test_sub_empty_segments(target: str, base: str, expected: str):
+def test_relative_to_with_empty_segments(target: str, base: str, expected: str):
     expected_url = URL(expected)
-    result_url = URL(target) - URL(base)
+    result_url = URL(target).relative_to(URL(base))
     assert result_url == expected_url
 
 
-def test_sub_with_different_schemes():
+def test_relative_to_with_different_schemes():
     expected_error_msg = r"^Both URLs should have the same scheme$"
     with pytest.raises(ValueError, match=expected_error_msg):
-        URL("http://example.com/") - URL("https://example.com/")
+        URL("http://example.com/").relative_to(URL("https://example.com/"))
 
 
-def test_sub_with_different_netlocs():
+def test_relative_to_with_different_netlocs():
     expected_error_msg = r"^Both URLs should have the same netloc$"
     with pytest.raises(ValueError, match=expected_error_msg):
-        URL("https://spam.com/") - URL("https://ham.com/")
+        URL("https://spam.com/").relative_to(URL("https://ham.com/"))
 
 
-def test_sub_with_different_anchors():
+def test_relative_to_with_different_anchors():
     expected_error_msg = r"^'path/to' and '/path' have different anchors$"
     with pytest.raises(ValueError, match=expected_error_msg):
-        URL("path/to") - URL("/path/from")
+        URL("path/to").relative_to(URL("/path/from"))
 
 
-def test_sub_with_two_dots_in_base():
+def test_relative_to_with_two_dots_in_base():
     expected_error_msg = r"^'..' segment in '/path/..' cannot be walked$"
     with pytest.raises(ValueError, match=expected_error_msg):
-        URL("path/to") - URL("/path/../from")
+        URL("path/to").relative_to(URL("/path/../from"))
 
 
 def test_repr():

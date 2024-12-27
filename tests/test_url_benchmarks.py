@@ -614,18 +614,18 @@ def test_empty_query(benchmark: BenchmarkFixture) -> None:
             url.query
 
 
-def test_url_subtract(benchmark: BenchmarkFixture) -> None:
+def test_relative_to(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            URL_WITH_LONGER_PATH - URL_WITH_PATH
+            URL_WITH_LONGER_PATH.relative_to(URL_WITH_PATH)
 
 
-def test_url_subtract_long_urls(benchmark: BenchmarkFixture) -> None:
+def test_relative_to_long_urls(benchmark: BenchmarkFixture) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            URL_VERY_LONG_PATH - URL_LONG_PATH
+            URL_VERY_LONG_PATH.relative_to(URL_LONG_PATH)
 
 
 def test_url_host_port_subcomponent(benchmark: BenchmarkFixture) -> None:
