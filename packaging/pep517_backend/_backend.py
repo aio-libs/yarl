@@ -42,14 +42,12 @@ with suppress(ImportError):
     from Cython.Build.Cythonize import main as _cythonize_cli_cmd
 
 from ._compat import chdir_cm
-from ._cython_configuration import (  # noqa: WPS436
-    get_local_cython_config as _get_local_cython_config,
-)
+from ._cython_configuration import get_local_cython_config as _get_local_cython_config
 from ._cython_configuration import (
     make_cythonize_cli_args_from_config as _make_cythonize_cli_args_from_config,
 )
 from ._cython_configuration import patched_env as _patched_cython_env
-from ._transformers import sanitize_rst_roles  # noqa: WPS436
+from ._transformers import sanitize_rst_roles
 
 __all__ = (  # noqa: WPS410
     'build_sdist',
