@@ -2,8 +2,6 @@
 
 from collections.abc import Sequence
 from contextlib import suppress
-from itertools import chain
-from pathlib import PurePosixPath
 
 
 def normalize_path_segments(segments: Sequence[str]) -> list[str]:
@@ -44,28 +42,22 @@ def normalize_path(path: str) -> str:
 
 
 def calculate_relative_path(target: str, base: str) -> str:
-    """Return the relative path between two other paths.
+    """Calculate the relative path between two other paths"""
 
-    If the operation is not possible, raise ValueError.
-    """
+    base_segments = base.split("/")[:-1]
+    target_segments = target.split("/")
 
-    target = target or "/"
-    base = base or "/"
-
-    target_path = PurePosixPath(target)
-    base_path = PurePosixPath(base)
-
-    if base[-1] != "/":
-        base_path = base_path.parent
-
-    for step, path in enumerate(chain((base_path,), base_path.parents)):
-        if path == target_path or path in target_path.parents:
+    offset = 0
+    for base_seg, target_seg in zip(base_segments, target_segments):
+        if base_seg == target_seg:
+            offset += 1
+        else:
             break
-        elif path.name == "..":
-            raise ValueError(f"'..' segment in {str(base_path)!r} cannot be walked")
-    else:
-        raise ValueError(
-            f"{str(target_path)!r} and {str(base_path)!r} have different anchors"
-        )
-    offset = len(path.parts)
-    return str(PurePosixPath(*("..",) * step, *target_path.parts[offset:]))
+
+    remaining_base_segments = base_segments[offset:]
+    remaining_target_segments = target_segments[offset:]
+
+    relative_segments = [".."] * len(remaining_base_segments)
+    relative_segments.extend(remaining_target_segments)
+
+    return "/".join(relative_segments)
