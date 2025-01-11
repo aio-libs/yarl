@@ -39,3 +39,25 @@ def normalize_path(path: str) -> str:
 
     segments = path.split("/")
     return prefix + "/".join(normalize_path_segments(segments))
+
+
+def calculate_relative_path(target: str, base: str) -> str:
+    """Calculate the relative path between two other paths"""
+
+    base_segments = base.split("/")[:-1]
+    target_segments = target.split("/")
+
+    offset = 0
+    for base_seg, target_seg in zip(base_segments, target_segments):
+        if base_seg == target_seg:
+            offset += 1
+        else:
+            break
+
+    remaining_base_segments = base_segments[offset:]
+    remaining_target_segments = target_segments[offset:]
+
+    relative_segments = [".."] * len(remaining_base_segments)
+    relative_segments.extend(remaining_target_segments)
+
+    return "/".join(relative_segments)

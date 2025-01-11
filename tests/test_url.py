@@ -61,6 +61,69 @@ def test_str():
     assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
 
 
+@pytest.mark.parametrize(
+    ("target", "base", "expected"),
+    [
+        ("http://example.com/path/to", "http://example.com/", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam", "path/to"),
+        ("http://example.com/this/is/a/test", "http://example.com/this/", "is/a/test"),
+        (
+            "http://example.com/this/./is/a/test",
+            "http://example.com/this/",
+            "is/a/test",
+        ),
+        (
+            "http://example.com/////path/////to",
+            "http://example.com/////spam",
+            "path/////to",
+        ),
+        (
+            "http://example.com////path/////to",
+            "http://example.com/////spam",
+            "../path/////to",
+        ),
+        (
+            "http://example.com/this/is/../a//test",
+            "http://example.com/this/",
+            "a//test",
+        ),
+        ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
+        ("http://example.com/path", "http://example.com/path/to/", ".."),
+        ("http://example.com/path", "http://example.com/other/../path/to/", ".."),
+        ("http://example.com/", "http://example.com/", ""),
+        ("http://example.com", "http://example.com", ""),
+        ("http://example.com/", "http://example.com", "/"),
+        ("http://example.com", "http://example.com/", ""),
+        ("//example.com", "//example.com", ""),
+        ("/path/to", "/spam/", "../path/to"),
+        ("path/to", "spam/", "../path/to"),
+        ("path/../to", "path/", "../to"),
+        ("path/..", ".", "path/.."),
+        ("path/../replace/me", "path/../replace", "replace/me"),
+        ("path/../replace/me", "path/../replace/", "me"),
+        ("path/to", "spam", "path/to"),
+        ("..", ".", ".."),
+        (".", "..", "."),
+    ],
+)
+def test_relative_to(target: str, base: str, expected: str):
+    expected_url = URL(expected)
+    result_url = URL(target).relative_to(URL(base))
+    assert result_url == expected_url
+
+
+def test_relative_to_with_different_schemes():
+    expected_error_msg = r"^Both URLs should have the same scheme$"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("http://example.com/").relative_to(URL("https://example.com/"))
+
+
+def test_relative_to_with_different_netlocs():
+    expected_error_msg = r"^Both URLs should have the same netloc$"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("https://spam.com/").relative_to(URL("https://ham.com/"))
+
+
 def test_repr():
     url = URL("http://example.com")
     assert "URL('http://example.com')" == repr(url)
