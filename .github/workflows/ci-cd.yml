@@ -38,7 +38,7 @@ env:
   PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
-  PYTHON_LATEST: 3.12
+  PYTHON_LATEST: 3.13
 
 
 jobs:
@@ -184,6 +184,7 @@ jobs:
     strategy:
       matrix:
         pyver:
+        - 3.13t
         - 3.13
         - 3.12
         - 3.11
@@ -231,7 +232,7 @@ jobs:
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
-      uses: actions/setup-python@v5
+      uses: quansight-labs/setup-python@v5
       with:
         python-version: ${{ matrix.pyver }}
         allow-prereleases: true
@@ -241,6 +242,14 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/test.txt
+    - name: Install Cython nightly on free-threading
+      if: matrix.pyver == '3.13t'
+      run: |
+        python -m pip uninstall -y cython
+        python -m pip install cython \
+          --pre \
+          --extra-index-url \
+          https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
     - name: Determine pre-compiled compatible wheel
       env:
         # NOTE: When `pip` is forced to colorize output piped into `jq`,
