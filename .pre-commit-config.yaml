@@ -21,13 +21,13 @@ repos:
   hooks:
   - id: isort
 - repo: https://github.com/psf/black
-  rev: '24.8.0'
+  rev: '24.10.0'
   hooks:
   - id: black
     language_version: python3  # Should be a command that runs python
 
 - repo: https://github.com/python-jsonschema/check-jsonschema.git
-  rev: 0.29.3
+  rev: 0.30.0
   hooks:
   - id: check-github-workflows
     files: ^\.github/workflows/[^/]+$
@@ -71,7 +71,7 @@ repos:
   - id: detect-private-key
     exclude: ^examples/
 - repo: https://github.com/asottile/pyupgrade
-  rev: 'v3.17.0'
+  rev: 'v3.19.1'
   hooks:
   - id: pyupgrade
     args: ['--py39-plus']
@@ -94,7 +94,7 @@ repos:
     - --strict
 
 - repo: https://github.com/MarcoGorelli/cython-lint.git
-  rev: v0.16.2
+  rev: v0.16.6
   hooks:
   - id: cython-lint
 
@@ -107,7 +107,7 @@ repos:
       ^[^/]+[.]rst$
 
 - repo: https://github.com/pre-commit/mirrors-mypy.git
-  rev: v1.11.2
+  rev: v1.14.1
   hooks:
   - id: mypy
     alias: mypy-py313
@@ -187,7 +187,7 @@ repos:
     pass_filenames: false
 
 - repo: https://github.com/rhysd/actionlint.git
-  rev: v1.7.3
+  rev: v1.7.6
   hooks:
   - id: actionlint-docker
     args:
