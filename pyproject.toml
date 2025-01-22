@@ -92,8 +92,3 @@ pure-python = "false"
 
 [tool.cibuildwheel.windows]
 before-test = []  # Windows cmd has different syntax and pip chooses wheels
-
-[[tool.cibuildwheel.overrides]]
-select = "cp313t-*"
-build-frontend = "build; args: --no-isolation"
-before-build = "bash {package}/scripts/cibw_before_build.sh"

@@ -374,8 +374,8 @@ def get_requires_for_build_wheel(
         )
 
     c_ext_build_deps = [] if is_pure_python_build else [
-        'Cython ~= 3.0.0; python_version >= "3.12"',
-        'Cython; python_version < "3.12"',
+        'Cython == 3.1.0a1; python_version >= "3.13"',
+        'Cython ~= 3.0.0; python_version <= "3.12"',
     ]
 
     return _setuptools_get_requires_for_build_wheel(
