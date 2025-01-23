@@ -393,7 +393,7 @@ jobs:
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
-        path: requirements/test.txt
+        path: requirements/codspeed.txt
     - name: Determine pre-compiled compatible wheel
       env:
         # NOTE: When `pip` is forced to colorize output piped into `jq`,

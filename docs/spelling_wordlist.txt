@@ -2,6 +2,7 @@ Bluesky
 Bugfixes
 Changelog
 Codecov
+CPython
 Cython
 GPG
 IPv
