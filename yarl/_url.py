@@ -1355,7 +1355,7 @@ class URL:
         """
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
-        if suffix and not suffix[0] == "." or suffix == ".":
+        if suffix and not suffix[0] == "." or suffix == "." or "/" in suffix:
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
@@ -1363,6 +1363,8 @@ class URL:
         old_suffix = self.raw_suffix
         suffix = PATH_QUOTER(suffix)
         name = name + suffix if not old_suffix else name[: -len(old_suffix)] + suffix
+        if name in (".", ".."):
+            raise ValueError(". and .. values are forbidden")
         parts = list(self.raw_parts)
         if netloc := self._netloc:
             if len(parts) == 1:
