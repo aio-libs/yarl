@@ -1665,7 +1665,7 @@ def test_with_suffix_with_slash2():
     with pytest.raises(ValueError) as excinfo:
         URL("http://example.com/a").with_suffix(".b/.d")
     (msg,) = excinfo.value.args
-    assert msg == "Slash in name is not allowed"
+    assert msg == "Invalid suffix '.b/.d'"
 
 
 def test_with_suffix_replace():
