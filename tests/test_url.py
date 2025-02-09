@@ -1514,6 +1514,30 @@ def test_with_suffix():
     assert url2.path == "/a/b.c"
 
 
+def test_with_suffix_encoded_suffix():
+    url = URL("http://example.com/a/b")
+    url2 = url.with_suffix(". c")
+    assert url2.raw_parts == ("/", "a", "b.%20c")
+    assert url2.parts == ("/", "a", "b. c")
+    assert url2.raw_path == "/a/b.%20c"
+    assert url2.path == "/a/b. c"
+
+
+def test_with_suffix_encoded_url():
+    url = URL("http://example.com/a/b c")
+    url2 = url.with_suffix(". d")
+    url3 = url.with_suffix(".e")
+    assert url2.raw_parts == ("/", "a", "b%20c.%20d")
+    assert url2.parts == ("/", "a", "b c. d")
+    assert url2.raw_path == "/a/b%20c.%20d"
+    assert url2.path == "/a/b c. d"
+
+    assert url3.raw_parts == ("/", "a", "b%20c.e")
+    assert url3.parts == ("/", "a", "b c.e")
+    assert url3.raw_path == "/a/b%20c.e"
+    assert url3.path == "/a/b c.e"
+
+
 @pytest.mark.parametrize(
     ("original_url", "keep_query", "keep_fragment", "expected_url"),
     [
