@@ -2,14 +2,10 @@
 
 import pytest
 
-try:
-    from pytest_codspeed import BenchmarkFixture
-
-    CODSPEED_MISSING = False
-except ImportError:
-    CODSPEED_MISSING = True
-
 from yarl._quoting import _Quoter, _Unquoter
+
+pytest_codspeed = pytest.importorskip("pytest_codspeed")
+
 
 QUOTER_SLASH_SAFE = _Quoter(safe="/")
 QUOTER = _Quoter()
@@ -22,80 +18,70 @@ LONG_QUERY = "a=1&b=2&c=3&d=4&e=5&f=6&g=7&h=8&i=9&j=0" * 25
 LONG_QUERY_WITH_PCT = LONG_QUERY + "&d=%25%2F%3F%3A%40%26%3B%3D%2B"
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_quote_query_string(benchmark: "BenchmarkFixture") -> None:
+def test_quote_query_string(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             QUERY_QUOTER("a=1&b=2&c=3&d=4&e=5&f=6&g=7&h=8&i=9&j=0")
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_quoter_ascii(benchmark: "BenchmarkFixture") -> None:
+def test_quoter_ascii(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             QUOTER_SLASH_SAFE("/path/to")
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_quote_long_path(benchmark: "BenchmarkFixture") -> None:
+def test_quote_long_path(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             PATH_QUOTER(LONG_PATH)
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_quoter_pct(benchmark: "BenchmarkFixture") -> None:
+def test_quoter_pct(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             QUOTER("abc%0a")
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_long_query(benchmark: "BenchmarkFixture") -> None:
+def test_long_query(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             QUERY_QUOTER(LONG_QUERY)
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_long_query_with_pct(benchmark: "BenchmarkFixture") -> None:
+def test_long_query_with_pct(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             QUERY_QUOTER(LONG_QUERY_WITH_PCT)
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_quoter_quote_utf8(benchmark: "BenchmarkFixture") -> None:
+def test_quoter_quote_utf8(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             PATH_QUOTER("/шлях/файл")
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_unquoter_short(benchmark: "BenchmarkFixture") -> None:
+def test_unquoter_short(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             UNQUOTER("/path/to")
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_unquoter_long_ascii(benchmark: "BenchmarkFixture") -> None:
+def test_unquoter_long_ascii(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
             UNQUOTER(LONG_QUERY)
 
 
-@pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed needs to be installed")
-def test_unquoter_long_pct(benchmark: "BenchmarkFixture") -> None:
+def test_unquoter_long_pct(benchmark: "pytest_codspeed.BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
