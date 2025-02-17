@@ -1,8 +1,8 @@
 Bluesky
 Bugfixes
-CPython
 Changelog
 Codecov
+CPython
 Cython
 GPG
 IPv
