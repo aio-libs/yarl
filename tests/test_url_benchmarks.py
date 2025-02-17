@@ -162,7 +162,9 @@ def test_url_make_with_host_path_and_port(benchmark: "BenchmarkFixture") -> None
 
 
 @pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed is not installed")
-def test_url_make_encoded_with_host_path_and_port(benchmark: "BenchmarkFixture") -> None:
+def test_url_make_encoded_with_host_path_and_port(
+    benchmark: "BenchmarkFixture",
+) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
@@ -266,7 +268,9 @@ def test_url_make_empty_password(benchmark: "BenchmarkFixture") -> None:
 
 
 @pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed is not installed")
-def test_url_make_with_ipv4_address_path_and_port(benchmark: "BenchmarkFixture") -> None:
+def test_url_make_with_ipv4_address_path_and_port(
+    benchmark: "BenchmarkFixture",
+) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
@@ -282,7 +286,9 @@ def test_url_make_with_ipv4_address_and_path(benchmark: "BenchmarkFixture") -> N
 
 
 @pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed is not installed")
-def test_url_make_with_ipv6_address_path_and_port(benchmark: "BenchmarkFixture") -> None:
+def test_url_make_with_ipv6_address_path_and_port(
+    benchmark: "BenchmarkFixture",
+) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
@@ -357,7 +363,9 @@ def test_update_query_mapping(benchmark: "BenchmarkFixture") -> None:
 
 
 @pytest.mark.skipif(CODSPEED_MISSING, reason="pytest-codspeed is not installed")
-def test_update_query_mapping_with_existing_query(benchmark: "BenchmarkFixture") -> None:
+def test_update_query_mapping_with_existing_query(
+    benchmark: "BenchmarkFixture",
+) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(25):
