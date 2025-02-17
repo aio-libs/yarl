@@ -9,7 +9,6 @@ except ImportError:
 
 from yarl._quoting import _Quoter, _Unquoter
 
-
 QUOTER_SLASH_SAFE = _Quoter(safe="/")
 QUOTER = _Quoter()
 UNQUOTER = _Unquoter()

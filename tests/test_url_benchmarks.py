@@ -9,7 +9,6 @@ except ImportError:
 
 from yarl import URL
 
-
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
 MANY_IPV4_URLS = [f"http://127.0.0.{i}" for i in range(256)]
