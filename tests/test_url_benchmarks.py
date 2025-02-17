@@ -4,6 +4,7 @@ import pytest
 
 try:
     from pytest_codspeed import BenchmarkFixture
+
     CODSPEED_MISSING = False
 except ImportError:
     CODSPEED_MISSING = True
