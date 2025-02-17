@@ -79,6 +79,12 @@ test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
 # don't build PyPy wheels, install from source instead
 skip = "pp*"
 
+# TODO: Remove this when there's a Cython 3.1 final release
+# Remove PIP_CONSTRAINT from the environment
+[[tool.cibuildwheel.overrides]]
+select = "cp313t-*"
+environment = {COLOR="yes", FORCE_COLOR="1", MYPY_FORCE_COLOR="1", PRE_COMMIT_COLOR="always", PY_COLORS="1"}
+
 [tool.cibuildwheel.environment]
 COLOR = "yes"
 FORCE_COLOR = "1"

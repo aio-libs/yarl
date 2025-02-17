@@ -4,8 +4,9 @@ import pytest
 
 try:
     from pytest_codspeed import BenchmarkFixture
+    CODSPEED_MISSING = False
 except ImportError:
-    BenchmarkFixture = None
+    CODSPEED_MISSING = True
 
 from yarl._quoting import _Quoter, _Unquoter
 
@@ -21,7 +22,7 @@ LONG_QUERY_WITH_PCT = LONG_QUERY + "&d=%25%2F%3F%3A%40%26%3B%3D%2B"
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_quote_query_string(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -31,7 +32,7 @@ def test_quote_query_string(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_quoter_ascii(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -41,7 +42,7 @@ def test_quoter_ascii(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_quote_long_path(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -51,7 +52,7 @@ def test_quote_long_path(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_quoter_pct(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -61,7 +62,7 @@ def test_quoter_pct(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_long_query(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -71,7 +72,7 @@ def test_long_query(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_long_query_with_pct(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -81,7 +82,7 @@ def test_long_query_with_pct(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_quoter_quote_utf8(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -91,7 +92,7 @@ def test_quoter_quote_utf8(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_unquoter_short(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -101,7 +102,7 @@ def test_unquoter_short(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_unquoter_long_ascii(benchmark: BenchmarkFixture) -> None:
     @benchmark
@@ -111,7 +112,7 @@ def test_unquoter_long_ascii(benchmark: BenchmarkFixture) -> None:
 
 
 @pytest.mark.skipif(
-    BenchmarkFixture is None, reason="pytest-codspeed needs to be installed"
+    CODSPEED_MISSING, reason="pytest-codspeed needs to be installed"
 )
 def test_unquoter_long_pct(benchmark: BenchmarkFixture) -> None:
     @benchmark
