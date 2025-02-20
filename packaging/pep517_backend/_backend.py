@@ -377,7 +377,7 @@ def get_requires_for_build_wheel(
     elif sysconfig.get_config_var('Py_GIL_DISABLED'):
         c_ext_build_deps = ['Cython ~= 3.1.0a1']
     else:
-        c_ext_build_deps = ['Cython ~= 3.0.11']
+        c_ext_build_deps = ['Cython ~= 3.0.12']
 
     return _setuptools_get_requires_for_build_wheel(
         config_settings=config_settings,
