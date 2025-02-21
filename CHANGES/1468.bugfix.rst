@@ -1,0 +1,1 @@
+Fix entire name being re-encoded when using `with_suffix` -- by :user:`NTFSvolume`.
