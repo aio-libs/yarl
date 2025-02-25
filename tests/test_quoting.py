@@ -2,6 +2,7 @@ import pytest
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
+import yarl
 from yarl._quoting import NO_EXTENSIONS
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
@@ -36,6 +37,11 @@ else:
     quoter_ids = ["PyQuoter"]
     unquoters = [_PyUnquoter]
     unquoter_ids = ["PyUnquoter"]
+
+
+@pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions available but not imported")
+def test_quoting_c_loaded():
+    assert "_quoting_c" in dir(yarl)
 
 
 def hexescape(char):
