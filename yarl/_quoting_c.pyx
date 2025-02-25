@@ -13,6 +13,7 @@ from cpython.unicode cimport (
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
+import sysconfig
 from string import ascii_letters, digits
 
 
@@ -25,6 +26,7 @@ cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
+cdef char BUFFER[BUF_SIZE]
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
@@ -90,18 +92,23 @@ cdef struct Writer:
 
 
 cdef inline void _init_writer(Writer* writer):
-    cdef char *buf = <char *> PyMem_Malloc(BUF_SIZE)
-    if buf == NULL:
-        PyErr_NoMemory()
-        return
-    writer.buf = buf
+    cdef char *buf
+    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+        buf = <char *> PyMem_Malloc(BUF_SIZE)
+        if buf == NULL:
+            PyErr_NoMemory()
+            return
+        writer.buf = buf
+    else:
+        writer.buf = &BUFFER[0]
     writer.size = BUF_SIZE
     writer.pos = 0
     writer.changed = 0
 
 
 cdef inline void _release_writer(Writer* writer):
-    PyMem_Free(writer.buf)
+    if writer.buf != BUFFER:
+        PyMem_Free(writer.buf)
 
 
 cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
@@ -111,10 +118,17 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
     if writer.pos == writer.size:
         # reallocate
         size = writer.size + BUF_SIZE
-        buf = <char*>PyMem_Realloc(writer.buf, size)
-        if buf == NULL:
-            PyErr_NoMemory()
-            return -1
+        if writer.buf == BUFFER:
+            buf = <char*>PyMem_Malloc(size)
+            if buf == NULL:
+                PyErr_NoMemory()
+                return -1
+            memcpy(buf, writer.buf, writer.size)
+        else:
+            buf = <char*>PyMem_Realloc(writer.buf, size)
+            if buf == NULL:
+                PyErr_NoMemory()
+                return -1
         writer.buf = buf
         writer.size = size
     writer.buf[writer.pos] = <char>ch
