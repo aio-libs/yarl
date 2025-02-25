@@ -27,6 +27,7 @@ cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 cdef char BUFFER[BUF_SIZE]
+cdef bint IS_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
@@ -93,7 +94,8 @@ cdef struct Writer:
 
 cdef inline void _init_writer(Writer* writer):
     cdef char *buf
-    if sysconfig.get_config_var("Py_GIL_DISABLED"):
+    if IS_GIL_DISABLED:
+        print("Calling malloc...")
         buf = <char *> PyMem_Malloc(BUF_SIZE)
         if buf == NULL:
             PyErr_NoMemory()
