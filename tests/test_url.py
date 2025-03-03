@@ -4,6 +4,7 @@ from urllib.parse import SplitResult, quote, unquote
 import pytest
 
 from yarl import URL
+from yarl._path import normalize_path
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -65,7 +66,8 @@ def test_str():
     ("target", "base", "expected"),
     [
         ("http://example.com/path/to", "http://example.com/", "path/to"),
-        ("http://example.com/path/to", "http://example.com/spam", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam", "../path/to"),
+        ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
         ("http://example.com/this/is/a/test", "http://example.com/this/", "is/a/test"),
         (
             "http://example.com/this/./is/a/test",
@@ -75,41 +77,44 @@ def test_str():
         (
             "http://example.com/////path/////to",
             "http://example.com/////spam",
-            "path/////to",
+            "../path/////to",
         ),
         (
             "http://example.com////path/////to",
             "http://example.com/////spam",
-            "../path/////to",
+            "../../path/////to",
         ),
         (
             "http://example.com/this/is/../a//test",
             "http://example.com/this/",
             "a//test",
         ),
-        ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
-        ("http://example.com/path", "http://example.com/path/to/", ".."),
-        ("http://example.com/path", "http://example.com/other/../path/to/", ".."),
-        ("http://example.com/", "http://example.com/", ""),
-        ("http://example.com", "http://example.com", ""),
-        ("http://example.com/", "http://example.com", "/"),
-        ("http://example.com", "http://example.com/", ""),
-        ("//example.com", "//example.com", ""),
+        ("http://example.com/", "http://example.com/", "."),
+        ("http://example.com", "http://example.com", "."),
+        ("http://example.com/", "http://example.com", "."),
+        ("http://example.com", "http://example.com/", "."),
+        ("//example.com", "//example.com", "."),
         ("/path/to", "/spam/", "../path/to"),
         ("path/to", "spam/", "../path/to"),
         ("path/../to", "path/", "../to"),
-        ("path/..", ".", "path/.."),
-        ("path/../replace/me", "path/../replace", "replace/me"),
+        ("path/..", ".", "../path/.."),
+        ("path/../replace/me", "path/../replace", "me"),
         ("path/../replace/me", "path/../replace/", "me"),
-        ("path/to", "spam", "path/to"),
-        ("..", ".", ".."),
-        (".", "..", "."),
+        ("path/to", "spam", "../path/to"),
+        ("..", ".", "../.."),
+        (".", "..", "../."),
     ],
 )
 def test_relative_to(target: str, base: str, expected: str):
     expected_url = URL(expected)
-    result_url = URL(target).relative_to(URL(base))
-    assert result_url == expected_url
+    target_url = URL(target)
+    base_url = URL(base)
+    relative_url = target_url.relative_to(base_url)
+    assert relative_url == expected_url
+    combined_url = base_url / expected
+    combined_path = normalize_path(combined_url.path)
+    target_path = normalize_path(target_url.path)
+    assert combined_path == target_path
 
 
 def test_relative_to_with_different_schemes():
