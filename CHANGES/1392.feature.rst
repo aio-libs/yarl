@@ -5,22 +5,22 @@ Note that both URLs must have the same scheme, user, password, host and port:
 
 .. code-block:: pycon
 
-   >>> target = URL("http://example.com/path/index.html")
+   >>> target = URL("http://example.com/path/to")
    >>> base = URL("http://example.com/")
    >>> target.relative_to(base)
-   URL('path/index.html')
+   URL('path/to')
    >>> base.relative_to(target)
-   URL('..')
+   URL('../..')
 
 URLs can also be relative:
 
 .. code-block:: pycon
 
-   >>> target = URL("/path/index.html")
+   >>> target = URL("/path/to")
    >>> base = URL("/")
    >>> target.relative_to(base)
-   URL('path/index.html')
+   URL('path/to')
    >>> base.relative_to(target)
-   URL('..')
+   URL('../..')
 
--- by :user:`oleksbabieiev`
+-- by :user:`babieiev`

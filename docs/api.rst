@@ -1022,12 +1022,12 @@ The path is encoded if needed.
 
    .. doctest::
 
-      >>> target = URL('http://example.com/path/index.html')
+      >>> target = URL('http://example.com/path/to')
       >>> base = URL('http://example.com/')
       >>> target.relative_to(base)
-      URL('path/index.html')
+      URL('path/to')
       >>> base.relative_to(target)
-      URL('..')
+      URL('../..')
 
    .. versionadded:: 1.19
 
