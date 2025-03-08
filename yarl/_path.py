@@ -59,4 +59,7 @@ def calculate_relative_path(target: str, base: str) -> str:
     relative_segments = [".."] * len(remaining_base_segments)
     relative_segments.extend(remaining_target_segments)
 
-    return "/".join(relative_segments) or "."
+    relative = "/".join(relative_segments) or "."
+    trailing_slashes = target[len(target.rstrip("/")) :]
+
+    return relative + trailing_slashes if len(trailing_slashes) > 1 else relative

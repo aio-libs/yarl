@@ -96,6 +96,16 @@ def test_str():
         ("//example.com", "//example.com", "."),
         ("/path/to", "/spam/", "../path/to"),
         ("path/to", "spam/", "../path/to"),
+        (
+            "http://example.com/path/to//",
+            "http://example.com/path/to",
+            ".//",
+        ),
+        (
+            "http://example.com/path/to//",
+            "http://example.com/path/to/",
+            ".//",
+        ),
         ("path/../to", "path/", "../to"),
         ("path/..", ".", "../path/.."),
         ("path/../replace/me", "path/../replace", "me"),
