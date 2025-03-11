@@ -4,7 +4,7 @@ import pytest
 
 try:
     from pytest_codspeed import BenchmarkFixture
-except ImportError:
+except ImportError:  # pragma: no branch  # only hit in cibuildwheel
     pytestmark = pytest.mark.skip("pytest-codspeed needs to be installed")
 
 from yarl._quoting import _Quoter, _Unquoter
