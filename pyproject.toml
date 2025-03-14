@@ -64,6 +64,7 @@ linetrace = "True"  # Implies `profile=True`
 
 [tool.cibuildwheel]
 build-frontend = "build"
+enable = ["cpython-freethreading"]
 before-test = [
   # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
   # NOTE: constraints unset. The hope is that pip will cache that wheel
@@ -91,3 +92,12 @@ pure-python = "false"
 
 [tool.cibuildwheel.windows]
 before-test = []  # Windows cmd has different syntax and pip chooses wheels
+
+# TODO: Remove this when there's a Cython 3.1 final release
+# Remove PIP_CONSTRAINT from the environment
+[[tool.cibuildwheel.overrides]]
+select = "cp313t-*"
+
+test-requires = "-r requirements/test-freethreading.txt"
+inherit.environment = "append"
+environment = {PIP_CONSTRAINT = "requirements/cython-freethreading.txt"}
