@@ -4,6 +4,7 @@ from urllib.parse import SplitResult, quote, unquote
 import pytest
 
 from yarl import URL
+from yarl._path import normalize_path
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -59,6 +60,82 @@ def test_url_is_not_str():
 def test_str():
     url = URL("http://example.com:8888/path/to?a=1&b=2")
     assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
+
+
+@pytest.mark.parametrize(
+    ("target", "base", "expected"),
+    [
+        ("http://example.com/path/to", "http://example.com/", "path/to"),
+        ("http://example.com/path/to", "http://example.com/spam", "../path/to"),
+        ("http://example.com/path/to", "http://example.com/spam/", "../path/to"),
+        ("http://example.com/this/is/a/test", "http://example.com/this/", "is/a/test"),
+        (
+            "http://example.com/this/./is/a/test",
+            "http://example.com/this/",
+            "is/a/test",
+        ),
+        (
+            "http://example.com/////path/////to",
+            "http://example.com/////spam",
+            "../path/////to",
+        ),
+        (
+            "http://example.com////path/////to",
+            "http://example.com/////spam",
+            "../../path/////to",
+        ),
+        (
+            "http://example.com/this/is/../a//test",
+            "http://example.com/this/",
+            "a//test",
+        ),
+        ("http://example.com/", "http://example.com/", "."),
+        ("http://example.com", "http://example.com", "."),
+        ("http://example.com/", "http://example.com", "."),
+        ("http://example.com", "http://example.com/", "."),
+        ("//example.com", "//example.com", "."),
+        ("/path/to", "/spam/", "../path/to"),
+        ("path/to", "spam/", "../path/to"),
+        (
+            "http://example.com/path/to//",
+            "http://example.com/path/to",
+            ".//",
+        ),
+        (
+            "http://example.com/path/to//",
+            "http://example.com/path/to/",
+            ".//",
+        ),
+        ("path/../to", "path/", "../to"),
+        ("path/..", ".", "../path/.."),
+        ("path/../replace/me", "path/../replace", "me"),
+        ("path/../replace/me", "path/../replace/", "me"),
+        ("path/to", "spam", "../path/to"),
+        ("..", ".", "../.."),
+        (".", "..", "../."),
+    ],
+)
+def test_relative_to(target: str, base: str, expected: str):
+    # test the input data
+    target_url = URL(target)
+    base_url = URL(base)
+    assert normalize_path(target_url.path) == normalize_path((base_url / expected).path)
+    # test the function itself
+    expected_url = URL(expected)
+    relative_url = target_url.relative_to(base_url)
+    assert relative_url == expected_url
+
+
+def test_relative_to_with_different_schemes():
+    expected_error_msg = r"^Both URLs should have the same scheme$"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("http://example.com/").relative_to(URL("https://example.com/"))
+
+
+def test_relative_to_with_different_netlocs():
+    expected_error_msg = r"^Both URLs should have the same netloc$"
+    with pytest.raises(ValueError, match=expected_error_msg):
+        URL("https://spam.com/").relative_to(URL("https://ham.com/"))
 
 
 def test_repr():
