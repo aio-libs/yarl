@@ -1,0 +1,2 @@
+Added all hidden folders to pytest's ``norecursedirs`` to prevent it
+from trying to collect tests there -- by :user:`lysnikolaou`.
