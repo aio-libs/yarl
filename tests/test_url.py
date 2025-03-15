@@ -116,15 +116,14 @@ def test_str():
     ],
 )
 def test_relative_to(target: str, base: str, expected: str):
-    expected_url = URL(expected)
+    # test the input data
     target_url = URL(target)
     base_url = URL(base)
+    assert normalize_path(target_url.path) == normalize_path((base_url / expected).path)
+    # test the function itself
+    expected_url = URL(expected)
     relative_url = target_url.relative_to(base_url)
     assert relative_url == expected_url
-    combined_url = base_url / expected
-    combined_path = normalize_path(combined_url.path)
-    target_path = normalize_path(target_url.path)
-    assert combined_path == target_path
 
 
 def test_relative_to_with_different_schemes():
