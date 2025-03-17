@@ -4,7 +4,7 @@ import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
+from collections.abc import Iterator
 
 if sys.version_info >= (3, 11):
     from contextlib import chdir as chdir_cm

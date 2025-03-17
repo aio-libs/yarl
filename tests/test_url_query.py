@@ -63,7 +63,9 @@ def test_query_basic_parsing(original_url: URL, expected_query: MultiDict[str]) 
     "original_url, expected_query",
     URLS_WITH_BASIC_QUERY_VALUES,
 )
-def test_query_basic_update_query(original_url: URL, expected_query: MultiDict[str]) -> None:
+def test_query_basic_update_query(
+    original_url: URL, expected_query: MultiDict[str]
+) -> None:
     new_url = original_url.update_query({})
     assert new_url == original_url
 

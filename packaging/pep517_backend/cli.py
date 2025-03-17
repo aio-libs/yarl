@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from itertools import chain
 from pathlib import Path
-from typing import Sequence
+from collections.abc import Sequence
 
 from Cython.Compiler.Main import compile as _translate_cython_cli_cmd
 from Cython.Compiler.Main import parse_command_line as _split_cython_cli_args

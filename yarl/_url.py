@@ -550,7 +550,9 @@ class URL:
     def __getstate__(self) -> tuple[SplitResult]:
         return (tuple.__new__(SplitResult, self._val),)
 
-    def __setstate__(self, state: Union[tuple[SplitURLType], tuple[None, _InternalURLCache]]) -> None:
+    def __setstate__(
+        self, state: Union[tuple[SplitURLType], tuple[None, _InternalURLCache]]
+    ) -> None:
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
             val = state[1]["_val"]

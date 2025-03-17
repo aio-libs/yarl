@@ -4,7 +4,7 @@ import pytest
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
-from yarl._quoting import _Quoter, _Unquoter, NO_EXTENSIONS
+from yarl._quoting import NO_EXTENSIONS, _Quoter, _Unquoter
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
@@ -240,7 +240,9 @@ def test_unquoting(num: int, unquoter: type[_Unquoter]) -> None:
         ("%€%3f", "%€?"),
     ],
 )
-def test_unquoting_bad_percent_escapes(unquoter: type[_Unquoter], input: str, expected: str) -> None:
+def test_unquoting_bad_percent_escapes(
+    unquoter: type[_Unquoter], input: str, expected: str
+) -> None:
     assert unquoter()(input) == expected
 
 
@@ -256,7 +258,9 @@ def test_unquoting_bad_percent_escapes(unquoter: type[_Unquoter], input: str, ex
     """,
 )
 @pytest.mark.parametrize("urlencoded_string", ("%AB", "%AB%AB"))
-def test_unquoting_invalid_utf8_sequence(unquoter: type[_Unquoter], urlencoded_string: str) -> None:
+def test_unquoting_invalid_utf8_sequence(
+    unquoter: type[_Unquoter], urlencoded_string: str
+) -> None:
     with pytest.raises(ValueError):
         unquoter()(urlencoded_string)
 

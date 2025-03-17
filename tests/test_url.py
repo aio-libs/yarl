@@ -1094,7 +1094,9 @@ def test_joinpath_single_empty_segments() -> None:
         pytest.param(URL(), (), ("",), id="empty-segments"),
     ],
 )
-def test_joinpath_relative(url: URL, to_join: tuple[str, ...], expected: tuple[str, ...]) -> None:
+def test_joinpath_relative(
+    url: URL, to_join: tuple[str, ...], expected: tuple[str, ...]
+) -> None:
     assert url.joinpath(*to_join).raw_parts == expected
 
 
@@ -1134,7 +1136,13 @@ def test_joinpath_relative(url: URL, to_join: tuple[str, ...], expected: tuple[s
     ],
 )
 def test_joinpath_encoding(
-    url: str, to_join: tuple[str, ...], encoded: bool, e_path: str, e_raw_path: str, e_parts: tuple[str, ...], e_raw_parts: tuple[str, ...]
+    url: str,
+    to_join: tuple[str, ...],
+    encoded: bool,
+    e_path: str,
+    e_raw_path: str,
+    e_parts: tuple[str, ...],
+    e_raw_parts: tuple[str, ...],
 ) -> None:
     joined = URL(url).joinpath(*to_join, encoded=encoded)
     assert joined.path == e_path

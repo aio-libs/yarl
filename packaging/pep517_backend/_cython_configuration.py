@@ -6,7 +6,8 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 from sys import version_info as _python_version_tuple
-from typing import Iterator, TypedDict
+from typing import TypedDict
+from collections.abc import Iterator
 
 from expandvars import expandvars
 

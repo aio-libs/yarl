@@ -1,8 +1,8 @@
 import enum
+from typing import Optional, Union
 
 import pytest
 from multidict import MultiDict
-from typing import Optional, Union
 
 from yarl import URL
 
@@ -147,7 +147,9 @@ def test_with_query_list_int() -> None:
         pytest.param({"a": [1, "2&a=3"]}, "/?a=1&a=2%26a%3D3", id="int then ampersand"),
     ],
 )
-def test_with_query_sequence(query: dict[str, Union[int, list[Union[str, int]], tuple[int, ...]]], expected: str) -> None:
+def test_with_query_sequence(
+    query: dict[str, Union[int, list[Union[str, int]], tuple[int, ...]]], expected: str
+) -> None:
     url = URL("http://example.com")
     expected = "http://example.com{expected}".format_map(locals())
     assert str(url.with_query(query)) == expected
@@ -209,7 +211,9 @@ def test_with_query_valid_type(value: Union[str, int, float], expected: str) -> 
         pytest.param(float("nan"), ValueError, id="NaN float"),
     ],
 )
-def test_with_query_invalid_type(value: Union[bool, float, None], exc_type: type[Exception]) -> None:
+def test_with_query_invalid_type(
+    value: Union[bool, float, None], exc_type: type[Exception]
+) -> None:
     url = URL("http://example.com")
     with pytest.raises(exc_type):
         url.with_query({"a": value})  # type: ignore[dict-item]
@@ -226,7 +230,9 @@ def test_with_query_invalid_type(value: Union[bool, float, None], exc_type: type
         pytest.param(_CFloat(1.1), "1.1", id="custom float"),
     ],
 )
-def test_with_query_list_valid_type(value: Union[str, int, float], expected: str) -> None:
+def test_with_query_list_valid_type(
+    value: Union[str, int, float], expected: str
+) -> None:
     url = URL("http://example.com")
     expected = "http://example.com/?a={expected}".format_map(locals())
     assert str(url.with_query([("a", value)])) == expected
@@ -342,7 +348,9 @@ def test_with_query_memoryview() -> None:
         ),
     ],
 )
-def test_with_query_params(query: Union[list[tuple[str, ...]], dict[str, str]], expected: str) -> None:
+def test_with_query_params(
+    query: Union[list[tuple[str, ...]], dict[str, str]], expected: str
+) -> None:
     url = URL("http://example.com/get")
     url2 = url.with_query(query)  # type: ignore[arg-type]
     assert str(url2) == ("http://example.com/get" + expected)

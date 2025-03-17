@@ -34,11 +34,9 @@ class _Quoter:
         self._requote = requote
 
     @overload
-    def __call__(self, val: str) -> str:
-        ...
+    def __call__(self, val: str) -> str: ...
     @overload
-    def __call__(self, val: None) -> None:
-        ...
+    def __call__(self, val: None) -> None: ...
     def __call__(self, val: Union[str, None]) -> Union[str, None]:
         if val is None:
             return None
@@ -129,11 +127,9 @@ class _Unquoter:
         self._qs_quoter = _Quoter(qs=True)
 
     @overload
-    def __call__(self, val: str) -> str:
-        ...
+    def __call__(self, val: str) -> str: ...
     @overload
-    def __call__(self, val: None) -> None:
-        ...
+    def __call__(self, val: None) -> None: ...
     def __call__(self, val: Union[str, None]) -> Union[str, None]:
         if val is None:
             return None
