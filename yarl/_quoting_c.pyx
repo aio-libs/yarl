@@ -13,7 +13,6 @@ from cpython.unicode cimport (
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
-import sysconfig
 from string import ascii_letters, digits
 
 
@@ -26,8 +25,6 @@ cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
-cdef char BUFFER[BUF_SIZE]
-cdef bint IS_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
@@ -87,28 +84,22 @@ for i in range(128):
 
 cdef struct Writer:
     char *buf
+    bint heap_allocated_buf
     Py_ssize_t size
     Py_ssize_t pos
     bint changed
 
 
-cdef inline void _init_writer(Writer* writer):
-    cdef char *buf
-    if IS_GIL_DISABLED:
-        buf = <char *> PyMem_Malloc(BUF_SIZE)
-        if buf == NULL:
-            PyErr_NoMemory()
-            return
-        writer.buf = buf
-    else:
-        writer.buf = &BUFFER[0]
+cdef inline void _init_writer(Writer* writer, char* buf):
+    writer.buf = buf
+    writer.heap_allocated_buf = False
     writer.size = BUF_SIZE
     writer.pos = 0
     writer.changed = 0
 
 
 cdef inline void _release_writer(Writer* writer):
-    if writer.buf != BUFFER:
+    if writer.heap_allocated_buf:
         PyMem_Free(writer.buf)
 
 
@@ -119,12 +110,13 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
     if writer.pos == writer.size:
         # reallocate
         size = writer.size + BUF_SIZE
-        if writer.buf == BUFFER:
+        if not writer.heap_allocated_buf:
             buf = <char*>PyMem_Malloc(size)
             if buf == NULL:
                 PyErr_NoMemory()
                 return -1
             memcpy(buf, writer.buf, writer.size)
+            writer.heap_allocated_buf = True
         else:
             buf = <char*>PyMem_Realloc(writer.buf, size)
             if buf == NULL:
@@ -230,6 +222,7 @@ cdef class _Quoter:
         return self._do_quote_or_skip(<str>val)
 
     cdef str _do_quote_or_skip(self, str val):
+        cdef char[BUF_SIZE] buffer
         cdef Py_UCS4 ch
         cdef Py_ssize_t length = PyUnicode_GET_LENGTH(val)
         cdef Py_ssize_t idx = length
@@ -250,7 +243,7 @@ cdef class _Quoter:
         if not must_quote:
             return val
 
-        _init_writer(&writer)
+        _init_writer(&writer, &buffer[0])
         try:
             return self._do_quote(<str>val, length, kind, data, &writer)
         finally:
