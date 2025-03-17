@@ -107,12 +107,13 @@ repos:
       ^[^/]+[.]rst$
 
 - repo: https://github.com/pre-commit/mirrors-mypy.git
-  rev: v1.14.1
+  rev: v1.15.0
   hooks:
   - id: mypy
     alias: mypy-py313
     name: MyPy, for Python 3.13
     additional_dependencies:
+    - Cython
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
@@ -131,6 +132,7 @@ repos:
     alias: mypy-py312
     name: MyPy, for Python 3.12
     additional_dependencies:
+    - Cython
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
@@ -149,6 +151,7 @@ repos:
     alias: mypy-py310
     name: MyPy, for Python 3.10
     additional_dependencies:
+    - Cython
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
@@ -169,6 +172,7 @@ repos:
     alias: mypy-py39
     name: MyPy, for Python 3.9
     additional_dependencies:
+    - Cython
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
