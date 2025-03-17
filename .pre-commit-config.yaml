@@ -148,10 +148,12 @@ repos:
     - --html-report=.tox/.tmp/.mypy/python-3.12
     pass_filenames: false
   - id: mypy
-    alias: mypy-py310
-    name: MyPy, for Python 3.10
+    alias: mypy-py311
+    name: MyPy, for Python 3.11
     additional_dependencies:
     - Cython
+    - expandvars
+    - idna
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
@@ -163,10 +165,10 @@ repos:
     - types-colorama
     - pytest_codspeed==3.0.0
     args:
-    - --python-version=3.10
-    - --txt-report=.tox/.tmp/.mypy/python-3.10
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.10
-    - --html-report=.tox/.tmp/.mypy/python-3.10
+    - --python-version=3.11
+    - --txt-report=.tox/.tmp/.mypy/python-3.11
+    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.11
+    - --html-report=.tox/.tmp/.mypy/python-3.11
     pass_filenames: false
   - id: mypy
     alias: mypy-py39
