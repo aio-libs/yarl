@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from itertools import chain
 from pathlib import Path
+from typing import Sequence
 
 from Cython.Compiler.Main import compile as _translate_cython_cli_cmd
 from Cython.Compiler.Main import parse_command_line as _split_cython_cli_args
@@ -18,7 +19,7 @@ from ._cython_configuration import patched_env as _patched_cython_env
 _PROJECT_PATH = Path(__file__).parents[2]
 
 
-def run_main_program(argv) -> int | str:
+def run_main_program(argv: Sequence[str]) -> int | str:
     """Invoke ``translate-cython`` or fail."""
     if len(argv) != 2:
         return 'This program only accepts one argument -- "translate-cython"'
@@ -43,7 +44,7 @@ def run_main_program(argv) -> int | str:
     )
 
     with _patched_cython_env(config['env'], cython_line_tracing_requested=True):
-        return _translate_cython_cli_cmd(
+        return _translate_cython_cli_cmd(  # type: ignore[no-any-return]
             cython_sources,
             cython_options,
         ).num_errors

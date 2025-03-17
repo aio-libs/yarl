@@ -6,6 +6,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 from sys import version_info as _python_version_tuple
+from typing import Iterator, TypedDict
 
 from expandvars import expandvars
 
@@ -13,7 +14,14 @@ from ._compat import load_toml_from_string
 from ._transformers import get_cli_kwargs_from_config, get_enabled_cli_flags_from_config
 
 
-def get_local_cython_config() -> dict:
+class Config(TypedDict):
+    env: dict[str, str]
+    flags: dict[str, bool]
+    kwargs: dict[str, str]
+    src: list[str]
+
+
+def get_local_cython_config() -> Config:
     """Grab optional build dependencies from pyproject.toml config.
 
     :returns: config section from ``pyproject.toml``
@@ -67,10 +75,10 @@ def get_local_cython_config() -> dict:
     """
     config_toml_txt = (Path.cwd().resolve() / 'pyproject.toml').read_text()
     config_mapping = load_toml_from_string(config_toml_txt)
-    return config_mapping['tool']['local']['cythonize']
+    return config_mapping['tool']['local']['cythonize']  # type: ignore[no-any-return]
 
 
-def make_cythonize_cli_args_from_config(config) -> list[str]:
+def make_cythonize_cli_args_from_config(config: Config) -> list[str]:
     py_ver_arg = f'-{_python_version_tuple.major!s}'
 
     cli_flags = get_enabled_cli_flags_from_config(config['flags'])
@@ -80,7 +88,7 @@ def make_cythonize_cli_args_from_config(config) -> list[str]:
 
 
 @contextmanager
-def patched_env(env: dict[str, str], cython_line_tracing_requested: bool):
+def patched_env(env: dict[str, str], cython_line_tracing_requested: bool) -> Iterator[None]:
     """Temporary set given env vars.
 
     :param env: tmp env vars to set

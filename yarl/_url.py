@@ -5,7 +5,7 @@ from collections.abc import Mapping, Sequence
 from enum import Enum
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
-from typing import TYPE_CHECKING, Any, TypedDict, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Any, NoReturn, TypedDict, TypeVar, Union, overload
 from urllib.parse import SplitResult, parse_qsl, uses_relative
 
 import idna
@@ -199,7 +199,7 @@ def encode_url(url_str: str) -> "URL":
     self._path = path
     self._query = query
     self._fragment = fragment
-    self._cache = cache
+    self._cache = cache  # type: ignore[assignment]
     return self
 
 
@@ -336,6 +336,9 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_scheme", "_netloc", "_path", "_query", "_fragment")
 
+    # _cache should be _InternalURLCache, but mypy needs to treat dict[str, Any] as
+    # compatible with TypedDict first.
+    _cache: dict[str, Any]
     _scheme: str
     _netloc: str
     _path: str
@@ -400,11 +403,11 @@ class URL:
         if query and query_string:
             raise ValueError('Only one of "query" or "query_string" should be passed')
         if (
-            scheme is None
-            or authority is None
-            or host is None
-            or path is None
-            or query_string is None
+            scheme is None  # type: ignore[redundant-expr]
+            or authority is None  # type: ignore[redundant-expr]
+            or host is None  # type: ignore[redundant-expr]
+            or path is None  # type: ignore[redundant-expr]
+            or query_string is None  # type: ignore[redundant-expr]
             or fragment is None
         ):
             raise TypeError(
@@ -466,7 +469,7 @@ class URL:
         self._cache = {}
         return self
 
-    def __init_subclass__(cls):
+    def __init_subclass__(cls) -> NoReturn:
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
     def __str__(self) -> str:
@@ -535,7 +538,7 @@ class URL:
 
     def __truediv__(self, name: str) -> "URL":
         if not isinstance(name, str):
-            return NotImplemented
+            return NotImplemented  # type: ignore[unreachable]
         return self._make_child((str(name),))
 
     def __mod__(self, query: Query) -> "URL":
@@ -547,11 +550,12 @@ class URL:
     def __getstate__(self) -> tuple[SplitResult]:
         return (tuple.__new__(SplitResult, self._val),)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Union[tuple[SplitURLType], tuple[None, _InternalURLCache]]) -> None:
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
             val = state[1]["_val"]
         else:
+            unused: list[object]
             val, *unused = state
         self._scheme, self._netloc, self._path, self._query, self._fragment = val
         self._cache = {}
@@ -680,7 +684,7 @@ class URL:
         """
         # not .username
         self._cache_netloc()
-        return self._cache["raw_user"]
+        return self._cache["raw_user"]  # type: ignore[no-any-return]
 
     @cached_property
     def user(self) -> Union[str, None]:
@@ -701,7 +705,7 @@ class URL:
 
         """
         self._cache_netloc()
-        return self._cache["raw_password"]
+        return self._cache["raw_password"]  # type: ignore[no-any-return]
 
     @cached_property
     def password(self) -> Union[str, None]:
@@ -726,7 +730,7 @@ class URL:
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         self._cache_netloc()
-        return self._cache["raw_host"]
+        return self._cache["raw_host"]  # type: ignore[no-any-return]
 
     @cached_property
     def host(self) -> Union[str, None]:
@@ -822,7 +826,7 @@ class URL:
 
         """
         self._cache_netloc()
-        return self._cache["explicit_port"]
+        return self._cache["explicit_port"]  # type: ignore[no-any-return]
 
     @cached_property
     def raw_path(self) -> str:
@@ -1248,7 +1252,7 @@ class URL:
             qstr: MultiDict[str] = MultiDict(self._parsed_query)
             qstr.update(parse_qsl(in_query, keep_blank_values=True))
             query = get_str_query_from_iterable(qstr.items())
-        elif isinstance(in_query, (bytes, bytearray, memoryview)):
+        elif isinstance(in_query, (bytes, bytearray, memoryview)):  # type: ignore[unreachable]
             msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
             raise TypeError(msg)
         elif isinstance(in_query, Sequence):
@@ -1577,8 +1581,6 @@ def cache_configure(
         if encode_host_size is UNDEFINED:
             encode_host_size = _DEFAULT_ENCODE_SIZE
 
-    if TYPE_CHECKING:
-        assert not isinstance(encode_host_size, object)
     _encode_host = lru_cache(encode_host_size)(_encode_host.__wrapped__)
     _idna_decode = lru_cache(idna_decode_size)(_idna_decode.__wrapped__)
     _idna_encode = lru_cache(idna_encode_size)(_idna_encode.__wrapped__)
