@@ -4,6 +4,7 @@ import pytest
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
+import yarl
 from yarl._quoting import NO_EXTENSIONS, _Quoter, _Unquoter
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
