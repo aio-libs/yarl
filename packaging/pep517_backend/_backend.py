@@ -294,7 +294,7 @@ def maybe_prebuild_c_extensions(
 
         cythonize_args = _make_cythonize_cli_args_from_config(config)
         with _patched_cython_env(config['env'], cython_line_tracing_requested):
-            _cythonize_cli_cmd(cythonize_args)
+            _cythonize_cli_cmd(cythonize_args)  # type: ignore[no-untyped-call]
         with patched_distutils_cmd_install():
             with patched_dist_has_ext_modules():
                 yield
