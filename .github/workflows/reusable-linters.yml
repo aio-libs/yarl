@@ -71,10 +71,7 @@ jobs:
       with:
         token: ${{ secrets.codecov-token }}
         files: >-
-          .tox/.tmp/.mypy/python-3.13/cobertura.xml,
-          .tox/.tmp/.mypy/python-3.12/cobertura.xml,
-          .tox/.tmp/.mypy/python-3.11/cobertura.xml,
-          .tox/.tmp/.mypy/python-3.9/cobertura.xml
+          .tox/.tmp/.mypy/python-3.11/cobertura.xml
         flags: >-
           CI-GHA,
           MyPy
