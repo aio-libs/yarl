@@ -7,8 +7,8 @@ from collections.abc import Sequence
 from itertools import chain
 from pathlib import Path
 
+from Cython.Compiler.CmdLine import parse_command_line as _split_cython_cli_args
 from Cython.Compiler.Main import compile as _translate_cython_cli_cmd
-from Cython.Compiler.Main import parse_command_line as _split_cython_cli_args
 
 from ._cython_configuration import get_local_cython_config as _get_local_cython_config
 from ._cython_configuration import (
@@ -39,12 +39,12 @@ def run_main_program(argv: Sequence[str]) -> int | str:
     )
     translate_cython_cli_args = _make_cythonize_cli_args_from_config(config)
 
-    cython_options, cython_sources = _split_cython_cli_args(
+    cython_options, cython_sources = _split_cython_cli_args(  # type: ignore[no-untyped-call]
         translate_cython_cli_args,
     )
 
     with _patched_cython_env(config['env'], cython_line_tracing_requested=True):
-        return _translate_cython_cli_cmd(  # type: ignore[no-any-return]
+        return _translate_cython_cli_cmd(  # type: ignore[no-any-return,no-untyped-call]
             cython_sources,
             cython_options,
         ).num_errors
