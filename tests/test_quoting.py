@@ -10,16 +10,16 @@ from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
 if not NO_EXTENSIONS:
-    from yarl._quoting_c import _Quoter as _CQuoter
+    from yarl._quoting_c import _Quoter as _CQuoter  # type: ignore[import-not-found]
     from yarl._quoting_c import _Unquoter as _CUnquoter
 
     @pytest.fixture(params=[_PyQuoter, _CQuoter], ids=["py_quoter", "c_quoter"])
-    def quoter(request: pytest.FixtureRequest) -> Union[_PyQuoter, _CQuoter]:
-        return request.param  # type: ignore[no-any-return]
+    def quoter(request: pytest.FixtureRequest) -> Union[_PyQuoter, _CQuoter]:  # type: ignore[no-any-unimported]
+        return request.param
 
     @pytest.fixture(params=[_PyUnquoter, _CUnquoter], ids=["py_unquoter", "c_unquoter"])
-    def unquoter(request: pytest.FixtureRequest) -> Union[_PyUnquoter, _CUnquoter]:
-        return request.param  # type: ignore[no-any-return]
+    def unquoter(request: pytest.FixtureRequest) -> Union[_PyUnquoter, _CUnquoter]:  # type: ignore[no-any-unimported]
+        return request.param
 
     quoters = [_PyQuoter, _CQuoter]
     quoter_ids = ["PyQuoter", "CQuoter"]
@@ -499,7 +499,7 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
 
 
 @given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
-def test_fuzz__PyUnquoter(ignore: str, unsafe: str, qs: bool) -> None:
+def test_fuzz__PyUnquoter(ignore: str, unsafe: str, qs: bool) -> None:  # type: ignore[misc]
     """Verify that _PyUnquoter can be instantiated with any valid arguments."""
     _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
 
