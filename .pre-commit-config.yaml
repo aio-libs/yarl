@@ -110,44 +110,6 @@ repos:
   rev: v1.15.0
   hooks:
   - id: mypy
-    alias: mypy-py313
-    name: MyPy, for Python 3.13
-    additional_dependencies:
-    - Cython
-    - hypothesis
-    - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
-    - multidict
-    - propcache >= 0.2.0
-    - pytest
-    - tomli  # requirement of packaging/pep517_backend/
-    - types-setuptools  # requirement of packaging/pep517_backend/
-    - pytest_codspeed==3.0.0
-    args:
-    - --python-version=3.13
-    - --txt-report=.tox/.tmp/.mypy/python-3.13
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.13
-    - --html-report=.tox/.tmp/.mypy/python-3.13
-    pass_filenames: false
-  - id: mypy
-    alias: mypy-py312
-    name: MyPy, for Python 3.12
-    additional_dependencies:
-    - Cython
-    - hypothesis
-    - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
-    - multidict
-    - propcache >= 0.2.0
-    - pytest
-    - tomli  # requirement of packaging/pep517_backend/
-    - types-setuptools  # requirement of packaging/pep517_backend/
-    - pytest_codspeed==3.0.0
-    args:
-    - --python-version=3.12
-    - --txt-report=.tox/.tmp/.mypy/python-3.12
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.12
-    - --html-report=.tox/.tmp/.mypy/python-3.12
-    pass_filenames: false
-  - id: mypy
     alias: mypy-py311
     name: MyPy, for Python 3.11
     additional_dependencies:
@@ -169,27 +131,6 @@ repos:
     - --txt-report=.tox/.tmp/.mypy/python-3.11
     - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.11
     - --html-report=.tox/.tmp/.mypy/python-3.11
-    pass_filenames: false
-  - id: mypy
-    alias: mypy-py39
-    name: MyPy, for Python 3.9
-    additional_dependencies:
-    - Cython
-    - hypothesis
-    - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
-    - multidict
-    - propcache >= 0.2.0
-    - pytest
-    - tomli  # requirement of packaging/pep517_backend/
-    - types-setuptools  # requirement of packaging/pep517_backend/
-    - types-Pygments
-    - types-colorama
-    - pytest_codspeed==3.0.0
-    args:
-    - --python-version=3.9
-    - --txt-report=.tox/.tmp/.mypy/python-3.9
-    - --cobertura-xml-report=.tox/.tmp/.mypy/python-3.9
-    - --html-report=.tox/.tmp/.mypy/python-3.9
     pass_filenames: false
 
 - repo: https://github.com/rhysd/actionlint.git
