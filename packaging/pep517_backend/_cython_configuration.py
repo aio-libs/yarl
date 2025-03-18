@@ -98,7 +98,7 @@ def patched_env(env: dict[str, str], cython_line_tracing_requested: bool) -> Ite
     :yields: None
     """
     orig_env = os.environ.copy()
-    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}
+    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}  # type: ignore[no-untyped-call]
     os.environ.update(expanded_env)
 
     if cython_line_tracing_requested:
