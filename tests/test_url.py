@@ -2351,7 +2351,7 @@ def test_parsing_populates_cache() -> None:
     assert url.raw_query_string == "a=b"
     assert url.raw_fragment == "frag"
     assert url.scheme == "http"
-    url._cache.clear()
+    url._cache.clear()  # type: ignore[attr-defined]
     assert url.raw_user == "user"
     assert url.raw_password == "password"
     assert url.raw_host == "example.com"

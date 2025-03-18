@@ -100,6 +100,7 @@ class _InternalURLCache(TypedDict, total=False):
     _val: SplitURLType
     _origin: "URL"
     absolute: bool
+    hash: int
     scheme: str
     raw_authority: str
     authority: str
@@ -199,7 +200,7 @@ def encode_url(url_str: str) -> "URL":
     self._path = path
     self._query = query
     self._fragment = fragment
-    self._cache = cache  # type: ignore[assignment]
+    self._cache = cache
     return self
 
 
@@ -336,9 +337,7 @@ class URL:
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
     __slots__ = ("_cache", "_scheme", "_netloc", "_path", "_query", "_fragment")
 
-    # _cache should be _InternalURLCache, but mypy needs to treat dict[str, Any] as
-    # compatible with TypedDict first.
-    _cache: dict[str, Any]
+    _cache: _InternalURLCache
     _scheme: str
     _netloc: str
     _path: str
@@ -686,7 +685,7 @@ class URL:
         """
         # not .username
         self._cache_netloc()
-        return self._cache["raw_user"]  # type: ignore[no-any-return]
+        return self._cache["raw_user"]
 
     @cached_property
     def user(self) -> Union[str, None]:
@@ -707,7 +706,7 @@ class URL:
 
         """
         self._cache_netloc()
-        return self._cache["raw_password"]  # type: ignore[no-any-return]
+        return self._cache["raw_password"]
 
     @cached_property
     def password(self) -> Union[str, None]:
@@ -732,7 +731,7 @@ class URL:
         # Use host instead of hostname for sake of shortness
         # May add .hostname prop later
         self._cache_netloc()
-        return self._cache["raw_host"]  # type: ignore[no-any-return]
+        return self._cache["raw_host"]
 
     @cached_property
     def host(self) -> Union[str, None]:
@@ -828,7 +827,7 @@ class URL:
 
         """
         self._cache_netloc()
-        return self._cache["explicit_port"]  # type: ignore[no-any-return]
+        return self._cache["explicit_port"]
 
     @cached_property
     def raw_path(self) -> str:
