@@ -2,7 +2,7 @@
 
 import math
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, SupportsInt, Union
+from typing import Any, SupportsInt, Union
 
 from multidict import istr
 
