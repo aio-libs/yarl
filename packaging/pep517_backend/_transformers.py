@@ -1,26 +1,28 @@
 """Data conversion helpers for the in-tree PEP 517 build backend."""
 
+from collections.abc import Iterable, Iterator, Mapping
 from itertools import chain
 from re import sub as _substitute_with_regexp
+from typing import Union
 
 
-def _emit_opt_pairs(opt_pair):
+def _emit_opt_pairs(opt_pair: tuple[str, Union[dict[str, str], str]]) -> Iterator[str]:
     flag, flag_value = opt_pair
     flag_opt = f"--{flag!s}"
     if isinstance(flag_value, dict):
-        sub_pairs = flag_value.items()
+        sub_pairs: Iterable[tuple[str, ...]] = flag_value.items()
     else:
         sub_pairs = ((flag_value,),)
 
     yield from ("=".join(map(str, (flag_opt,) + pair)) for pair in sub_pairs)
 
 
-def get_cli_kwargs_from_config(kwargs_map):
+def get_cli_kwargs_from_config(kwargs_map: dict[str, str]) -> list[str]:
     """Make a list of options with values from config."""
     return list(chain.from_iterable(map(_emit_opt_pairs, kwargs_map.items())))
 
 
-def get_enabled_cli_flags_from_config(flags_map):
+def get_enabled_cli_flags_from_config(flags_map: Mapping[str, bool]) -> list[str]:
     """Make a list of enabled boolean flags from config."""
     return [f"--{flag}" for flag, is_enabled in flags_map.items() if is_enabled]
 
