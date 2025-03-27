@@ -119,7 +119,7 @@ repos:
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`
     - multidict
-    - propcache >= 0.2.0
+    - propcache >= 0.3.1
     - pytest
     - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
