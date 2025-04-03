@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import Union
 from urllib.parse import scheme_chars, uses_netloc
 
-from ._quoters import QUOTER
+from ._quoters import QUOTER, UNQUOTER
 
 # Leading and trailing C0 control and space to be stripped per WHATWG spec.
 # == "".join([chr(i) for i in range(0, 0x20 + 1)])
@@ -187,3 +187,19 @@ def make_netloc(
     elif user and encode:
         user = QUOTER(user)
     return f"{user}@{ret}" if user else ret
+
+
+def query_to_pairs(query_string: str) -> list[tuple[str, str]]:
+    """Parse a query given as a string argument.
+
+    Works like urllib.parse.parse_qsl with keep empty values.
+    """
+    pairs: list[tuple[str, str]] = []
+    if not query_string:
+        return pairs
+    for k_v in query_string.split("&"):
+        k, _, v = k_v.partition("=")
+        # replaces '+' with ' ' before unquoting to match
+        # urllib.parse.parse_qsl unquote_plus behavior.
+        pairs.append((UNQUOTER(k.replace("+", " ")), UNQUOTER(v.replace("+", " "))))
+    return pairs
