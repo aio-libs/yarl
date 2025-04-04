@@ -15,11 +15,15 @@ skip_covered = true
 skip_empty = true
 show_missing = true
 exclude_also =
-    ^\s*@pytest\.mark\.xfail
-    if TYPE_CHECKING
-    assert False
-    : \.\.\.(\s*#.*)?$
-    ^ +\.\.\.$
+  ^\s*@pytest\.mark\.xfail
+  if TYPE_CHECKING
+  assert False
+  : \.\.\.(\s*#.*)?$
+  ^ +\.\.\.$
+omit =
+  benchmark.py
+  url_benchmark.py
+  tests/*_benchmarks.py
 
 [run]
 branch = true
