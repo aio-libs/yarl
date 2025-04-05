@@ -356,7 +356,6 @@ cdef class _Unquoter:
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
         cdef bint changed = 0
-        cdef bint replaced_unsafe_char = 0
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
@@ -407,26 +406,22 @@ cdef class _Unquoter:
                 buflen = 0
 
             if ch == '+':
-                if (not self._qs and not self._plus) or ch in self._unsafe:
+                if (not self._qs and not self._plus) or self._is_char_unsafe(ch):
                     ret.append('+')
                 else:
                     changed = 1
                     ret.append(' ')
                 continue
 
-            replaced_unsafe_char = 0
-            for i in range(self._unsafe_bytes_len):
-                if ch == self._unsafe_bytes_char[i]:
-                    changed = 1
-                    ret.append('%')
-                    h = hex(ord(ch)).upper()[2:]
-                    for ch in h:
-                        ret.append(ch)
-                    replaced_unsafe_char = 1
-                    break
+            if self._is_char_unsafe(ch):
+                changed = 1
+                ret.append('%')
+                h = hex(ord(ch)).upper()[2:]
+                for ch in h:
+                    ret.append(ch)
+                continue
 
-            if not replaced_unsafe_char:
-                ret.append(ch)
+            ret.append(ch)
 
         if not changed:
             return val
@@ -435,3 +430,9 @@ cdef class _Unquoter:
             ret.append(val[length - buflen * 3 : length])
 
         return ''.join(ret)
+
+    cdef inline bint _is_char_unsafe(self, Py_UCS4 ch):
+        for i in range(self._unsafe_bytes_len):
+            if ch == self._unsafe_bytes_char[i]:
+                return True
+        return False
