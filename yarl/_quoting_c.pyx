@@ -310,13 +310,15 @@ cdef class _Unquoter:
     cdef str _ignore
     cdef str _unsafe
     cdef bint _qs
+    cdef bint _plus  # to match urllib.parse.unquote_plus
     cdef _Quoter _quoter
     cdef _Quoter _qs_quoter
 
-    def __init__(self, *, ignore="", unsafe="", qs=False):
+    def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
         self._ignore = ignore
         self._unsafe = unsafe
         self._qs = qs
+        self._plus = plus
         self._quoter = _Quoter()
         self._qs_quoter = _Quoter(qs=True)
 
@@ -397,7 +399,7 @@ cdef class _Unquoter:
                 buflen = 0
 
             if ch == '+':
-                if not self._qs or ch in self._unsafe:
+                if (not self._qs and not self._plus) or ch in self._unsafe:
                     ret.append('+')
                 else:
                     changed = 1

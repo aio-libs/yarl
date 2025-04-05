@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import Union
 from urllib.parse import scheme_chars, uses_netloc
 
-from ._quoters import QUOTER, UNQUOTER
+from ._quoters import QUOTER, UNQUOTER_PLUS
 
 # Leading and trailing C0 control and space to be stripped per WHATWG spec.
 # == "".join([chr(i) for i in range(0, 0x20 + 1)])
@@ -201,5 +201,5 @@ def query_to_pairs(query_string: str) -> list[tuple[str, str]]:
         k, _, v = k_v.partition("=")
         # replaces '+' with ' ' before unquoting to match
         # urllib.parse.parse_qsl unquote_plus behavior.
-        pairs.append((UNQUOTER(k.replace("+", " ")), UNQUOTER(v.replace("+", " "))))
+        pairs.append((UNQUOTER_PLUS(k), UNQUOTER_PLUS(v)))
     return pairs

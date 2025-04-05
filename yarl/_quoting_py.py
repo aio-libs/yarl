@@ -119,10 +119,18 @@ class _Quoter:
 
 
 class _Unquoter:
-    def __init__(self, *, ignore: str = "", unsafe: str = "", qs: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        ignore: str = "",
+        unsafe: str = "",
+        qs: bool = False,
+        plus: bool = False,
+    ) -> None:
         self._ignore = ignore
         self._unsafe = unsafe
         self._qs = qs
+        self._plus = plus  # to match urllib.parse.unquote_plus
         self._quoter = _Quoter()
         self._qs_quoter = _Quoter(qs=True)
 
@@ -181,7 +189,7 @@ class _Unquoter:
                 decoder.reset()
 
             if ch == "+":
-                if not self._qs or ch in self._unsafe:
+                if (not self._qs and not self._plus) or ch in self._unsafe:
                     ret.append("+")
                 else:
                     ret.append(" ")
