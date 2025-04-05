@@ -1,5 +1,6 @@
 """codspeed benchmarks for yarl.URL."""
 
+import pytest
 from pytest_codspeed import BenchmarkFixture
 
 from yarl import URL
@@ -743,19 +744,13 @@ def test_raw_path_qs_with_query_uncached(benchmark: BenchmarkFixture) -> None:
             URL.raw_path_qs.wrapped(IPV6_QUERY_URL)
 
 
-def test_parse_query_uncached(benchmark: BenchmarkFixture) -> None:
+@pytest.mark.parametrize(
+    "url", [QUERY_URL_STR, LONG_QUERY_URL_STR], ids=["short", "long"]
+)
+def test_parse_query_uncached(benchmark: BenchmarkFixture, url: URL) -> None:
     """Test parsing the query string without the cache."""
 
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            URL.query.wrapped(QUERY_URL_STR)
-
-
-def test_parse_long_query_uncached(benchmark: BenchmarkFixture) -> None:
-    """Test parsing a long query string without the cache."""
-
-    @benchmark
-    def _run() -> None:
-        for _ in range(100):
-            URL.query.wrapped(LONG_QUERY_URL_STR)
+            URL.query.wrapped(url)
