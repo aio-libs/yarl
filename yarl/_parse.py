@@ -194,12 +194,10 @@ def query_to_pairs(query_string: str) -> list[tuple[str, str]]:
 
     Works like urllib.parse.parse_qsl with keep empty values.
     """
-    pairs: list[tuple[str, str]] = []
     if not query_string:
-        return pairs
-    for k_v in query_string.split("&"):
-        k, _, v = k_v.partition("=")
-        # replaces '+' with ' ' before unquoting to match
-        # urllib.parse.parse_qsl unquote_plus behavior.
-        pairs.append((UNQUOTER_PLUS(k), UNQUOTER_PLUS(v)))
-    return pairs
+        return []
+    return [
+        (UNQUOTER_PLUS(parts[0]), UNQUOTER_PLUS(parts[2]))
+        for k_v in query_string.split("&")
+        if (parts := k_v.partition("="))  # type: ignore[redundant-expr]
+    ]
