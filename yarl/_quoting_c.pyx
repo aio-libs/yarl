@@ -311,7 +311,7 @@ cdef class _Unquoter:
     cdef str _unsafe
     cdef Py_ssize_t _unsafe_bytes_len
     cdef bytes _unsafe_bytes
-    cdef unsigned char * _unsafe_bytes_char
+    cdef const unsigned char * _unsafe_bytes_char
     cdef bint _qs
     cdef _Quoter _quoter
     cdef _Quoter _qs_quoter
