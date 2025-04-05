@@ -35,6 +35,7 @@ manylinux
 multi
 nightlies
 pre
+pytest
 rc
 reStructuredText
 reencoding
