@@ -1360,15 +1360,31 @@ class URL:
         """
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
-        if suffix and not suffix[0] == "." or suffix == ".":
+        if suffix and not suffix[0] == "." or suffix == "." or "/" in suffix:
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
             raise ValueError(f"{self!r} has an empty name")
         old_suffix = self.raw_suffix
+        suffix = PATH_QUOTER(suffix)
         name = name + suffix if not old_suffix else name[: -len(old_suffix)] + suffix
+        if name in (".", ".."):
+            raise ValueError(". and .. values are forbidden")
+        parts = list(self.raw_parts)
+        if netloc := self._netloc:
+            if len(parts) == 1:
+                parts.append(name)
+            else:
+                parts[-1] = name
+            parts[0] = ""  # replace leading '/'
+        else:
+            parts[-1] = name
+            if parts[0] == "/":
+                parts[0] = ""  # replace leading '/'
 
-        return self.with_name(name, keep_query=keep_query, keep_fragment=keep_fragment)
+        query = self._query if keep_query else ""
+        fragment = self._fragment if keep_fragment else ""
+        return from_parts(self._scheme, netloc, "/".join(parts), query, fragment)
 
     def join(self, url: "URL") -> "URL":
         """Join URLs
