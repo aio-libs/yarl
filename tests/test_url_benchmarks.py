@@ -20,6 +20,17 @@ URL_WITH_USER_PASS = URL(URL_WITH_USER_PASS_STR)
 IPV6_QUERY_URL = URL("http://[::1]/req?query=1&query=2&query=3&query=4&query=5")
 URL_WITH_NOT_DEFAULT_PORT = URL("http://www.domain.tld:1234")
 QUERY_URL_STR = "http://www.domain.tld?query=1&query=2&query=3&query=4&query=5"
+LONG_QUERY_URL_STR = (
+    "http://www.domain.tld?query=1&query=2&query=3&query=4&query=5&query=6&query=7"
+    "&query=8&query=9&query=10&query=11&query=12&query=13&query=14&query=15"
+    "&query=16&query=17&query=18&query=19&query=20&query=21&query=22&query=23"
+    "&query=24&query=25&query=26&query=27&query=28&query=29&query=30&query=31"
+    "&query=32&query=33&query=34&query=35&query=36&query=37&query=38&query=39"
+    "&query=40&query=41&query=42&query=43&query=44&query=45&query=46&query=47"
+    "&query=48&query=49&query=50&query=51&query=52&query=53&query=54&query=55"
+    "&query=56&query=57&query=58&query=59&query=60&query=61&query=62&query=63"
+)
+LONG_QUERY_URL = URL(LONG_QUERY_URL_STR)
 QUERY_URL = URL(QUERY_URL_STR)
 URL_WITH_PATH_STR = "http://www.domain.tld/req"
 URL_WITH_PATH = URL(URL_WITH_PATH_STR)
@@ -817,3 +828,13 @@ def test_raw_path_qs_with_query_uncached(
     def _run() -> None:
         for _ in range(100):
             URL.raw_path_qs.wrapped(IPV6_QUERY_URL)
+
+
+@pytest.mark.parametrize("url", [QUERY_URL, LONG_QUERY_URL], ids=["short", "long"])
+def test_parse_query_uncached(benchmark: "BenchmarkFixture", url: URL) -> None:
+    """Test parsing the query string without the cache."""
+
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL._parsed_query.wrapped(url)
