@@ -506,9 +506,6 @@ jobs:
         tag:
         - ''
         - musllinux
-        exclude:
-        - tag: ''
-          qemu: armv7l
     uses: ./.github/workflows/reusable-build-wheel.yml
     with:
       qemu: ${{ matrix.qemu }}
