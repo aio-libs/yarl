@@ -1522,7 +1522,7 @@ def test_with_suffix() -> None:
     assert url2.path == "/a/b.c"
 
 
-def test_with_suffix_encoded_suffix():
+def test_with_suffix_encoded_suffix() -> None:
     url = URL("http://example.com/a/b")
     url2 = url.with_suffix(". c")
     assert url2.raw_parts == ("/", "a", "b.%20c")
@@ -1531,7 +1531,7 @@ def test_with_suffix_encoded_suffix():
     assert url2.path == "/a/b. c"
 
 
-def test_with_suffix_encoded_url():
+def test_with_suffix_encoded_url() -> None:
     url = URL("http://example.com/a/b c")
     url2 = url.with_suffix(". d")
     url3 = url.with_suffix(".e")
