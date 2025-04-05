@@ -26,7 +26,7 @@ LONG_QUERY_URL_STR = (
     "&query=48&query=49&query=50&query=51&query=52&query=53&query=54&query=55"
     "&query=56&query=57&query=58&query=59&query=60&query=61&query=62&query=63"
 )
-
+LONG_QUERY_URL = URL(LONG_QUERY_URL_STR)
 QUERY_URL = URL(QUERY_URL_STR)
 URL_WITH_PATH_STR = "http://www.domain.tld/req"
 URL_WITH_PATH = URL(URL_WITH_PATH_STR)
@@ -744,9 +744,7 @@ def test_raw_path_qs_with_query_uncached(benchmark: BenchmarkFixture) -> None:
             URL.raw_path_qs.wrapped(IPV6_QUERY_URL)
 
 
-@pytest.mark.parametrize(
-    "url", [QUERY_URL_STR, LONG_QUERY_URL_STR], ids=["short", "long"]
-)
+@pytest.mark.parametrize("url", [QUERY_URL, LONG_QUERY_URL], ids=["short", "long"])
 def test_parse_query_uncached(benchmark: BenchmarkFixture, url: URL) -> None:
     """Test parsing the query string without the cache."""
 
