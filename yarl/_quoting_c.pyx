@@ -354,6 +354,7 @@ cdef class _Unquoter:
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
         cdef bint changed = 0
+        cdef bint found_unsafe_byte = 0
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
@@ -411,6 +412,7 @@ cdef class _Unquoter:
                     ret.append(' ')
                 continue
 
+            found_unsafe_byte = 0
             for i in range(self._unsafe_bytes_len):
                 if ch == self._unsafe_bytes_char[i]:
                     changed = 1
@@ -418,7 +420,11 @@ cdef class _Unquoter:
                     h = hex(ord(ch)).upper()[2:]
                     for ch in h:
                         ret.append(ch)
-                    continue
+                    found_unsafe_byte = 1
+                    break
+
+            if found_unsafe_byte:
+                continue
 
             ret.append(ch)
 
