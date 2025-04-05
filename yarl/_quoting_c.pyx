@@ -406,14 +406,17 @@ cdef class _Unquoter:
                 buflen = 0
 
             if ch == '+':
-                if (not self._qs and not self._plus) or self._is_char_unsafe(ch):
+                if (
+                    (not self._qs and not self._plus) or
+                    (self._unsafe_bytes_len and self._is_char_unsafe(ch))
+                ):
                     ret.append('+')
                 else:
                     changed = 1
                     ret.append(' ')
                 continue
 
-            if self._is_char_unsafe(ch):
+            if self._unsafe_bytes_len and self._is_char_unsafe(ch):
                 changed = 1
                 ret.append('%')
                 h = hex(ord(ch)).upper()[2:]
