@@ -313,10 +313,11 @@ cdef class _Unquoter:
     cdef bytes _unsafe_bytes
     cdef const unsigned char * _unsafe_bytes_char
     cdef bint _qs
+    cdef bint _plus  # to match urllib.parse.unquote_plus
     cdef _Quoter _quoter
     cdef _Quoter _qs_quoter
 
-    def __init__(self, *, ignore="", unsafe="", qs=False):
+    def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
         self._ignore = ignore
         self._unsafe = unsafe
         # unsafe may only be extended ascii characters (0-255)
@@ -324,6 +325,7 @@ cdef class _Unquoter:
         self._unsafe_bytes_len = len(self._unsafe_bytes)
         self._unsafe_bytes_char = self._unsafe_bytes
         self._qs = qs
+        self._plus = plus
         self._quoter = _Quoter()
         self._qs_quoter = _Quoter(qs=True)
 
@@ -405,7 +407,7 @@ cdef class _Unquoter:
                 buflen = 0
 
             if ch == '+':
-                if not self._qs or ch in self._unsafe:
+                if (not self._qs and not self._plus) or ch in self._unsafe:
                     ret.append('+')
                 else:
                     changed = 1
