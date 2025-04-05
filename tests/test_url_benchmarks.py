@@ -751,4 +751,4 @@ def test_parse_query_uncached(benchmark: BenchmarkFixture, url: URL) -> None:
     @benchmark
     def _run() -> None:
         for _ in range(100):
-            URL.query.wrapped(url)
+            URL._parsed_query.wrapped(url)
