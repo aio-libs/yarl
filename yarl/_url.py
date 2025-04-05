@@ -6,7 +6,7 @@ from enum import Enum
 from functools import _CacheInfo, lru_cache
 from ipaddress import ip_address
 from typing import TYPE_CHECKING, Any, NoReturn, TypedDict, TypeVar, Union, overload
-from urllib.parse import SplitResult, parse_qsl, uses_relative
+from urllib.parse import SplitResult, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy
@@ -16,6 +16,7 @@ from ._parse import (
     USES_AUTHORITY,
     SplitURLType,
     make_netloc,
+    query_to_pairs,
     split_netloc,
     split_url,
     unsplit_result,
@@ -863,7 +864,7 @@ class URL:
     @cached_property
     def _parsed_query(self) -> list[tuple[str, str]]:
         """Parse query part of URL."""
-        return parse_qsl(self._query, keep_blank_values=True)
+        return query_to_pairs(self._query)
 
     @cached_property
     def query(self) -> "MultiDictProxy[str]":
@@ -1251,7 +1252,7 @@ class URL:
             query = get_str_query_from_sequence_iterable(qm.items())
         elif isinstance(in_query, str):
             qstr: MultiDict[str] = MultiDict(self._parsed_query)
-            qstr.update(parse_qsl(in_query, keep_blank_values=True))
+            qstr.update(query_to_pairs(in_query))
             query = get_str_query_from_iterable(qstr.items())
         elif isinstance(in_query, (bytes, bytearray, memoryview)):  # type: ignore[unreachable]
             msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
