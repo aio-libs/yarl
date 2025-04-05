@@ -199,7 +199,5 @@ def query_to_pairs(query_string: str) -> list[tuple[str, str]]:
         return pairs
     for k_v in query_string.split("&"):
         k, _, v = k_v.partition("=")
-        # replaces '+' with ' ' before unquoting to match
-        # urllib.parse.parse_qsl unquote_plus behavior.
         pairs.append((UNQUOTER_PLUS(k), UNQUOTER_PLUS(v)))
     return pairs
