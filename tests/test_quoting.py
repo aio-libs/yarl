@@ -445,6 +445,14 @@ def test_unquote_plus_to_space(unquoter: type[_Unquoter]) -> None:
     assert unquoter(qs=True)("a+b") == "a b"
 
 
+def test_unquote_with_plus_plus_to_space(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(plus=True)("a+b") == "a b"
+
+
+def test_unquote_without_plus_plus(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(plus=False)("a+b") == "a+b"
+
+
 def test_unquote_plus_to_space_unsafe(unquoter: type[_Unquoter]) -> None:
     assert unquoter(unsafe="+", qs=True)("a+b") == "a+b"
 
