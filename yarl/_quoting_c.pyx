@@ -308,10 +308,9 @@ cdef class _Quoter:
 
 cdef class _Unquoter:
     cdef str _ignore
-    cdef Py_ssize_t _ignore_len
+    cdef bint _has_ignore
     cdef str _unsafe
     cdef Py_ssize_t _unsafe_bytes_len
-    cdef bytes _unsafe_bytes
     cdef const unsigned char * _unsafe_bytes_char
     cdef bint _qs
     cdef bint _plus  # to match urllib.parse.unquote_plus
@@ -320,12 +319,12 @@ cdef class _Unquoter:
 
     def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
         self._ignore = ignore
-        self._ignore_len = len(self._ignore)
+        self._has_ignore = bool(self._ignore)
         self._unsafe = unsafe
         # unsafe may only be extended ascii characters (0-255)
-        self._unsafe_bytes = self._unsafe.encode('ascii')
-        self._unsafe_bytes_len = len(self._unsafe_bytes)
-        self._unsafe_bytes_char = self._unsafe_bytes
+        unsafe_bytes = (<str>unsafe).encode('ascii')
+        self._unsafe_bytes_len = unsafe_bytes
+        self._unsafe_bytes_char = unsafe_bytes
         self._qs = qs
         self._plus = plus
         self._quoter = _Quoter()
@@ -396,7 +395,7 @@ cdef class _Unquoter:
                         ret.append(self._qs_quoter(unquoted))
                     elif (
                         (self._unsafe_bytes_len and unquoted in self._unsafe) or
-                        (self._ignore_len and unquoted in self._ignore)
+                        (self._has_ignore and unquoted in self._ignore)
                     ):
                         ret.append(self._quoter(unquoted))
                     else:
