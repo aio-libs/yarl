@@ -308,6 +308,7 @@ cdef class _Quoter:
 
 cdef class _Unquoter:
     cdef str _ignore
+    cdef Py_ssize_t _ignore_len
     cdef str _unsafe
     cdef Py_ssize_t _unsafe_bytes_len
     cdef bytes _unsafe_bytes
@@ -319,6 +320,7 @@ cdef class _Unquoter:
 
     def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
         self._ignore = ignore
+        self._ignore_len = len(self._ignore)
         self._unsafe = unsafe
         # unsafe may only be extended ascii characters (0-255)
         self._unsafe_bytes = self._unsafe.encode('ascii')
@@ -392,7 +394,10 @@ cdef class _Unquoter:
                     buflen = 0
                     if self._qs and unquoted in '+=&;':
                         ret.append(self._qs_quoter(unquoted))
-                    elif unquoted in self._unsafe or unquoted in self._ignore:
+                    elif (
+                        (self._unsafe_bytes_len and unquoted in self._unsafe) or
+                        (self._ignore_len and unquoted in self._ignore)
+                    ):
                         ret.append(self._quoter(unquoted))
                     else:
                         ret.append(unquoted)
