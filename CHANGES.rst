@@ -23,7 +23,7 @@ Changelog
 Bug fixes
 ---------
 
-- Fixed entire name being re-encoded when using `with_suffix` -- by :user:`NTFSvolume`.
+- Fixed entire name being re-encoded when using :py:meth:`yarl.URL.with_suffix` -- by :user:`NTFSvolume`.
 
   *Related issues and pull requests on GitHub:*
   :issue:`1468`.
