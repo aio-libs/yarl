@@ -322,7 +322,7 @@ cdef class _Unquoter:
         self._has_ignore = bool(self._ignore)
         self._unsafe = unsafe
         # unsafe may only be extended ascii characters (0-255)
-        unsafe_bytes = (<str>unsafe).encode('ascii')
+        unsafe_bytes = self._unsafe.encode('ascii')
         self._unsafe_bytes_len = unsafe_bytes
         self._unsafe_bytes_char = unsafe_bytes
         self._qs = qs
