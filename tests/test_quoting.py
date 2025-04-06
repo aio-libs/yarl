@@ -457,6 +457,14 @@ def test_unquote_plus_to_space_unsafe(unquoter: type[_Unquoter]) -> None:
     assert unquoter(unsafe="+", qs=True)("a+b") == "a+b"
 
 
+def test_unquote_multiple_unsafe(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(unsafe="!@#$")("a!@#$b") == "a%21%40%23%24b"
+
+
+def test_unquote_explict_empty_unsafe(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(unsafe="")("a!@#$b") == "a!@#$b"
+
+
 def test_quote_qs_with_colon(quoter: type[_Quoter]) -> None:
     s = quoter(safe="=+&?/:@", qs=True)("next=http%3A//example.com/")
     assert s == "next=http://example.com/"

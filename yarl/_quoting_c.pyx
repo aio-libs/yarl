@@ -310,6 +310,7 @@ cdef class _Unquoter:
     cdef str _ignore
     cdef bint _has_ignore
     cdef str _unsafe
+    cdef bytes _unsafe_bytes
     cdef Py_ssize_t _unsafe_bytes_len
     cdef const unsigned char * _unsafe_bytes_char
     cdef bint _qs
@@ -322,9 +323,9 @@ cdef class _Unquoter:
         self._has_ignore = bool(self._ignore)
         self._unsafe = unsafe
         # unsafe may only be extended ascii characters (0-255)
-        unsafe_bytes = self._unsafe.encode('ascii')
-        self._unsafe_bytes_len = len(unsafe_bytes)
-        self._unsafe_bytes_char = unsafe_bytes
+        self._unsafe_bytes = self._unsafe.encode('ascii')
+        self._unsafe_bytes_len = len(self._unsafe_bytes)
+        self._unsafe_bytes_char = self._unsafe_bytes
         self._qs = qs
         self._plus = plus
         self._quoter = _Quoter()
