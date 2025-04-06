@@ -1,1 +1,0 @@
-Improved performance of the C unquoter -- by :user:`bdraco`.

@@ -1,1 +1,0 @@
-Improved performance of parsing query strings -- by :user:`bdraco`.

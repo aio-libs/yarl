@@ -1,4 +1,0 @@
-Increased minimum `propcache`_ version to 0.2.1 to fix failing tests -- by :user:`bdraco`.
-
-.. _`propcache`:
-   https://github.com/aio-libs/propcache

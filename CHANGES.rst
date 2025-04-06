@@ -14,6 +14,81 @@ Changelog
 
 .. towncrier release notes start
 
+1.19.0
+======
+
+*(2025-04-05)*
+
+
+Bug fixes
+---------
+
+- Fixed entire name being re-encoded when using `with_suffix` -- by :user:`NTFSvolume`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1468`.
+
+
+Features
+--------
+
+- Started building armv7l wheels for manylinux -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1495`.
+
+
+Contributor-facing changes
+--------------------------
+
+- GitHub Actions CI/CD is now configured to manage caching pip-ecosystem
+  dependencies using `re-actors/cache-python-deps`_ -- an action by
+  :user:`webknjaz` that takes into account ABI stability and the exact
+  version of Python runtime.
+
+  .. _`re-actors/cache-python-deps`:
+     https://github.com/marketplace/actions/cache-python-deps
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1471`.
+
+- Increased minimum `propcache`_ version to 0.2.1 to fix failing tests -- by :user:`bdraco`.
+
+  .. _`propcache`:
+     https://github.com/aio-libs/propcache
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1479`.
+
+- Added all hidden folders to pytest's ``norecursedirs`` to prevent it
+  from trying to collect tests there -- by :user:`lysnikolaou`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1480`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved accuracy of type annotations -- by :user:`Dreamsorcerer`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1484`.
+
+- Improved performance of parsing query strings -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1493`, :issue:`1497`.
+
+- Improved performance of the C unquoter -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1496`, :issue:`1498`.
+
+
+----
+
+
 1.18.3
 ======
 
