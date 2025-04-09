@@ -115,7 +115,7 @@ def test_str() -> None:
         (".", "..", "../."),
     ],
 )
-def test_relative_to(target: str, base: str, expected: str):
+def test_relative_to(target: str, base: str, expected: str) -> None:
     # test the input data
     target_url = URL(target)
     base_url = URL(base)
@@ -126,13 +126,13 @@ def test_relative_to(target: str, base: str, expected: str):
     assert relative_url == expected_url
 
 
-def test_relative_to_with_different_schemes():
+def test_relative_to_with_different_schemes() -> None:
     expected_error_msg = r"^Both URLs should have the same scheme$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("http://example.com/").relative_to(URL("https://example.com/"))
 
 
-def test_relative_to_with_different_netlocs():
+def test_relative_to_with_different_netlocs() -> None:
     expected_error_msg = r"^Both URLs should have the same netloc$"
     with pytest.raises(ValueError, match=expected_error_msg):
         URL("https://spam.com/").relative_to(URL("https://ham.com/"))
