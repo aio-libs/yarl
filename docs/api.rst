@@ -1029,7 +1029,7 @@ The path is encoded if needed.
       >>> base.relative_to(target)
       URL('../..')
 
-   .. versionadded:: 1.19
+   .. versionadded:: 1.20
 
 Human readable representation
 -----------------------------
