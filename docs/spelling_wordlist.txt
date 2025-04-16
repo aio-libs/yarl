@@ -12,6 +12,7 @@ Towncrier
 Twitter
 UTF
 aiohttp
+armv
 ascii
 backend
 boolean
@@ -50,5 +51,6 @@ subcomponent
 svetlov
 uncompiled
 unencoded
+unquoter
 v1
 yarl

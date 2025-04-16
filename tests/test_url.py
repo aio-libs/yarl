@@ -1522,6 +1522,30 @@ def test_with_suffix() -> None:
     assert url2.path == "/a/b.c"
 
 
+def test_with_suffix_encoded_suffix() -> None:
+    url = URL("http://example.com/a/b")
+    url2 = url.with_suffix(". c")
+    assert url2.raw_parts == ("/", "a", "b.%20c")
+    assert url2.parts == ("/", "a", "b. c")
+    assert url2.raw_path == "/a/b.%20c"
+    assert url2.path == "/a/b. c"
+
+
+def test_with_suffix_encoded_url() -> None:
+    url = URL("http://example.com/a/b c")
+    url2 = url.with_suffix(". d")
+    url3 = url.with_suffix(".e")
+    assert url2.raw_parts == ("/", "a", "b%20c.%20d")
+    assert url2.parts == ("/", "a", "b c. d")
+    assert url2.raw_path == "/a/b%20c.%20d"
+    assert url2.path == "/a/b c. d"
+
+    assert url3.raw_parts == ("/", "a", "b%20c.e")
+    assert url3.parts == ("/", "a", "b c.e")
+    assert url3.raw_path == "/a/b%20c.e"
+    assert url3.path == "/a/b c.e"
+
+
 @pytest.mark.parametrize(
     ("original_url", "keep_query", "keep_fragment", "expected_url"),
     [
@@ -1649,7 +1673,7 @@ def test_with_suffix_with_slash2() -> None:
     with pytest.raises(ValueError) as excinfo:
         URL("http://example.com/a").with_suffix(".b/.d")
     (msg,) = excinfo.value.args
-    assert msg == "Slash in name is not allowed"
+    assert msg == "Invalid suffix '.b/.d'"
 
 
 def test_with_suffix_replace() -> None:

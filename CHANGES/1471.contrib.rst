@@ -1,7 +1,0 @@
-GitHub Actions CI/CD is now configured to manage caching pip-ecosystem
-dependencies using `re-actors/cache-python-deps`_ -- an action by
-:user:`webknjaz` that takes into account ABI stability and the exact
-version of Python runtime.
-
-.. _`re-actors/cache-python-deps`:
-   https://github.com/marketplace/actions/cache-python-deps
