@@ -14,6 +14,33 @@ Changelog
 
 .. towncrier release notes start
 
+1.20.0
+======
+
+*(2025-04-16)*
+
+
+Features
+--------
+
+- Implemented support for the free-threaded build of CPython 3.13 -- by :user:`lysnikolaou`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1456`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Started building wheels for the free-threaded build of CPython 3.13 -- by :user:`lysnikolaou`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1456`.
+
+
+----
+
+
 1.19.0
 ======
 
