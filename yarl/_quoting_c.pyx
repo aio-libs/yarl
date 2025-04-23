@@ -62,7 +62,7 @@ cdef uint8_t ALLOWED_TABLE[16]
 cdef uint8_t ALLOWED_NOTQS_TABLE[16]
 
 
-cdef inline bint bit_at(uint8_t array[], uint64_t ch) noexcept:
+cdef inline bint bit_at(const uint8_t* array, uint64_t ch) noexcept:
     return array[ch >> 3] & (1 << (ch & 7))
 
 
