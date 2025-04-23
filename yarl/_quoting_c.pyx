@@ -104,26 +104,33 @@ cdef inline void _release_writer(Writer* writer):
 
 
 cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
-    cdef char * buf
-    cdef Py_ssize_t size
+    if writer.pos < writer.size:
+        writer.buf[writer.pos] = <char>ch
+        writer.pos += 1
+        writer.changed |= changed
+        return 0
+    return _write_char_slow(writer, ch, changed)
 
-    if writer.pos == writer.size:
-        # reallocate
-        size = writer.size + BUF_SIZE
-        if not writer.heap_allocated_buf:
-            buf = <char*>PyMem_Malloc(size)
-            if buf == NULL:
-                PyErr_NoMemory()
-                return -1
-            memcpy(buf, writer.buf, writer.size)
-            writer.heap_allocated_buf = True
-        else:
-            buf = <char*>PyMem_Realloc(writer.buf, size)
-            if buf == NULL:
-                PyErr_NoMemory()
-                return -1
-        writer.buf = buf
-        writer.size = size
+
+cdef int _write_char_slow(Writer* writer, Py_UCS4 ch, bint changed):
+    cdef char * buf
+    cdef Py_ssize_t size = writer.size + BUF_SIZE
+
+    if not writer.heap_allocated_buf:
+        buf = <char*>PyMem_Malloc(size)
+        if buf == NULL:
+            PyErr_NoMemory()
+            return -1
+        memcpy(buf, writer.buf, writer.size)
+        writer.heap_allocated_buf = True
+    else:
+        buf = <char*>PyMem_Realloc(writer.buf, size)
+        if buf == NULL:
+            PyErr_NoMemory()
+            return -1
+
+    writer.buf = buf
+    writer.size = size
     writer.buf[writer.pos] = <char>ch
     writer.pos += 1
     writer.changed |= changed
