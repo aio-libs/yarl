@@ -207,19 +207,12 @@ jobs:
         - ubuntu-latest
         - macos-latest
         - windows-latest
-        - windows-11-arm
         experimental: [false]
         exclude:
         - os: macos-latest
           no-extensions: Y
         - os: windows-latest
           no-extensions: Y
-        - os: windows-11-arm
-          no-extensions: Y
-        - os: windows-11-arm
-          pyver: 3.10  # not supported by setup-python
-        - os: windows-11-arm
-          pyver: 3.9  # not supported by setup-python
         include:
         - pyver: pypy-3.10
           no-extensions: Y
