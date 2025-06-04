@@ -6,6 +6,7 @@ on:
   merge_group:
   push:
     branches:
+    - arm64-runner
     - master
     - >-
       [0-9].[0-9]+
