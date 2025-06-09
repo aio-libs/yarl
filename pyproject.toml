@@ -48,7 +48,6 @@ keep-going = false
 # https://cython.rtfd.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
 embedsignature = "True"
 emit_code_comments = "True"
-linetrace = "True"  # Implies `profile=True`
 
 [tool.local.cythonize.kwargs.compile-time-env]
 # This section can contain compile time env vars
