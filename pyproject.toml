@@ -48,7 +48,6 @@ keep-going = false
 # https://cython.rtfd.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
 embedsignature = "True"
 emit_code_comments = "True"
-linetrace = "True"  # Implies `profile=True`
 
 [tool.local.cythonize.kwargs.compile-time-env]
 # This section can contain compile time env vars
@@ -92,12 +91,3 @@ pure-python = "false"
 
 [tool.cibuildwheel.windows]
 before-test = []  # Windows cmd has different syntax and pip chooses wheels
-
-# TODO: Remove this when there's a Cython 3.1 final release
-# Remove PIP_CONSTRAINT from the environment
-[[tool.cibuildwheel.overrides]]
-select = "cp313t-*"
-
-test-requires = "-r requirements/test-freethreading.txt"
-inherit.environment = "append"
-environment = {PIP_CONSTRAINT = "requirements/cython-freethreading.txt"}

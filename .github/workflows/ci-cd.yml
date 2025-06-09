@@ -259,9 +259,7 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: >-
-          requirements/test${{
-            matrix.pyver == '3.13t' && '-freethreading' || ''
-          }}.txt
+          requirements/test.txt
     - name: Determine pre-compiled compatible wheel
       env:
         # NOTE: When `pip` is forced to colorize output piped into `jq`,

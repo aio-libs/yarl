@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import os
-import sysconfig
 from collections.abc import Iterator
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -293,7 +292,7 @@ def maybe_prebuild_c_extensions(
     with build_dir_ctx:
         config = _get_local_cython_config()
 
-        cythonize_args = _make_cythonize_cli_args_from_config(config)
+        cythonize_args = _make_cythonize_cli_args_from_config(config, cython_line_tracing_requested)
         with _patched_cython_env(config['env'], cython_line_tracing_requested):
             _cythonize_cli_cmd(cythonize_args)  # type: ignore[no-untyped-call]
         with patched_distutils_cmd_install():
@@ -376,10 +375,8 @@ def get_requires_for_build_wheel(
 
     if is_pure_python_build:
         c_ext_build_deps = []
-    elif sysconfig.get_config_var('Py_GIL_DISABLED'):
-        c_ext_build_deps = ['Cython ~= 3.1.0a1']
     else:
-        c_ext_build_deps = ['Cython >= 3.0.12']
+        c_ext_build_deps = ['Cython >= 3.1.2']
 
     return _setuptools_get_requires_for_build_wheel(
         config_settings=config_settings,
