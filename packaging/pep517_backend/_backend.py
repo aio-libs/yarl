@@ -376,7 +376,7 @@ def get_requires_for_build_wheel(
     if is_pure_python_build:
         c_ext_build_deps = []
     else:
-        c_ext_build_deps = ['Cython >= 3.1.1']
+        c_ext_build_deps = ['Cython >= 3.1.2']
 
     return _setuptools_get_requires_for_build_wheel(
         config_settings=config_settings,
