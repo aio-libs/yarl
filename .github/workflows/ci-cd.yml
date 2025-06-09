@@ -381,28 +381,12 @@ jobs:
   benchmark:
     name: Benchmark
     needs:
-    - build-pure-python-dists  # transitive, for accessing settings
-    - build-wheels-for-tested-arches
     - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
     - name: Checkout project
       uses: actions/checkout@v4
-    - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v2
-      with:
-        source-tarball-name: >-
-          ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
-        workflow-artifact-name: >-
-          ${{ needs.pre-setup.outputs.dists-artifact-name }}
-    - name: Download distributions
-      uses: actions/download-artifact@v4
-      with:
-        path: dist
-        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
-        merge-multiple: true
-
     - name: Setup Python 3.13
       id: python-install
       uses: actions/setup-python@v5
@@ -422,47 +406,8 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: requirements/codspeed.txt
-    - name: Determine pre-compiled compatible wheel
-      env:
-        # NOTE: When `pip` is forced to colorize output piped into `jq`,
-        # NOTE: the latter can't parse it. So we're overriding the color
-        # NOTE: preference here via https://no-color.org.
-        # NOTE: Setting `FORCE_COLOR` to any value (including 0, an empty
-        # NOTE: string, or a "YAML null" `~`) doesn't have any effect and
-        # NOTE: `pip` (through its verndored copy of `rich`) treats the
-        # NOTE: presence of the variable as "force-color" regardless.
-        #
-        # NOTE: This doesn't actually work either, so we'll resort to unsetting
-        # NOTE: in the Bash script.
-        # NOTE: Ref: https://github.com/Textualize/rich/issues/2622
-        NO_COLOR: 1
-      id: wheel-file
-      run: >
-        echo -n path= | tee -a "${GITHUB_OUTPUT}"
-
-
-        unset FORCE_COLOR
-
-
-        python
-        -X utf8
-        -u -I
-        -m pip install
-        --find-links=./dist
-        --no-index
-        '${{ env.PROJECT_NAME }}'
-        --force-reinstall
-        --no-color
-        --no-deps
-        --only-binary=:all:
-        --dry-run
-        --report=-
-        --quiet
-        | jq --raw-output .install[].download_info.url
-        | tee -a "${GITHUB_OUTPUT}"
-      shell: bash
-    - name: Self-install
-      run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
+    - name: Build and install yarl without Cython tracing
+      run: python -Im pip install . --config-settings=with-cython-tracing=false
     - name: Run benchmarks
       uses: CodSpeedHQ/action@v3
       with:
