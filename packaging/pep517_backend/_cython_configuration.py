@@ -79,19 +79,25 @@ def get_local_cython_config() -> Config:
     return config_mapping['tool']['local']['cythonize']  # type: ignore[no-any-return]
 
 
-def make_cythonize_cli_args_from_config(config: Config, cython_line_tracing_requested: bool = False) -> list[str]:
-    py_ver_arg = f'-{_python_version_tuple.major!s}'
-
-    cli_flags = get_enabled_cli_flags_from_config(config['flags'])
-
+def _configure_cython_line_tracing(config_kwargs: dict[str, str | dict[str, str]], cython_line_tracing_requested: bool) -> None:
+    """Configure Cython line tracing directives if requested."""
     # If line tracing is requested, add it to the directives
     if cython_line_tracing_requested:
-        directives = config['kwargs'].setdefault('directive', {})
+        directives = config_kwargs.setdefault('directive', {})
         assert isinstance(directives, dict)  # Type narrowing for mypy
         directives['linetrace'] = 'True'
         directives['profile'] = 'True'
 
-    cli_kwargs = get_cli_kwargs_from_config(config['kwargs'])
+
+def make_cythonize_cli_args_from_config(config: Config, cython_line_tracing_requested: bool = False) -> list[str]:
+    py_ver_arg = f'-{_python_version_tuple.major!s}'
+
+    cli_flags = get_enabled_cli_flags_from_config(config['flags'])
+    config_kwargs = config['kwargs']
+
+    _configure_cython_line_tracing(config_kwargs, cython_line_tracing_requested)
+
+    cli_kwargs = get_cli_kwargs_from_config(config_kwargs)
 
     return cli_flags + [py_ver_arg] + cli_kwargs + ['--'] + config['src']
 
