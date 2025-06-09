@@ -1,2 +1,0 @@
--r cython-freethreading.txt
--r test-pure.txt
