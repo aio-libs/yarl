@@ -407,7 +407,7 @@ jobs:
       with:
         path: requirements/codspeed.txt
     - name: Build and install yarl without Cython tracing
-      run: python -Im pip install . --config-settings=with-cython-tracing=true
+      run: python -Im pip install . --config-settings=with-cython-tracing=false
     - name: Run benchmarks
       uses: CodSpeedHQ/action@v3
       with:
