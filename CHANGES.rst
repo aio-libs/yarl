@@ -14,6 +14,50 @@ Changelog
 
 .. towncrier release notes start
 
+v1.20.1
+=======
+
+*(2025-06-09)*
+
+
+Bug fixes
+---------
+
+- Started raising a :exc:`ValueError` exception raised for corrupted
+  IPv6 URL values.
+
+  These fixes the issue where exception :exc:`IndexError` was
+  leaking from the internal code because of not being handled and
+  transformed into a user-facing error. The problem was happening
+  under the following conditions: empty IPv6 URL, brackets in
+  reverse order.
+
+  -- by :user:`MaelPic`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1512`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Updated to use Cython 3.1 universally across the build path -- by :user:`lysnikolaou`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1514`.
+
+- Made Cython line tracing opt-in via the ``with-cython-tracing`` build config setting -- by :user:`bdraco`.
+
+  Previously, line tracing was enabled by default in :file:`pyproject.toml`, which caused build issues for some users and made wheels nearly twice as slow.
+  Now line tracing is only enabled when explicitly requested via ``pip install . --config-setting=with-cython-tracing=true`` or by setting the ``YARL_CYTHON_TRACING`` environment variable.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1521`.
+
+
+----
+
+
 1.20.0
 ======
 

@@ -1,4 +1,0 @@
-Made Cython line tracing opt-in via the ``with-cython-tracing`` build config setting -- by :user:`bdraco`.
-
-Previously, line tracing was enabled by default in :file:`pyproject.toml`, which caused build issues for some users and made wheels nearly twice as slow.
-Now line tracing is only enabled when explicitly requested via ``pip install . --config-setting=with-cython-tracing=true`` or by setting the ``YARL_CYTHON_TRACING`` environment variable.
