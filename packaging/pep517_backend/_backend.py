@@ -293,7 +293,7 @@ def maybe_prebuild_c_extensions(
     with build_dir_ctx:
         config = _get_local_cython_config()
 
-        cythonize_args = _make_cythonize_cli_args_from_config(config)
+        cythonize_args = _make_cythonize_cli_args_from_config(config, cython_line_tracing_requested)
         with _patched_cython_env(config['env'], cython_line_tracing_requested):
             _cythonize_cli_cmd(cythonize_args)  # type: ignore[no-untyped-call]
         with patched_distutils_cmd_install():
