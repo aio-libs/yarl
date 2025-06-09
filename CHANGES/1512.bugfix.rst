@@ -1,0 +1,10 @@
+Started raising a :exc:`ValueError` exception raised for corrupted
+IPv6 URL values.
+
+These fixes the issue where exception :exc:`IndexError` was
+leaking from the internal code because of not being handled and
+transformed into a user-facing error. The problem was happening
+under the following conditions: empty IPv6 URL, brackets in
+reverse order.
+
+-- by :user:`MaelPic`.
