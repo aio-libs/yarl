@@ -314,10 +314,8 @@ cdef class _Quoter:
 
 
 
-# Custom Writer for dealing with unicode characters so that lists aren't required when 
-# Unquoting...
-# Python's C API can't do dynamic allocating so this was the closes solution...
-
+# Unicode Writer was programmed to be faster than using and joining a list.
+# Python's C API can't do dynamic Unicode allocating so this was the closest solution...
 # ----------------- Unicode Writer ---------------------------
 
 
