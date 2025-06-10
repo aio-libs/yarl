@@ -9,9 +9,11 @@ from cpython.unicode cimport (
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
-    PyUnicode_FromKindAndData
+    PyUnicode_FromKindAndData,
+    PyUnicode_WRITE,
+    PyUnicode_4BYTE_KIND
 )
-cimport cython
+
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
@@ -314,8 +316,10 @@ cdef class _Quoter:
 
 
 
-# Unicode Writer was programmed to be faster than using and joining a list.
+# Custom Writer for dealing with unicode characters so that lists aren't required when 
+# Unquoting...
 # Python's C API can't do dynamic Unicode allocating so this was the closest solution...
+
 # ----------------- Unicode Writer ---------------------------
 
 
@@ -330,6 +334,7 @@ cdef inline int _unicode_writer_init(UnicodeWriter* writer, Py_ssize_t size, int
     if writer.buf == NULL:
         PyErr_NoMemory()
         return -1
+    writer.kind = kind
     writer.index = 0
     writer.size = size
     return 0
@@ -350,9 +355,10 @@ cdef inline int _unicode_writer__write_char(UnicodeWriter* writer, Py_UCS4 ch) e
         writer.buf = alloc
         writer.size = size
 
-    writer.buf[writer.index] = ch
+    PyUnicode_WRITE(writer.kind, writer.buf, writer.index, ch)
     writer.index += 1
     return 0
+
 
 cdef inline int _unicode_writer__write_str(UnicodeWriter* writer, str uni) except -1:
     cdef Py_UCS4 ch
@@ -362,12 +368,12 @@ cdef inline int _unicode_writer__write_str(UnicodeWriter* writer, str uni) excep
     return 0
 
 cdef inline str _unicode_writer_finish(UnicodeWriter* writer):
+    
     return PyUnicode_FromKindAndData(writer.kind, writer.buf, writer.index)
 
 cdef inline void _unicode_writer_release(UnicodeWriter* writer):
     if writer.buf != NULL:
         PyMem_Free(writer.buf)
-
 
 # ----------------- End Unicode Writer ---------------------------
 
@@ -414,7 +420,7 @@ cdef class _Unquoter:
             return val
 
         cdef UnicodeWriter writer
-        cdef list ret = []
+        cdef str ret
         cdef char buffer[4]
         cdef Py_ssize_t buflen = 0
         cdef Py_ssize_t consumed
@@ -428,7 +434,7 @@ cdef class _Unquoter:
         cdef const void *data = PyUnicode_DATA(val)
         cdef bint changed = 0
 
-        _unicode_writer_init(&writer, len(val), kind)
+        _unicode_writer_init(&writer, len(val), PyUnicode_4BYTE_KIND)
 
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
