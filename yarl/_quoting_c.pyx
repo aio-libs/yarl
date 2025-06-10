@@ -3,16 +3,17 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
 from cpython.unicode cimport (
-    PyUnicode_4BYTE_KIND,
     PyUnicode_DATA,
     PyUnicode_DecodeASCII,
     PyUnicode_DecodeUTF8Stateful,
-    PyUnicode_FromKindAndData,
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
+    PyUnicode_FromKindAndData,
     PyUnicode_WRITE,
+    PyUnicode_4BYTE_KIND
 )
+
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
@@ -314,8 +315,7 @@ cdef class _Quoter:
         return _write_utf8(writer, ch)
 
 
-
-# Custom Writer for dealing with unicode characters so that lists aren't required when
+# Custom Writer for dealing with unicode characters so that lists aren't required when 
 # Unquoting...
 # Python's C API can't do dynamic Unicode allocating so this was the closest solution...
 
@@ -328,7 +328,9 @@ cdef struct UnicodeWriter:
     Py_ssize_t index
     Py_ssize_t size
 
-cdef inline int _unicode_writer_init(UnicodeWriter* writer, Py_ssize_t size, int kind) except -1:
+cdef inline int _unicode_writer_init(
+    UnicodeWriter* writer, Py_ssize_t size, int kind
+) except -1:
     writer.buf = <Py_UCS4*>PyMem_Malloc(sizeof(Py_UCS4) * size)
     if writer.buf == NULL:
         PyErr_NoMemory()
@@ -338,7 +340,9 @@ cdef inline int _unicode_writer_init(UnicodeWriter* writer, Py_ssize_t size, int
     writer.size = size
     return 0
 
-cdef inline int _unicode_writer__write_char(UnicodeWriter* writer, Py_UCS4 ch) except -1:
+cdef inline int _unicode_writer__write_char(
+    UnicodeWriter* writer, Py_UCS4 ch
+) except -1:
     cdef Py_UCS4* alloc
     cdef Py_ssize_t size
     if writer.index >= writer.size:
@@ -359,7 +363,9 @@ cdef inline int _unicode_writer__write_char(UnicodeWriter* writer, Py_UCS4 ch) e
     return 0
 
 
-cdef inline int _unicode_writer__write_str(UnicodeWriter* writer, str uni) except -1:
+cdef inline int _unicode_writer__write_str(
+    UnicodeWriter* writer, str uni
+) except -1:
     cdef Py_UCS4 ch
     for ch in uni:
         if _unicode_writer__write_char(writer, ch) < 0:
@@ -367,7 +373,6 @@ cdef inline int _unicode_writer__write_str(UnicodeWriter* writer, str uni) excep
     return 0
 
 cdef inline str _unicode_writer_finish(UnicodeWriter* writer):
-
     return PyUnicode_FromKindAndData(writer.kind, writer.buf, writer.index)
 
 cdef inline void _unicode_writer_release(UnicodeWriter* writer):
@@ -515,10 +520,10 @@ cdef class _Unquoter:
 
         if buflen:
             _unicode_writer__write_str(&writer, val[length - buflen * 3 : length])
-
+        
         ret = _unicode_writer_finish(&writer)
         _unicode_writer_release(&writer)
-        return ret
+        return ret 
 
     cdef inline bint _is_char_unsafe(self, Py_UCS4 ch):
         for i in range(self._unsafe_bytes_len):
