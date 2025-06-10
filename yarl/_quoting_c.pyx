@@ -9,7 +9,9 @@ from cpython.unicode cimport (
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
+    PyUnicode_FromKindAndData
 )
+cimport cython
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
@@ -311,6 +313,67 @@ cdef class _Quoter:
         return _write_utf8(writer, ch)
 
 
+
+# Custom Writer for dealing with unicode characters so that lists aren't required when 
+# Unquoting...
+# Python's C API can't do dynamic allocating so this was the closes solution...
+
+# ----------------- Unicode Writer ---------------------------
+
+
+cdef struct UnicodeWriter:
+    Py_UCS4 *buf
+    int kind
+    Py_ssize_t index
+    Py_ssize_t size
+
+cdef inline int _unicode_writer_init(UnicodeWriter* writer, Py_ssize_t size, int kind) except -1:
+    writer.buf = <Py_UCS4*>PyMem_Malloc(sizeof(Py_UCS4) * size)
+    if writer.buf == NULL:
+        PyErr_NoMemory()
+        return -1
+    writer.index = 0
+    writer.size = size
+    return 0
+
+cdef inline int _unicode_writer__write_char(UnicodeWriter* writer, Py_UCS4 ch) except -1:
+    cdef Py_UCS4* alloc
+    cdef Py_ssize_t size
+    if writer.index >= writer.size:
+        size = writer.size + BUF_SIZE
+
+        alloc = <Py_UCS4*>PyMem_Realloc(writer.buf, size)
+        if alloc == NULL:
+            # Release writer's memory and then throw an error...
+            PyMem_Free(writer.buf)
+            PyErr_NoMemory()
+            return -1
+
+        writer.buf = alloc
+        writer.size = size
+
+    writer.buf[writer.index] = ch
+    writer.index += 1
+    return 0
+
+cdef inline int _unicode_writer__write_str(UnicodeWriter* writer, str uni) except -1:
+    cdef Py_UCS4 ch
+    for ch in uni:
+        if _unicode_writer__write_char(writer, ch) < 0:
+            return -1
+    return 0
+
+cdef inline str _unicode_writer_finish(UnicodeWriter* writer):
+    return PyUnicode_FromKindAndData(writer.kind, writer.buf, writer.index)
+
+cdef inline void _unicode_writer_release(UnicodeWriter* writer):
+    if writer.buf != NULL:
+        PyMem_Free(writer.buf)
+
+
+# ----------------- End Unicode Writer ---------------------------
+
+
 cdef class _Unquoter:
     cdef str _ignore
     cdef bint _has_ignore
@@ -352,11 +415,13 @@ cdef class _Unquoter:
         if length == 0:
             return val
 
+        cdef UnicodeWriter writer
         cdef list ret = []
         cdef char buffer[4]
         cdef Py_ssize_t buflen = 0
         cdef Py_ssize_t consumed
         cdef str unquoted
+        cdef str h
         cdef Py_UCS4 ch = 0
         cdef long chl = 0
         cdef Py_ssize_t idx = 0
@@ -364,6 +429,9 @@ cdef class _Unquoter:
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
         cdef bint changed = 0
+
+        _unicode_writer_init(&writer, len(val), kind)
+
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
@@ -386,13 +454,13 @@ cdef class _Unquoter:
                         start_pct = idx - buflen * 3
                         buffer[0] = ch
                         buflen = 1
-                        ret.append(val[start_pct : idx - 3])
+                        _unicode_writer__write_str(&writer, val[start_pct : idx - 3])
                         try:
                             unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
                                                                     NULL, &consumed)
                         except UnicodeDecodeError:
                             buflen = 0
-                            ret.append(val[idx - 3 : idx])
+                            _unicode_writer__write_str(&writer, val[idx - 3 : idx])
                             continue
                     if not unquoted:
                         assert consumed == 0
@@ -400,21 +468,21 @@ cdef class _Unquoter:
                     assert consumed == buflen
                     buflen = 0
                     if self._qs and unquoted in '+=&;':
-                        ret.append(self._qs_quoter(unquoted))
+                        _unicode_writer__write_str(&writer, self._qs_quoter(unquoted))
                     elif (
                         (self._unsafe_bytes_len and unquoted in self._unsafe) or
                         (self._has_ignore and unquoted in self._ignore)
                     ):
-                        ret.append(self._quoter(unquoted))
+                        _unicode_writer__write_str(&writer, self._quoter(unquoted))
                     else:
-                        ret.append(unquoted)
+                        _unicode_writer__write_str(&writer, unquoted)
                     continue
                 else:
                     ch = '%'
 
             if buflen:
                 start_pct = idx - 1 - buflen * 3
-                ret.append(val[start_pct : idx - 1])
+                _unicode_writer__write_str(&writer, val[start_pct : idx - 1])
                 buflen = 0
 
             if ch == '+':
@@ -422,29 +490,32 @@ cdef class _Unquoter:
                     (not self._qs and not self._plus) or
                     (self._unsafe_bytes_len and self._is_char_unsafe(ch))
                 ):
-                    ret.append('+')
+                    _unicode_writer__write_char(&writer, '+')
                 else:
                     changed = 1
-                    ret.append(' ')
+                    _unicode_writer__write_char(&writer, ' ')
                 continue
 
             if self._unsafe_bytes_len and self._is_char_unsafe(ch):
                 changed = 1
-                ret.append('%')
+                _unicode_writer__write_char(&writer, '%')
                 h = hex(ord(ch)).upper()[2:]
                 for ch in h:
-                    ret.append(ch)
+                    _unicode_writer__write_char(&writer, ch)
                 continue
 
-            ret.append(ch)
+            _unicode_writer__write_str(&writer, ch)
 
         if not changed:
+            _unicode_writer_release(&writer)
             return val
 
         if buflen:
-            ret.append(val[length - buflen * 3 : length])
-
-        return ''.join(ret)
+            _unicode_writer__write_str(&writer, val[length - buflen * 3 : length])
+        
+        ret = _unicode_writer_finish(&writer)
+        _unicode_writer_release(&writer)
+        return ret 
 
     cdef inline bint _is_char_unsafe(self, Py_UCS4 ch):
         for i in range(self._unsafe_bytes_len):
