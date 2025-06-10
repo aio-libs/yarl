@@ -523,7 +523,7 @@ cdef class _Unquoter:
         
         ret = _unicode_writer_finish(&writer)
         _unicode_writer_release(&writer)
-        return ret 
+        return ret
 
     cdef inline bint _is_char_unsafe(self, Py_UCS4 ch):
         for i in range(self._unsafe_bytes_len):
