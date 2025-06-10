@@ -1,1 +1,1 @@
-Optimized Unquoter with the use of a new unicode writer based off the quoting writer -- by :user:`Vizonex`.
+Optimized Unquote class with the use of a new Unicode writer based off the quoting writer -- by :user:`Vizonex`.
