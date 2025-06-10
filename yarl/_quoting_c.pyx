@@ -357,7 +357,7 @@ cdef inline int _unicode_writer__write_char(
         writer.buf = alloc
         writer.size = size
 
-    PyUnicode_WRITE(writer.kind, writer.buf, writer.index, ch)
+    writer.buf[writer.index] = ch
     writer.index += 1
     return 0
 
