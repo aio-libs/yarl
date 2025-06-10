@@ -3,17 +3,16 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
 from cpython.unicode cimport (
+    PyUnicode_4BYTE_KIND,
     PyUnicode_DATA,
     PyUnicode_DecodeASCII,
     PyUnicode_DecodeUTF8Stateful,
+    PyUnicode_FromKindAndData,
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
-    PyUnicode_FromKindAndData,
     PyUnicode_WRITE,
-    PyUnicode_4BYTE_KIND
 )
-
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
@@ -315,7 +314,7 @@ cdef class _Quoter:
         return _write_utf8(writer, ch)
 
 
-# Custom Writer for dealing with unicode characters so that lists aren't required when 
+# Custom Writer for dealing with unicode characters so that lists aren't required when
 # Unquoting...
 # Python's C API can't do dynamic Unicode allocating so this was the closest solution...
 
@@ -520,7 +519,7 @@ cdef class _Unquoter:
 
         if buflen:
             _unicode_writer__write_str(&writer, val[length - buflen * 3 : length])
-        
+
         ret = _unicode_writer_finish(&writer)
         _unicode_writer_release(&writer)
         return ret
