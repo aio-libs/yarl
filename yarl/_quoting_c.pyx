@@ -11,7 +11,6 @@ from cpython.unicode cimport (
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
-    PyUnicode_WRITE,
 )
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
