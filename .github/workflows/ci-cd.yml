@@ -139,12 +139,15 @@ jobs:
         os:
         - ubuntu
         - windows
+        - windows-11-arm
         - macos
         tag:
         - ''
         - 'musllinux'
         exclude:
         - os: windows
+          tag: 'musllinux'
+        - os: windows-11-arm
           tag: 'musllinux'
         - os: macos
           tag: 'musllinux'
