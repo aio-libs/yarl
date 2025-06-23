@@ -32,6 +32,10 @@ on:  # yamllint disable-line rule:truthy
         description: Sdist filename wildcard
         required: true
         type: string
+      timeout-minutes:
+        description: Deadline for the job to complete
+        required: true
+        type: number
       wheel-tags-to-skip:
         description: Wheel tags to skip building
         default: ''
@@ -57,7 +61,7 @@ jobs:
         )
       }}
     runs-on: ${{ inputs.runner-vm-os }}
-    timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
+    timeout-minutes: ${{ fromJSON(inputs.timeout-minutes) }}
     steps:
     - name: Compute GHA artifact name ending
       id: gha-artifact-name

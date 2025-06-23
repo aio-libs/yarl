@@ -170,6 +170,7 @@ jobs:
         || '*-musllinux_* pp*'
         }}
       runner-vm-os: ${{ matrix.runner-vm-os }}
+      timeout-minutes: 20
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
@@ -520,6 +521,7 @@ jobs:
         && '*-manylinux_* pp*'
         || '*-musllinux_* pp*'
         }}
+      timeout-minutes: 60
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
