@@ -13,16 +13,19 @@ on:  # yamllint disable-line rule:truthy
         description: A custom name for the Checks API-reported status
         required: false
         type: string
-      cython-tracing:
-        description: Whether to build Cython modules with line tracing
-        default: '0'
+      environment-variables:
+        description: >-
+          A newline-delimited blob of text with environment variables
+          to be set using `${GITHUB_ENV}`
         required: false
         type: string
       qemu:
-        description: Emulated QEMU architecture
-        default: ''
+        default: false
+        description: >-
+          Whether this job needs to configure QEMU to emulate a foreign
+          architecture before running `cibuildwheel`. Defaults to "false".
         required: false
-        type: string
+        type: boolean
       runner-vm-os:
         description: VM OS to use
         default: ubuntu-latest
@@ -36,11 +39,6 @@ on:  # yamllint disable-line rule:truthy
         description: Deadline for the job to complete
         required: true
         type: number
-      wheel-tags-to-skip:
-        description: Wheel tags to skip building
-        default: ''
-        required: false
-        type: string
 
 env:
   FORCE_COLOR: "1"  # Make tools pretty.
@@ -55,14 +53,21 @@ jobs:
         inputs.check-name
         && inputs.check-name
         || format(
-          'Build wheels on {0} {1}',
+          'Build wheels on {0}{1}',
           inputs.runner-vm-os,
-          inputs.qemu
+          inputs.qemu && ' under QEMU' || ''
         )
       }}
     runs-on: ${{ inputs.runner-vm-os }}
     timeout-minutes: ${{ fromJSON(inputs.timeout-minutes) }}
     steps:
+    - name: Export requested job-global environment variables
+      if: inputs.environment-variables != ''
+      env:
+        INPUT_ENVIRONMENT_VARIABLES: ${{ inputs.environment-variables }}
+      run: echo "${INPUT_ENVIRONMENT_VARIABLES}" >> "${GITHUB_ENV}"
+      shell: bash
+
     - name: Compute GHA artifact name ending
       id: gha-artifact-name
       run: |
@@ -93,39 +98,16 @@ jobs:
       uses: docker/setup-qemu-action@v3
       with:
         platforms: all
-        # This should be temporary
-        # xref https://github.com/docker/setup-qemu-action/issues/188
-        # xref https://github.com/tonistiigi/binfmt/issues/215
-        image: tonistiigi/binfmt:qemu-v8.1.5
-      id: qemu
-    - name: Prepare emulation
-      if: inputs.qemu
-      run: |
-        # Build emulated architectures only if QEMU is set,
-        # use default "auto" otherwise
-        echo "CIBW_ARCHS_LINUX=${{ inputs.qemu }}" >> "${GITHUB_ENV}"
-      shell: bash
-
-    - name: Skip building some wheel tags
-      if: inputs.wheel-tags-to-skip
-      run: |
-        echo "CIBW_SKIP=${{ inputs.wheel-tags-to-skip }}" >> "${GITHUB_ENV}"
-      shell: bash
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.0.0
-      env:
-        CIBW_ARCHS_MACOS: x86_64 arm64 universal2
-        CIBW_CONFIG_SETTINGS: >-  # Cython line tracing for coverage collection
-          pure-python=false
-          with-cython-tracing=${{ inputs.cython-tracing }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.dists-artifact-name }}-
           ${{ inputs.runner-vm-os }}-
-          ${{ inputs.qemu }}-
+          ${{ inputs.qemu && 'qemu-' || '' }}
           ${{ steps.gha-artifact-name.outputs.hash }}
         path: ./wheelhouse/*.whl
 
