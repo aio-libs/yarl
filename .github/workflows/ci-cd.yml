@@ -154,7 +154,7 @@ jobs:
            (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
            && 'musllinux' || 'none'
            }}
-    uses: ./.github/workflows/reusable-build-wheel.yml
+    uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
       os: ${{ matrix.os }}
       tag: ${{ matrix.tag }}
@@ -508,7 +508,7 @@ jobs:
         tag:
         - ''
         - musllinux
-    uses: ./.github/workflows/reusable-build-wheel.yml
+    uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
       qemu: ${{ matrix.qemu }}
       tag: ${{ matrix.tag }}
