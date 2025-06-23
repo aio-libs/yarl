@@ -156,7 +156,8 @@ jobs:
            }}
     uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
-      tag: ${{ matrix.tag }}
+      check-name: >-
+        Build ${{ matrix.tag }} wheels on ${{ matrix.runner-vm-os }}
       wheel-tags-to-skip: >-
         ${{
         (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
@@ -510,8 +511,9 @@ jobs:
         - musllinux
     uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
+      check-name: >-
+        Build ${{ matrix.tag }} wheels for ${{ matrix.qemu }}
       qemu: ${{ matrix.qemu }}
-      tag: ${{ matrix.tag }}
       wheel-tags-to-skip: >-
         ${{
         (matrix.tag == 'musllinux')
