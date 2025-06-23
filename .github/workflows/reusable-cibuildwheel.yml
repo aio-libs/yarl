@@ -14,11 +14,6 @@ on:
         default: '0'
         required: false
         type: string
-      os:
-        description: VM OS to use, without version suffix
-        default: ubuntu
-        required: false
-        type: string
       qemu:
         description: Emulated QEMU architecture
         default: ''
@@ -27,6 +22,11 @@ on:
       tag:
         description: Build platform tag wheels
         default: ''
+        required: false
+        type: string
+      runner-vm-os:
+        description: VM OS to use
+        default: ubuntu-latest
         required: false
         type: string
       source-tarball-name:
@@ -48,8 +48,8 @@ jobs:
 
   build-wheel:
     name: >-
-     Build ${{ inputs.tag }} wheels on ${{ inputs.os }} ${{ inputs.qemu }}
-    runs-on: ${{ inputs.os }}-latest
+      Build ${{ inputs.tag }} wheels on ${{ inputs.runner-vm-os }} ${{ inputs.qemu }}
+    runs-on: ${{ inputs.runner-vm-os }}
     timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
     - name: Retrieve the project source from an sdist inside the GHA artifact
@@ -94,7 +94,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.dists-artifact-name }}-
-          ${{ inputs.os }}-
+          ${{ inputs.runner-vm-os }}-
           ${{ inputs.qemu }}-
           ${{ inputs.tag }}
         path: ./wheelhouse/*.whl
