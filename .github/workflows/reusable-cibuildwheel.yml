@@ -52,6 +52,25 @@ jobs:
     runs-on: ${{ inputs.runner-vm-os }}
     timeout-minutes: ${{ inputs.qemu && 60 || 20 }}
     steps:
+    - name: Compute GHA artifact name ending
+      id: gha-artifact-name
+      run: |
+        from hashlib import sha512
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        inputs_json_str = """${{ toJSON(inputs) }}"""
+
+        hash = sha512(inputs_json_str.encode()).hexdigest()
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print(f'hash={hash}', file=outputs_file)
+      shell: python
+
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -96,7 +115,8 @@ jobs:
         name: ${{ inputs.dists-artifact-name }}-
           ${{ inputs.runner-vm-os }}-
           ${{ inputs.qemu }}-
-          ${{ inputs.tag }}
+          ${{ inputs.tag }}-
+          ${{ steps.gha-artifact-name.outputs.hash }}
         path: ./wheelhouse/*.whl
 
 ...
