@@ -1,0 +1,114 @@
+---
+
+name: Build wheel
+
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      dists-artifact-name:
+        description: Workflow artifact name containing dists
+        required: true
+        type: string
+      check-name:
+        description: A custom name for the Checks API-reported status
+        required: false
+        type: string
+      environment-variables:
+        description: >-
+          A newline-delimited blob of text with environment variables
+          to be set using `${GITHUB_ENV}`
+        required: false
+        type: string
+      qemu:
+        default: false
+        description: >-
+          Whether this job needs to configure QEMU to emulate a foreign
+          architecture before running `cibuildwheel`. Defaults to "false".
+        required: false
+        type: boolean
+      runner-vm-os:
+        description: VM OS to use
+        default: ubuntu-latest
+        required: false
+        type: string
+      source-tarball-name:
+        description: Sdist filename wildcard
+        required: true
+        type: string
+      timeout-minutes:
+        description: Deadline for the job to complete
+        required: true
+        type: number
+
+env:
+  FORCE_COLOR: "1"  # Make tools pretty.
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_PYTHON_VERSION_WARNING: "1"
+
+jobs:
+
+  build-wheel:
+    name: >-
+      ${{
+        inputs.check-name
+        && inputs.check-name
+        || format(
+          'Build wheels on {0}{1}',
+          inputs.runner-vm-os,
+          inputs.qemu && ' under QEMU' || ''
+        )
+      }}
+    runs-on: ${{ inputs.runner-vm-os }}
+    timeout-minutes: ${{ fromJSON(inputs.timeout-minutes) }}
+    steps:
+    - name: Export requested job-global environment variables
+      if: inputs.environment-variables != ''
+      env:
+        INPUT_ENVIRONMENT_VARIABLES: ${{ inputs.environment-variables }}
+      run: echo "${INPUT_ENVIRONMENT_VARIABLES}" >> "${GITHUB_ENV}"
+      shell: bash
+
+    - name: Compute GHA artifact name ending
+      id: gha-artifact-name
+      run: |
+        from hashlib import sha512
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        inputs_json_str = """${{ toJSON(inputs) }}"""
+
+        hash = sha512(inputs_json_str.encode()).hexdigest()
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print(f'hash={hash}', file=outputs_file)
+      shell: python
+
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v2
+      with:
+        source-tarball-name: ${{ inputs.source-tarball-name }}
+        workflow-artifact-name: ${{ inputs.dists-artifact-name }}
+
+    - name: Set up QEMU
+      if: inputs.qemu
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: all
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v3.0.0
+
+    - name: Upload built artifacts for testing and publishing
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.dists-artifact-name }}-
+          ${{ inputs.runner-vm-os }}-
+          ${{ inputs.qemu && 'qemu-' || '' }}
+          ${{ steps.gha-artifact-name.outputs.hash }}
+        path: ./wheelhouse/*.whl
+
+...
