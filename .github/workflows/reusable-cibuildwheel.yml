@@ -1,6 +1,9 @@
 ---
 
-name: Build wheel
+name: >-
+  ❌
+  [DO NOT CLICK]
+  Reusable cibuildwheel
 
 on:  # yamllint disable-line rule:truthy
   workflow_call:
