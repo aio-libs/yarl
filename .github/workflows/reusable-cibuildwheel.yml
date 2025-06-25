@@ -95,11 +95,11 @@ jobs:
             print(f'hash={hash}', file=outputs_file)
       shell: python
 
-    - name: Retrieve the project source from an sdist inside the GHA artifact
-      uses: re-actors/checkout-python-sdist@release/v2
+    - name: Download the source distribution
+      uses: actions/download-artifact@v4
       with:
-        source-tarball-name: ${{ inputs.source-tarball-name }}
-        workflow-artifact-name: ${{ inputs.dists-artifact-name }}
+        name: ${{ inputs.dists-artifact-name }}
+        path: dist/
 
     - name: Set up QEMU
       if: inputs.qemu
@@ -109,6 +109,9 @@ jobs:
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.0.0
+      with:
+        package-dir: >-  # not necessarily a dir, we pass an acceptable sdist
+          dist/${{ inputs.source-tarball-name }}
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v4
