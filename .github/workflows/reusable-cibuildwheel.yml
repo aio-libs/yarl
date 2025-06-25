@@ -8,12 +8,15 @@ name: >-
 on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
-      dists-artifact-name:
-        description: Workflow artifact name containing dists
-        required: true
-        type: string
       check-name:
         description: A custom name for the Checks API-reported status
+        required: false
+        type: string
+      dists-artifact-name:
+        description: >-
+          Workflow artifact name containing dists.
+          Defaults to "python-package-distributions".
+        default: python-package-distributions
         required: false
         type: string
       environment-variables:
@@ -35,8 +38,10 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: string
       source-tarball-name:
-        description: Sdist filename wildcard
-        required: true
+        default: >-
+          *.tar.gz
+        description: Sdist filename wildcard. Defaults to "*.tar.gz".
+        required: false
         type: string
       timeout-minutes:
         description: Deadline for the job to complete
