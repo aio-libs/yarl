@@ -1,0 +1,2 @@
+When building wheels, the source distribution is now passed directly
+to the ``cibuildwheel`` invocation -- by :user:`webknjaz`.
