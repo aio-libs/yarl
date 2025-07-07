@@ -27,7 +27,7 @@ repos:
     language_version: python3  # Should be a command that runs python
 
 - repo: https://github.com/python-jsonschema/check-jsonschema.git
-  rev: 0.32.1
+  rev: 0.33.2
   hooks:
   - id: check-github-workflows
     files: ^\.github/workflows/[^/]+$
@@ -71,12 +71,12 @@ repos:
   - id: detect-private-key
     exclude: ^examples/
 - repo: https://github.com/asottile/pyupgrade
-  rev: 'v3.19.1'
+  rev: 'v3.20.0'
   hooks:
   - id: pyupgrade
     args: ['--py39-plus']
 - repo: https://github.com/PyCQA/flake8
-  rev: '7.2.0'
+  rev: '7.3.0'
   hooks:
   - id: flake8
     exclude: "^docs/"
@@ -87,14 +87,14 @@ repos:
   - id: codespell
 
 - repo: https://github.com/adrienverge/yamllint.git
-  rev: v1.37.0
+  rev: v1.37.1
   hooks:
   - id: yamllint
     args:
     - --strict
 
 - repo: https://github.com/MarcoGorelli/cython-lint.git
-  rev: v0.16.6
+  rev: v0.16.7
   hooks:
   - id: cython-lint
 
@@ -107,7 +107,7 @@ repos:
       ^[^/]+[.]rst$
 
 - repo: https://github.com/pre-commit/mirrors-mypy.git
-  rev: v1.15.0
+  rev: v1.16.1
   hooks:
   - id: mypy
     alias: mypy-py311
