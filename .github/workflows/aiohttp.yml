@@ -32,13 +32,13 @@ jobs:
         branch: ['master', '3.12', '3.13']
     steps:
     - name: Checkout aiohttp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: aio-libs/aiohttp
         ref: ${{ matrix.branch }}
         submodules: true
     - name: Checkout yarl
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: vendor/yarl
     - name: Setup Python

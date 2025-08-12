@@ -74,7 +74,7 @@ jobs:
         ${{ steps.dist-filenames-detection.outputs.wheel-filename }}
     steps:
     - name: Checkout project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -235,7 +235,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -397,7 +397,7 @@ jobs:
     timeout-minutes: 5
     steps:
     - name: Checkout project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
