@@ -1,1 +1,1 @@
-Started building wheels for CPython 3.14 -- by :user:`kumaraditya303`.
+Added CI for Python 3.14 -- by :user:`kumaraditya303`.
