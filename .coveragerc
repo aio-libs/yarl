@@ -39,3 +39,4 @@ source =
   .
 source_pkgs =
   yarl
+core = ctrace

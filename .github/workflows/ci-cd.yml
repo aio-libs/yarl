@@ -202,8 +202,8 @@ jobs:
     strategy:
       matrix:
         pyver:
-        - 3.14t-dev
-        - 3.14-dev
+        - 3.14t
+        - 3.14
         - 3.13t
         - 3.13
         - 3.12
