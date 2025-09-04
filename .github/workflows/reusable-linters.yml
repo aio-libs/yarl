@@ -33,7 +33,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v5
     - name: Setup Python ${{ env.PYTHON_LATEST }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: >-
