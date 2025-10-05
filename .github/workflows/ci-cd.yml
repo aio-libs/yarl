@@ -139,12 +139,15 @@ jobs:
         runner-vm-os:
         - ubuntu-latest
         - windows-latest
+        - windows-11-arm
         - macos-latest
         tag:
         - ''
         - 'musllinux'
         exclude:
         - runner-vm-os: windows-latest
+          tag: 'musllinux'
+        - runner-vm-os: windows-11-arm
           tag: 'musllinux'
         - runner-vm-os: macos-latest
           tag: 'musllinux'
