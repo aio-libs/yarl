@@ -14,6 +14,25 @@ Changelog
 
 .. towncrier release notes start
 
+1.22.0
+======
+
+*(2025-10-05)*
+
+
+Features
+--------
+
+- Added arm64 Windows wheel builds
+  -- by :user:`finnagin`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1516`.
+
+
+----
+
+
 1.21.0
 ======
 
