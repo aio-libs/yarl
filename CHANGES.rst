@@ -14,6 +14,37 @@ Changelog
 
 .. towncrier release notes start
 
+1.21.0
+======
+
+*(2025-10-05)*
+
+
+Contributor-facing changes
+--------------------------
+
+- The :file:`reusable-cibuildwheel.yml` workflow has been refactored to
+  be more generic and :file:`ci-cd.yml` now holds all the configuration
+  toggles -- by :user:`webknjaz`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1535`.
+
+- When building wheels, the source distribution is now passed directly
+  to the ``cibuildwheel`` invocation -- by :user:`webknjaz`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1536`.
+
+- Added CI for Python 3.14 -- by :user:`kumaraditya303`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1560`.
+
+
+----
+
+
 1.20.1
 ======
 
