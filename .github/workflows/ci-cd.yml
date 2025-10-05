@@ -74,9 +74,9 @@ jobs:
         ${{ steps.dist-filenames-detection.outputs.wheel-filename }}
     steps:
     - name: Checkout project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: >-
@@ -136,47 +136,44 @@ jobs:
     - pre-setup  # transitive, for accessing settings
     strategy:
       matrix:
-        os:
-        - ubuntu
-        - windows
+        runner-vm-os:
+        - ubuntu-latest
+        - windows-latest
         - windows-11-arm
-        - macos
+        - macos-latest
         tag:
         - ''
         - 'musllinux'
         exclude:
-        - os: windows
+        - runner-vm-os: windows-latest
           tag: 'musllinux'
-        - os: windows-11-arm
+        - runner-vm-os: windows-11-arm
           tag: 'musllinux'
-        - os: macos
+        - runner-vm-os: macos-latest
           tag: 'musllinux'
-        - os: ubuntu
+        - runner-vm-os: ubuntu-latest
           tag: >-
            ${{
            (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
            && 'musllinux' || 'none'
            }}
-    uses: ./.github/workflows/reusable-build-wheel.yml
+    uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
-      os: ${{ matrix.os }}
-      tag: ${{ matrix.tag }}
-      wheel-tags-to-skip: >-
-        ${{
-        (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
-        && '*_i686
-        *-macosx_universal2
-        *-musllinux_*
-        *-win32
-        pp*'
-        || (matrix.tag == 'musllinux') && '*-manylinux_* pp*'
-        || '*-musllinux_* pp*'
-        }}
+      check-name: >-
+        Build ${{ matrix.tag }} wheels on ${{ matrix.runner-vm-os }}
+      runner-vm-os: ${{ matrix.runner-vm-os }}
+      timeout-minutes: 20
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
-      cython-tracing: >-  # Cython line tracing for coverage collection
-        ${{
+      # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
+      # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      environment-variables: |-
+        CIBW_ARCHS_MACOS=x86_64 arm64 universal2
+
+        CIBW_CONFIG_SETTINGS<<EOF
+        pure-python=false
+        with-cython-tracing=${{
           (
             github.event_name == 'push'
             && contains(github.ref, 'refs/tags/')
@@ -184,6 +181,20 @@ jobs:
           && 'false'
           || 'true'
         }}
+        EOF
+
+        CIBW_SKIP<<EOF
+        ${{
+          (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+          && '*_i686
+          *-macosx_universal2
+          *-musllinux_*
+          *-win32'
+          || (matrix.tag == 'musllinux') && '*-manylinux_*'
+        || '*-musllinux_*'
+        }}
+        pp*
+        EOF
 
   test:
     name: Test
@@ -194,6 +205,8 @@ jobs:
     strategy:
       matrix:
         pyver:
+        - 3.14t
+        - 3.14
         - 3.13t
         - 3.13
         - 3.12
@@ -227,7 +240,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -236,7 +249,7 @@ jobs:
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         path: dist
         pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
@@ -244,7 +257,7 @@ jobs:
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.pyver }}
         allow-prereleases: true
@@ -262,9 +275,7 @@ jobs:
       uses: py-actions/py-dependency-install@v4
       with:
         path: >-
-          requirements/test${{
-            matrix.pyver == '3.13t' && '-freethreading' || ''
-          }}.txt
+          requirements/test.txt
     - name: Determine pre-compiled compatible wheel
       env:
         # NOTE: When `pip` is forced to colorize output piped into `jq`,
@@ -391,7 +402,7 @@ jobs:
     timeout-minutes: 5
     steps:
     - name: Checkout project
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -400,7 +411,7 @@ jobs:
         workflow-artifact-name: >-
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         path: dist
         pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
@@ -408,7 +419,7 @@ jobs:
 
     - name: Setup Python 3.13
       id: python-install
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: 3.13
     - name: >-
@@ -467,10 +478,11 @@ jobs:
     - name: Self-install
       run: python -Im pip install '${{ steps.wheel-file.outputs.path }}'
     - name: Run benchmarks
-      uses: CodSpeedHQ/action@v3
+      uses: CodSpeedHQ/action@v4
       with:
         token: ${{ secrets.CODSPEED_TOKEN }}
         run: python -Im pytest --no-cov -vvvvv --codspeed
+        mode: instrumentation
 
   test-summary:
     name: Test matrix status
@@ -513,19 +525,40 @@ jobs:
         tag:
         - ''
         - musllinux
-    uses: ./.github/workflows/reusable-build-wheel.yml
+    uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
-      qemu: ${{ matrix.qemu }}
-      tag: ${{ matrix.tag }}
-      wheel-tags-to-skip: >-
-        ${{
-        (matrix.tag == 'musllinux')
-        && '*-manylinux_* pp*'
-        || '*-musllinux_* pp*'
-        }}
+      check-name: >-
+        Build ${{ matrix.tag }} wheels for ${{ matrix.qemu }}
+      qemu: true
+      timeout-minutes: 60
       source-tarball-name: >-
         ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      # CIBW_ARCHS_LINUX: Build emulated architectures if QEMU, else "auto"
+      # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
+      # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      environment-variables: |-
+        CIBW_ARCHS_LINUX=${{ matrix.qemu }}
+
+        CIBW_ARCHS_MACOS=x86_64 arm64 universal2
+
+        CIBW_CONFIG_SETTINGS<<EOF
+        pure-python=false
+        with-cython-tracing=${{
+          (
+            github.event_name == 'push'
+            && contains(github.ref, 'refs/tags/')
+          )
+          && 'false'
+          || 'true'
+        }}
+        EOF
+
+        CIBW_SKIP=${{
+          (matrix.tag == 'musllinux')
+          && '*-manylinux_*'
+          || '*-musllinux_*'
+        }} pp*
 
   deploy:
     name: Deploy
@@ -555,7 +588,7 @@ jobs:
           ${{ needs.pre-setup.outputs.dists-artifact-name }}
 
     - name: Download distributions
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         path: dist
         pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
@@ -583,7 +616,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.0.0
+      uses: sigstore/gh-action-sigstore-python@v3.0.1
       with:
         inputs: >-
           ./dist/${{ needs.build-pure-python-dists.outputs.sdist-filename }}

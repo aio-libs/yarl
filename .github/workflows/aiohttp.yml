@@ -29,20 +29,20 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        branch: ['master', '3.11', '3.12']
+        branch: ['master', '3.12', '3.13']
     steps:
     - name: Checkout aiohttp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: aio-libs/aiohttp
         ref: ${{ matrix.branch }}
         submodules: true
     - name: Checkout yarl
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: vendor/yarl
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: 3.x
         cache: pip

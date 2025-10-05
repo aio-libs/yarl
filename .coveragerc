@@ -27,6 +27,9 @@ omit =
 
 [run]
 branch = true
+# Cython.Coverage plugin is not supported on sysmon core which is default on
+# Python 3.14+ so always use ctrace core
+core = ctrace
 cover_pylib = false
 # https://coverage.rtfd.io/en/latest/contexts.html#dynamic-contexts
 # dynamic_context = test_function  # conflicts with `pytest-cov` if set here
