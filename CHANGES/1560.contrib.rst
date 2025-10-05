@@ -1,1 +1,0 @@
-Added CI for Python 3.14 -- by :user:`kumaraditya303`.

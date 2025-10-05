@@ -1,3 +1,0 @@
-The :file:`reusable-cibuildwheel.yml` workflow has been refactored to
-be more generic and :file:`ci-cd.yml` now holds all the configuration
-toggles -- by :user:`webknjaz`.
