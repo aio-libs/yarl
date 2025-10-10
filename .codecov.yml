@@ -2,8 +2,7 @@
 
 codecov:
   notify:
-    after_n_builds: 23  # The number of test matrix+lint jobs uploading coverage
-    wait_for_ci: false
+    manual_trigger: true  # prevent notifications until we notify Codecov
 
   require_ci_to_pass: false
 

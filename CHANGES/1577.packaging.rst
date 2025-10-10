@@ -1,0 +1,5 @@
+The CI has been set up to notify Codecov about upload completion
+-- by :user:`webknjaz`.
+
+With this, Codecov no longer needs to guess whether it received all
+the intended coverage reports or not.
