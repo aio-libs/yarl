@@ -1,0 +1,9 @@
+---
+
+paths:
+  .github/workflows/ci-cd.yml:
+    ignore:
+    - >-  # FIXME: revert upon https://github.com/rhysd/actionlint/issues/579
+      input "run_command" is not defined in action "codecov/codecov-action@v5"
+
+...
