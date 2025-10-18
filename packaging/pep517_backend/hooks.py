@@ -12,7 +12,9 @@ from ._backend import (  # type: ignore[assignment]
     prepare_metadata_for_build_wheel,
 )
 
-with _suppress(ImportError):  # Only succeeds w/ setuptools implementing PEP 660
+with _suppress(
+    ImportError,
+):  # Only succeeds w/ setuptools implementing PEP 660
     # Re-exporting PEP 660 hooks
     from ._backend import (  # type: ignore[assignment]
         build_editable,

@@ -6,15 +6,17 @@ from re import sub as _substitute_with_regexp
 from typing import Union
 
 
-def _emit_opt_pairs(opt_pair: tuple[str, Union[dict[str, str], str]]) -> Iterator[str]:
+def _emit_opt_pairs(
+    opt_pair: tuple[str, Union[dict[str, str], str]],
+) -> Iterator[str]:
     flag, flag_value = opt_pair
-    flag_opt = f"--{flag!s}"
+    flag_opt = f'--{flag!s}'
     if isinstance(flag_value, dict):
         sub_pairs: Iterable[tuple[str, ...]] = flag_value.items()
     else:
         sub_pairs = ((flag_value,),)
 
-    yield from ("=".join(map(str, (flag_opt,) + pair)) for pair in sub_pairs)
+    yield from ('='.join(map(str, (flag_opt,) + pair)) for pair in sub_pairs)
 
 
 def get_cli_kwargs_from_config(
@@ -24,9 +26,13 @@ def get_cli_kwargs_from_config(
     return list(chain.from_iterable(map(_emit_opt_pairs, kwargs_map.items())))
 
 
-def get_enabled_cli_flags_from_config(flags_map: Mapping[str, bool]) -> list[str]:
+def get_enabled_cli_flags_from_config(
+    flags_map: Mapping[str, bool],
+) -> list[str]:
     """Make a list of enabled boolean flags from config."""
-    return [f"--{flag}" for flag, is_enabled in flags_map.items() if is_enabled]
+    return [
+        f'--{flag}' for flag, is_enabled in flags_map.items() if is_enabled
+    ]
 
 
 def sanitize_rst_roles(rst_source_text: str) -> str:
@@ -35,58 +41,58 @@ def sanitize_rst_roles(rst_source_text: str) -> str:
         :pep:`(?P<pep_number>\d+)`
     """
     pep_substitution_pattern = (
-        r"`PEP \g<pep_number> <https://peps.python.org/pep-\g<pep_number>>`__"
+        r'`PEP \g<pep_number> <https://peps.python.org/pep-\g<pep_number>>`__'
     )
 
     user_role_regex = r"""(?x)
         :user:`(?P<github_username>[^`]+)(?:\s+(.*))?`
     """
     user_substitution_pattern = (
-        r"`@\g<github_username> "
-        r"<https://github.com/sponsors/\g<github_username>>`__"
+        r'`@\g<github_username> '
+        r'<https://github.com/sponsors/\g<github_username>>`__'
     )
 
     issue_role_regex = r"""(?x)
         :issue:`(?P<issue_number>[^`]+)(?:\s+(.*))?`
     """
     issue_substitution_pattern = (
-        r"`#\g<issue_number> "
-        r"<https://github.com/aio-libs/yarl/issues/\g<issue_number>>`__"
+        r'`#\g<issue_number> '
+        r'<https://github.com/aio-libs/yarl/issues/\g<issue_number>>`__'
     )
 
     pr_role_regex = r"""(?x)
         :pr:`(?P<pr_number>[^`]+)(?:\s+(.*))?`
     """
     pr_substitution_pattern = (
-        r"`PR #\g<pr_number> "
-        r"<https://github.com/aio-libs/yarl/pull/\g<pr_number>>`__"
+        r'`PR #\g<pr_number> '
+        r'<https://github.com/aio-libs/yarl/pull/\g<pr_number>>`__'
     )
 
     commit_role_regex = r"""(?x)
         :commit:`(?P<commit_sha>[^`]+)(?:\s+(.*))?`
     """
     commit_substitution_pattern = (
-        r"`\g<commit_sha> "
-        r"<https://github.com/aio-libs/yarl/commit/\g<commit_sha>>`__"
+        r'`\g<commit_sha> '
+        r'<https://github.com/aio-libs/yarl/commit/\g<commit_sha>>`__'
     )
 
     gh_role_regex = r"""(?x)
         :gh:`(?P<gh_slug>[^`<]+)(?:\s+([^`]*))?`
     """
-    gh_substitution_pattern = r"GitHub: ``\g<gh_slug>``"
+    gh_substitution_pattern = r'GitHub: ``\g<gh_slug>``'
 
     meth_role_regex = r"""(?x)
         (?::py)?:meth:`~?(?P<rendered_text>[^`<]+)(?:\s+([^`]*))?`
     """
-    meth_substitution_pattern = r"``\g<rendered_text>()``"
+    meth_substitution_pattern = r'``\g<rendered_text>()``'
 
     role_regex = r"""(?x)
         (?::\w+)?:\w+:`(?P<rendered_text>[^`<]+)(?:\s+([^`]*))?`
     """
-    substitution_pattern = r"``\g<rendered_text>``"
+    substitution_pattern = r'``\g<rendered_text>``'
 
-    project_substitution_regex = r"\|project\|"
-    project_substitution_pattern = "yarl"
+    project_substitution_regex = r'\|project\|'
+    project_substitution_pattern = 'yarl'
 
     substitutions = (
         (pep_role_regex, pep_substitution_pattern),

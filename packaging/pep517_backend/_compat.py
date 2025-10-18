@@ -13,7 +13,7 @@ else:
     from tomli import loads as load_toml_from_string
 
     @contextmanager  # type: ignore[no-redef]
-    def chdir_cm(path: "os.PathLike[str]") -> Iterator[None]:
+    def chdir_cm(path: 'os.PathLike[str]') -> Iterator[None]:
         """Temporarily change the current directory, recovering on exit."""
         original_wd = Path.cwd()
         os.chdir(path)
@@ -23,4 +23,4 @@ else:
             os.chdir(original_wd)
 
 
-__all__ = ("chdir_cm", "load_toml_from_string")  # noqa: WPS410
+__all__ = ('chdir_cm', 'load_toml_from_string')  # noqa: WPS410
