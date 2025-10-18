@@ -1,0 +1,41 @@
+line-length = 79  # Accessibility-friendly
+
+[format]
+quote-style = "single"
+
+[lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+lines-after-imports = 2
+section-order = [
+  "future",
+  "standard-library",
+  "testing",
+  "frameworks",
+  "platforms",
+  "third-party",
+  "first-party",
+  "local-folder",
+]
+
+[lint.isort.sections]
+frameworks = [
+  "libc",
+  "cpython",
+  "Cython",
+]
+platforms = [
+  # "awx_plugins.interfaces",
+]
+testing = [
+  "hypothesis",
+  "pytest",
+  "pytest_mock",
+  "pytest_subtests",
+  "unittest",
+  "_service_utils",
+]
+
+
+[lint.pydocstyle]
+convention = "pep257"
