@@ -10,6 +10,58 @@ requires = [
 backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
 build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
 
+[tool.local.cython]
+# This attr can contain multiple globs
+src = ["yarl/*.pyx"]
+
+[tool.local.cython.env]
+# Env vars provisioned during cythonize call
+#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
+#LDFLAGS = "${LDFLAGS}"
+
+[tool.local.cython.flags]
+# This section can contain the following booleans:
+# * annotate — generate annotated HTML page for source files
+# * build — build extension modules using distutils
+# * inplace — build extension modules in place using distutils (implies -b)
+# * force — force recompilation
+# * quiet — be less verbose during compilation
+# * lenient — increase Python compat by ignoring some compile time errors
+# * keep-going — compile as much as possible, ignore compilation failures
+annotate = false
+build = false
+inplace = true
+force = true
+quiet = false
+lenient = false
+keep-going = false
+
+[tool.local.cython.kwargs]
+# This section can contain args that have values:
+# * exclude=PATTERN      exclude certain file patterns from the compilation
+# * parallel=N    run builds in N parallel jobs (default: calculated per system)
+# exclude = "**.py"
+
+[tool.local.cython.kwargs.directive]
+# This section can contain compiler directives. Ref:
+# https://cython.rtfd.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
+embedsignature = "True"
+emit_code_comments = "True"
+language_level = "3"
+freethreading_compatible = "True"
+
+[tool.local.cython.kwargs.compile-time-env]
+# This section can contain compile time env vars
+
+[tool.local.cython.kwargs.option]
+# This section can contain cythonize options
+# Ref: https://github.com/cython/cython/blob/d6e6de9/Cython/Compiler/Options.py#L694-L730
+#docstrings = "True"
+#embed_pos_in_docstring = "True"
+#warning_errors = "True"
+#error_on_unknown_names = "True"
+#error_on_uninitialized = "True"
+
 [tool.local.cythonize]
 # This attr can contain multiple globs
 src = ["yarl/*.pyx"]
@@ -41,7 +93,13 @@ keep-going = false
 # * exclude=PATTERN      exclude certain file patterns from the compilation
 # * parallel=N    run builds in N parallel jobs (default: calculated per system)
 # exclude = "**.py"
-# parallel = 12
+#
+# NOTE: Setting parallelism to 1 works around a bug in the ``cythonize``
+# NOTE: script that hangs on macOS under Python 3.8+ due to the use of
+# NOTE: the ``spawn`` method in ``multiprocessing``. This patch can be
+# NOTE: reverted once the fix PR is usable upstream.
+# Ref: https://github.com/cython/cython/pull/7183
+parallel = 1
 
 [tool.local.cythonize.kwargs.directive]
 # This section can contain compiler directives. Ref:
