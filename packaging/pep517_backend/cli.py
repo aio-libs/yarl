@@ -1,25 +1,34 @@
 # fmt: off
 
+"""A command-line interface wrapper for calling Cython."""
+
 from __future__ import annotations
 
 import sys
-from collections.abc import Sequence
+import typing as _t  # noqa: WPS111
 from itertools import chain
 from pathlib import Path
 
-from Cython.Compiler.CmdLine import parse_command_line as _split_cython_cli_args
+from Cython.Compiler.CmdLine import (
+    parse_command_line as _split_cython_cli_args,
+)
 from Cython.Compiler.Main import compile as _translate_cython_cli_cmd
 
-from ._cython_configuration import get_local_cython_config as _get_local_cython_config
 from ._cython_configuration import (
+    get_local_cython_config as _get_local_cython_config,
     make_cythonize_cli_args_from_config as _make_cythonize_cli_args_from_config,
+    patched_env as _patched_cython_env,
 )
-from ._cython_configuration import patched_env as _patched_cython_env
+
+
+if _t.TYPE_CHECKING:
+    import collections.abc as _c  # noqa: WPS111, WPS301
+
 
 _PROJECT_PATH = Path(__file__).parents[2]
 
 
-def run_main_program(argv: Sequence[str]) -> int | str:
+def run_main_program(argv: _c.Sequence[str]) -> int | str:
     """Invoke ``translate-cython`` or fail."""
     if len(argv) != 2:
         return 'This program only accepts one argument -- "translate-cython"'

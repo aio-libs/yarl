@@ -18,6 +18,18 @@ repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
   rev: v0.13.3
   hooks:
+  - id: ruff-check
+    name: ruff check | PEP 517 backend
+    args:
+    # Ref: https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    - --exit-non-zero-on-fix
+    - --fix  # NOTE: When `--fix` is used, linting should be before ruff-format
+    - --show-fixes
+    files: ^packaging/pep517_backend/.+$
+
+- repo: https://github.com/astral-sh/ruff-pre-commit.git
+  rev: v0.13.3
+  hooks:
   - id: ruff-format  # Cython imports are handled by `isort`
     alias: ruff-format-first-pass
     name: ruff-format | PEP 517 backend (first pass)

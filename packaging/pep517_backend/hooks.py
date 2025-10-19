@@ -2,22 +2,25 @@
 
 from contextlib import suppress as _suppress
 
-from setuptools.build_meta import *  # Re-exporting PEP 517 hooks  # pylint: disable=unused-wildcard-import,wildcard-import  # noqa: F401, F403
+# Re-exporting PEP 517 hooks
+# pylint: disable-next=unused-wildcard-import,wildcard-import
+from setuptools.build_meta import *  # noqa: F403, WPS347
 
 # Re-exporting PEP 517 hooks
 from ._backend import (  # type: ignore[assignment]
-    build_sdist,
-    build_wheel,
-    get_requires_for_build_wheel,
-    prepare_metadata_for_build_wheel,
+    build_sdist,  # noqa: F401
+    build_wheel,  # noqa: F401
+    get_requires_for_build_wheel,  # noqa: F401
+    prepare_metadata_for_build_wheel,  # noqa: F401
 )
+
 
 with _suppress(
     ImportError,
 ):  # Only succeeds w/ setuptools implementing PEP 660
     # Re-exporting PEP 660 hooks
     from ._backend import (  # type: ignore[assignment]
-        build_editable,
-        get_requires_for_build_editable,
-        prepare_metadata_for_build_editable,
+        build_editable,  # noqa: F401
+        get_requires_for_build_editable,  # noqa: F401
+        prepare_metadata_for_build_editable,  # noqa: F401
     )

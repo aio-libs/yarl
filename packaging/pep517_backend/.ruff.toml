@@ -3,6 +3,70 @@ line-length = 79  # Accessibility-friendly
 [format]
 quote-style = "single"
 
+[lint]
+external = [
+  "WPS",  # Do not remove noqa for wemake-python-style (WPS) checks
+]
+ignore = [
+  "CPY001",  # Skip copyright notice requirement at top of files
+
+  # Legitimate cases, no need to "fix" these violations:
+  # E501: "line too long", its function is replaced by `flake8-length`
+  "E501",
+  # W505: "doc line too long", its function is replaced by `flake8-length`
+  "W505",
+
+  # FIXME: These `flake8-annotations` errors need fixing and removal
+  # ANN001: Missing type annotation for function argument 'argv'
+  "ANN001",
+  # ANN201: Missing return type annotation for public function
+  "ANN201",
+  # ANN202: Missing return type annotation for protected function
+  "ANN202",
+  "ANN401",  # any-type  # FIXME
+
+  # Refs:
+  # * https://github.com/astral-sh/ruff/issues/6606
+  # * https://github.com/astral-sh/ruff/pull/13286
+  "DOC201",  # Ruff doesn't understand sphinx-native param lists
+  "DOC402",  # docstring-missing-yields  # Ruff doesn't understand sphinx-native param lists
+  "DOC501",  # docstring-missing-exception  # Ruff doesn't understand sphinx-native param lists
+
+  "FIX001",  # line-contains-fixme  # FIXME
+  "FIX002",  # line-contains-todo  # FIXME / noqa
+
+  "PLR0914",  # too-many-locals  # FIXME / noqa
+  "PLR2004",  # magic-value-comparison  # FIXME
+
+  "RUF100",  # Ruff doesn't know about WPS
+
+  "SIM117",  # multiple-with-statements  # FIXME
+
+  "TD002",   # missing-todo-author  # FIXME
+  "TD004",   # missing-todo-colon  # FIXME
+
+  "TRY003",  # raise-vanilla-args  # controversial
+
+  "UP024",  # os-error-alias  # FIXME
+]
+preview = true  # Live dangerously
+select = [
+  "ALL",
+]
+task-tags = [
+  "FIXME",
+  "NOTE",
+  "Ref",
+  "Refs",
+  "TODO",
+]
+
+[lint.flake8-pytest-style]
+parametrize-values-type = "tuple"
+
+[lint.flake8-quotes]
+inline-quotes = "single"
+
 [lint.isort]
 combine-as-imports = true
 force-wrap-aliases = true

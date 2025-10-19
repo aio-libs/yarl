@@ -1,33 +1,39 @@
 """Data conversion helpers for the in-tree PEP 517 build backend."""
 
-from collections.abc import Iterable, Iterator, Mapping
+from __future__ import annotations
+
+import typing as _t  # noqa: WPS111
 from itertools import chain
 from re import sub as _substitute_with_regexp
-from typing import Union
+
+
+if _t.TYPE_CHECKING:
+    import collections.abc as _c  # noqa: WPS111, WPS301
 
 
 def _emit_opt_pairs(
-    opt_pair: tuple[str, Union[dict[str, str], str]],
-) -> Iterator[str]:
+    opt_pair: tuple[str, dict[str, str] | str],
+) -> _c.Iterator[str]:
     flag, flag_value = opt_pair
     flag_opt = f'--{flag!s}'
     if isinstance(flag_value, dict):
-        sub_pairs: Iterable[tuple[str, ...]] = flag_value.items()
+        sub_pairs: _c.Iterable[tuple[str, ...]] = flag_value.items()
     else:
         sub_pairs = ((flag_value,),)
 
-    yield from ('='.join(map(str, (flag_opt,) + pair)) for pair in sub_pairs)
+    for pair in sub_pairs:
+        yield '='.join(map(str, (flag_opt, *pair)))
 
 
 def get_cli_kwargs_from_config(
-    kwargs_map: dict[str, Union[str, dict[str, str]]],
+    kwargs_map: dict[str, str | dict[str, str]],
 ) -> list[str]:
     """Make a list of options with values from config."""
     return list(chain.from_iterable(map(_emit_opt_pairs, kwargs_map.items())))
 
 
 def get_enabled_cli_flags_from_config(
-    flags_map: Mapping[str, bool],
+    flags_map: _c.Mapping[str, bool],
 ) -> list[str]:
     """Make a list of enabled boolean flags from config."""
     return [
@@ -35,7 +41,7 @@ def get_enabled_cli_flags_from_config(
     ]
 
 
-def sanitize_rst_roles(rst_source_text: str) -> str:
+def sanitize_rst_roles(rst_source_text: str) -> str:  # noqa: WPS210
     """Replace RST roles with inline highlighting."""
     pep_role_regex = r"""(?x)
         :pep:`(?P<pep_number>\d+)`
