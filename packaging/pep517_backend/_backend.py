@@ -78,7 +78,7 @@ __all__ = (  # noqa: PLE0604, WPS410
 )
 
 
-_ConfigDict = dict[str, str | list[str] | None]
+_ConfigDict: _t.TypeAlias = 'dict[str, str | list[str] | None]'
 
 
 CYTHON_TRACING_CONFIG_SETTING = 'with-cython-tracing'  # noqa: WPS462
