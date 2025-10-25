@@ -313,6 +313,10 @@ def maybe_prebuild_c_extensions(
         file=_standard_error_stream,
     )
     print(  # noqa: T201, WPS421
+        f'* Mode: {"debug" if cython_line_tracing_requested else "release"} *',
+        file=_standard_error_stream,
+    )
+    print(  # noqa: T201, WPS421
         '**********************',
         file=_standard_error_stream,
     )

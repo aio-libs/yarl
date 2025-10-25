@@ -196,11 +196,60 @@ def patched_env(
     expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}  # type: ignore[no-untyped-call]
     os.environ.update(expanded_env)
 
-    if cython_line_tracing_requested:
-        os.environ['CFLAGS'] = ' '.join((
-            os.getenv('CFLAGS', ''),
-            '-DCYTHON_TRACE_NOGIL=1',  # Implies CYTHON_TRACE=1
-        )).strip()
+    os.environ['CFLAGS'] = ' '.join((
+        # First, low priority hardcoded value from the `pyproject.toml` config:
+        expanded_env.get('CFLAGS', ''),
+        # Next, add dynamically computed compiler flags:
+        *(
+            # Debug mode:
+            (
+                # Compiler-specific settings:
+                '-g3',  # debug symbols w/ extra details
+                '-Og',  # optimize for debug experience, better than -O0
+                '-UNDEBUG',  # enable assertions
+                # Coverage-related:
+                '--coverage',
+                '-fkeep-inline-functions',
+                '-fkeep-static-functions',
+                '-fprofile-abs-path',
+                # Cython-specific settings:
+                '-DCYTHON_TRACE=1',
+                '-DCYTHON_TRACE_NOGIL=1',
+            )
+            if cython_line_tracing_requested
+            # Release mode:
+            else (
+                '-g0',  # no debug symbols
+                '-Ofast',  # maximum optimization
+                '-DNDEBUG',  # disable assertions
+            )
+        ),
+        # Finally, append the user-set env var, ensuring its top priority:
+        orig_env.get('CFLAGS', ''),
+        # Last thing, strip spaces caused by empty leading/trailing flags:
+    )).strip()
+
+    os.environ['LDFLAGS'] = ' '.join((
+        # First, low priority hardcoded value from the `pyproject.toml` config:
+        expanded_env.get('LDFLAGS', ''),
+        # Next, add dynamically computed linker flags:
+        *(
+            # Debug mode:
+            (
+                # Coverage-related:
+                '--coverage',
+            )
+            if cython_line_tracing_requested
+            # Release mode:
+            else (
+                '-s',  # remove all symbol table and relocation information
+            )
+        ),
+        # Finally, append the user-set env var, ensuring its top priority:
+        orig_env.get('LDFLAGS', ''),
+        # Last thing, strip spaces caused by empty leading/trailing flags:
+    )).strip()
+
     try:
         yield
     finally:
