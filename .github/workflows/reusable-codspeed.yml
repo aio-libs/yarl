@@ -1,0 +1,170 @@
+---
+
+name: >-
+  ❌
+  [DO NOT CLICK]
+  Reusable codspeed
+
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      check-name:
+        description: A custom name for the Checks API-reported status
+        required: false
+        type: string
+      dists-artifact-name:
+        description: >-
+          Workflow artifact name containing dists.
+          Defaults to "python-package-distributions".
+        default: python-package-distributions
+        required: false
+        type: string
+      pypi-project-name:
+        description: >-
+          Project name in the metadata that goes into site-packages. It
+          also governs whether to install the project from pre-built
+          wheels (when set) or build from source (when unset).
+        default: ''
+        required: false
+        type: string
+      runner-vm-os:
+        description: VM OS to use
+        default: ubuntu-latest
+        required: false
+        type: string
+      source-tarball-name:
+        default: >-
+          *.tar.gz
+        description: Sdist filename wildcard. Defaults to "*.tar.gz".
+        required: false
+        type: string
+      timeout-minutes:
+        description: Deadline for the job to complete
+        required: true
+        type: number
+    secrets:
+      codspeed-token:
+        description: Mandatory token for uploading to Codspeed
+        required: true
+
+env:
+  COLOR: >-  # Supposedly, pytest or coveragepy use this
+    yes
+  FORCE_COLOR: 1  # Request colored output from CLI tools supporting it
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  PIP_NO_PYTHON_VERSION_WARNING: 1
+  PIP_NO_WARN_SCRIPT_LOCATION: 1
+  PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: 1
+
+jobs:
+
+  codspeed:
+    name: >-
+      ${{
+        inputs.check-name
+        && inputs.check-name
+        || format(
+          '🐇 Codspeed: {0}', inputs.pypi-project-name != ''
+          && 'pre-built'
+          || 'src'
+        )
+      }}
+    runs-on: ${{ inputs.runner-vm-os }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    steps:
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v2
+      with:
+        source-tarball-name: >-
+          ${{ inputs.source-tarball-name }}
+        workflow-artifact-name: >-
+          ${{ inputs.dists-artifact-name }}
+    - name: Download distributions
+      if: inputs.pypi-project-name != ''
+      uses: actions/download-artifact@v6
+      with:
+        path: dist
+        pattern: ${{ inputs.dists-artifact-name }}*
+        merge-multiple: true
+
+    - name: Setup Python 3.13
+      id: python-install
+      uses: actions/setup-python@v6
+      with:
+        python-version: 3.13
+    - name: >-
+        Calculate dependency files' combined hash value
+        for use in the cache key
+      id: calc-cache-key-files
+      uses: ./.github/actions/cache-keys
+    - name: Set up pip cache
+      uses: re-actors/cache-python-deps@release/v1
+      with:
+        cache-key-for-dependency-files: >-
+          ${{ steps.calc-cache-key-files.outputs.cache-key-for-dep-files }}
+
+    - name: Determine pre-compiled compatible wheel
+      if: inputs.pypi-project-name != ''
+      env:
+        # NOTE: When `pip` is forced to colorize output piped into `jq`,
+        # NOTE: the latter can't parse it. So we're overriding the color
+        # NOTE: preference here via https://no-color.org.
+        # NOTE: Setting `FORCE_COLOR` to any value (including 0, an empty
+        # NOTE: string, or a "YAML null" `~`) doesn't have any effect and
+        # NOTE: `pip` (through its verndored copy of `rich`) treats the
+        # NOTE: presence of the variable as "force-color" regardless.
+        #
+        # NOTE: This doesn't actually work either, so we'll resort to unsetting
+        # NOTE: in the Bash script.
+        # NOTE: Ref: https://github.com/Textualize/rich/issues/2622
+        NO_COLOR: 1
+        PROJECT_NAME: ${{ inputs.pypi-project-name }}
+      id: wheel-file
+      run: >
+        echo -n path= | tee -a "${GITHUB_OUTPUT}"
+
+
+        unset FORCE_COLOR
+
+
+        python
+        -X utf8
+        -u -I
+        -m pip install
+        --find-links=./dist
+        --no-index
+        "${PROJECT_NAME}"
+        --force-reinstall
+        --no-color
+        --no-deps
+        --only-binary=:all:
+        --dry-run
+        --report=-
+        --quiet
+        | jq --raw-output .install[].download_info.url
+        | tee -a "${GITHUB_OUTPUT}"
+      shell: bash
+    - name: Install benchmark deps and the project from a pre-built wheel
+      if: inputs.pypi-project-name != ''
+      run: >-
+        python -Im pip install
+        -r requirements/codspeed.txt
+        '${{ steps.wheel-file.outputs.path }}'
+    - name: Install benchmark deps and the project from source
+      if: inputs.pypi-project-name == ''
+      run: >-
+        python -Im pip install
+        -r requirements/codspeed.txt
+        .
+        --config-setting=pure-python=false
+        --config-setting=with-cython-tracing=false
+    - name: Run benchmarks
+      uses: CodSpeedHQ/action@v4
+      with:
+        token: ${{ secrets.codspeed-token }}
+        run: python -Im pytest --no-cov -vvvvv --codspeed
+        mode: instrumentation
+
+...
