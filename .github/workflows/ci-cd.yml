@@ -393,9 +393,27 @@ jobs:
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: true
 
+  benchmark-src:
+    name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
+      ⚡ Benchmark${{ '' }}
+    if: github.event_name != 'push' || github.ref_type != 'tag'
+    needs:
+    - build-pure-python-dists  # transitive, for accessing settings
+    - pre-setup  # transitive, for accessing settings
+    uses: ./.github/workflows/reusable-codspeed.yml
+    with:
+      dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      runner-vm-os: ubuntu-latest
+      source-tarball-name: >-
+        ${{ needs.build-pure-python-dists.outputs.sdist-filename }}
+      timeout-minutes: 5
+    secrets:
+      codspeed-token: ${{ secrets.CODSPEED_TOKEN }}
+
   benchmark-prebuilt:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
       ⚡ Benchmark${{ '' }}
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     needs:
     - build-pure-python-dists  # transitive, for accessing settings
     - build-wheels-for-tested-arches
