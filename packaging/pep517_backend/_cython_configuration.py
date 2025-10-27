@@ -209,9 +209,9 @@ def patched_env(
                 '-UNDEBUG',  # enable assertions
                 # Coverage-related:
                 '--coverage',
-                '-fkeep-inline-functions',
-                '-fkeep-static-functions',
-                '-fprofile-abs-path',
+                # '-fkeep-inline-functions',  # clang seems to not support this
+                # '-fkeep-static-functions',  # clang seems to not support this
+                # '-fprofile-abs-path',  # clang seems to not support this
                 # Cython-specific settings:
                 '-DCYTHON_TRACE=1',
                 '-DCYTHON_TRACE_NOGIL=1',
