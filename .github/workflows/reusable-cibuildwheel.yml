@@ -114,7 +114,7 @@ jobs:
           dist/${{ inputs.source-tarball-name }}
 
     - name: Upload built artifacts for testing and publishing
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ inputs.dists-artifact-name }}-
           ${{ inputs.runner-vm-os }}-
