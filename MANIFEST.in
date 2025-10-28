@@ -6,6 +6,7 @@ include LICENSE
 include NOTICE
 include CHANGES.rst
 include README.rst
+graft .github/actions/
 graft yarl
 graft packaging
 graft docs
