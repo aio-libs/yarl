@@ -8,11 +8,15 @@ on:
   push:
     branches:
     - master
+    paths-ignore:
+    - .github/workflows/reusable-codspeed.yml
     tags:
     - v*
   pull_request:
     branches:
     - master
+    paths-ignore:
+    - .github/workflows/reusable-codspeed.yml
 
 
 env:
