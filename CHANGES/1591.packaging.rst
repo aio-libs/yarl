@@ -1,0 +1,14 @@
+Starting this version, when building the wheels is happening
+in an automatically created temporary directory, the build
+backend makes an effort to normalize the respective file
+system path to a deterministic source checkout directory.
+
+-- by :user:`webknjaz`
+
+It does so by injecting the ``-ffile-prefix-map`` compiler
+option into the ``CFLAGS`` environment variable as suggested
+by known `reproducible build practices
+<https://reproducible-builds.org/docs/build-path/>`__.
+
+The effect is that downstreams will get more reproducible
+build results.
