@@ -261,7 +261,7 @@ def _exclude_dir_path(
 
 
 @contextmanager
-def _in_temporary_directory(src_dir: Path) -> _c.Iterator[None]:
+def _in_temporary_directory(src_dir: Path) -> _c.Iterator[Path]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
         root_tmp_dir_path = tmp_dir_path.parent
@@ -276,7 +276,7 @@ def _in_temporary_directory(src_dir: Path) -> _c.Iterator[None]:
                 symlinks=True,
             )
             os.chdir(tmp_src_dir)
-            yield
+            yield tmp_src_dir
 
 
 @contextmanager
@@ -356,12 +356,13 @@ def maybe_prebuild_c_extensions(
             stacklevel=999,
         )
 
+    original_src_dir = Path.cwd().resolve()
     build_dir_ctx = (
         nullcontext()
         if build_inplace
-        else _in_temporary_directory(src_dir=Path.cwd().resolve())
+        else _in_temporary_directory(src_dir=original_src_dir)
     )
-    with build_dir_ctx:
+    with build_dir_ctx as tmp_build_dir:
         config = _get_local_cython_config()
 
         cythonize_args = _make_cythonize_cli_args_from_config(
@@ -371,6 +372,8 @@ def maybe_prebuild_c_extensions(
         with _patched_cython_env(
             config['env'],
             cython_line_tracing_requested=cython_line_tracing_requested,
+            original_source_directory=original_src_dir,
+            temporary_build_directory=tmp_build_dir,
         ):
             _cythonize_cli_cmd(cythonize_args)  # type: ignore[no-untyped-call]
         with patched_distutils_cmd_install():
