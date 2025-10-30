@@ -94,6 +94,16 @@ Environment variable name toggle used to opt out of making C-exts.
 PURE_PYTHON_CONFIG_SETTING = 'pure-python'
 """Config setting name toggle that is used to opt out of making C-exts."""
 
+BUILD_INPLACE_CONFIG_SETTING = 'build-inplace'  # noqa: WPS462
+"""
+Config setting name toggle for building C-exts in-place.
+"""  # noqa: WPS322
+
+BUILD_INPLACE_ENV_VAR = 'YARL_BUILD_INPLACE'
+"""
+Environment variable name toggle for building C-exts in-place.
+"""  # noqa: WPS322
+
 PURE_PYTHON_ENV_VAR = 'YARL_NO_EXTENSIONS'
 """Environment variable name toggle used to opt out of making C-exts."""
 
@@ -148,6 +158,19 @@ def _include_cython_line_tracing(
         config_settings,
         CYTHON_TRACING_CONFIG_SETTING,
         CYTHON_TRACING_ENV_VAR,
+        default=default,
+    )
+
+
+def _build_inplace(
+    config_settings: _ConfigDict | None = None,
+    *,
+    default: bool = False,
+) -> bool:
+    return _get_setting_value(
+        config_settings,
+        BUILD_INPLACE_CONFIG_SETTING,
+        BUILD_INPLACE_ENV_VAR,
         default=default,
     )
 
@@ -317,6 +340,10 @@ def maybe_prebuild_c_extensions(
         file=_standard_error_stream,
     )
     print(  # noqa: T201, WPS421
+        f'* Build location: {"in-tree" if build_inplace else "tmp dir"} *',
+        file=_standard_error_stream,
+    )
+    print(  # noqa: T201, WPS421
         '**********************',
         file=_standard_error_stream,
     )
@@ -368,7 +395,7 @@ def build_wheel(
     """
     with maybe_prebuild_c_extensions(
         line_trace_cython_when_unset=False,
-        build_inplace=False,
+        build_inplace=_build_inplace(config_settings, default=False),
         config_settings=config_settings,
     ):
         return _setuptools_build_wheel(
@@ -393,9 +420,17 @@ def build_editable(
     :param metadata_directory: :file:`.dist-info` directory path.
 
     """
+    mandatory_build_inplace = True
+    if not _build_inplace(config_settings, default=mandatory_build_inplace):
+        _warn_that(
+            'Editable builds require C-extensions to be produced in-tree',
+            RuntimeWarning,
+            stacklevel=999,
+        )
+
     with maybe_prebuild_c_extensions(
         line_trace_cython_when_unset=True,
-        build_inplace=True,
+        build_inplace=mandatory_build_inplace,
         config_settings=config_settings,
     ):
         return _setuptools_build_editable(
