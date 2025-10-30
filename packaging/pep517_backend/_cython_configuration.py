@@ -184,6 +184,8 @@ def patched_env(
     env: dict[str, str],
     *,
     cython_line_tracing_requested: bool,
+    original_source_directory: Path | None = None,
+    temporary_build_directory: Path | None = None,
 ) -> _c.Iterator[None]:
     """Temporary set given env vars.
 
@@ -222,6 +224,16 @@ def patched_env(
                 '-g0',  # no debug symbols
                 '-Ofast',  # maximum optimization
                 '-DNDEBUG',  # disable assertions
+            )
+        ),
+        *(
+            # In-tree mode:
+            ()
+            if temporary_build_directory is None
+            # Temporary build directory mode:
+            else (
+                '-ffile-prefix-map='
+                f'{temporary_build_directory!s}={original_source_directory!s}',
             )
         ),
         # Finally, append the user-set env var, ensuring its top priority:
