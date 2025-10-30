@@ -1,4 +1,4 @@
-The in-tree build backend to allows the end-users appending
+The in-tree build backend allows the end-users appending
 ``CFLAGS`` and ``LDFLAGS`` by setting respective environment
 variables externally.
 
