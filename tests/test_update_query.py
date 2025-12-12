@@ -229,9 +229,7 @@ def test_with_query_invalid_type(
         pytest.param(_CFloat(1.1), "1.1", id="custom float"),
     ],
 )
-def test_with_query_list_valid_type(
-    value: str | int | float, expected: str
-) -> None:
+def test_with_query_list_valid_type(value: str | int | float, expected: str) -> None:
     url = URL("http://example.com")
     expected = "http://example.com/?a={expected}".format_map(locals())
     assert str(url.with_query([("a", value)])) == expected

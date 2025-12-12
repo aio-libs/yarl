@@ -1241,10 +1241,10 @@ class URL:
         URL('http://example.com/?a=3&b=2&c=4')
         """
         in_query: (
-            str |
-            Mapping[str, QueryVariable] |
-            Sequence[tuple[str | istr, SimpleQuery]] |
-            None
+            str
+            | Mapping[str, QueryVariable]
+            | Sequence[tuple[str | istr, SimpleQuery]]
+            | None
         )
         if kwargs:
             if args:
