@@ -47,7 +47,7 @@ jobs:
         cache-key-for-dependency-files: >-
           ${{ steps.calc-cache-key-files.outputs.cache-key-for-dep-files }}
     - name: Cache pre-commit.com virtualenvs
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.cache/pre-commit
         key: >-
