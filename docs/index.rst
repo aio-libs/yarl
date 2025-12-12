@@ -168,7 +168,7 @@ convert bools into strings using own preferred translation protocol.
 
 .. _yarl-pydantic-support:
 
-The :class:`URL` could be used as a field type in pydantic_ models seamlessly::
+The :class:`~yarl.URL` could be used as a field type in pydantic_ models seamlessly::
 
    from pydantic import BaseModel
    from yarl import URL
