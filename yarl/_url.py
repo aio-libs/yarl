@@ -55,6 +55,16 @@ from ._quoters import (
     human_quote,
 )
 
+try:
+    from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+    from pydantic.json_schema import JsonSchemaValue
+    from pydantic_core import core_schema
+
+    HAS_PYDANTIC = True
+except ImportError:
+    HAS_PYDANTIC = False
+
+
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_RELATIVE = frozenset(uses_relative)
 
@@ -1479,6 +1489,39 @@ class URL:
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
+
+    if HAS_PYDANTIC:
+        # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
+        @classmethod
+        def __get_pydantic_json_schema__(
+            cls, core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+        ) -> JsonSchemaValue:
+            field_schema: dict[str, Any] = {}
+            field_schema.update(type="string", format="uri")
+            return field_schema
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
+        ) -> core_schema.CoreSchema:
+            from_str_schema = core_schema.chain_schema(
+                [
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(URL),
+                ]
+            )
+
+            return core_schema.json_or_python_schema(
+                json_schema=from_str_schema,
+                python_schema=core_schema.union_schema(
+                    [
+                        # check if it's an instance first before doing any further work
+                        core_schema.is_instance_schema(URL),
+                        from_str_schema,
+                    ]
+                ),
+                serialization=core_schema.plain_serializer_function_ser_schema(str),
+            )
 
 
 _DEFAULT_IDNA_SIZE = 256
