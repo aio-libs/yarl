@@ -1,5 +1,4 @@
 import enum
-from typing import Optional, Union
 
 import pytest
 from multidict import MultiDict

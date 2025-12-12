@@ -1,6 +1,5 @@
 """Quoting and unquoting utilities for URL parts."""
 
-from typing import Union
 from urllib.parse import quote
 
 from ._quoting import _Quoter, _Unquoter

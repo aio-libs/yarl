@@ -3,7 +3,6 @@
 import re
 import unicodedata
 from functools import lru_cache
-from typing import Union
 from urllib.parse import scheme_chars, uses_netloc
 
 from ._quoters import QUOTER, UNQUOTER_PLUS

@@ -1,5 +1,3 @@
-from typing import Union
-
 import pytest
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
