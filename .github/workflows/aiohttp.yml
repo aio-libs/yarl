@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        branch: ['master', '3.12', '3.13']
+        branch: ['master', '3.13', '3.14']
     steps:
     - name: Checkout aiohttp
       uses: actions/checkout@v5
@@ -48,7 +48,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
-        python-version: 3.x
+        python-version: "3.13"
         cache: pip
         cache-dependency-path: requirements/*.txt
     - name: Provision the dev env
