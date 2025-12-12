@@ -1,0 +1,2 @@
+Added support for ``pydantic``, the :class:`URL` could be used as a
+field type in ``pydantic`` models seamlessly (see also yarl-pydantic-support_ in docs).
