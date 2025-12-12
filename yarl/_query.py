@@ -79,10 +79,10 @@ def get_str_query_from_iterable(
 def get_str_query(*args: Any, **kwargs: Any) -> str | None:
     """Return a query string from supported args."""
     query: (
-        str |
-        Mapping[str, QueryVariable] |
-        Sequence[tuple[str | istr, SimpleQuery]] |
-        None
+        str
+        | Mapping[str, QueryVariable]
+        | Sequence[tuple[str | istr, SimpleQuery]]
+        | None
     )
     if kwargs:
         if args:
