@@ -148,7 +148,7 @@ def test_with_query_list_int() -> None:
     ],
 )
 def test_with_query_sequence(
-    query: dict[str, Union[int, list[Union[str, int]], tuple[int, ...]]], expected: str
+    query: dict[str, int | list[str | int] | tuple[int, ...]], expected: str
 ) -> None:
     url = URL("http://example.com")
     expected = "http://example.com{expected}".format_map(locals())
@@ -196,7 +196,7 @@ class _CFloat(float, _EmptyStrEr):
         pytest.param(_CFloat(1.1), "1.1", id="custom float"),
     ],
 )
-def test_with_query_valid_type(value: Union[str, int, float], expected: str) -> None:
+def test_with_query_valid_type(value: str | int | float, expected: str) -> None:
     url = URL("http://example.com")
     expected = "http://example.com/?a={expected}".format_map(locals())
     assert str(url.with_query({"a": value})) == expected
@@ -212,7 +212,7 @@ def test_with_query_valid_type(value: Union[str, int, float], expected: str) -> 
     ],
 )
 def test_with_query_invalid_type(
-    value: Union[bool, float, None], exc_type: type[Exception]
+    value: bool | float | None, exc_type: type[Exception]
 ) -> None:
     url = URL("http://example.com")
     with pytest.raises(exc_type):
@@ -231,7 +231,7 @@ def test_with_query_invalid_type(
     ],
 )
 def test_with_query_list_valid_type(
-    value: Union[str, int, float], expected: str
+    value: str | int | float, expected: str
 ) -> None:
     url = URL("http://example.com")
     expected = "http://example.com/?a={expected}".format_map(locals())
@@ -241,7 +241,7 @@ def test_with_query_list_valid_type(
 @pytest.mark.parametrize(
     ("value"), [pytest.param(True, id="bool"), pytest.param(None, id="none")]
 )
-def test_with_query_list_invalid_type(value: Optional[bool]) -> None:
+def test_with_query_list_invalid_type(value: bool | None) -> None:
     url = URL("http://example.com")
     with pytest.raises(TypeError):
         url.with_query([("a", value)])  # type: ignore[list-item]
@@ -349,7 +349,7 @@ def test_with_query_memoryview() -> None:
     ],
 )
 def test_with_query_params(
-    query: Union[list[tuple[str, ...]], dict[str, str]], expected: str
+    query: list[tuple[str, ...]] | dict[str, str], expected: str
 ) -> None:
     url = URL("http://example.com/get")
     url2 = url.with_query(query)  # type: ignore[arg-type]

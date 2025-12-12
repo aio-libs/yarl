@@ -114,16 +114,16 @@ class _InternalURLCache(TypedDict, total=False):
     scheme: str
     raw_authority: str
     authority: str
-    raw_user: Union[str, None]
-    user: Union[str, None]
-    raw_password: Union[str, None]
-    password: Union[str, None]
-    raw_host: Union[str, None]
-    host: Union[str, None]
-    host_subcomponent: Union[str, None]
-    host_port_subcomponent: Union[str, None]
-    port: Union[int, None]
-    explicit_port: Union[int, None]
+    raw_user: str | None
+    user: str | None
+    raw_password: str | None
+    password: str | None
+    raw_host: str | None
+    host: str | None
+    host_subcomponent: str | None
+    host_port_subcomponent: str | None
+    port: int | None
+    explicit_port: int | None
     raw_path: str
     path: str
     _parsed_query: list[tuple[str, str]]
@@ -154,7 +154,7 @@ def rewrite_module(obj: _T) -> _T:
 def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
-    host: Union[str, None]
+    host: str | None
     scheme, netloc, path, query, fragment = split_url(url_str)
     if not netloc:  # netloc
         host = ""
@@ -228,10 +228,10 @@ def pre_encoded_url(url_str: str) -> "URL":
 def build_pre_encoded_url(
     scheme: str,
     authority: str,
-    user: Union[str, None],
-    password: Union[str, None],
+    user: str | None,
+    password: str | None,
     host: str,
-    port: Union[int, None],
+    port: int | None,
     path: str,
     query_string: str,
     fragment: str,
@@ -359,7 +359,7 @@ class URL:
         val: Union[str, SplitResult, "URL", UndefinedType] = UNDEFINED,
         *,
         encoded: bool = False,
-        strict: Union[bool, None] = None,
+        strict: bool | None = None,
     ) -> "URL":
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -389,12 +389,12 @@ class URL:
         *,
         scheme: str = "",
         authority: str = "",
-        user: Union[str, None] = None,
-        password: Union[str, None] = None,
+        user: str | None = None,
+        password: str | None = None,
         host: str = "",
-        port: Union[int, None] = None,
+        port: int | None = None,
         path: str = "",
-        query: Union[Query, None] = None,
+        query: Query | None = None,
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
@@ -442,7 +442,7 @@ class URL:
 
         self = object.__new__(URL)
         self._scheme = scheme
-        _host: Union[str, None] = None
+        _host: str | None = None
         if authority:
             user, password, _host, port = split_netloc(authority)
             _host = _encode_host(_host, validate_host=False) if _host else ""
@@ -560,7 +560,7 @@ class URL:
         return (tuple.__new__(SplitResult, self._val),)
 
     def __setstate__(
-        self, state: Union[tuple[SplitURLType], tuple[None, _InternalURLCache]]
+        self, state: tuple[SplitURLType] | tuple[None, _InternalURLCache]
     ) -> None:
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
@@ -687,7 +687,7 @@ class URL:
         return make_netloc(self.user, self.password, self.host, self.port)
 
     @cached_property
-    def raw_user(self) -> Union[str, None]:
+    def raw_user(self) -> str | None:
         """Encoded user part of URL.
 
         None if user is missing.
@@ -698,7 +698,7 @@ class URL:
         return self._cache["raw_user"]
 
     @cached_property
-    def user(self) -> Union[str, None]:
+    def user(self) -> str | None:
         """Decoded user part of URL.
 
         None if user is missing.
@@ -709,7 +709,7 @@ class URL:
         return UNQUOTER(raw_user)
 
     @cached_property
-    def raw_password(self) -> Union[str, None]:
+    def raw_password(self) -> str | None:
         """Encoded password part of URL.
 
         None if password is missing.
@@ -719,7 +719,7 @@ class URL:
         return self._cache["raw_password"]
 
     @cached_property
-    def password(self) -> Union[str, None]:
+    def password(self) -> str | None:
         """Decoded password part of URL.
 
         None if password is missing.
@@ -730,7 +730,7 @@ class URL:
         return UNQUOTER(raw_password)
 
     @cached_property
-    def raw_host(self) -> Union[str, None]:
+    def raw_host(self) -> str | None:
         """Encoded host part of URL.
 
         None for relative URLs.
@@ -744,7 +744,7 @@ class URL:
         return self._cache["raw_host"]
 
     @cached_property
-    def host(self) -> Union[str, None]:
+    def host(self) -> str | None:
         """Decoded host part of URL.
 
         None for relative URLs.
@@ -758,7 +758,7 @@ class URL:
         return _idna_decode(raw)
 
     @cached_property
-    def host_subcomponent(self) -> Union[str, None]:
+    def host_subcomponent(self) -> str | None:
         """Return the host subcomponent part of URL.
 
         None for relative URLs.
@@ -780,7 +780,7 @@ class URL:
         return f"[{raw}]" if ":" in raw else raw
 
     @cached_property
-    def host_port_subcomponent(self) -> Union[str, None]:
+    def host_port_subcomponent(self) -> str | None:
         """Return the host and port subcomponent part of URL.
 
         Trailing dots are removed from the host part.
@@ -818,7 +818,7 @@ class URL:
         return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
 
     @cached_property
-    def port(self) -> Union[int, None]:
+    def port(self) -> int | None:
         """Port part of URL, with scheme-based fallback.
 
         None for relative URLs or URLs without explicit port and
@@ -830,7 +830,7 @@ class URL:
         return DEFAULT_PORTS.get(self._scheme)
 
     @cached_property
-    def explicit_port(self) -> Union[int, None]:
+    def explicit_port(self) -> int | None:
         """Port part of URL, without scheme-based fallback.
 
         None for relative URLs or URLs without explicit port.
@@ -1068,7 +1068,7 @@ class URL:
             raise ValueError(msg)
         return from_parts(lower_scheme, netloc, self._path, self._query, self._fragment)
 
-    def with_user(self, user: Union[str, None]) -> "URL":
+    def with_user(self, user: str | None) -> "URL":
         """Return a new URL with user replaced.
 
         Autoencode user if needed.
@@ -1090,7 +1090,7 @@ class URL:
         netloc = make_netloc(user, password, encoded_host, self.explicit_port)
         return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
 
-    def with_password(self, password: Union[str, None]) -> "URL":
+    def with_password(self, password: str | None) -> "URL":
         """Return a new URL with password replaced.
 
         Autoencode password if needed.
@@ -1133,7 +1133,7 @@ class URL:
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
 
-    def with_port(self, port: Union[int, None]) -> "URL":
+    def with_port(self, port: int | None) -> "URL":
         """Return a new URL with port replaced.
 
         Clear port to default if None is passed.
@@ -1240,12 +1240,12 @@ class URL:
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        in_query: Union[
-            str,
-            Mapping[str, QueryVariable],
-            Sequence[tuple[Union[str, istr], SimpleQuery]],
-            None,
-        ]
+        in_query: (
+            str |
+            Mapping[str, QueryVariable] |
+            Sequence[tuple[str | istr, SimpleQuery]] |
+            None
+        )
         if kwargs:
             if args:
                 msg = "Either kwargs or single query parameter must be present"
@@ -1305,7 +1305,7 @@ class URL:
             )
         )
 
-    def with_fragment(self, fragment: Union[str, None]) -> "URL":
+    def with_fragment(self, fragment: str | None) -> "URL":
         """Return a new URL with fragment replaced.
 
         Autoencode fragment if needed.
@@ -1582,11 +1582,11 @@ def cache_info() -> CacheInfo:
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
-    idna_decode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
-    ip_address_size: Union[int, None, UndefinedType] = UNDEFINED,
-    host_validate_size: Union[int, None, UndefinedType] = UNDEFINED,
-    encode_host_size: Union[int, None, UndefinedType] = UNDEFINED,
+    idna_encode_size: int | None = _DEFAULT_IDNA_SIZE,
+    idna_decode_size: int | None = _DEFAULT_IDNA_SIZE,
+    ip_address_size: int | None | UndefinedType = UNDEFINED,
+    host_validate_size: int | None | UndefinedType = UNDEFINED,
+    encode_host_size: int | None | UndefinedType = UNDEFINED,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _encode_host
