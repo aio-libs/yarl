@@ -133,7 +133,7 @@ before-test = [
   # Ref: https://github.com/pypa/cibuildwheel/issues/1666
   "PIP_CONSTRAINT= pip install PyYAML",
 ]
-test-requires = "-r requirements/test.txt"
+test-requires = "-r requirements/test-cibuildwheel.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
 # don't build PyPy wheels, install from source instead
 skip = "pp*"

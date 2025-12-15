@@ -1,10 +1,5 @@
--r cython.txt
-covdefaults
-hypothesis>=6.0
-idna==3.11
-multidict==6.7.0
-propcache==0.4.1
+-r test-cibuildwheel.txt
+# pydantic-core has no binary wheels for freethreading mode,
+# let's skip testing it during wheels building.
+# The regular test run is sufficient for testing pydantic integration.
 pydantic>=2.0
-pytest==8.4.2
-pytest-cov>=2.3.1
-pytest-xdist
