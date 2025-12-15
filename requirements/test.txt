@@ -2,4 +2,7 @@
 # pydantic-core has no binary wheels for freethreading mode,
 # let's skip testing it during wheels building.
 # The regular test run is sufficient for testing pydantic integration.
+#
+# After implementing PEP 780 '"free-threading" not in sys_abi_features' could
+# be used instead of extraction of test-cibuildwheel.txt file.
 pydantic>=2.0
