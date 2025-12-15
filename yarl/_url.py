@@ -1501,9 +1501,9 @@ class URL:
             return field_schema
 
         @classmethod
-        def __get_pydantic_core_schema__(
+        def __get_pydantic_core_schema__(  # pragma: no cover
             cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
-        ) -> core_schema.CoreSchema:  # pragma: no cover
+        ) -> core_schema.CoreSchema:
             # core_schema calls don't work well with coverage
             # because of the module is written is rust
             from_str_schema = core_schema.chain_schema(
