@@ -1490,7 +1490,9 @@ class URL:
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
-    if HAS_PYDANTIC:
+    if HAS_PYDANTIC:  # pragma: no cover
+        # paydantic calls don't work well with coverage tool
+        # because of the module is written is rust
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
@@ -1501,11 +1503,9 @@ class URL:
             return field_schema
 
         @classmethod
-        def __get_pydantic_core_schema__(  # pragma: no cover
+        def __get_pydantic_core_schema__(
             cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
         ) -> core_schema.CoreSchema:
-            # core_schema calls don't work well with coverage
-            # because of the module is written is rust
             from_str_schema = core_schema.chain_schema(
                 [
                     core_schema.str_schema(),
