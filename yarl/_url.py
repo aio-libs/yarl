@@ -1503,7 +1503,9 @@ class URL:
         @classmethod
         def __get_pydantic_core_schema__(
             cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
-        ) -> core_schema.CoreSchema:
+        ) -> core_schema.CoreSchema:  # pragma: no cover
+            # core_schema calls don't work well with coverage
+            # because of the module is written is rust
             from_str_schema = core_schema.chain_schema(
                 [
                     core_schema.str_schema(),
