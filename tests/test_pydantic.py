@@ -54,3 +54,11 @@ def test_json_roundtrip_json() -> None:
     assert m == m2
     js2 = m2.model_dump_json()
     assert js == js2
+
+
+def test_fake_cover() -> None:
+    # The test exists only for getting ocverage for __get_pydantic_core_schema__,
+    # otherwise a call of python code back from rust is not measured
+    # by coverage tool
+
+    URL.__get_pydantic_core_schema__(URL, pydantic.GetCoreSchemaHandler())

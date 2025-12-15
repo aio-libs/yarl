@@ -1490,9 +1490,7 @@ class URL:
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
-    if HAS_PYDANTIC:  # pragma: no cover
-        # paydantic calls don't work well with coverage tool
-        # because of the module is written is rust
+    if HAS_PYDANTIC:
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
