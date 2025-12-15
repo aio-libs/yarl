@@ -1,12 +1,16 @@
+from typing import TYPE_CHECKING
+
 import pytest
-from pydantic import BaseModel, ValidationError
 
 from yarl import URL
 
-pytest.importorskip("pydantic")
+if TYPE_CHECKING:
+    import pydantic
+else:
+    pydantic = pytest.importorskip("pydantic")
 
 
-class TstModel(BaseModel):
+class TstModel(pydantic.BaseModel):
     url: URL
 
 
@@ -28,7 +32,7 @@ def test_validate_valid() -> None:
 
 def test_validate_invalid() -> None:
     dct = {"url": 123}
-    with pytest.raises(ValidationError, match="url"):
+    with pytest.raises(pydantic.ValidationError, match="url"):
         TstModel.model_validate(dct)
 
 
