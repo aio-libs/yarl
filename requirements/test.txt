@@ -1,4 +1,4 @@
--r test-cibuildwheel.txt
+-r requirements/test-cibuildwheel.txt
 # pydantic-core has no binary wheels for freethreading mode,
 # let's skip testing it during wheels building.
 # The regular test run is sufficient for testing pydantic integration.
