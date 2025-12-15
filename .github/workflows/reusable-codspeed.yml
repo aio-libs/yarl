@@ -77,7 +77,7 @@ jobs:
     - name: Retrieve the project source from Git to please Codspeed runner
       # NOTE: Codspeed is incapable of getting repo details from CI environment
       # Ref: https://github.com/CodSpeedHQ/runner/issues/144
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         depth: 1  # Codspeed only checks the HEAD
     - name: Retrieve the project source from an sdist inside the GHA artifact
