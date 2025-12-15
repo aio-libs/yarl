@@ -38,3 +38,18 @@ def test_get_schema() -> None:
         "title": "TstModel",
         "type": "object",
     }
+
+
+def test_json_roundtrip_dump_json() -> None:
+    url = URL("https://example.com")
+    m = TstModel(url=url)
+    js = m.model_dump_json()
+    m2 = TstModel.model_validate_json(js)
+    assert m == m2
+
+
+def test_json_roundtrip_validate_json() -> None:
+    js = '{"url":"https://example.com"}'
+    m = TstModel.model_validate_json(js)
+    js2 = m.model_dump_json()
+    assert js == js2
