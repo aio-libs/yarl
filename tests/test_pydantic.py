@@ -3,6 +3,8 @@ from pydantic import BaseModel, ValidationError
 
 from yarl import URL
 
+pytest.importorskip("pydantic")
+
 
 class TstModel(BaseModel):
     url: URL

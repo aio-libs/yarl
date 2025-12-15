@@ -136,7 +136,7 @@ before-test = [
 test-requires = "-r requirements/test.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
 # don't build PyPy wheels, install from source instead
-skip = "pp*"
+skip = ["cp313t-*", "pp*"]
 
 [tool.cibuildwheel.environment]
 COLOR = "yes"
