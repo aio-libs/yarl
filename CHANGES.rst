@@ -14,6 +14,139 @@ Changelog
 
 .. towncrier release notes start
 
+v1.22.1.dev0
+============
+
+*(2025-12-16)*
+
+
+Features
+--------
+
+- Added support for ``pydantic``, the :class:`~yarl.URL` could be used as a
+  field type in ``pydantic`` models seamlessly.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1607`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- The CI has been set up to notify Codecov about upload completion
+  -- by :user:`webknjaz`.
+
+  With this, Codecov no longer needs to guess whether it received all
+  the intended coverage reports or not.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1577`.
+
+- The in-tree build backend allows the end-users appending
+  ``CFLAGS`` and ``LDFLAGS`` by setting respective environment
+  variables externally.
+
+  It additionally sets up default compiler flags to perform
+  building with maximum optimization in release mode. This
+  makes the resulting artifacts shipped to PyPI smaller.
+
+  When line tracing is requested, the compiler and linker
+  flags are configured to include as much information as
+  possible for debugging and coverage tracking. The
+  development builds are therefore smaller.
+
+  -- by :user:`webknjaz`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1586`.
+
+- The :pep:`517` build backend now supports a new config
+  setting for controlling whether to build the project in-tree
+  or in a temporary directory. It only affects wheels and is
+  set up to build in a temporary directory by default. It does
+  not affect editable wheel builds — they will keep being
+  built in-tree regardless.
+
+  -- by :user:`webknjaz`
+
+  Here's an example of using this setting:
+
+  .. code-block:: console
+
+     $ python -m build \
+         --config-setting=build-inplace=true
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1590`.
+
+- Starting this version, when building the wheels is happening
+  in an automatically created temporary directory, the build
+  backend makes an effort to normalize the respective file
+  system path to a deterministic source checkout directory.
+
+  -- by :user:`webknjaz`
+
+  It does so by injecting the ``-ffile-prefix-map`` compiler
+  option into the ``CFLAGS`` environment variable as suggested
+  by known `reproducible build practices
+  <https://reproducible-builds.org/docs/build-path/>`__.
+
+  The effect is that downstreams will get more reproducible
+  build results.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1591`.
+
+- Dropped Python 3.9 support; Python 3.10 is the minimal supported Python version
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1609`.
+
+
+Contributor-facing changes
+--------------------------
+
+- The deprecated license classifier was removed from :file:`setup.cfg`
+  -- by :user:`yegorich`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1550`.
+
+- The in-tree build backend allows the end-users appending
+  ``CFLAGS`` and ``LDFLAGS`` by setting respective environment
+  variables externally.
+
+  It additionally sets up default compiler flags to perform
+  building with maximum optimization in release mode. This
+  makes the resulting artifacts shipped to PyPI smaller.
+
+  When line tracing is requested, the compiler and linker
+  flags are configured to include as much information as
+  possible for debugging and coverage tracking. The
+  development builds are therefore smaller.
+
+  -- by :user:`webknjaz`
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1586`.
+
+- The CI has been updated to consistently benchmark optimized
+  release builds -- by :user:`webknjaz`.
+
+  When the release workflow is triggered, the pre-built wheels
+  ready to hit PyPI are being tested. Otherwise, the job
+  builds the project from source, while the rest of the
+  workflow uses debug builds for line tracing and coverage
+  collection.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1587`.
+
+
+----
+
+
 1.22.0
 ======
 

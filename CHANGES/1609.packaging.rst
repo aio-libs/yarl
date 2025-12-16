@@ -1,2 +1,0 @@
-Dropped Python 3.9 support; Python 3.10 is the minimal supported Python version
--- by :user:`bdraco`.
