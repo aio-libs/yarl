@@ -14,7 +14,7 @@ Changelog
 
 .. towncrier release notes start
 
-v1.22.1.dev0
+v1.23.0
 ============
 
 *(2025-12-16)*
