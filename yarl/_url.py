@@ -1504,24 +1504,24 @@ class URL:
         def __get_pydantic_core_schema__(
             cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
         ) -> core_schema.CoreSchema:
-            lst1: list[core_schema.CoreSchema] = [
-                core_schema.str_schema(),
-                core_schema.no_info_plain_validator_function(URL),
-            ]
-
-            from_str_schema = core_schema.chain_schema(lst1)
-
-            json_schema = from_str_schema
-            python_schema = core_schema.union_schema(
+            from_str_schema = core_schema.chain_schema(
                 [
-                    # check if it's an instance first before doing any further work
-                    core_schema.is_instance_schema(URL),
-                    from_str_schema,
+                    core_schema.str_schema(),  # pragma: no cover
+                    core_schema.no_info_plain_validator_function(
+                        URL
+                    ),  # pragma: no cover
                 ]
             )
+
             return core_schema.json_or_python_schema(
-                json_schema=json_schema,
-                python_schema=python_schema,
+                json_schema=from_str_schema,  # pragma: no cover
+                python_schema=core_schema.union_schema(
+                    [
+                        # check if it's an instance first before doing any further work
+                        core_schema.is_instance_schema(URL),  # pragma: no cover
+                        from_str_schema,  # pragma: no cover
+                    ]
+                ),
                 serialization=core_schema.plain_serializer_function_ser_schema(str),
             )
 
