@@ -1490,7 +1490,7 @@ class URL:
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
-    if HAS_PYDANTIC:
+    if HAS_PYDANTIC:  # pragma: no cover
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
@@ -1506,20 +1506,18 @@ class URL:
         ) -> core_schema.CoreSchema:
             from_str_schema = core_schema.chain_schema(
                 [
-                    core_schema.str_schema(),  # pragma: no cover
-                    core_schema.no_info_plain_validator_function(
-                        URL
-                    ),  # pragma: no cover
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(URL),
                 ]
             )
 
             return core_schema.json_or_python_schema(
-                json_schema=from_str_schema,  # pragma: no cover
+                json_schema=from_str_schema,
                 python_schema=core_schema.union_schema(
                     [
                         # check if it's an instance first before doing any further work
-                        core_schema.is_instance_schema(URL),  # pragma: no cover
-                        from_str_schema,  # pragma: no cover
+                        core_schema.is_instance_schema(URL),
+                        from_str_schema,
                     ]
                 ),
                 serialization=core_schema.plain_serializer_function_ser_schema(str),
