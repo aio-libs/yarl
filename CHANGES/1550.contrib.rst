@@ -1,2 +1,0 @@
-The deprecated license classifier was removed from :file:`setup.cfg`
--- by :user:`yegorich`.

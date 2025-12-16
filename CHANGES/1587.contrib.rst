@@ -1,8 +1,0 @@
-The CI has been updated to consistently benchmark optimized
-release builds -- by :user:`webknjaz`.
-
-When the release workflow is triggered, the pre-built wheels
-ready to hit PyPI are being tested. Otherwise, the job
-builds the project from source, while the rest of the
-workflow uses debug builds for line tracing and coverage
-collection.

@@ -1,2 +1,0 @@
-Added support for ``pydantic``, the :class:`~yarl.URL` could be used as a
-field type in ``pydantic`` models seamlessly.
