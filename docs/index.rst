@@ -166,6 +166,17 @@ because it is specific to how the end-user's application is built and would be d
 for different apps.  The library doesn't accept booleans in the API; a user should
 convert bools into strings using own preferred translation protocol.
 
+.. _yarl-pydantic-support:
+
+The :class:`~yarl.URL` could be used as a field type in pydantic_ models seamlessly::
+
+   from pydantic import BaseModel
+   from yarl import URL
+
+   class Model(BaseModel):
+       url: URL
+
+
 Source code
 -----------
 
@@ -224,3 +235,5 @@ Indices and tables
 
 
 .. _GitHub: https://github.com/aio-libs/yarl
+
+.. _pydantic: https://docs.pydantic.dev/latest/

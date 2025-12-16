@@ -163,6 +163,7 @@ repos:
     - types-Pygments
     - types-colorama
     - pytest_codspeed==3.0.0
+    - pydantic >= 2.0
     args:
     - --python-version=3.11
     - --txt-report=.tox/.tmp/.mypy/python-3.11
