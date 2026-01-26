@@ -2,7 +2,7 @@
 covdefaults
 hypothesis>=6.0
 idna==3.11
-multidict==6.7.0
+multidict==6.7.1
 propcache==0.4.1
 pytest==9.0.2
 pytest-cov>=2.3.1
