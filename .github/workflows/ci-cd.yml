@@ -481,6 +481,7 @@ jobs:
         - ppc64le
         - s390x
         - armv7l
+        - riscv64
         tag:
         - ''
         - musllinux
