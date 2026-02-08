@@ -30,7 +30,7 @@ from ._parse import (
     split_url,
     unsplit_result,
 )
-from ._path import normalize_path, normalize_path_segments
+from ._path import calculate_relative_path, normalize_path, normalize_path_segments
 from ._query import (
     Query,
     QueryVariable,
@@ -1414,6 +1414,34 @@ class URL:
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
         return from_parts(self._scheme, netloc, "/".join(parts), query, fragment)
+
+    def relative_to(self, other: object) -> "URL":
+        """Return a new URL with a relative path between two other URL objects.
+
+        Note that both URLs must have the same scheme and netloc.
+
+        Example:
+        >>> target = URL("http://example.com/path/to")
+        >>> base = URL("http://example.com/")
+        >>> target.relative_to(base)
+        URL('path/to')
+        >>> base.relative_to(target)
+        URL('../..')
+        """
+
+        if type(other) is not URL:
+            raise TypeError("other should be URL")
+
+        target_scheme, target_netloc, target_path, _, _ = self._val
+        base_scheme, base_netloc, base_path, _, _ = other._val
+
+        if target_scheme != base_scheme:
+            raise ValueError("Both URLs should have the same scheme")
+        if target_netloc != base_netloc:
+            raise ValueError("Both URLs should have the same netloc")
+
+        path = calculate_relative_path(target_path, base_path)
+        return from_parts("", "", path, "", "")
 
     def join(self, url: "URL") -> "URL":
         """Join URLs

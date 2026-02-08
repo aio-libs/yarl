@@ -34,6 +34,9 @@ LONG_QUERY_URL = URL(LONG_QUERY_URL_STR)
 QUERY_URL = URL(QUERY_URL_STR)
 URL_WITH_PATH_STR = "http://www.domain.tld/req"
 URL_WITH_PATH = URL(URL_WITH_PATH_STR)
+URL_WITH_LONGER_PATH = URL("http://www.domain.tld/req/req/req")
+URL_WITH_LONG_PATH = URL("http://www.domain.tld/" + "req/" * 30)
+URL_WITH_VERY_LONG_PATH = URL("http://www.domain.tld/" + "req/" * 100)
 REL_URL = URL("/req")
 QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
@@ -572,6 +575,20 @@ def test_url_with_path_parent(benchmark: "BenchmarkFixture") -> None:
         for _ in range(100):
             cache.pop("parent", None)
             URL_WITH_PATH.parent
+
+
+def test_relative_to(benchmark: "BenchmarkFixture") -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_LONGER_PATH.relative_to(URL_WITH_PATH)
+
+
+def test_relative_to_long_urls(benchmark: "BenchmarkFixture") -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(100):
+            URL_WITH_VERY_LONG_PATH.relative_to(URL_WITH_LONG_PATH)
 
 
 def test_url_join(benchmark: "BenchmarkFixture") -> None:
