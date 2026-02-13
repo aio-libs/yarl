@@ -491,24 +491,30 @@ class URL:
     def __init_subclass__(cls) -> NoReturn:
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
-    def __str__(self) -> str:
+    def _make_string(self, mask_password: bool = False) -> str:
         if not self._path and self._netloc and (self._query or self._fragment):
             path = "/"
         else:
             path = self._path
-        if (port := self.explicit_port) is not None and port == DEFAULT_PORTS.get(
-            self._scheme
-        ):
+        if (
+            (port := self.explicit_port) is not None
+            and port == DEFAULT_PORTS.get(self._scheme)
+        ) or mask_password:
             # port normalization - using None for default ports to remove from rendering
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
-            netloc = make_netloc(self.raw_user, self.raw_password, host, None)
+            netloc = make_netloc(
+                self.raw_user, self.raw_password, host, None, mask_password=True
+            )
         else:
             netloc = self._netloc
         return unsplit_result(self._scheme, netloc, path, self._query, self._fragment)
 
+    def __str__(self) -> str:
+        return self._make_string(mask_password=False)
+
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}('{str(self)}')"
+        return f"{self.__class__.__name__}('{self._make_string(mask_password=True)}')"
 
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
