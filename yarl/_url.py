@@ -504,7 +504,11 @@ class URL:
             # https://datatracker.ietf.org/doc/html/rfc3986.html#section-6.2.3
             host = self.host_subcomponent
             netloc = make_netloc(
-                self.raw_user, self.raw_password, host, None, mask_password=mask_password
+                self.raw_user,
+                self.raw_password,
+                host,
+                None,
+                mask_password=mask_password,
             )
         else:
             netloc = self._netloc
