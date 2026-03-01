@@ -1015,6 +1015,22 @@ The path is encoded if needed.
          >>> base.join(URL('//python.org/page.html'))
          URL('http://python.org/page.html')
 
+.. method:: URL.relative_to(url)
+
+   Return a new URL with a relative *path* between two other URL objects.
+   *scheme*, *user*, *password*, *host*, *port*, *query* and *fragment* are removed.
+
+   .. doctest::
+
+      >>> target = URL('http://example.com/path/to')
+      >>> base = URL('http://example.com/')
+      >>> target.relative_to(base)
+      URL('path/to')
+      >>> base.relative_to(target)
+      URL('../..')
+
+   .. versionadded:: 1.23
+
 Human readable representation
 -----------------------------
 
