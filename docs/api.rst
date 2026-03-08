@@ -699,7 +699,7 @@ section generates a new :class:`URL` instance.
    .. warning::
 
       Any object implementing :class:`~typing.SupportsInt` (i.e. having an
-      ``__int__`` method) will be converted to :class:`int` before being used
+      :external+python:meth:`~object.__int__` method) will be converted to :class:`int` before being used
       as a query parameter value. This includes types such as :class:`uuid.UUID`,
       which will be converted to their integer representation rather than their
       string representation. To avoid unexpected results, explicitly convert such
