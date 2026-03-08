@@ -696,6 +696,25 @@ section generates a new :class:`URL` instance.
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
 
+   .. warning::
+
+      Any object implementing :class:`~typing.SupportsInt` (i.e. having an
+      :external+python:meth:`~object.__int__` method) will be converted to :class:`int` before being used
+      as a query parameter value. This includes types such as :class:`uuid.UUID`,
+      which will be converted to their integer representation rather than their
+      string representation. To avoid unexpected results, explicitly convert such
+      values to :class:`str` before passing them as query parameters:
+
+      .. code-block:: python
+
+         import uuid
+
+         my_uuid = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
+         # Wrong: will use int(my_uuid) -> a large integer
+         url = URL("http://example.com/").with_query({"id": my_uuid})
+         # Correct: explicitly convert to string
+         url = URL("http://example.com/").with_query({"id": str(my_uuid)})
+
    .. doctest::
 
       >>> URL('http://example.com/path?a=b').with_query('c=d')
