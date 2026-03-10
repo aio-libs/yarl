@@ -566,8 +566,8 @@ class URL:
     def __bool__(self) -> bool:
         return bool(self._netloc or self._path or self._query or self._fragment)
 
-    def __getstate__(self) -> tuple[SplitResult]:
-        return (tuple.__new__(SplitResult, self._val),)
+    def __getstate__(self) -> tuple[SplitURLType]:
+        return (self._val,)
 
     def __setstate__(
         self, state: tuple[SplitURLType] | tuple[None, _InternalURLCache]
