@@ -281,7 +281,10 @@ def test_with_query_uuid() -> None:
     url = URL("http://example.com/path")
     test_uuid = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
     url2 = url.with_query(user_id=test_uuid)
-    assert str(url2) == "http://example.com/path?user_id=3199712f-1b78-4420-852b-a73ee09e6a8f"
+    assert (
+        str(url2)
+        == "http://example.com/path?user_id=3199712f-1b78-4420-852b-a73ee09e6a8f"
+    )
 
 
 def test_with_query_uuid_multiple_values() -> None:
@@ -290,7 +293,10 @@ def test_with_query_uuid_multiple_values() -> None:
     uuid1 = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
     uuid2 = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
     url2 = url.with_query([("id", uuid1), ("id", uuid2)])
-    assert str(url2) == "http://example.com/path?id=3199712f-1b78-4420-852b-a73ee09e6a8f&id=550e8400-e29b-41d4-a716-446655440000"
+    assert (
+        str(url2)
+        == "http://example.com/path?id=3199712f-1b78-4420-852b-a73ee09e6a8f&id=550e8400-e29b-41d4-a716-446655440000"
+    )
 
 
 def test_with_query_uuid_mixed_types() -> None:
@@ -310,7 +316,10 @@ def test_update_query_uuid() -> None:
     url = URL("http://example.com/path?existing=value")
     test_uuid = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
     url2 = url.update_query(user_id=test_uuid)
-    assert str(url2) == "http://example.com/path?existing=value&user_id=3199712f-1b78-4420-852b-a73ee09e6a8f"
+    assert (
+        str(url2)
+        == "http://example.com/path?existing=value&user_id=3199712f-1b78-4420-852b-a73ee09e6a8f"
+    )
 
 
 def test_with_query_multidict() -> None:
