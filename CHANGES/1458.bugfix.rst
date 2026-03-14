@@ -1,0 +1,2 @@
+Fixed ``uuid.UUID`` objects being converted to integers instead of strings
+when used as query parameter values -- by :user:`toroleapinc`.

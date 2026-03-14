@@ -1,4 +1,5 @@
 import enum
+import uuid
 
 import pytest
 from multidict import MultiDict
@@ -273,6 +274,52 @@ def test_with_float_enum() -> None:
     url = URL("http://example.com/path")
     url2 = url.with_query(a=FloatEnum.A)
     assert str(url2) == "http://example.com/path?a=1.1"
+
+
+def test_with_query_uuid() -> None:
+    """UUID objects should be converted to string representation, not integer."""
+    url = URL("http://example.com/path")
+    test_uuid = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
+    url2 = url.with_query(user_id=test_uuid)
+    assert (
+        str(url2)
+        == "http://example.com/path?user_id=3199712f-1b78-4420-852b-a73ee09e6a8f"
+    )
+
+
+def test_with_query_uuid_multiple_values() -> None:
+    """Test UUID handling with multiple values."""
+    url = URL("http://example.com/path")
+    uuid1 = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
+    uuid2 = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
+    url2 = url.with_query([("id", uuid1), ("id", uuid2)])
+    assert (
+        str(url2)
+        == "http://example.com/path?id=3199712f-1b78-4420-852b-a73ee09e6a8f&id=550e8400-e29b-41d4-a716-446655440000"
+    )
+
+
+def test_with_query_uuid_mixed_types() -> None:
+    """Test UUID mixed with other types."""
+    url = URL("http://example.com/path")
+    test_uuid = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
+    url2 = url.with_query({"user_id": test_uuid, "count": 42, "name": "test"})
+    query_parts = str(url2).split("?")[1].split("&")
+    query_dict = dict(part.split("=") for part in query_parts)
+    assert query_dict["user_id"] == "3199712f-1b78-4420-852b-a73ee09e6a8f"
+    assert query_dict["count"] == "42"
+    assert query_dict["name"] == "test"
+
+
+def test_update_query_uuid() -> None:
+    """Test UUID handling with update_query."""
+    url = URL("http://example.com/path?existing=value")
+    test_uuid = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
+    url2 = url.update_query(user_id=test_uuid)
+    assert (
+        str(url2)
+        == "http://example.com/path?existing=value&user_id=3199712f-1b78-4420-852b-a73ee09e6a8f"
+    )
 
 
 def test_with_query_multidict() -> None:
