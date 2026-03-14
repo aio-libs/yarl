@@ -1,6 +1,7 @@
 """Query string handling."""
 
 import math
+import uuid
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, SupportsInt, Union, cast
 
@@ -8,7 +9,7 @@ from multidict import istr
 
 from ._quoters import QUERY_PART_QUOTER, QUERY_QUOTER
 
-SimpleQuery = Union[str, SupportsInt, float]
+SimpleQuery = Union[str, SupportsInt, float, uuid.UUID]
 QueryVariable = Union[SimpleQuery, Sequence[SimpleQuery]]
 Query = Union[
     None, str, Mapping[str, QueryVariable], Sequence[tuple[str, QueryVariable]]
@@ -22,6 +23,8 @@ def query_var(v: SimpleQuery) -> str:
         return str(v)
     if isinstance(v, str):
         return v
+    if isinstance(v, uuid.UUID):
+        return str(v)
     if isinstance(v, float):
         if math.isinf(v):
             raise ValueError("float('inf') is not supported")
