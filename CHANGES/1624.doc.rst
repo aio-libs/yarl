@@ -1,0 +1,1 @@
+Updated Pydantic example to include ``arbitrary_types_allowed=True`` in ``model_config`` -- by :user:`wuzhrun`.
