@@ -1,0 +1,4 @@
+Added a note in the :meth:`~yarl.URL.with_query` documentation explaining
+that types implementing ``__int__`` (e.g. :class:`~uuid.UUID`) are
+converted to integers, and advising users to cast to :class:`str` when the
+human-readable representation is needed.
