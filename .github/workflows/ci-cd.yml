@@ -376,7 +376,7 @@ jobs:
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
@@ -437,7 +437,7 @@ jobs:
     - name: Notify Codecov that all coverage reports have been uploaded
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         fail_ci_if_error: true
         run_command: send-notifications
