@@ -21,13 +21,15 @@ if not NO_EXTENSIONS:
         unquoters.append(quoting_c._Unquoter)
         unquoter_ids.append("CUnquoter")
 
+
 @pytest.fixture(params=quoters, ids=quoter_ids)
 def quoter(request: pytest.FixtureRequest) -> _PyQuoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
-    return request.param # type: ignore[no-any-return]
+    return request.param  # type: ignore[no-any-return]
+
 
 @pytest.fixture(params=unquoters, ids=unquoter_ids)
 def unquoter(request: pytest.FixtureRequest) -> _PyUnquoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
-    return request.param # type: ignore[no-any-return]
+    return request.param  # type: ignore[no-any-return]
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions available but not imported")
