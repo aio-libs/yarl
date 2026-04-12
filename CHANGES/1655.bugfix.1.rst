@@ -1,0 +1,4 @@
+Fixed :meth:`~yarl.URL.build` failing to validate characters in the zone ID
+portion of IPv6 addresses when ``validate_host=True``, allowing control
+characters such as CR and LF to pass through into ``url.host``
+-- by :user:`rodrigobnogueira`.

@@ -89,6 +89,10 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
+# RFC 6874 ZoneID = 1*( unreserved / pct-encoded )
+# In practice, sub-delimiters are also used (e.g. eth0, Ethernet+1).
+_ZONE_ID_RE = re.compile(r"^[A-Za-z0-9._~!$&'()*+,;=%-]+$")
+
 _T = TypeVar("_T")
 
 if sys.version_info >= (3, 11):
@@ -1574,6 +1578,10 @@ def _encode_host(host: str, validate_host: bool) -> str:
         except ValueError:
             pass
         else:
+            if sep and validate_host and not _ZONE_ID_RE.match(zone):
+                raise ValueError(
+                    f"Invalid characters in IPv6 zone ID: {zone!r}"
+                )
             # These checks should not happen in the
             # LRU to keep the cache size small
             host = ip.compressed

@@ -12,6 +12,8 @@ _WHATWG_C0_CONTROL_OR_SPACE = (
 _VERTICAL_COLON = "\ufe13"  # normalizes to ":"
 _FULL_WITH_NUMBER_SIGN = "\uff03"  # normalizes to "#"
 _ACCOUNT_OF = "\u2100"  # normalizes to "a/c"
+_FULLWIDTH_PERCENT = "\uff05"  # normalizes to "%"
+_SMALL_PERCENT = "\ufe6a"  # normalizes to "%"
 
 
 def test_inheritance() -> None:
@@ -2465,3 +2467,16 @@ def test_url_with_invalid_unicode(disallowed_unicode: str) -> None:
         ValueError, match="contains invalid characters under NFKC normalization"
     ):
         URL(f"http://example.{disallowed_unicode}.com/frag")
+
+
+@pytest.mark.parametrize(
+    "percent_char",
+    [_FULLWIDTH_PERCENT, _SMALL_PERCENT],
+    ids=["fullwidth-percent-U+FF05", "small-percent-U+FE6A"],
+)
+def test_url_with_fullwidth_percent_rejected(percent_char: str) -> None:
+    """NFKC normalization of fullwidth/small percent signs must be caught."""
+    with pytest.raises(
+        ValueError, match="contains invalid characters under NFKC normalization"
+    ):
+        URL(f"http://evil.com{percent_char}2e.internal/")

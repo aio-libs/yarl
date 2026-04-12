@@ -96,7 +96,7 @@ def _check_netloc(netloc: str) -> None:
     # Note that there are no unicode decompositions for the character '@' so
     # its currently impossible to have test coverage for this branch, however if the
     # one should be added in the future we want to make sure its still checked.
-    for c in "/?#@:":  # pragma: no branch
+    for c in "/?#@:%":  # pragma: no branch
         if c in normalized_netloc:
             raise ValueError(
                 f"netloc '{netloc}' contains invalid "
