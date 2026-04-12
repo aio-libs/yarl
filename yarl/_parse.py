@@ -64,6 +64,12 @@ def split_url(url: str) -> SplitURLType:
         ):
             raise ValueError("Invalid IPv6 URL")
         if has_left_bracket:
+            # Per RFC 3986, brackets are only valid at the START of the host
+            # for IP-literal addresses. Text before '[' (e.g. '127.0.0.1[::1]')
+            # is invalid and must be rejected to prevent SSRF bypasses.
+            hostinfo = netloc.rpartition("@")[2]
+            if hostinfo[0] != "[":
+                raise ValueError("Invalid IPv6 URL")
             bracketed_host = netloc.partition("[")[2].partition("]")[0]
             # Valid bracketed hosts are defined in
             # https://www.rfc-editor.org/rfc/rfc3986#page-49
