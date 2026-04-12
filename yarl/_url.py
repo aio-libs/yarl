@@ -764,6 +764,9 @@ class URL:
             return None
         if raw and raw[-1].isdigit() or ":" in raw:
             # IP addresses are never IDNA encoded
+            if "%25" in raw:
+                # Decode RFC 6874 zone ID separator
+                return raw.replace("%25", "%")
             return raw
         return _idna_decode(raw)
 
@@ -1550,7 +1553,10 @@ def _encode_host(host: str, validate_host: bool) -> str:
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
     if host and (host[-1].isdigit() or ":" in host):
-        raw_ip, sep, zone = host.partition("%")
+        if "%25" in host:
+            raw_ip, sep, zone = host.partition("%25")
+        else:
+            raw_ip, sep, zone = host.partition("%")
         # If it looks like an IP, we check with _ip_compressed_version
         # and fall-through if its not an IP address. This is a performance
         # optimization to avoid parsing IP addresses as much as possible
@@ -1578,8 +1584,8 @@ def _encode_host(host: str, validate_host: bool) -> str:
             # LRU to keep the cache size small
             host = ip.compressed
             if ip.version == 6:
-                return f"[{host}%{zone}]" if sep else f"[{host}]"
-            return f"{host}%{zone}" if sep else host
+                return f"[{host}{sep}{zone}]" if sep else f"[{host}]"
+            return f"{host}{sep}{zone}" if sep else host
 
     # IDNA encoding is slow, skip it for ASCII-only strings
     if host.isascii():
