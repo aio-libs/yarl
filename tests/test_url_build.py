@@ -36,15 +36,15 @@ def test_url_ipv4_in_ipv6() -> None:
 
 
 @pytest.mark.parametrize(
-    ("zone", "desc"),
+    "zone",
     (
-        ("\r\nX-Injected: evil", "crlf-injection"),
-        ("\x00evil", "null-byte"),
-        ("zone with spaces", "spaces"),
+        "\r\nX-Injected: evil",
+        "\x00evil",
+        "zone with spaces",
     ),
     ids=("crlf-injection", "null-byte", "spaces"),
 )
-def test_url_build_ipv6_zone_id_invalid_chars(zone: str, desc: str) -> None:
+def test_url_build_ipv6_zone_id_invalid_chars(zone: str) -> None:
     """Zone IDs with control characters must be rejected by validate_host."""
     with pytest.raises(ValueError, match="Invalid characters in IPv6 zone ID"):
         URL.build(scheme="http", host=f"::1%{zone}", path="/")

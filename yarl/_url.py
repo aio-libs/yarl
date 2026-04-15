@@ -89,7 +89,9 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
-# RFC 6874 ZoneID = 1*( unreserved / pct-encoded )
+# Zone IDs in URIs are defined by RFC 6874 (obsoleted by RFC 9844 for UI usage):
+# ZoneID = 1*( unreserved / pct-encoded )
+# https://www.rfc-editor.org/rfc/rfc6874#section-2
 # In practice, sub-delimiters are also used (e.g. eth0, Ethernet+1).
 _ZONE_ID_RE = re.compile(r"^[A-Za-z0-9._~!$&'()*+,;=%-]+$")
 
