@@ -226,7 +226,7 @@ jobs:
         - os: windows-latest
           no-extensions: Y
         include:
-        - pyver: pypy-3.10
+        - pyver: pypy-3.11
           no-extensions: Y
           experimental: false
           os: ubuntu-latest
