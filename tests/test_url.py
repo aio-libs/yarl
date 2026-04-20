@@ -2466,6 +2466,22 @@ def test_build_with_invalid_ipv6_host(host: str, is_authority: bool) -> None:
         URL(f"http://{host}/")
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        r"http://vulndetector.com\admin\api",
+        r"http://example.com\path",
+        r"http://example.com\../",
+        r"http://\example.com",
+    ],
+)
+def test_url_with_backslash_in_netloc(url: str) -> None:
+    with pytest.raises(
+        ValueError, match=r"backslash \('\\'\) is not allowed in the host"
+    ):
+        URL(url)
+
+
 @pytest.mark.parametrize("byte", ["\r", "\n", "\t"])
 def test_unsafe_url_bytes_are_removed(byte: str) -> None:
     url = URL(f"http://example.com{byte}/")

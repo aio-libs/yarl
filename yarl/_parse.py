@@ -79,6 +79,16 @@ def split_url(url: str) -> SplitURLType:
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
+    # Backslash is not valid in the authority's host component per RFC 3986.
+    # Only check the host portion (after the last @), since backslashes in
+    # user/password fields don't cause the parsing ambiguity that backslashes
+    # in the host do (where WHATWG parsers treat \ as a path separator).
+    _netloc_host = netloc.rpartition("@")[2] if "@" in netloc else netloc
+    if "\\" in _netloc_host:
+        raise ValueError(
+            "Invalid URL: backslash ('\\') is not allowed in the host "
+            "component per RFC 3986."
+        )
     if has_hash:
         url, _, fragment = url.partition("#")
     if has_question_mark:
