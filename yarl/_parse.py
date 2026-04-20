@@ -73,6 +73,12 @@ def split_url(url: str) -> SplitURLType:
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
+    if "\\" in netloc:
+        raise ValueError(
+            "Invalid URL: backslash ('\\') is not allowed in the authority "
+            "(netloc) component per RFC 3986. Use forward slashes to "
+            "separate path components."
+        )
     if has_hash:
         url, _, fragment = url.partition("#")
     if has_question_mark:
