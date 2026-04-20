@@ -2445,14 +2445,14 @@ def test_build_with_invalid_ipv6_host(host: str, is_authority: bool) -> None:
     "url",
     [
         r"http://vulndetector.com\admin\api",
-        r"http://example.com\@evil.com",
+        r"http://example.com\path",
         r"http://example.com\../",
         r"http://\example.com",
     ],
 )
 def test_url_with_backslash_in_netloc(url: str) -> None:
     with pytest.raises(
-        ValueError, match=r"backslash \('\\'\) is not allowed in the authority"
+        ValueError, match=r"backslash \('\\'\) is not allowed in the host"
     ):
         URL(url)
 
