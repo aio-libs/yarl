@@ -1,5 +1,3 @@
-Raise :exc:`ValueError` when a URL's authority (netloc) component contains a
-backslash. Backslashes are not valid in the authority per :rfc:`3986` and create
-SSRF and ACL bypass vulnerabilities when yarl is used alongside WHATWG-compliant
-parsers that convert backslashes to forward slashes
+Raise :exc:`ValueError` when a URL's authority component contains a
+backslash, which is not a valid character per :rfc:`3986`
 -- by :user:`rodrigobnogueira`.
