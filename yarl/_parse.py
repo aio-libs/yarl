@@ -63,9 +63,7 @@ def split_url(url: str) -> SplitURLType:
             has_right_bracket and not has_left_bracket
         ):
             raise ValueError("Invalid IPv6 URL")
-        if has_left_bracket and (
-            netloc.count("[") != 1 or netloc.count("]") != 1
-        ):
+        if has_left_bracket and (netloc.count("[") != 1 or netloc.count("]") != 1):
             raise ValueError("Invalid IPv6 URL")
         if has_left_bracket:
             bracketed_host = netloc.partition("[")[2].partition("]")[0]
