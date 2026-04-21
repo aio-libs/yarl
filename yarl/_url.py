@@ -508,6 +508,10 @@ class URL:
         return unsplit_result(self._scheme, netloc, path, self._query, self._fragment)
 
     def __repr__(self) -> str:
+        # Fix #1630: mask password to prevent credential leaks in logs/tracebacks.
+        if self.password is not None:
+            masked = self.with_password("********")
+            return f"{self.__class__.__name__}('{str(masked)}')"
         return f"{self.__class__.__name__}('{str(self)}')"
 
     def __bytes__(self) -> bytes:
@@ -1490,7 +1494,7 @@ class URL:
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
-    if HAS_PYDANTIC:
+    if HAS_PYDANTIC:  # pragma: no cover
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(

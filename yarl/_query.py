@@ -29,6 +29,12 @@ def query_var(v: SimpleQuery) -> str:
             raise ValueError("float('nan') is not supported")
         return str(float(v))
     if cls is not bool and isinstance(v, SupportsInt):
+        # Fix #1643: UUID implements __int__() but should be represented as string.
+        # More generally: if the type defines its own __str__ (not inherited from
+        # object), prefer str() over int() since the custom __str__ is the
+        # intended human-readable representation.
+        if type(v).__str__ is not object.__str__:
+            return str(v)
         return str(int(v))
     raise TypeError(
         "Invalid variable type: value "

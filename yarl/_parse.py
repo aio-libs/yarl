@@ -51,10 +51,19 @@ def split_url(url: str) -> SplitURLType:
             delim_chars = "/#"
         else:
             delim_chars = "/"
-        for c in delim_chars:  # look for delimiters; the order is NOT important
-            wdelim = url.find(c, 2)  # find first of this delim
-            if wdelim >= 0 and wdelim < delim:  # if found
-                delim = wdelim  # use earliest delim position
+        # Perf: find each delimiter independently and take the minimum.
+        # Avoids repeated character iteration and Python loop overhead.
+        slash = url.find("/", 2)
+        if slash >= 0:
+            delim = slash
+        if has_question_mark:
+            q = url.find("?", 2)
+            if 0 <= q < delim:
+                delim = q
+        if has_hash:
+            h = url.find("#", 2)
+            if 0 <= h < delim:
+                delim = h
         netloc = url[2:delim]
         url = url[delim:]
         has_left_bracket = "[" in netloc
