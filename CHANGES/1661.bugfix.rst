@@ -1,0 +1,7 @@
+Fixed a host-confusion parsing bug where URLs containing multiple bracket
+characters in the host component (e.g. ``http://[:localhost[]].google:80``)
+were silently canonicalized to an unintended host. Both ``split_url()`` and
+``split_netloc()`` now raise :exc:`ValueError` when more than one ``[`` or
+``]`` is found in the authority, or when ``[`` does not appear at the start of
+the host subcomponent, in compliance with :rfc:`3986` -- by
+:user:`rodrigobnogueira`.

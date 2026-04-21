@@ -365,6 +365,37 @@ def test_ipfuture_brackets_not_allowed() -> None:
         URL("http://[v10]/")
 
 
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://[:localhost[]].google:80",
+        "http://[:localhost[]].google",
+        "http://[:attacker.com[]]:80",
+        "http://[:evil.com[]].bank.com:443",
+        "http://[:127.0.0.1[]]:80",
+        "http://[v1.:attacker[]].bank.com:80",
+    ),
+    ids=(
+        "host-confusion-with-port",
+        "host-confusion-without-port",
+        "attacker-host-injection",
+        "domain-allowlist-bypass",
+        "private-ip-injection",
+        "ipvfuture-bracket-abuse",
+    ),
+)
+def test_malformed_bracketed_host_rejected(url: str) -> None:
+    """Reject URLs with multiple brackets to prevent host confusion (SSRF)."""
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(url)
+
+
+def test_malformed_bracketed_host_in_authority() -> None:
+    """Reject malformed brackets via URL.build(authority=...) path."""
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL.build(scheme="http", authority="[:localhost[]].google:80")
+
+
 def test_ipv4_zone() -> None:
     # I'm unsure if it is correct.
     url = URL("http://1.2.3.4%тест%42:123")
