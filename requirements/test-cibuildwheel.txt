@@ -1,6 +1,6 @@
 -r cython.txt
 covdefaults
-hypothesis>=6.0
+hypothesis>=6.152.1
 idna==3.11
 multidict==6.7.0
 propcache==0.4.1
