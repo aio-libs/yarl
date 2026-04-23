@@ -57,13 +57,13 @@ def test_url_is_not_str() -> None:
 
 
 def test_str() -> None:
-    url = URL("http://example.com:8888/path/to?a=1&b=2")
-    assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
+    url = URL("http://user:password@example.com:8888/path/to?a=1&b=2")
+    assert str(url) == "http://user:password@example.com:8888/path/to?a=1&b=2"
 
 
 def test_repr() -> None:
-    url = URL("http://example.com")
-    assert "URL('http://example.com')" == repr(url)
+    url = URL("http://user:password@example.com")
+    assert "URL('http://user:********@example.com')" == repr(url)
 
 
 def test_origin() -> None:

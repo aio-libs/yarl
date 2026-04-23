@@ -167,6 +167,7 @@ def make_netloc(
     host: str | None,
     port: int | None,
     encode: bool = False,
+    mask_password: bool = False,
 ) -> str:
     """Make netloc from parts.
 
@@ -182,6 +183,8 @@ def make_netloc(
     if user is None and password is None:
         return ret
     if password is not None:
+        if mask_password:
+            password = "********"
         if not user:
             user = ""
         elif encode:
