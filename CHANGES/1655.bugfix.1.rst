@@ -1,0 +1,6 @@
+Fixed :meth:`~yarl.URL.build` failing to validate characters in the zone ID
+portion of IPv6 addresses when ``validate_host=True``, allowing control
+characters such as CR, LF, and NUL to pass through into ``url.host``.
+Zone IDs now reject ASCII control characters per
+`RFC 9844 §6.3 <https://datatracker.ietf.org/doc/html/rfc9844#section-6-3>`_
+-- by :user:`rodrigobnogueira`.

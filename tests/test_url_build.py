@@ -35,6 +35,37 @@ def test_url_ipv4_in_ipv6() -> None:
     assert str(u) == "http://[2001:db8:122:344::c000:221]"
 
 
+@pytest.mark.parametrize(
+    "zone",
+    (
+        "\r\nX-Injected: evil",
+        "\x00evil",
+    ),
+    ids=("crlf-injection", "null-byte"),
+)
+def test_url_build_ipv6_zone_id_invalid_chars(zone: str) -> None:
+    """Zone IDs with control characters must be rejected by validate_host."""
+    with pytest.raises(ValueError, match="Invalid characters in IPv6 zone ID"):
+        URL.build(scheme="http", host=f"::1%{zone}", path="/")
+
+
+@pytest.mark.parametrize(
+    "zone",
+    (
+        "eth0",
+        "1",
+        "zone with spaces",
+        "Ethernet (LAN)",
+        "日本語",
+    ),
+    ids=("iface-name", "numeric", "spaces", "parens", "unicode"),
+)
+def test_url_build_ipv6_zone_id_valid(zone: str) -> None:
+    """Zone IDs accept any non-CTL text per RFC 4007 §11.2."""
+    u = URL.build(scheme="http", host=f"::1%{zone}", path="/")
+    assert u.host == f"::1%{zone}"
+
+
 def test_build_with_scheme() -> None:
     u = URL.build(scheme="blob", path="path")
     assert str(u) == "blob:path"

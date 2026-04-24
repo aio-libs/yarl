@@ -1,0 +1,5 @@
+Fixed ``_check_netloc()`` missing ``%`` from its NFKC normalization character
+check, which allowed Unicode characters U+FF05 (FULLWIDTH PERCENT SIGN) and
+U+FE6A (SMALL PERCENT SIGN) to produce a literal ``%`` in ``url.host`` via
+the standard library IDNA fallback
+-- by :user:`rodrigobnogueira`.

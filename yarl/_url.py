@@ -89,6 +89,13 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
+# Zone IDs are OS-specific text strings with no format defined by the RFCs:
+# https://datatracker.ietf.org/doc/html/rfc4007#section-11.2
+# RFC 9844 §6.3 recommends rejecting characters inappropriate for the
+# environment; for yarl we reject ASCII control characters (CTL):
+# https://datatracker.ietf.org/doc/html/rfc9844#section-6-3
+_ZONE_ID_UNSAFE_RE = re.compile(r"[\x00-\x1f\x7f]")
+
 _T = TypeVar("_T")
 
 if sys.version_info >= (3, 11):
@@ -1574,6 +1581,8 @@ def _encode_host(host: str, validate_host: bool) -> str:
         except ValueError:
             pass
         else:
+            if sep and validate_host and (not zone or _ZONE_ID_UNSAFE_RE.search(zone)):
+                raise ValueError(f"Invalid characters in IPv6 zone ID: {zone!r}")
             # These checks should not happen in the
             # LRU to keep the cache size small
             host = ip.compressed
