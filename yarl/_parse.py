@@ -63,6 +63,8 @@ def split_url(url: str) -> SplitURLType:
             has_right_bracket and not has_left_bracket
         ):
             raise ValueError("Invalid IPv6 URL")
+        if has_left_bracket and (netloc.count("[") != 1 or netloc.count("]") != 1):
+            raise ValueError("Invalid IPv6 URL")
         if has_left_bracket:
             # Per RFC 3986, brackets are only valid at the START of the host
             # for IP-literal addresses. Text before '[' (e.g. '127.0.0.1[::1]')
@@ -126,6 +128,12 @@ def split_netloc(
             password = None
 
     if "[" in hostinfo:
+        if (
+            hostinfo.count("[") != 1
+            or hostinfo.count("]") != 1
+            or not hostinfo.startswith("[")
+        ):
+            raise ValueError("Invalid IPv6 URL")
         _, _, bracketed = hostinfo.partition("[")
         hostname, _, port_str = bracketed.partition("]")
         _, _, port_str = port_str.partition(":")
