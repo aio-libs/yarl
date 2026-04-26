@@ -1,0 +1,5 @@
+Fixed the :attr:`~yarl.URL.host` property incorrectly returning the
+percent-encoded zone ID separator ``%25`` instead of decoding it to ``%``
+for IPv6 Zone ID URLs (e.g. ``http://[fe80::1%251]/`` now correctly exposes
+``.host`` as ``fe80::1%1`` per :rfc:`6874`)
+-- by :user:`rodrigobnogueira`.

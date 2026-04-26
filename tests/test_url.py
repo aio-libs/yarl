@@ -398,6 +398,14 @@ def test_ipv4_zone() -> None:
     assert url.raw_host == SplitResult(*url._val).hostname
 
 
+def test_ipv6_zone_rfc6874() -> None:
+    url = URL("http://[fe80::1%251]/")
+    assert url.raw_host == "fe80::1%251"
+    assert url.host == "fe80::1%1"
+    assert url.host_subcomponent == "[fe80::1%251]"
+    assert str(url) == "http://[fe80::1%251]/"
+
+
 def test_port_for_explicit_port() -> None:
     url = URL("http://example.com:8888")
     assert 8888 == url.port
