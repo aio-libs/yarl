@@ -1,4 +1,5 @@
-Documented that objects implementing :class:`~typing.SupportsInt` (such as
-:class:`uuid.UUID`) are converted to :class:`int` when used as query parameter
+Documented that objects implementing :external+python:meth:`~object.__int__`
+(the data model protocol, also typed as :class:`~typing.SupportsInt`) such as
+:class:`uuid.UUID` are converted to :class:`int` when used as query parameter
 values, and that explicit conversion to :class:`str` is needed if the string
 representation is desired -- by :user:`edvatar`.

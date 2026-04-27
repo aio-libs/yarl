@@ -698,12 +698,14 @@ section generates a new :class:`URL` instance.
 
    .. warning::
 
-      Any object implementing :class:`~typing.SupportsInt` (i.e. having an
-      :external+python:meth:`~object.__int__` method) will be converted to :class:`int` before being used
-      as a query parameter value. This includes types such as :class:`uuid.UUID`,
-      which will be converted to their integer representation rather than their
-      string representation. To avoid unexpected results, explicitly convert such
-      values to :class:`str` before passing them as query parameters:
+      Any object implementing the :external+python:meth:`~object.__int__`
+      data model method (which is also represented in typing as
+      :class:`~typing.SupportsInt`) will be converted to :class:`int` before
+      being used as a query parameter value. This includes types such as
+      :class:`uuid.UUID`, which will be converted to their integer
+      representation rather than their string representation. To avoid
+      unexpected results, explicitly convert such values to :class:`str`
+      before passing them as query parameters:
 
       .. code-block:: python
 
