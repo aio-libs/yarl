@@ -37,6 +37,7 @@ manylinux
 multi
 nightlies
 pre
+pydantic
 pytest
 rc
 reStructuredText
