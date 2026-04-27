@@ -170,10 +170,11 @@ convert bools into strings using own preferred translation protocol.
 
 The :class:`~yarl.URL` could be used as a field type in pydantic_ models seamlessly::
 
-   from pydantic import BaseModel
+   from pydantic import BaseModel, ConfigDict
    from yarl import URL
 
    class Model(BaseModel):
+       model_config = ConfigDict(arbitrary_types_allowed=True)
        url: URL
 
 
