@@ -1,4 +1,4 @@
 -r towncrier.txt
 myst-parser >= 0.10.0
-sphinx==8.2.3
+sphinx==9.1.0
 sphinxcontrib-towncrier
