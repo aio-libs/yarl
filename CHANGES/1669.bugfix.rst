@@ -1,0 +1,8 @@
+Fixed a parser/serializer inconsistency where percent-encoded characters in
+the scheme portion of a URL (e.g. ``ht%74p://...``) were decoded by the
+requoter, causing ``str()`` and :py:meth:`~yarl.URL.human_repr` to emit an
+absolute URL with a scheme and host while the parsed properties
+(:attr:`~yarl.URL.scheme`, :attr:`~yarl.URL.host`, :attr:`~yarl.URL.absolute`)
+reported a relative, hostless URL. The fix preserves the percent-encoding of
+the colon (``%3A``) in relative paths whenever decoding it would materialize a
+URL scheme -- by :user:`rodrigobnogueira`.

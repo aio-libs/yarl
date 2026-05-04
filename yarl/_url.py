@@ -160,6 +160,25 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+def _has_scheme_prefix(path: str, colon_pos: int) -> bool:
+    """Check if path[:colon_pos] looks like a valid URL scheme.
+
+    A scheme is ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) per RFC 3986.
+    We use scheme_chars from urllib.parse for consistency with split_url().
+    """
+    from urllib.parse import scheme_chars
+
+    if colon_pos <= 0:
+        return False
+    if path[0] not in scheme_chars or path[0].isdigit() or path[0] in "+-.":
+        # Scheme must start with a letter
+        return False
+    for c in path[1:colon_pos]:
+        if c not in scheme_chars:
+            return False
+    return True
+
+
 @lru_cache
 def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
@@ -204,6 +223,16 @@ def encode_url(url_str: str) -> "URL":
         path = PATH_REQUOTER(path)
         if netloc and "." in path:
             path = normalize_path(path)
+        elif not scheme and not netloc:
+            # Prevent requoting from materializing a scheme in a relative path.
+            # For example, "ht%74p://host/path" is parsed as a relative URL
+            # with the entire string as the path (no scheme recognized because
+            # of the percent-encoded character). After requoting, %74 -> 't'
+            # produces "http://host/path" which would be an absolute URL.
+            # Re-encode the colon to %3A to preserve the relative semantics.
+            colon_pos = path.find(":")
+            if colon_pos > 0 and _has_scheme_prefix(path, colon_pos):
+                path = path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
     if query:
         query = QUERY_REQUOTER(query)
     if fragment:
@@ -1480,6 +1509,12 @@ class URL:
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
+        if not self._scheme and not self._netloc:
+            # Same protection as in encode_url(): prevent the decoded path
+            # from materializing a scheme in a relative URL.
+            colon_pos = path.find(":")
+            if colon_pos > 0 and _has_scheme_prefix(path, colon_pos):
+                path = path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
         query_string = "&".join(
             "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()
