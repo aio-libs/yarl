@@ -1494,7 +1494,7 @@ class URL:
         @classmethod
         def __get_pydantic_json_schema__(
             cls,
-            core_schema: "core_schema.CoreSchema",
+            core_schema: "CoreSchema",
             handler: "GetJsonSchemaHandler",
         ) -> "JsonSchemaValue":
             field_schema: dict[str, Any] = {}
