@@ -5,5 +5,8 @@ github:
 - asvetlov
 - webknjaz
 - Dreamsorcerer
+open_collective: aio-libs
+custom:
+- https://opencollective.com/aiohttp
 
 ...
