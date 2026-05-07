@@ -6,6 +6,7 @@ github:
 - webknjaz
 - Dreamsorcerer
 open_collective: aio-libs
+tidelift: pypi/yarl
 custom:
 - https://opencollective.com/aiohttp
 
