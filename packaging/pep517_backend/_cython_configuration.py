@@ -21,28 +21,6 @@ if _t.TYPE_CHECKING:
     import collections.abc as _c  # noqa: WPS111, WPS301
 
 
-NO_OPTIMIZATION_FLAGS_ENV_VAR = 'YARL_NO_BUILD_OPTIMIZATION_FLAGS'
-"""
-Environment variable name to opt out of hardcoded release-build flags.
-
-When set to a truthy value (``1``, ``true``, ``on``, ``yes``), the PEP 517
-backend will not inject the default release-mode compiler/linker flags
-(``-g0 -Ofast -DNDEBUG`` and ``-s``). The user's :envvar:`CFLAGS` and
-:envvar:`LDFLAGS` (and any flags from :file:`pyproject.toml`) are still
-applied. Intended for downstream packagers (Linux distributions, Homebrew,
-MacPorts, etc.) that build with their own optimization and debug-symbol
-conventions.
-"""  # noqa: WPS322
-
-
-def _should_inject_release_flags() -> bool:
-    """Return ``True`` unless the user opted out via env var."""
-    truthy_values = {'1', 'true', 'on', 'yes'}
-    return os.environ.get(
-        NO_OPTIMIZATION_FLAGS_ENV_VAR, '',
-    ).lower() not in truthy_values
-
-
 class Config(_t.TypedDict):
     """Data structure for the TOML config."""
 
@@ -206,6 +184,7 @@ def patched_env(
     env: dict[str, str],
     *,
     cython_line_tracing_requested: bool,
+    no_build_optimization_flags_requested: bool = False,
     original_source_directory: Path | None = None,
     temporary_build_directory: Path | None = None,
 ) -> _c.Iterator[None]:
@@ -243,14 +222,14 @@ def patched_env(
             if cython_line_tracing_requested
             # Release mode:
             else (
-                (
+                ()
+                if no_build_optimization_flags_requested
+                # Downstream-packager mode: keep their own CFLAGS as-is.
+                else (
                     '-g0',  # no debug symbols
                     '-Ofast',  # maximum optimization
                     '-DNDEBUG',  # disable assertions
                 )
-                if _should_inject_release_flags()
-                # Downstream-packager mode: keep their own CFLAGS as-is.
-                else ()
             )
         ),
         *(
@@ -280,10 +259,10 @@ def patched_env(
             if cython_line_tracing_requested
             # Release mode:
             else (
-                ('-s',)  # remove all symbol table and relocation information
-                if _should_inject_release_flags()
+                ()
+                if no_build_optimization_flags_requested
                 # Downstream-packager mode: keep their own LDFLAGS as-is.
-                else ()
+                else ('-s',)  # remove all symbol table and relocation info
             )
         ),
         # Finally, append the user-set env var, ensuring its top priority:

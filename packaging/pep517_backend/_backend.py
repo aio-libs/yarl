@@ -107,6 +107,23 @@ Environment variable name toggle for building C-exts in-place.
 PURE_PYTHON_ENV_VAR = 'YARL_NO_EXTENSIONS'
 """Environment variable name toggle used to opt out of making C-exts."""
 
+NO_OPTIMIZATION_FLAGS_CONFIG_SETTING = 'no-build-optimization-flags'  # noqa: WPS462
+"""
+Config setting name toggle used to opt out of hardcoded release-build flags.
+"""  # noqa: WPS322
+
+NO_OPTIMIZATION_FLAGS_ENV_VAR = 'YARL_NO_BUILD_OPTIMIZATION_FLAGS'
+"""
+Environment variable name toggle used to opt out of hardcoded release-build flags.
+
+When truthy, the PEP 517 backend will not inject the default release-mode
+compiler/linker flags (``-g0 -Ofast -DNDEBUG`` and ``-s``). The user's
+:envvar:`CFLAGS` and :envvar:`LDFLAGS` (and any flags from
+:file:`pyproject.toml`) are still applied. Intended for downstream packagers
+(Linux distributions, Homebrew, MacPorts, etc.) that build with their own
+optimization and debug-symbol conventions.
+"""  # noqa: WPS322
+
 IS_CPYTHON = _system_implementation.name == 'cpython'
 """A flag meaning that the current interpreter implementation is CPython."""
 
@@ -172,6 +189,17 @@ def _build_inplace(
         BUILD_INPLACE_CONFIG_SETTING,
         BUILD_INPLACE_ENV_VAR,
         default=default,
+    )
+
+
+def _no_build_optimization_flags(
+    config_settings: _ConfigDict | None = None,
+) -> bool:
+    return _get_setting_value(
+        config_settings,
+        NO_OPTIMIZATION_FLAGS_CONFIG_SETTING,
+        NO_OPTIMIZATION_FLAGS_ENV_VAR,
+        default=False,
     )
 
 
@@ -298,6 +326,9 @@ def maybe_prebuild_c_extensions(
         config_settings,
         default=line_trace_cython_when_unset,
     )
+    no_build_optimization_flags_requested = _no_build_optimization_flags(
+        config_settings,
+    )
     is_pure_python_build = _make_pure_python(config_settings)
 
     if is_pure_python_build:
@@ -372,6 +403,9 @@ def maybe_prebuild_c_extensions(
         with _patched_cython_env(
             config['env'],
             cython_line_tracing_requested=cython_line_tracing_requested,
+            no_build_optimization_flags_requested=(
+                no_build_optimization_flags_requested
+            ),
             original_source_directory=original_src_dir,
             temporary_build_directory=tmp_build_dir,
         ):
