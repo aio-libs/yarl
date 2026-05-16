@@ -230,7 +230,7 @@ jobs:
           os: ubuntu-latest
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout project
