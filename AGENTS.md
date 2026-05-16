@@ -49,9 +49,7 @@ the repo does not ship its own `.github/PULL_REQUEST_TEMPLATE.md`,
 maintainers expect every PR body to follow this exact structure.
 Do not invent your own `## What / ## Why / ## How / ## Testing`
 layout; that is the marker that the PR was written by an agent
-without reading the conventions. See the cautionary example at
-[aio-libs/multidict#1336](https://github.com/aio-libs/multidict/pull/1336)
-for a PR that was closed for this reason.
+without reading the conventions.
 
 Fill out the template verbatim, like so:
 
