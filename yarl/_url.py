@@ -1485,12 +1485,12 @@ class URL:
         for segment in other:
             if not isinstance(segment, str):
                 raise TypeError("Argument should be str")
-            quoted = PATH_SAFE_QUOTER(segment)
-            if quoted == ".":
-                quoted = "%2E"
-            elif quoted == "..":
-                quoted = "%2E%2E"
-            safe_segments.append(quoted)
+            if segment == ".":
+                safe_segments.append("%2E")
+            elif segment == "..":
+                safe_segments.append("%2E%2E")
+            else:
+                safe_segments.append(PATH_SAFE_QUOTER(segment))
         return self._make_child(safe_segments, encoded=True)
 
     def human_repr(self) -> str:
