@@ -557,7 +557,7 @@ class URL:
 
     def __truediv__(self, name: str) -> "URL":
         if not isinstance(name, str):
-            return NotImplemented  # type: ignore[unreachable]
+            return NotImplemented
         return self._make_child((str(name),))
 
     def __mod__(self, query: Query) -> "URL":
