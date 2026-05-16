@@ -124,9 +124,25 @@ previously parsed by silently dropping the prefix
 -- by :user:`github-handle`.
 ```
 
-You do not know the PR number before pushing. Open the PR first
-to get the number, then rename the file in a follow-up commit on
-the same branch (or use the issue number if one exists).
+Pick the number for the fragment filename as follows:
+
+- **If the change has a linked issue, name the fragment after
+  the issue number** (e.g. `CHANGES/1234.bugfix.rst` for a fix
+  that closes `#1234`). The issue number is stable and known
+  before the PR is opened.
+- **If there is no linked issue,** you will not know the PR
+  number until after `gh pr create`. Open the PR first, then add
+  the fragment as a follow-up commit on the same branch using
+  the assigned PR number.
+- **If both an issue and a PR number are in play and you want
+  both to resolve,** keep the issue-numbered file as the real
+  fragment and add a symlink at `CHANGES/<pr_number>.<category>.rst`
+  pointing to it, so towncrier and the GitHub cross-reference
+  both find the entry:
+
+  ```bash
+  ln -s 1234.bugfix.rst CHANGES/1240.bugfix.rst
+  ```
 
 ### 3. Open the PR as a draft
 
