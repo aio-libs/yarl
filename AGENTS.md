@@ -144,10 +144,14 @@ Pick the number for the fragment filename as follows:
   ln -s 1234.bugfix.rst CHANGES/1240.bugfix.rst
   ```
 
-### 3. Open the PR as a draft
+### 3. Open the PR as a draft, and leave it that way
 
-Use `gh pr create --draft`. The maintainer will mark it ready
-once they have looked it over. Do not request reviewers yourself.
+Use `gh pr create --draft`. **Do not mark the PR ready
+yourself.** Maintainers do not review drafts, so the draft state
+is the agent's hand-off to a human reviewer; only once that
+human has fully reviewed the change should the PR be flipped
+out of draft. Do not request reviewers from the agent session
+either; the human who marks it ready will route it.
 
 ### 4. Disclose the agent, do not advertise it
 
@@ -283,5 +287,8 @@ exercises the runnable examples in the docs.
   or commit messages.
 - Do not commit Cython build artefacts (`*.c`, `*.html`, `*.so`)
   alongside source changes.
-- Do not request reviewers from the agent session; leave the PR
-  as a draft and let the maintainer route it.
+- Do not mark the PR ready for review yourself; that is the
+  human reviewer's call, not the agent's. Maintainers do not
+  look at drafts.
+- Do not request reviewers from the agent session; the human
+  who flips the PR out of draft will route it.
