@@ -1,5 +1,24 @@
 # Notes for LLM contributors
 
+## Rule zero: prove it works before opening the PR
+
+**Your job is to deliver code that is proven to work.** If you
+have not proven the change works, it is not time to open the PR
+yet. "It compiles", "type checks pass", and "the diff looks
+right" are not proof. Proof is: the relevant tests run locally
+and pass, the new behaviour is exercised by a test you added or
+extended, and any user-visible path you touched has been
+executed end-to-end. If you cannot run the suite in your
+environment, say so explicitly in the PR body rather than
+implying coverage you did not actually achieve. Opening a PR
+that turns out not to work wastes the reviewer's time and is
+the single fastest way to lose trust on this repo.
+
+The rest of this document covers how to dress up that proven
+change for review. None of it matters if rule zero is not met.
+
+---
+
 Read this before opening a pull request against `aio-libs/yarl`.
 Agents keep getting the same things wrong in this repo, so the
 rules below are not optional. If you are about to skip a section
@@ -146,12 +165,18 @@ Pick the number for the fragment filename as follows:
 
 ### 3. Open the PR as a draft, and leave it that way
 
-Use `gh pr create --draft`. **Do not mark the PR ready
-yourself.** Maintainers do not review drafts, so the draft state
-is the agent's hand-off to a human reviewer; only once that
-human has fully reviewed the change should the PR be flipped
-out of draft. Do not request reviewers from the agent session
-either; the human who marks it ready will route it.
+Use `gh pr create --draft`. **Every LLM-authored submission
+must be fully reviewed by a human before it is marked ready
+out of draft, with no exceptions.** That review is the
+responsibility of the person running the agent, not of the
+project maintainers; do not shift the burden of reviewing LLM
+work onto them. Maintainers do not look at drafts, so the
+draft state is the agent's hand-off to the operator's review,
+not a request for the project to review the code on the
+operator's behalf. Do not mark the PR ready yourself, and do
+not request reviewers from the agent session; the human who
+reviewed the change and flipped it out of draft is the one who
+routes it.
 
 ### 4. Disclose the agent, do not advertise it
 
@@ -274,6 +299,11 @@ exercises the runnable examples in the docs.
 
 ## Things not to do
 
+- Do not open a PR for code you have not proven works (see
+  _Rule zero_ at the top of this file). Run the relevant tests,
+  cover the new behaviour with a test, exercise the user-visible
+  path end-to-end, and say so honestly in the PR body if any of
+  that was not possible in your environment.
 - Do not invent a `## What / ## Why / ## How / ## Testing` PR
   body; use the aio-libs template above.
 - Do not skip the `CHANGES/` fragment "because the change is
@@ -288,7 +318,10 @@ exercises the runnable examples in the docs.
 - Do not commit Cython build artefacts (`*.c`, `*.html`, `*.so`)
   alongside source changes.
 - Do not mark the PR ready for review yourself; that is the
-  human reviewer's call, not the agent's. Maintainers do not
-  look at drafts.
+  call of the human running the agent, not the agent itself.
+  Maintainers do not look at drafts, but that does not mean
+  they should be doing your review; the operator is responsible
+  for reviewing the LLM-authored change before flipping the PR
+  out of draft.
 - Do not request reviewers from the agent session; the human
   who flips the PR out of draft will route it.
