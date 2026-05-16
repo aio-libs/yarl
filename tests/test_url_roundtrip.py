@@ -70,7 +70,7 @@ def test_str_url_roundtrip_concrete_examples(url: str) -> None:
     query=_safe_text(max_size=20),
     fragment=_safe_text(max_size=20),
 )
-def test_str_url_roundtrip_is_idempotent(
+def test_str_url_roundtrip_is_idempotent(  # type: ignore[misc]
     scheme: str,
     host: str,
     path: str,
@@ -92,7 +92,7 @@ def test_str_url_roundtrip_is_idempotent(
     port=st.one_of(st.none(), st.integers(min_value=1, max_value=65535)),
     path=_safe_path(max_size=30),
 )
-def test_build_components_survive_str_parse_roundtrip(
+def test_build_components_survive_str_parse_roundtrip(  # type: ignore[misc]
     scheme: str,
     host: str,
     port: int | None,
@@ -120,7 +120,7 @@ def test_build_components_survive_str_parse_roundtrip(
     query_key=_safe_text(min_size=1, max_size=15),
     query_value=_safe_text(max_size=15),
 )
-def test_query_pair_survives_roundtrip(
+def test_query_pair_survives_roundtrip(  # type: ignore[misc]
     query_key: str,
     query_value: str,
 ) -> None:
@@ -136,7 +136,7 @@ def test_query_pair_survives_roundtrip(
 
 
 @given(fragment=_safe_text(max_size=30))
-def test_fragment_roundtrips(fragment: str) -> None:
+def test_fragment_roundtrips(fragment: str) -> None:  # type: ignore[misc]
     """Safe fragments are preserved verbatim."""
     built = URL.build(scheme="https", host="example.com", fragment=fragment)
     parsed = URL(str(built))
@@ -156,7 +156,7 @@ def test_fragment_roundtrips(fragment: str) -> None:
         path=_safe_path(max_size=20),
     )
 )
-def test_repeated_normalization_reaches_fixed_point(s: str) -> None:
+def test_repeated_normalization_reaches_fixed_point(s: str) -> None:  # type: ignore[misc]
     """Normalization must be idempotent after at most one application."""
     once = str(URL(s))
     twice = str(URL(once))
@@ -168,7 +168,7 @@ def test_repeated_normalization_reaches_fixed_point(s: str) -> None:
     host=_safe_text(min_size=1, max_size=15),
     path=_safe_path(max_size=20),
 )
-def test_equal_urls_hash_equal(scheme: str, host: str, path: str) -> None:
+def test_equal_urls_hash_equal(scheme: str, host: str, path: str) -> None:  # type: ignore[misc]
     """Equal URLs must produce equal hashes (Python contract)."""
     path = "/" + path if path else ""
     u1 = URL.build(scheme=scheme, host=host, path=path)
