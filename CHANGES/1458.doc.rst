@@ -1,0 +1,4 @@
+Documented that query parameter values implementing :class:`~typing.SupportsInt`
+(e.g. :class:`uuid.UUID`, :class:`~enum.IntEnum`) are coerced to their integer
+representation via ``str(int(value))``, and that callers wanting the canonical
+string form must convert explicitly with ``str()`` -- by :user:`aiolibsbot`.

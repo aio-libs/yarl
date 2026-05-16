@@ -696,6 +696,10 @@ section generates a new :class:`URL` instance.
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
 
+      Values implementing :class:`~typing.SupportsInt` (e.g. :class:`uuid.UUID`,
+      :class:`~enum.IntEnum`) are coerced via ``str(int(value))``; see
+      :ref:`yarl-supportsint-coercion`.
+
    .. doctest::
 
       >>> URL('http://example.com/path?a=b').with_query('c=d')
@@ -753,6 +757,10 @@ section generates a new :class:`URL` instance.
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
 
+      Values implementing :class:`~typing.SupportsInt` (e.g. :class:`uuid.UUID`,
+      :class:`~enum.IntEnum`) are coerced via ``str(int(value))``; see
+      :ref:`yarl-supportsint-coercion`.
+
    .. doctest::
 
       >>> URL('http://example.com/path?a=b&b=1').extend_query(b='2')
@@ -799,6 +807,10 @@ section generates a new :class:`URL` instance.
 
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
+
+      Values implementing :class:`~typing.SupportsInt` (e.g. :class:`uuid.UUID`,
+      :class:`~enum.IntEnum`) are coerced via ``str(int(value))``; see
+      :ref:`yarl-supportsint-coercion`.
 
    .. doctest::
 

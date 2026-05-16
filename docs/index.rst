@@ -166,6 +166,37 @@ because it is specific to how the end-user's application is built and would be d
 for different apps.  The library doesn't accept booleans in the API; a user should
 convert bools into strings using own preferred translation protocol.
 
+.. _yarl-supportsint-coercion:
+
+How are integer-like objects (e.g. ``uuid.UUID``) serialized?
+-------------------------------------------------------------
+
+Query parameter values that are not :class:`str`, :class:`int`, or :class:`float`
+but implement :class:`~typing.SupportsInt` (i.e. define ``__int__``) are coerced
+to their integer representation with ``str(int(value))``.
+
+This includes :class:`uuid.UUID`, :class:`~enum.IntEnum`, :class:`~ipaddress.IPv4Address`,
+and any third-party class that defines ``__int__``.
+
+.. doctest::
+
+   >>> import uuid
+   >>> from yarl import URL
+   >>> u = uuid.UUID("3199712f-1b78-4420-852b-a73ee09e6a8f")
+   >>> URL("http://example.com").with_query(id=u)
+   URL('http://example.com/?id=65928888857327045292976149998723820175')
+
+If the canonical string form is desired instead, convert the value explicitly:
+
+.. doctest::
+
+   >>> URL("http://example.com").with_query(id=str(u))
+   URL('http://example.com/?id=3199712f-1b78-4420-852b-a73ee09e6a8f')
+
+``yarl`` cannot know which representation the receiving server expects, so it
+applies the same integer-coercion rule to every ``SupportsInt`` value. Explicit
+``str()`` conversion at the call site is the recommended way to opt out.
+
 .. _yarl-pydantic-support:
 
 The :class:`~yarl.URL` could be used as a field type in pydantic_ models seamlessly::
