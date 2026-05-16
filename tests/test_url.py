@@ -1117,7 +1117,7 @@ def test_joinpath_backtrack_to_base() -> None:
 
 
 @pytest.mark.parametrize(
-    ("base", "to_join", "expected"),
+    "base,to_join,expected",
     [
         pytest.param(
             "/api/v1/",
