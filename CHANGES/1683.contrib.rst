@@ -1,0 +1,3 @@
+Raised the per-matrix-cell timeout of the CI ``Test`` job from
+5 to 10 minutes to prevent false failures on slower runners
+-- by :user:`aiolibsbot`.
