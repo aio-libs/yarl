@@ -44,6 +44,7 @@ from ._quoters import (
     FRAGMENT_REQUOTER,
     PATH_QUOTER,
     PATH_REQUOTER,
+    PATH_SAFE_QUOTER,
     PATH_SAFE_UNQUOTER,
     PATH_UNQUOTER,
     QS_UNQUOTER,
@@ -1470,6 +1471,27 @@ class URL:
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
         """Return a new URL with the elements in other appended to the path."""
         return self._make_child(other, encoded=encoded)
+
+    def joinpath_safe(self, *other: str) -> "URL":
+        """Append path segments while preventing path traversal.
+
+        Unlike :meth:`joinpath`, each argument is treated as a single path
+        segment: ``/`` characters inside an argument are percent-encoded so
+        they cannot introduce additional segments, and segments consisting
+        entirely of ``.`` or ``..`` are percent-encoded so they cannot be
+        interpreted as relative-path indicators.
+        """
+        safe_segments: list[str] = []
+        for segment in other:
+            if not isinstance(segment, str):
+                raise TypeError("Argument should be str")
+            quoted = PATH_SAFE_QUOTER(segment)
+            if quoted == ".":
+                quoted = "%2E"
+            elif quoted == "..":
+                quoted = "%2E%2E"
+            safe_segments.append(quoted)
+        return self._make_child(safe_segments, encoded=True)
 
     def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
