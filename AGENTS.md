@@ -149,10 +149,16 @@ Pick the number for the fragment filename as follows:
   the issue number** (e.g. `CHANGES/1234.bugfix.rst` for a fix
   that closes `#1234`). The issue number is stable and known
   before the PR is opened.
-- **If there is no linked issue,** you will not know the PR
-  number until after `gh pr create`. Open the PR first, then add
-  the fragment as a follow-up commit on the same branch using
-  the assigned PR number.
+- **If there is no linked issue,** you have two options:
+  - Open the PR first, then add the fragment as a follow-up
+    commit on the same branch using the assigned PR number; or
+  - Guess the next PR number (scan
+    `gh pr list --state all --limit 5` for the current top of
+    the range), include the fragment in your initial push, and
+    rename in a follow-up commit if the guess was off by the
+    time the PR opened. This PR (`1685.contrib.rst`, opened as
+    `#1685`) is an example of the guess-and-pray path working
+    on the first try.
 - **If both an issue and a PR number are in play and you want
   both to resolve,** keep the issue-numbered file as the real
   fragment and add a symlink at `CHANGES/<pr_number>.<category>.rst`
