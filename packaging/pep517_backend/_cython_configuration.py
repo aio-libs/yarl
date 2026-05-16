@@ -232,8 +232,7 @@ def patched_env(
             if temporary_build_directory is None
             # Temporary build directory mode:
             else (
-                '-ffile-prefix-map='
-                f'{temporary_build_directory!s}={original_source_directory!s}',
+                f'-ffile-prefix-map={temporary_build_directory!s}={original_source_directory!s}',
             )
         ),
         # Finally, append the user-set env var, ensuring its top priority:

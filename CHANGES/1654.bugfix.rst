@@ -1,0 +1,4 @@
+Fixed a parsing issue where URLs containing text before an opening bracket
+in the host component (e.g. ``http://127.0.0.1[aa::ff]``) were silently accepted
+instead of being rejected as strictly invalid per RFC 3986
+-- by :user:`rodrigobnogueira`.
