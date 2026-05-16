@@ -21,10 +21,7 @@ from yarl import URL
 # Characters that survive ``yarl``'s default per-component quoting unchanged.
 # All of these are members of RFC 3986 ``unreserved``.
 _UNRESERVED = (
-    "abcdefghijklmnopqrstuvwxyz"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "0123456789"
-    "-._~"
+    "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789" "-._~"
 )
 
 # Schemes whose default ports yarl strips from ``str(URL)``.
