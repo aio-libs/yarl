@@ -282,6 +282,42 @@ benchmark leg for the quoting hot path. Do not regress
 `tests/test_url_benchmarks.py` without flagging the trade-off in
 the PR body.
 
+### Every line in a test must be covered
+
+The coverage gate applies to test code too, not just `yarl/`. A
+test that contains a branch or statement the suite never reaches
+will fail CI. This catches a class of mistake agents make all
+the time: defensive `raise` inside a monkeypatched stub, a
+cleanup branch behind `if had_own_getstate:` that the happy path
+never enters, an `else` arm guarding a condition that is always
+true under the fixture. From the perspective of a unit suite all
+of those lines are dead code, and the coverage report flags them
+the same as dead code in `yarl/`.
+
+Design tests so every line runs:
+
+- Drive the fixture deterministically so both arms of any
+  conditional are hit, or drop the conditional entirely and
+  assert the single shape you actually set up.
+- Do not add `raise TypeError("must not be invoked")` guards
+  inside stubs the test installs; if the stub is never meant to
+  fire, either omit it or assert at the call site that it did
+  not. An unreachable `raise` is the most common form of this
+  failure.
+- Cleanup branches that only run when setup took a particular
+  shape (`if had_own_getstate: ...` style restores) need a
+  second test, or a parametrize, that exercises the other shape.
+  If you cannot justify the second case, unconditionally restore
+  instead.
+- Prefer `monkeypatch` (which auto-reverts) over hand-rolled
+  save/restore blocks; the auto-revert path has no untaken
+  branch for coverage to flag.
+
+See [aio-libs/yarl#1687](https://github.com/aio-libs/yarl/pull/1687)
+for the canonical example: the test added an unreachable `raise`
+inside a patched `__getstate__` and a conditional restore of the
+original attribute, both of which CI rejected as uncovered.
+
 ## Cython quoter
 
 `yarl/_quoting_c.pyx` is the compiled quoter; `yarl/_quoting_py.py`
@@ -323,6 +359,11 @@ exercises the runnable examples in the docs.
   or commit messages.
 - Do not commit Cython build artefacts (`*.c`, `*.html`, `*.so`)
   alongside source changes.
+- Do not leave unreachable lines in tests (defensive `raise`
+  inside a stub the suite never invokes, cleanup branches that
+  only run for a setup shape the test does not exercise). The
+  coverage gate applies to test code; see _Every line in a test
+  must be covered_ above.
 - Do not mark the PR ready for review yourself; that is the
   call of the human running the agent, not the agent itself.
   Maintainers do not look at drafts, but that does not mean
