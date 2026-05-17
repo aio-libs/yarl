@@ -1,4 +1,5 @@
 import pickle
+from urllib.parse import SplitResult
 
 from yarl import URL
 
@@ -13,6 +14,13 @@ def test_pickle() -> None:
     assert u1._cache
     assert not u2._cache
     assert hash(u1) == hash(u2)
+
+
+def test_pickle_state_uses_plain_tuple() -> None:
+    state = URL("picklepickle").__getstate__()
+
+    assert type(state[0]) is tuple
+    assert not isinstance(state[0], SplitResult)
 
 
 def test_default_style_state() -> None:
