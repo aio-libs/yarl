@@ -4,7 +4,7 @@ requires = [
   # NOTE: provisioning of the in-tree build backend located under
   # NOTE: `packaging/pep517_backend/`.
   "expandvars",
-  "setuptools >= 47",  # Minimum required for `version = attr:`
+  "setuptools >= 82.0.1",  # Minimum required for `version = attr:`
   "tomli; python_version < '3.11'",
 ]
 backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
@@ -123,7 +123,6 @@ freethreading_compatible = "True"
 
 [tool.cibuildwheel]
 build-frontend = "build"
-enable = ["cpython-freethreading"]
 before-test = [
   # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
   # NOTE: constraints unset. The hope is that pip will cache that wheel
