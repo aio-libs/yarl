@@ -8,13 +8,6 @@ repos:
   rev: 'v6.0.0'
   hooks:
   - id: check-merge-conflict
-- repo: https://github.com/asottile/yesqa
-  rev: v1.5.0
-  hooks:
-  - id: yesqa
-    exclude: ^packaging/pep517_backend/.+$
-    additional_dependencies:
-    - wemake-python-styleguide
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
   rev: v0.15.9
   hooks:
@@ -26,6 +19,16 @@ repos:
     - --fix  # NOTE: When `--fix` is used, linting should be before ruff-format
     - --show-fixes
     files: ^packaging/pep517_backend/.+$
+
+- repo: https://github.com/astral-sh/ruff-pre-commit.git
+  rev: v0.15.9
+  hooks:
+  - id: ruff-check
+    name: ruff check | yarl & tests
+    # Uses the [tool.ruff] config in pyproject.toml. Currently enforces
+    # PLC0415 (top-level imports) repo-wide; legitimate lazy imports
+    # must be opted in with `# noqa: PLC0415` + a comment.
+    exclude: ^packaging/pep517_backend/.+$
 
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
   rev: v0.15.9

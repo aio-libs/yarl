@@ -121,6 +121,24 @@ freethreading_compatible = "True"
 #error_on_unknown_names = "True"
 #error_on_uninitialized = "True"
 
+[tool.ruff]
+# The packaging/pep517_backend/ tree has its own .ruff.toml and is linted
+# under that config via a separate pre-commit hook.
+extend-exclude = ["packaging/pep517_backend"]
+
+[tool.ruff.lint]
+# Keep this list small and intentional; the rest of the project still
+# relies on flake8 + isort + black. The rules below are ones we want to
+# enforce repo-wide as a baseline.
+select = [
+  # Imports must live at the top of the module. Late/inside-function
+  # imports must be opted into explicitly with `# noqa: PLC0415` and a
+  # comment explaining why (e.g. avoiding a heavy optional dependency
+  # in the import path). Enforced because AI-assisted contributions
+  # frequently introduce function-scoped imports that are unnecessary.
+  "PLC0415",
+]
+
 [tool.cibuildwheel]
 build-frontend = "build"
 before-test = [
