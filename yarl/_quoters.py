@@ -1,7 +1,7 @@
 """Quoting and unquoting utilities for URL parts."""
 
-from functools import lru_cache
 import re
+from functools import lru_cache
 from urllib.parse import quote
 
 from ._quoting import _Quoter, _Unquoter
@@ -36,7 +36,9 @@ def _human_quote_re(unsafe: str) -> re.Pattern[str]:
 def human_quote(s: str | None, unsafe: str) -> str | None:
     if not s:
         return s
-    if s.isalnum() or ("/" not in unsafe and (s == "/" or s.startswith("/") and s[1:].isalnum())):
+    if s.isalnum() or (
+        "/" not in unsafe and (s == "/" or s.startswith("/") and s[1:].isalnum())
+    ):
         return s
     if _human_quote_re(unsafe).search(s):
         s = s.translate(_human_quote_table(unsafe))
