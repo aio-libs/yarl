@@ -1,8 +1,6 @@
 import pickle
 from urllib.parse import SplitResult
 
-import pytest
-
 from yarl import URL
 
 # serialize
@@ -80,9 +78,7 @@ def test_pickle_legacy_splitresult_state() -> None:
     assert u._fragment == "frag"
 
 
-def test_pickle_state_survives_strict_splitresult_getstate(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_pickle_state_survives_strict_splitresult_getstate() -> None:
     """Regression test for gh-1632.
 
     Python 3.15 added a ``SplitResult.__getstate__`` that touches instance
@@ -94,10 +90,22 @@ def test_pickle_state_survives_strict_splitresult_getstate(
     def _strict_getstate(self: SplitResult) -> None:
         raise TypeError("SplitResult.__getstate__ must not be invoked")
 
-    monkeypatch.setattr(SplitResult, "__getstate__", _strict_getstate, raising=False)
-    u1 = URL("http://example.com/path?q=1#frag")
-    hash(u1)
-    v = pickle.dumps(u1)
-    u2 = pickle.loads(v)
-    assert u1 == u2
-    assert hash(u1) == hash(u2)
+    # Install the strict ``__getstate__`` directly on the class. Using
+    # ``monkeypatch.setattr(..., raising=False)`` is unreliable on Python 3.10
+    # (where ``object`` lacks ``__getstate__``) so we manage the lifecycle by
+    # hand to keep the test version-agnostic.
+    had_own_getstate = "__getstate__" in SplitResult.__dict__
+    saved = SplitResult.__dict__.get("__getstate__")
+    SplitResult.__getstate__ = _strict_getstate  # type: ignore[method-assign]
+    try:
+        u1 = URL("http://example.com/path?q=1#frag")
+        hash(u1)
+        v = pickle.dumps(u1)
+        u2 = pickle.loads(v)
+        assert u1 == u2
+        assert hash(u1) == hash(u2)
+    finally:
+        if had_own_getstate:
+            SplitResult.__getstate__ = saved  # type: ignore[method-assign]
+        else:
+            del SplitResult.__getstate__
