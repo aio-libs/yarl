@@ -1516,7 +1516,10 @@ class URL:
             source_type: type[Self] | type[str],
             handler: "GetCoreSchemaHandler",
         ) -> "CoreSchema":
-            from pydantic_core import core_schema
+            # Lazy import: pulling in pydantic_core at module load time
+            # increases yarl's import cost 3-7x for users who don't use
+            # pydantic. Keep this import function-scoped.
+            from pydantic_core import core_schema  # noqa: PLC0415
 
             from_str_schema = core_schema.chain_schema(
                 [
