@@ -696,6 +696,20 @@ section generates a new :class:`URL` instance.
       Please see :ref:`yarl-bools-support` for the reason why :class:`bool` is not
       supported out-of-the-box.
 
+      .. tip::
+
+         Types that implement :meth:`~object.__int__` (e.g. :class:`~uuid.UUID`)
+         are converted to integers because :class:`int` is preferred over
+         :class:`str` for numeric coercion.  If you need the human-readable
+         representation, cast the value to :class:`str` before passing it:
+
+         .. doctest::
+
+            >>> import uuid
+            >>> uid = uuid.UUID('3199712f-1b78-4420-852b-a73ee09e6a8f')
+            >>> URL('http://example.com/').with_query({'id': str(uid)})
+            URL('http://example.com/?id=3199712f-1b78-4420-852b-a73ee09e6a8f')
+
    .. doctest::
 
       >>> URL('http://example.com/path?a=b').with_query('c=d')

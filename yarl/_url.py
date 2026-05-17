@@ -564,7 +564,7 @@ class URL:
 
     def __truediv__(self, name: str) -> "URL":
         if not isinstance(name, str):
-            return NotImplemented  # type: ignore[unreachable]
+            return NotImplemented
         return self._make_child((str(name),))
 
     def __mod__(self, query: Query) -> "URL":
@@ -573,8 +573,15 @@ class URL:
     def __bool__(self) -> bool:
         return bool(self._netloc or self._path or self._query or self._fragment)
 
-    def __getstate__(self) -> tuple[SplitResult]:
-        return (tuple.__new__(SplitResult, self._val),)
+    def __getstate__(self) -> tuple[SplitURLType]:
+        # Return a plain tuple rather than a ``SplitResult``. Constructing a
+        # ``SplitResult`` via ``tuple.__new__`` skips its ``__init__`` and on
+        # Python 3.15+ leaves ``_keep_empty`` unset, which breaks pickling: the
+        # new ``SplitResult.__getstate__`` indexes a state that ends up as
+        # ``None`` (gh-1632). ``__setstate__`` already unpacks both shapes, so
+        # pickles produced by older yarl releases (which embed a real
+        # ``SplitResult``) still load correctly.
+        return (self._val,)
 
     def __setstate__(
         self, state: tuple[SplitURLType] | tuple[None, _InternalURLCache]
