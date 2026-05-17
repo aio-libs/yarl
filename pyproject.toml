@@ -128,9 +128,13 @@ extend-exclude = ["packaging/pep517_backend"]
 
 [tool.ruff.lint]
 # Keep this list small and intentional; the rest of the project still
-# relies on flake8 + isort + black. The rules below are ones we want to
-# enforce repo-wide as a baseline.
+# relies on flake8 for general style. The rules below are ones we want
+# to enforce repo-wide as a baseline.
 select = [
+  # Import sorting. Replaces the dedicated isort pre-commit hook so the
+  # formatter (ruff format) and the import sorter (ruff check --select I)
+  # come from the same tool and rev.
+  "I",
   # Imports must live at the top of the module. Late/inside-function
   # imports must be opted into explicitly with `# noqa: PLC0415` and a
   # comment explaining why (e.g. avoiding a heavy optional dependency

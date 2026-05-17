@@ -53,6 +53,7 @@ sdist
 subclass
 subclasses
 subcomponent
+subtree
 svetlov
 uncompiled
 unencoded
