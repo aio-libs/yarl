@@ -4,6 +4,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from enum import Enum
 from functools import _CacheInfo, lru_cache
+from importlib.util import find_spec
 from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
@@ -55,14 +56,14 @@ from ._quoters import (
     human_quote,
 )
 
-try:
+# Avoid Pydantic import if not used (increases yarl's import time by 3-7x).
+HAS_PYDANTIC = (
+    find_spec("pydantic") is not None and find_spec("pydantic_core") is not None
+)
+if TYPE_CHECKING:
     from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
     from pydantic.json_schema import JsonSchemaValue
-    from pydantic_core import core_schema
-
-    HAS_PYDANTIC = True
-except ImportError:
-    HAS_PYDANTIC = False
+    from pydantic_core import CoreSchema
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
@@ -1501,16 +1502,22 @@ class URL:
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
-            cls, core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
-        ) -> JsonSchemaValue:
+            cls,
+            core_schema: "CoreSchema",
+            handler: "GetJsonSchemaHandler",
+        ) -> "JsonSchemaValue":
             field_schema: dict[str, Any] = {}
             field_schema.update(type="string", format="uri")
             return field_schema
 
         @classmethod
         def __get_pydantic_core_schema__(
-            cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
-        ) -> core_schema.CoreSchema:
+            cls,
+            source_type: type[Self] | type[str],
+            handler: "GetCoreSchemaHandler",
+        ) -> "CoreSchema":
+            from pydantic_core import core_schema
+
             from_str_schema = core_schema.chain_schema(
                 [
                     core_schema.str_schema(),
