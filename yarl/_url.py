@@ -88,6 +88,10 @@ NOT_REG_NAME = re.compile(
     """,
     re.VERBOSE,
 )
+ASCII_REG_NAME_ALLOWED = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~!$&'()*+,;="
+)
+ASCII_HEXDIGITS = frozenset("0123456789abcdefABCDEF")
 
 _T = TypeVar("_T")
 
@@ -1544,6 +1548,44 @@ def _idna_encode(host: str) -> str:
         return host.encode("idna").decode("ascii")
 
 
+def _find_invalid_host_char(host: str) -> tuple[str, int] | None:
+    if host.isascii():
+        if invalid := NOT_REG_NAME.search(host):
+            return invalid.group(), invalid.start()
+        return None
+
+    # The IDNA 2003 fallback accepts ASCII delimiters inside non-ASCII labels.
+    # Those delimiters are still invalid in a reg-name host.
+    for pos, value in enumerate(host):
+        if not value.isascii():
+            continue
+        if value == "%":
+            if (
+                pos + 2 >= len(host)
+                or host[pos + 1] not in ASCII_HEXDIGITS
+                or host[pos + 2] not in ASCII_HEXDIGITS
+            ):
+                return value, pos
+        elif value not in ASCII_REG_NAME_ALLOWED:
+            return value, pos
+    return None
+
+
+def _validate_host(host: str) -> None:
+    if invalid := _find_invalid_host_char(host):
+        value, pos = invalid
+        extra = ""
+        if value == "@" or (value == ":" and "@" in host[pos:]):
+            # this looks like an authority string
+            extra = (
+                ", if the value includes a username or password, "
+                "use 'authority' instead of 'host'"
+            )
+        raise ValueError(
+            f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
+        ) from None
+
+
 @lru_cache(_DEFAULT_ENCODE_SIZE)
 def _encode_host(host: str, validate_host: bool) -> str:
     """Encode host part of URL."""
@@ -1583,22 +1625,15 @@ def _encode_host(host: str, validate_host: bool) -> str:
 
     # IDNA encoding is slow, skip it for ASCII-only strings
     if host.isascii():
-        # Check for invalid characters explicitly; _idna_encode() does this
-        # for non-ascii host names.
+        # Check for invalid characters explicitly; _idna_encode() is skipped
+        # for ASCII-only strings.
         host = host.lower()
-        if validate_host and (invalid := NOT_REG_NAME.search(host)):
-            value, pos, extra = invalid.group(), invalid.start(), ""
-            if value == "@" or (value == ":" and "@" in host[pos:]):
-                # this looks like an authority string
-                extra = (
-                    ", if the value includes a username or password, "
-                    "use 'authority' instead of 'host'"
-                )
-            raise ValueError(
-                f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
-            ) from None
+        if validate_host:
+            _validate_host(host)
         return host
 
+    if validate_host:
+        _validate_host(host)
     return _idna_encode(host)
 
 

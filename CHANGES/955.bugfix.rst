@@ -1,0 +1,4 @@
+Rejected non-ASCII ``host`` values passed to ``URL.build()`` and ``URL.with_host()``
+when they contain URI delimiter characters such as ``@`` or ``:``, matching the
+validation already applied to ASCII hosts
+-- by :user:`Sean-Kenneth-Doherty`.

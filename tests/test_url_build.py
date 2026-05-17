@@ -128,6 +128,12 @@ def test_build_with_authority_and_host() -> None:
         ("not_percent_encoded%Zf", False),
         ("still_not_percent_encoded%fZ", False),
         *(("other_gen_delim_" + c, False) for c in "/?#[]"),
+        ("user:pass@éxample.test", True),
+        ("user@éxample.test", True),
+        ("host:éxample.test", False),
+        ("not_percent_encoded%Zféxample.test", False),
+        ("still_not_percent_encoded%fZéxample.test", False),
+        *(("other_non_ascii_gen_delim_" + c + "éxample.test", False) for c in "/?#[]"),
     ],
 )
 def test_build_with_invalid_host(host: str, is_authority: bool) -> None:
@@ -136,6 +142,15 @@ def test_build_with_invalid_host(host: str, is_authority: bool) -> None:
         match += ", if .* use 'authority' instead of 'host'"
     with pytest.raises(ValueError, match=f"{match}$"):
         URL.build(host=host)
+
+
+def test_build_rejects_authority_like_non_ascii_host_with_user() -> None:
+    with pytest.raises(ValueError, match="use 'authority' instead of 'host'"):
+        URL.build(
+            scheme="http",
+            host="user:pass@éxample.test",
+            user="therealusername",
+        )
 
 
 def test_build_with_authority() -> None:

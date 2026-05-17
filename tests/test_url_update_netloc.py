@@ -195,6 +195,12 @@ def test_with_host_non_ascii() -> None:
         ("not_percent_encoded%Zf", False),
         ("still_not_percent_encoded%fZ", False),
         *(("other_gen_delim_" + c, False) for c in "/?#[]"),
+        ("user:pass@éxample.test", True),
+        ("user@éxample.test", True),
+        ("host:éxample.test", False),
+        ("not_percent_encoded%Zféxample.test", False),
+        ("still_not_percent_encoded%fZéxample.test", False),
+        *(("other_non_ascii_gen_delim_" + c + "éxample.test", False) for c in "/?#[]"),
     ],
 )
 def test_with_invalid_host(host: str, is_authority: bool) -> None:
