@@ -27,11 +27,13 @@ class _Quoter:
         protected: str = "",
         qs: bool = False,
         requote: bool = True,
+        unsafe: str = "",
     ) -> None:
         self._safe = safe
         self._protected = protected
         self._qs = qs
         self._requote = requote
+        self._unsafe = unsafe
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -52,6 +54,8 @@ class _Quoter:
         if not self._qs:
             safe += "+&=;"
         safe += self._protected
+        if self._unsafe:
+            safe = "".join(ch for ch in safe if ch not in self._unsafe)
         bsafe = safe.encode("ascii")
         idx = 0
         while idx < len(bval):

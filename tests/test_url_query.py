@@ -242,3 +242,40 @@ def test_update_query_with_sequence_of_pairs() -> None:
     new_url = url.update_query([("a", "1"), ("b", "2")])
     assert new_url.query == MultiDict([("a", "1"), ("b", "2")])
     assert new_url.query_string == "a=1&b=2"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        {"x": ":/?#[]@!$&'()*+,;="},
+        [("x", ":/?#[]@!$&'()*+,;=")],
+    ],
+)
+def test_query_arguments_percent_encode_reserved_chars(
+    query: dict[str, str] | list[tuple[str, str]],
+) -> None:
+    url = URL("https://example.com").with_query(query)
+    assert (
+        url.raw_query_string == "x=%3A%2F?%23%5B%5D%40!%24%26%27%28%29%2A%2B%2C%3B%3D"
+    )
+    assert url.query["x"] == ":/?#[]@!$&'()*+,;="
+
+
+def test_query_arguments_percent_encode_issue_1073_reproducer() -> None:
+    query = {"deviceUdid": '${"freemarker.template.utility.Execute"?new()("ls")}'}
+    url = URL.build(scheme="https", host="foo", query=query)
+    assert (
+        str(url) == "https://foo/?deviceUdid="
+        "%24%7B%22freemarker.template.utility.Execute%22?new%28%29%28%22ls%22%29%7D"
+    )
+    assert URL(str(url)) == url
+    assert url.query["deviceUdid"] == query["deviceUdid"]
+
+
+def test_literal_query_string_preserves_reserved_delimiters() -> None:
+    url = URL.build(
+        scheme="https",
+        host="foo",
+        query="foo=ba=r&next=http://example.com/p?a",
+    )
+    assert str(url) == "https://foo/?foo=ba=r&next=http://example.com/p?a"

@@ -1480,8 +1480,9 @@ class URL:
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
+        query_unsafe = "#&+;=:/@$'()*,"
         query_string = "&".join(
-            "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
+            f"{human_quote(k, query_unsafe)}={human_quote(v, query_unsafe)}"
             for k, v in self.query.items()
         )
         fragment = human_quote(self.fragment, "")

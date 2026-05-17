@@ -2289,8 +2289,8 @@ def test_human_repr_delimiters() -> None:
         ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B\\%5D^_`{|}~"
         "@хост.домен:8080"
         "/ !\"%23$%25&'()*+,-./:;<=>%3F@[\\]^_`{|}~"
-        "? !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
-        "= !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
+        '? !"%23%24%25%26%27%28%29%2A%2B%2C-.%2F%3A%3B<%3D>?%40[\\]^_`{|}~'
+        '= !"%23%24%25%26%27%28%29%2A%2B%2C-.%2F%3A%3B<%3D>?%40[\\]^_`{|}~'
         "# !\"#$%25&'()*+,-./:;<=>?@[\\]^_`{|}~"
     )
 
@@ -2360,8 +2360,8 @@ def test_slash_and_question_in_fragment() -> None:
 
 def test_requoting() -> None:
     u = URL("http://127.0.0.1/?next=http%3A//example.com/")
-    assert u.raw_query_string == "next=http://example.com/"
-    assert str(u) == "http://127.0.0.1/?next=http://example.com/"
+    assert u.raw_query_string == "next=http%3A//example.com/"
+    assert str(u) == "http://127.0.0.1/?next=http%3A//example.com/"
 
 
 def test_join_query_string() -> None:

@@ -122,6 +122,16 @@ def test_safe(quoter: type[_Quoter]) -> None:
     assert ret == quote_by_default
 
 
+def test_unsafe(quoter: type[_Quoter]) -> None:
+    ret = quoter(safe="$", unsafe="$")("$")
+    assert ret == "%24"
+
+
+def test_unsafe_query_defaults(quoter: type[_Quoter]) -> None:
+    ret = quoter(qs=True, unsafe="$'()*,")("$'()*,!")
+    assert ret == "%24%27%28%29%2A%2C!"
+
+
 _SHOULD_QUOTE = [chr(num) for num in range(32)]
 _SHOULD_QUOTE.append(r'<>#"{}|\^[]`')
 _SHOULD_QUOTE.append(chr(127))  # For 0x7F
@@ -506,10 +516,18 @@ def test_unquoter_path_with_plus(unquoter: type[_Unquoter]) -> None:
     assert "/test/x+y+z/:++/" == unquoter(unsafe="+")(s)
 
 
-@given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
-def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
+@given(
+    safe=st.text(),
+    protected=st.text(),
+    qs=st.booleans(),
+    requote=st.booleans(),
+    unsafe=st.text(),
+)
+def test_fuzz__PyQuoter(  # type: ignore[misc]
+    safe: str, protected: str, qs: bool, requote: bool, unsafe: str
+) -> None:
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
-    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote, unsafe=unsafe)
 
 
 @given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
