@@ -385,6 +385,43 @@ def test_host_with_text_before_bracket_is_invalid(url: str) -> None:
         URL(url)
 
 
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://[::1]allowed.example:1/",
+        "http://[::1]evil.com/",
+        "http://[::1]evil.com:8080/",
+        "http://user@[::1]evil.com:1/",
+        "http://[::1]evil/",
+        "http://[::1].:80/",
+    ),
+    ids=(
+        "suffix-with-port",
+        "suffix-no-port",
+        "suffix-with-explicit-port",
+        "userinfo-suffix-with-port",
+        "short-suffix-no-port",
+        "dot-suffix-with-port",
+    ),
+)
+def test_host_with_text_after_bracket_is_invalid(url: str) -> None:
+    """Text after the closing bracket of an IP-literal is invalid.
+
+    Per RFC 3986 §3.2.2, after the closing ']' of an IP-literal only
+    ':' <port> or end-of-authority is valid. Previously yarl silently
+    dropped the suffix (e.g. '[::1]allowed.example:1' -> '[::1]:1'),
+    changing the effective host identity.
+    """
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(url)
+
+
+def test_build_authority_with_text_after_bracket_is_invalid() -> None:
+    """URL.build(authority=...) must also reject text after ']'."""
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL.build(scheme="http", authority="[::1]allowed.example:1", path="/")
+
+
 def test_ipfuture_brackets_not_allowed() -> None:
     with pytest.raises(ValueError, match="IPvFuture address is invalid"):
         URL("http://[v10]/")
