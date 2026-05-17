@@ -200,6 +200,7 @@ def test_with_host_non_ascii() -> None:
         ("host:éxample.test", False),
         ("not_percent_encoded%Zféxample.test", False),
         ("still_not_percent_encoded%fZéxample.test", False),
+        ("incomplete_percent_éxample.test%", False),
         *(("other_non_ascii_gen_delim_" + c + "éxample.test", False) for c in "/?#[]"),
     ],
 )
@@ -210,6 +211,16 @@ def test_with_invalid_host(host: str, is_authority: bool) -> None:
         match += ", if .* use 'authority' instead of 'host'"
     with pytest.raises(ValueError, match=f"{match}$"):
         url.with_host(host=host)
+
+
+def test_with_host_non_ascii_percent_encoded() -> None:
+    url = URL("http://example.com:123")
+    url2 = url.with_host("éxample%41.test")
+
+    assert url2.raw_host == "xn--xample%41-93a.test"
+    assert url2.host == "éxample%41.test"
+    assert url2.raw_authority == "xn--xample%41-93a.test:123"
+    assert url2.authority == "éxample%41.test:123"
 
 
 def test_with_host_percent_encoded() -> None:

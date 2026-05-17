@@ -133,6 +133,7 @@ def test_build_with_authority_and_host() -> None:
         ("host:éxample.test", False),
         ("not_percent_encoded%Zféxample.test", False),
         ("still_not_percent_encoded%fZéxample.test", False),
+        ("incomplete_percent_éxample.test%", False),
         *(("other_non_ascii_gen_delim_" + c + "éxample.test", False) for c in "/?#[]"),
     ],
 )
@@ -142,6 +143,13 @@ def test_build_with_invalid_host(host: str, is_authority: bool) -> None:
         match += ", if .* use 'authority' instead of 'host'"
     with pytest.raises(ValueError, match=f"{match}$"):
         URL.build(host=host)
+
+
+def test_build_with_non_ascii_percent_encoded_host() -> None:
+    url = URL.build(host="éxample%41.test")
+
+    assert url.raw_host == "xn--xample%41-93a.test"
+    assert url.host == "éxample%41.test"
 
 
 def test_build_rejects_authority_like_non_ascii_host_with_user() -> None:
