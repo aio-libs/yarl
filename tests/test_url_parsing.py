@@ -733,3 +733,43 @@ class TestPercentEncodedSchemeBypass:
         u = URL("/path/with:colon")
         assert u.scheme == ""
         assert str(u) == "/path/with:colon"
+
+    @pytest.mark.parametrize(
+        "input_url",
+        [
+            "0t%65st:foo",
+            "+ht%74p:foo",
+            "-ht%74p:foo",
+            ".ht%74p:foo",
+        ],
+        ids=[
+            "digit-start",
+            "plus-start",
+            "minus-start",
+            "dot-start",
+        ],
+    )
+    def test_non_alpha_start_pct_encoded_does_not_materialize_scheme(
+        self, input_url: str
+    ) -> None:
+        """split_url() accepts any scheme_chars in the first position, not just
+        ALPHA, so digit / "+" / "-" / "." starts must also be guarded against
+        scheme materialization on requote."""
+        u = URL(input_url)
+        assert u.scheme == ""
+        assert u.host is None
+
+        reparsed = URL(str(u))
+        assert reparsed.scheme == u.scheme
+        assert reparsed.host == u.host
+        assert reparsed.absolute is False
+
+    def test_relative_path_with_underscore_prefix_not_affected(self) -> None:
+        """Prefixes that cannot form a scheme (contain chars outside
+        scheme_chars) are left alone — the colon stays literal."""
+        # underscore is not in scheme_chars, so "no_scheme:" cannot form a
+        # scheme regardless of decoding.
+        u = URL("no_sch%65me:foo")
+        assert u.scheme == ""
+        assert ":" in str(u)
+        assert "%3A" not in str(u)

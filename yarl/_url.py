@@ -15,7 +15,7 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import SplitResult, uses_relative
+from urllib.parse import SplitResult, scheme_chars, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
@@ -161,19 +161,15 @@ def rewrite_module(obj: _T) -> _T:
 
 
 def _has_scheme_prefix(path: str, colon_pos: int) -> bool:
-    """Check if path[:colon_pos] looks like a valid URL scheme.
+    """Check if path[:colon_pos] would be parsed as a scheme by split_url().
 
-    A scheme is ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) per RFC 3986.
-    We use scheme_chars from urllib.parse for consistency with split_url().
+    Matches the loose rule split_url() applies (every char in scheme_chars),
+    which is more permissive than RFC 3986's ALPHA *( ALPHA / DIGIT / "+" /
+    "-" / "." ). Matching split_url() exactly is required so the re-encoding
+    here covers every prefix that would round-trip back into a scheme upon
+    reparse. Callers must ensure colon_pos > 0.
     """
-    from urllib.parse import scheme_chars
-
-    if colon_pos <= 0:
-        return False
-    if path[0] not in scheme_chars or path[0].isdigit() or path[0] in "+-.":
-        # Scheme must start with a letter
-        return False
-    for c in path[1:colon_pos]:
+    for c in path[:colon_pos]:
         if c not in scheme_chars:
             return False
     return True
