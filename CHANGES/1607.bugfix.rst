@@ -1,1 +1,1 @@
-Delay importing pydantic until it's needed to avoid increased import time -- by :user:`Dreamsorcerer`.
+Delayed importing pydantic until it's needed to avoid increased import time -- by :user:`Dreamsorcerer`.

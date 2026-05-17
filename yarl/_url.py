@@ -57,7 +57,9 @@ from ._quoters import (
 )
 
 # Avoid Pydantic import if not used (increases yarl's import time by 3-7x).
-HAS_PYDANTIC = find_spec("pydantic_core") is not None
+HAS_PYDANTIC = (
+    find_spec("pydantic") is not None and find_spec("pydantic_core") is not None
+)
 if TYPE_CHECKING:
     from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
     from pydantic.json_schema import JsonSchemaValue
