@@ -94,7 +94,7 @@ def test_pickle_state_survives_strict_splitresult_getstate(
     def _strict_getstate(self: SplitResult) -> None:
         raise TypeError("SplitResult.__getstate__ must not be invoked")
 
-    monkeypatch.setattr(SplitResult, "__getstate__", _strict_getstate)
+    monkeypatch.setattr(SplitResult, "__getstate__", _strict_getstate, raising=False)
     u1 = URL("http://example.com/path?q=1#frag")
     hash(u1)
     v = pickle.dumps(u1)
