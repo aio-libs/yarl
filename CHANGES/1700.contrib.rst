@@ -6,4 +6,4 @@ context from a shared ``aio-libs`` layer
 :file:`CLAUDE.local.md` override (added to :file:`.gitignore`),
 so shared ``aio-libs`` guidance can live outside the repository
 while project rules continue to load automatically in Claude
-Code -- by :user:`bdraco`.
+Code -- by :user:`aiolibsbot`.
