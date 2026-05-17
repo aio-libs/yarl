@@ -593,9 +593,7 @@ class TestStripEmptyParts:
 )
 def test_schemes_that_require_host(scheme: str) -> None:
     """Verify that schemes that require a host raise with empty host."""
-    expect = (
-        "Invalid URL: host is required for " f"absolute urls with the {scheme} scheme"
-    )
+    expect = f"Invalid URL: host is required for absolute urls with the {scheme} scheme"
     with pytest.raises(ValueError, match=expect):
         URL(f"{scheme}://:1")
 
