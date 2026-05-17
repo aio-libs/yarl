@@ -11,6 +11,7 @@ PYX
 Towncrier
 Twitter
 UTF
+actionlint
 aiohttp
 armv
 ascii
@@ -20,6 +21,7 @@ booleans
 bools
 changelog
 changelogs
+codspeed
 config
 de
 decodable
