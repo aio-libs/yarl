@@ -79,7 +79,7 @@ jobs:
       # Ref: https://github.com/CodSpeedHQ/runner/issues/144
       uses: actions/checkout@v6
       with:
-        depth: 1  # Codspeed only checks the HEAD
+        fetch-depth: 1  # Codspeed only checks the HEAD
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
