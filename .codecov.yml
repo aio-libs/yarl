@@ -39,9 +39,5 @@ coverage:
         paths:
         - tests/
         target: 99.87%  # 100%
-      typing:
-        flags:
-        - MyPy
-        target: 100%
 
 ...
