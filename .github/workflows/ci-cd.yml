@@ -111,7 +111,7 @@ jobs:
         }
         >> "${GITHUB_OUTPUT}"
     - name: Upload built artifacts for testing
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         if-no-files-found: error
         name: ${{ needs.pre-setup.outputs.dists-artifact-name  }}
@@ -126,8 +126,6 @@ jobs:
 
   lint:
     uses: ./.github/workflows/reusable-linters.yml
-    secrets:
-      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   build-wheels-for-tested-arches:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
@@ -226,13 +224,13 @@ jobs:
         - os: windows-latest
           no-extensions: Y
         include:
-        - pyver: pypy-3.10
+        - pyver: pypy-3.11
           no-extensions: Y
           experimental: false
           os: ubuntu-latest
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout project
@@ -376,7 +374,7 @@ jobs:
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
@@ -437,7 +435,7 @@ jobs:
     - name: Notify Codecov that all coverage reports have been uploaded
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         fail_ci_if_error: true
         run_command: send-notifications
@@ -481,6 +479,7 @@ jobs:
         - ppc64le
         - s390x
         - armv7l
+        - riscv64
         tag:
         - ''
         - musllinux
@@ -564,7 +563,7 @@ jobs:
         version_file: ${{ env.PROJECT_NAME }}/__init__.py
         github_token: ${{ secrets.GITHUB_TOKEN }}
         head_line: >-
-          {version}\n=+\n\n\*\({date}\)\*\n
+          v{version}\n=+\n\n\*\({date}\)\*\n
         fix_issue_regex: >-
           :issue:`(\d+)`
         fix_issue_repl: >-
@@ -575,7 +574,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.2.0
+      uses: sigstore/gh-action-sigstore-python@v3.3.0
       with:
         inputs: >-
           ./dist/${{ needs.build-pure-python-dists.outputs.sdist-filename }}
