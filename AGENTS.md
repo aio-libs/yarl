@@ -246,7 +246,30 @@ cause is welcome (see
 for the right length). Long, multi-section essays with bolded
 sub-headings are not the style here.
 
-### 6. Commit hygiene
+### 6. Run the docs spell check before pushing
+
+CI builds the docs with `sphinxcontrib.spelling` and treats any
+unknown word as a hard failure. The spell checker reads every
+`CHANGES/*.rst` fragment as part of the build, so a technical
+word in your news fragment (`quoter`, `parametrization`,
+`repr`, and so on) that is not in
+[`docs/spelling_wordlist.txt`](docs/spelling_wordlist.txt)
+will fail `make doc-spelling` and burn a CI run before a human
+even sees the PR.
+
+Before pushing:
+
+```bash
+make doc-spelling
+```
+
+If it flags a word you actually meant to use, add it to
+`docs/spelling_wordlist.txt` (one word per line, roughly
+alphabetical within case) in the same commit as the fragment.
+If it flags a typo, fix the typo. Do not paper over real
+misspellings by adding them to the wordlist.
+
+### 7. Commit hygiene
 
 - One logical change per PR. If a refactor and a bugfix are
   bundled together, split them.
@@ -348,6 +371,10 @@ exercises the runnable examples in the docs.
   that was not possible in your environment.
 - Do not invent a `## What / ## Why / ## How / ## Testing` PR
   body; use the aio-libs template above.
+- Do not push without running `make doc-spelling` first if you
+  edited any `.rst` file (including `CHANGES/`). The docs build
+  fails on unknown words and burns a CI run; see _Run the docs
+  spell check before pushing_ above.
 - Do not skip the `CHANGES/` fragment "because the change is
   small". Even a one-line bugfix needs one.
 - Do not add `Co-Authored-By` trailers for LLM tools, in either
