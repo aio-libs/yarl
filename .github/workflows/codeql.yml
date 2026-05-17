@@ -9,12 +9,20 @@ on:
   pull_request:
     branches:
     - master
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
   schedule:
   - cron: "46 14 * * 0"
 
 jobs:
   analyze:
     name: Analyze
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 4
     permissions:

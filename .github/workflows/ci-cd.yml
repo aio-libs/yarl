@@ -16,6 +16,11 @@ on:
     - master
     - >-
       [0-9].[0-9]+
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
   schedule:
   - cron: 0 6 * * *  # Daily 6AM UTC build
 
@@ -45,6 +50,9 @@ jobs:
 
   pre-setup:
     name: ⚙️ Pre-set global build settings
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 1
     defaults:
@@ -125,6 +133,9 @@ jobs:
         retention-days: 15
 
   lint:
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.draft == false
     uses: ./.github/workflows/reusable-linters.yml
 
   build-wheels-for-tested-arches:
@@ -448,6 +459,10 @@ jobs:
     name: Coverage processing
     if: >-
       !cancelled()
+      && (
+        github.event_name != 'pull_request'
+        || github.event.pull_request.draft == false
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 1
     needs:
@@ -465,7 +480,12 @@ jobs:
 
   test-summary:
     name: Test matrix status
-    if: always()
+    if: >-
+      always()
+      && (
+        github.event_name != 'pull_request'
+        || github.event.pull_request.draft == false
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 1
     needs: [lint, test]

@@ -17,6 +17,11 @@ on:
     - master
     paths-ignore:
     - .github/workflows/reusable-codspeed.yml
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
 
 
 env:
@@ -29,6 +34,9 @@ jobs:
 
   test-aiohttp:
     name: Aiohttp tests
+    if: >-
+      github.event_name != 'pull_request'
+      || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
