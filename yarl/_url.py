@@ -161,19 +161,28 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
-def _has_scheme_prefix(path: str, colon_pos: int) -> bool:
-    """Check if path[:colon_pos] would be parsed as a scheme by split_url().
+def _encode_relative_scheme_colon(path: str) -> str:
+    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``.
 
-    Matches the loose rule split_url() applies (every char in scheme_chars),
-    which is more permissive than RFC 3986's ALPHA *( ALPHA / DIGIT / "+" /
-    "-" / "." ). Matching split_url() exactly is required so the re-encoding
-    here covers every prefix that would round-trip back into a scheme upon
-    reparse. Callers must ensure colon_pos > 0.
+    When ``split_url()`` does not recognize a scheme (e.g. because a
+    percent-encoded character obscures it), the entire input is treated as a
+    relative path. After requoting decodes the percent-encoding, the path
+    could form a string like ``http://host/path`` that would reparse as an
+    absolute URL even though the original was relative. Re-encoding the
+    colon preserves the relative semantics.
+
+    The check matches the loose rule ``split_url()`` applies (every char in
+    ``scheme_chars``), which is more permissive than RFC 3986's
+    ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ), so this catches every prefix
+    that would round-trip back into a scheme upon reparse.
     """
+    colon_pos = path.find(":")
+    if colon_pos <= 0:
+        return path
     for c in path[:colon_pos]:
         if c not in scheme_chars:
-            return False
-    return True
+            return path
+    return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
 
 
 @lru_cache
@@ -221,15 +230,7 @@ def encode_url(url_str: str) -> "URL":
         if netloc and "." in path:
             path = normalize_path(path)
         elif not scheme and not netloc:
-            # Prevent requoting from materializing a scheme in a relative path.
-            # For example, "ht%74p://host/path" is parsed as a relative URL
-            # with the entire string as the path (no scheme recognized because
-            # of the percent-encoded character). After requoting, %74 -> 't'
-            # produces "http://host/path" which would be an absolute URL.
-            # Re-encode the colon to %3A to preserve the relative semantics.
-            colon_pos = path.find(":")
-            if colon_pos > 0 and _has_scheme_prefix(path, colon_pos):
-                path = path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
+            path = _encode_relative_scheme_colon(path)
     if query:
         query = QUERY_REQUOTER(query)
     if fragment:
@@ -1514,11 +1515,7 @@ class URL:
         if TYPE_CHECKING:
             assert path is not None
         if not self._scheme and not self._netloc:
-            # Same protection as in encode_url(): prevent the decoded path
-            # from materializing a scheme in a relative URL.
-            colon_pos = path.find(":")
-            if colon_pos > 0 and _has_scheme_prefix(path, colon_pos):
-                path = path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
+            path = _encode_relative_scheme_colon(path)
         query_string = "&".join(
             "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()
