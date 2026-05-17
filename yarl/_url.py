@@ -68,6 +68,7 @@ if TYPE_CHECKING:
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_RELATIVE = frozenset(uses_relative)
+_SCHEME_CHARS = frozenset(scheme_chars)
 
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
@@ -167,7 +168,7 @@ def _encode_relative_scheme_colon(path: str) -> str:
     if colon_pos <= 0:
         return path
     for c in path[:colon_pos]:
-        if c not in scheme_chars:
+        if c not in _SCHEME_CHARS:
             return path
     return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
 
