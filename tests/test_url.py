@@ -458,6 +458,15 @@ def test_malformed_bracketed_host_in_authority() -> None:
         URL.build(scheme="http", authority="[:localhost[]].google:80")
 
 
+def test_userinfo_with_bracketed_host_is_valid() -> None:
+    """Ensure the multi-bracket check still accepts userinfo + IP-literal host."""
+    url = URL("http://user:pass@[::1]:8080/")
+    assert url.user == "user"
+    assert url.password == "pass"
+    assert url.raw_host == "::1"
+    assert url.port == 8080
+
+
 def test_ipv4_zone() -> None:
     # I'm unsure if it is correct.
     url = URL("http://1.2.3.4%тест%42:123")
