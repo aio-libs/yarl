@@ -143,17 +143,14 @@ select = [
   "PLC0415",
 ]
 
+# `build[uv]` makes cibuildwheel use `uv` for every venv it provisions,
+# both on the build side (passed to `python -m build` as `--installer=uv`)
+# and when materializing the test environment. uv resolves and installs
+# the wheel plus `requirements/test-cibuildwheel.txt` in roughly a second;
+# the previous pip-based path took noticeably longer per ABI and ran once
+# per matrix cell.
 [tool.cibuildwheel]
-build-frontend = "build"
-before-test = [
-  # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
-  # NOTE: constraints unset. The hope is that pip will cache that wheel
-  # NOTE: and the test env provisioning stage will pick up PyYAML from
-  # NOTE: said cache rather than attempting to build it with a conflicting.
-  # NOTE: Version of Cython.
-  # Ref: https://github.com/pypa/cibuildwheel/issues/1666
-  "PIP_CONSTRAINT= pip install PyYAML",
-]
+build-frontend = "build[uv]"
 test-requires = "-r requirements/test-cibuildwheel.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
 # don't build PyPy wheels, install from source instead
@@ -169,6 +166,3 @@ PY_COLORS = "1"
 
 [tool.cibuildwheel.config-settings]
 pure-python = "false"
-
-[tool.cibuildwheel.windows]
-before-test = []  # Windows cmd has different syntax and pip chooses wheels
