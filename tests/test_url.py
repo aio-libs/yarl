@@ -385,9 +385,86 @@ def test_host_with_text_before_bracket_is_invalid(url: str) -> None:
         URL(url)
 
 
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://[::1]allowed.example:1/",
+        "http://[::1]evil.com/",
+        "http://[::1]evil.com:8080/",
+        "http://user@[::1]evil.com:1/",
+        "http://[::1]evil/",
+        "http://[::1].:80/",
+    ),
+    ids=(
+        "suffix-with-port",
+        "suffix-no-port",
+        "suffix-with-explicit-port",
+        "userinfo-suffix-with-port",
+        "short-suffix-no-port",
+        "dot-suffix-with-port",
+    ),
+)
+def test_host_with_text_after_bracket_is_invalid(url: str) -> None:
+    """Text after the closing bracket of an IP-literal is invalid.
+
+    Per RFC 3986 §3.2.2, after the closing ']' of an IP-literal only
+    ':' <port> or end-of-authority is valid. Previously yarl silently
+    dropped the suffix (e.g. '[::1]allowed.example:1' -> '[::1]:1'),
+    changing the effective host identity.
+    """
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(url)
+
+
+def test_build_authority_with_text_after_bracket_is_invalid() -> None:
+    """URL.build(authority=...) must also reject text after ']'."""
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL.build(scheme="http", authority="[::1]allowed.example:1", path="/")
+
+
 def test_ipfuture_brackets_not_allowed() -> None:
     with pytest.raises(ValueError, match="IPvFuture address is invalid"):
         URL("http://[v10]/")
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://[:localhost[]].google:80",
+        "http://[:localhost[]].google",
+        "http://[:attacker.com[]]:80",
+        "http://[:evil.com[]].bank.com:443",
+        "http://[:127.0.0.1[]]:80",
+        "http://[v1.:attacker[]].bank.com:80",
+    ),
+    ids=(
+        "host-confusion-with-port",
+        "host-confusion-without-port",
+        "attacker-host-injection",
+        "domain-allowlist-bypass",
+        "private-ip-injection",
+        "ipvfuture-bracket-abuse",
+    ),
+)
+def test_malformed_bracketed_host_rejected(url: str) -> None:
+    """Reject URLs with multiple brackets to prevent host confusion (SSRF)."""
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(url)
+
+
+def test_malformed_bracketed_host_in_authority() -> None:
+    """Reject malformed brackets via URL.build(authority=...) path."""
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL.build(scheme="http", authority="[:localhost[]].google:80")
+
+
+def test_userinfo_with_bracketed_host_is_valid() -> None:
+    """Ensure the multi-bracket check still accepts userinfo + IP-literal host."""
+    url = URL("http://user:pass@[::1]:8080/")
+    assert url.user == "user"
+    assert url.password == "pass"
+    assert url.raw_host == "::1"
+    assert url.port == 8080
 
 
 def test_ipv4_zone() -> None:
@@ -1831,8 +1908,8 @@ def test_to_idna() -> None:
 
 
 def test_from_ascii_login() -> None:
-    url = URL("http://" "%D0%B2%D0%B0%D1%81%D1%8F" "@host:1234/")
-    assert ("http://" "%D0%B2%D0%B0%D1%81%D1%8F" "@host:1234/") == str(url)
+    url = URL("http://%D0%B2%D0%B0%D1%81%D1%8F@host:1234/")
+    assert ("http://%D0%B2%D0%B0%D1%81%D1%8F@host:1234/") == str(url)
 
 
 def test_from_non_ascii_login() -> None:
@@ -1866,16 +1943,16 @@ def test_from_non_ascii_login_and_password() -> None:
 
 
 def test_from_ascii_path() -> None:
-    url = URL("http://example.com/" "%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0")
+    url = URL("http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0")
     assert (
-        "http://example.com/" "%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
+        "http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
     ) == str(url)
 
 
 def test_from_ascii_path_lower_case() -> None:
-    url = URL("http://example.com/" "%d0%bf%d1%83%d1%82%d1%8c/%d1%82%d1%83%d0%b4%d0%b0")
+    url = URL("http://example.com/%d0%bf%d1%83%d1%82%d1%8c/%d1%82%d1%83%d0%b4%d0%b0")
     assert (
-        "http://example.com/" "%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
+        "http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
     ) == str(url)
 
 
@@ -1896,23 +1973,17 @@ def test_bytes() -> None:
 
 def test_from_ascii_query_parts() -> None:
     url = URL(
-        "http://example.com/"
-        "?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC"
-        "=%D0%B7%D0%BD%D0%B0%D1%87"
+        "http://example.com/?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87"
     )
     assert (
-        "http://example.com/"
-        "?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC"
-        "=%D0%B7%D0%BD%D0%B0%D1%87"
+        "http://example.com/?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87"
     ) == str(url)
 
 
 def test_from_non_ascii_query_parts() -> None:
     url = URL("http://example.com/?парам=знач")
     assert (
-        "http://example.com/"
-        "?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC"
-        "=%D0%B7%D0%BD%D0%B0%D1%87"
+        "http://example.com/?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87"
     ) == str(url)
 
 
@@ -1922,16 +1993,16 @@ def test_from_non_ascii_query_parts2() -> None:
 
 
 def test_from_ascii_fragment() -> None:
-    url = URL("http://example.com/" "#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82")
+    url = URL("http://example.com/#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82")
     assert (
-        "http://example.com/" "#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
+        "http://example.com/#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
     ) == str(url)
 
 
 def test_from_bytes_with_non_ascii_fragment() -> None:
     url = URL("http://example.com/#фрагмент")
     assert (
-        "http://example.com/" "#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
+        "http://example.com/#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
     ) == str(url)
 
 
@@ -1942,12 +2013,10 @@ def test_to_str() -> None:
 
 def test_to_str_long() -> None:
     url = URL(
-        "https://host-12345678901234567890123456789012345678901234567890" "-name:8888/"
+        "https://host-12345678901234567890123456789012345678901234567890-name:8888/"
     )
     expected = (
-        "https://host-"
-        "12345678901234567890123456789012345678901234567890"
-        "-name:8888/"
+        "https://host-12345678901234567890123456789012345678901234567890-name:8888/"
     )
     assert expected == str(url)
 
