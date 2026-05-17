@@ -4,4 +4,4 @@ gained a ``__getstate__`` that requires attributes set by ``__init__``.
 built via ``tuple.__new__``, so pickling no longer touches ``SplitResult``
 serialization at all. Pickles produced by older yarl releases (which embed
 a ``SplitResult``) continue to load unchanged
--- by :user:`aiolibsbot`.
+-- by :user:`befeleme`.

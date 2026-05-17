@@ -1,0 +1,7 @@
+Fixed a parsing issue where URLs containing text after the closing bracket
+of an IP-literal host (e.g. ``http://[::1]allowed.example:1/``) were silently
+accepted and normalized to the bracketed IP address (``http://[::1]:1/``),
+dropping the trailing suffix and changing the effective host identity.
+Per RFC 3986, after the closing ``]`` only ``:`` followed by a port number or
+end-of-authority is valid
+-- by :user:`rodrigobnogueira`.

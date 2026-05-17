@@ -72,7 +72,13 @@ def split_url(url: str) -> SplitURLType:
             hostinfo = netloc.rpartition("@")[2]
             if hostinfo[0] != "[":
                 raise ValueError("Invalid IPv6 URL")
-            bracketed_host = netloc.partition("[")[2].partition("]")[0]
+            bracketed_host, _, after_bracket = netloc.partition("[")[2].partition("]")
+            # Per RFC 3986 §3.2.2, after the closing ']' of an IP-literal
+            # only ":" <port> or end-of-authority is valid. Any other text
+            # (e.g. '[::1]allowed.example:1') must be rejected to prevent
+            # host-confusion where the suffix is silently dropped.
+            if after_bracket and after_bracket[0] != ":":
+                raise ValueError("Invalid IPv6 URL")
             # Valid bracketed hosts are defined in
             # https://www.rfc-editor.org/rfc/rfc3986#page-49
             # https://url.spec.whatwg.org/
@@ -136,6 +142,11 @@ def split_netloc(
             raise ValueError("Invalid IPv6 URL")
         _, _, bracketed = hostinfo.partition("[")
         hostname, _, port_str = bracketed.partition("]")
+        # Defense-in-depth: after ']' only ':port' or empty is valid.
+        # split_url() should have already rejected invalid suffixes,
+        # but guard here too for callers that use split_netloc() directly.
+        if port_str and port_str[0] != ":":
+            raise ValueError("Invalid IPv6 URL")
         _, _, port_str = port_str.partition(":")
     else:
         hostname, _, port_str = hostinfo.partition(":")
