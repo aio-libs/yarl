@@ -1,0 +1,3 @@
+Bumped the pinned ``pyupgrade`` pre-commit hook to ``v3.21.2`` so it stops
+crashing on Python 3.14, which made ``tokenize.cookie_re`` bytes-only
+-- by :user:`bdraco`.
