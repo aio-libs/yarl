@@ -162,20 +162,7 @@ def rewrite_module(obj: _T) -> _T:
 
 
 def _encode_relative_scheme_colon(path: str) -> str:
-    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``.
-
-    When ``split_url()`` does not recognize a scheme (e.g. because a
-    percent-encoded character obscures it), the entire input is treated as a
-    relative path. After requoting decodes the percent-encoding, the path
-    could form a string like ``http://host/path`` that would reparse as an
-    absolute URL even though the original was relative. Re-encoding the
-    colon preserves the relative semantics.
-
-    The check matches the loose rule ``split_url()`` applies (every char in
-    ``scheme_chars``), which is more permissive than RFC 3986's
-    ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ), so this catches every prefix
-    that would round-trip back into a scheme upon reparse.
-    """
+    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``."""
     colon_pos = path.find(":")
     if colon_pos <= 0:
         return path
