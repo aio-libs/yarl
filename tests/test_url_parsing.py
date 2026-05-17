@@ -714,7 +714,7 @@ class TestPercentEncodedSchemeBypass:
 
     def test_relative_path_with_colon_not_affected(self) -> None:
         """Relative paths with colons that aren't scheme-like must be preserved."""
-        # "not_scheme:path" — underscore is not in scheme_chars, so not a scheme
+        # "not_scheme:path"; underscore is not in scheme_chars, so not a scheme
         u = URL("not_scheme:path")
         assert u.scheme == ""
         assert str(u) == "not_scheme:path"
@@ -764,7 +764,7 @@ class TestPercentEncodedSchemeBypass:
 
     def test_relative_path_with_underscore_prefix_not_affected(self) -> None:
         """Prefixes that cannot form a scheme (contain chars outside
-        scheme_chars) are left alone — the colon stays literal."""
+        scheme_chars) are left alone; the colon stays literal."""
         # underscore is not in scheme_chars, so "no_scheme:" cannot form a
         # scheme regardless of decoding.
         u = URL("no_sch%65me:foo")
