@@ -66,11 +66,14 @@ def split_url(url: str) -> SplitURLType:
         if has_left_bracket:
             # Per RFC 3986, brackets are only valid at the START of the host
             # for IP-literal addresses. Text before '[' (e.g. '127.0.0.1[::1]')
-            # is invalid and must be rejected to prevent SSRF bypasses.
+            # is invalid and must be rejected to prevent SSRF bypasses. The
+            # count checks reject URLs with more than one bracket pair in the
+            # host subcomponent (e.g. 'http://[:localhost[]].google:80'),
+            # which would otherwise resolve to an unintended host.
             hostinfo = netloc.rpartition("@")[2]
-            if hostinfo[0] != "[":
+            if hostinfo[0] != "[" or hostinfo.count("[") > 1 or hostinfo.count("]") > 1:
                 raise ValueError("Invalid IPv6 URL")
-            bracketed_host, _, after_bracket = netloc.partition("[")[2].partition("]")
+            bracketed_host, _, after_bracket = hostinfo[1:].partition("]")
             # Per RFC 3986 §3.2.2, after the closing ']' of an IP-literal
             # only ":" <port> or end-of-authority is valid. Any other text
             # (e.g. '[::1]allowed.example:1') must be rejected to prevent
@@ -132,6 +135,8 @@ def split_netloc(
             password = None
 
     if "[" in hostinfo:
+        if hostinfo[0] != "[" or hostinfo.count("[") > 1 or hostinfo.count("]") > 1:
+            raise ValueError("Invalid IPv6 URL")
         _, _, bracketed = hostinfo.partition("[")
         hostname, _, port_str = bracketed.partition("]")
         # Defense-in-depth: after ']' only ':port' or empty is valid.
