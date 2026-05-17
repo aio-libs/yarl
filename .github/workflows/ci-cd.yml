@@ -156,6 +156,16 @@ jobs:
            (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
            && 'musllinux' || 'none'
            }}
+        # On PRs and non-tag pushes, skip the native windows-on-arm runner —
+        # the test matrix only runs on ubuntu/macos/windows-latest (amd64), so
+        # win_arm64 wheels built here are never installed. They take ~6 minutes
+        # and are on the critical path. Tag releases still build them.
+        - runner-vm-os: >-
+           ${{
+           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           && 'windows-11-arm' || 'none'
+           }}
+          tag: ''
     uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
       check-name: >-
@@ -167,8 +177,21 @@ jobs:
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
       # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      # CIBW_ARCHS_*: on PR/non-tag, only build the arches that the test matrix
+      # actually consumes (linux x86_64 from cibw default, macos arm64,
+      # windows AMD64). Tag releases keep the full arch set.
       environment-variables: |-
-        CIBW_ARCHS_MACOS=x86_64 arm64 universal2
+        CIBW_ARCHS_MACOS=${{
+          (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
+          && 'x86_64 arm64 universal2'
+          || 'arm64'
+        }}
+
+        CIBW_ARCHS_WINDOWS=${{
+          (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
+          && 'AMD64 ARM64'
+          || 'AMD64'
+        }}
 
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
