@@ -96,7 +96,7 @@ def test_pickle_state_survives_strict_splitresult_getstate() -> None:
     # hand to keep the test version-agnostic.
     had_own_getstate = "__getstate__" in SplitResult.__dict__
     saved = SplitResult.__dict__.get("__getstate__")
-    SplitResult.__getstate__ = _strict_getstate  # type: ignore[method-assign]
+    SplitResult.__getstate__ = _strict_getstate  # type: ignore[assignment,method-assign]
     try:
         u1 = URL("http://example.com/path?q=1#frag")
         hash(u1)
@@ -106,6 +106,6 @@ def test_pickle_state_survives_strict_splitresult_getstate() -> None:
         assert hash(u1) == hash(u2)
     finally:
         if had_own_getstate:
-            SplitResult.__getstate__ = saved  # type: ignore[method-assign]
+            SplitResult.__getstate__ = saved  # type: ignore[assignment,method-assign]
         else:
             del SplitResult.__getstate__
