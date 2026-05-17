@@ -106,9 +106,7 @@ def test_unquote_to_bytes(unquoter: type[_Unquoter]) -> None:
 
 def test_never_quote(quoter: type[_Quoter]) -> None:
     # Make sure quote() does not quote letters, digits, and "_,.-~"
-    do_not_quote = (
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz" "0123456789" "_.-~"
-    )
+    do_not_quote = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~"
     assert quoter()(do_not_quote) == do_not_quote
     assert quoter(qs=True)(do_not_quote) == do_not_quote
 

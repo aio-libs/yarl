@@ -1,3 +1,3 @@
-Percent-encoded RFC 3986 reserved characters in query keys and values
-supplied through mapping or sequence query arguments, while preserving
-literal query string behavior -- by :user:`Sean-Kenneth-Doherty`.
+Percent-encoded RFC 3986 reserved characters except ``!`` and ``?`` in
+query keys and values supplied through mapping or sequence query arguments,
+while preserving literal query string behavior -- by :user:`Sean-Kenneth-Doherty`.

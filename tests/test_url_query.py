@@ -251,7 +251,7 @@ def test_update_query_with_sequence_of_pairs() -> None:
         [("x", ":/?#[]@!$&'()*+,;=")],
     ],
 )
-def test_query_arguments_percent_encode_reserved_chars(
+def test_query_arguments_percent_encode_reserved_chars_except_bang_and_question(
     query: dict[str, str] | list[tuple[str, str]],
 ) -> None:
     url = URL("https://example.com").with_query(query)
