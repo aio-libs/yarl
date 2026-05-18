@@ -4,6 +4,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from enum import Enum
 from functools import _CacheInfo, lru_cache
+from importlib.util import find_spec
 from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
@@ -15,7 +16,7 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import SplitResult, uses_relative
+from urllib.parse import SplitResult, scheme_chars, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
@@ -55,18 +56,17 @@ from ._quoters import (
     human_quote,
 )
 
-try:
+# Avoid Pydantic import if not used (increases yarl's import time by 3-7x).
+HAS_PYDANTIC = find_spec("pydantic_core") is not None
+if TYPE_CHECKING:
     from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
     from pydantic.json_schema import JsonSchemaValue
-    from pydantic_core import core_schema
-
-    HAS_PYDANTIC = True
-except ImportError:
-    HAS_PYDANTIC = False
+    from pydantic_core import CoreSchema
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_RELATIVE = frozenset(uses_relative)
+_SCHEME_CHARS = frozenset(scheme_chars)
 
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
@@ -167,6 +167,17 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+def _encode_relative_scheme_colon(path: str) -> str:
+    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``."""
+    colon_pos = path.find(":")
+    if colon_pos <= 0:
+        return path
+    for c in path[:colon_pos]:
+        if c not in _SCHEME_CHARS:
+            return path
+    return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
+
+
 @lru_cache
 def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
@@ -211,6 +222,8 @@ def encode_url(url_str: str) -> "URL":
         path = PATH_REQUOTER(path)
         if netloc and "." in path:
             path = normalize_path(path)
+        elif not scheme and not netloc:
+            path = _encode_relative_scheme_colon(path)
     if query:
         query = QUERY_REQUOTER(query)
     if fragment:
@@ -1487,13 +1500,15 @@ class URL:
 
     def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
-        user = human_quote(self.user, "#/:?@[]")
-        password = human_quote(self.password, "#/:?@[]")
+        user = human_quote(self.user, "#/:?@[]\\")
+        password = human_quote(self.password, "#/:?@[]\\")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
+        if not self._scheme and not self._netloc:
+            path = _encode_relative_scheme_colon(path)
         query_string = "&".join(
             "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()
@@ -1508,16 +1523,25 @@ class URL:
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
-            cls, core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
-        ) -> JsonSchemaValue:
+            cls,
+            core_schema: "CoreSchema",
+            handler: "GetJsonSchemaHandler",
+        ) -> "JsonSchemaValue":
             field_schema: dict[str, Any] = {}
             field_schema.update(type="string", format="uri")
             return field_schema
 
         @classmethod
         def __get_pydantic_core_schema__(
-            cls, source_type: type[Self] | type[str], handler: GetCoreSchemaHandler
-        ) -> core_schema.CoreSchema:
+            cls,
+            source_type: type[Self] | type[str],
+            handler: "GetCoreSchemaHandler",
+        ) -> "CoreSchema":
+            # Lazy import: pulling in pydantic_core at module load time
+            # increases yarl's import cost 3-7x for users who don't use
+            # pydantic. Keep this import function-scoped.
+            from pydantic_core import core_schema  # noqa: PLC0415
+
             from_str_schema = core_schema.chain_schema(
                 [
                     core_schema.str_schema(),

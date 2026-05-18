@@ -1,0 +1,3 @@
+Raise :exc:`ValueError` when a URL's authority component contains a
+backslash, which is not a valid character per :rfc:`3986`
+-- by :user:`rodrigobnogueira`.
