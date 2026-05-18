@@ -237,11 +237,8 @@ def patched_dist_get_long_description() -> _c.Iterator[None]:
         _DistutilsDistributionMetadata.get_long_description = orig_func  # type: ignore[method-assign]
 
 
-# Pre-built native extensions left over from a previous in-place build
-# (e.g. by an earlier `cibuildwheel` invocation under a different Python
-# interpreter) MUST NOT be copied into the isolated build directory, or
-# they end up bundled into the wheel for the current interpreter.
-# Ref: https://github.com/aio-libs/yarl/issues/1583
+# Skip stale native build artifacts so cross-interpreter `.so`/`.pyd`/`.dylib`
+# from prior in-place builds don't leak into the wheel. See #1583.
 _STALE_BUILD_ARTIFACT_SUFFIXES = ('.so', '.pyd', '.dylib')
 
 
@@ -250,19 +247,7 @@ def _exclude_dir_path(
     visited_directory: str,
     _visited_dir_contents: list[str],
 ) -> list[str]:
-    """Skip recursive traversal and stale native build artifacts.
-
-    Filters out two distinct categories of entries during ``copytree``:
-
-    * The temporary build directory's parent — stops it from being copied
-      into self recursively forever
-      (ref: https://github.com/aio-libs/yarl/issues/992).
-    * Pre-built C-extension shared objects (``*.so``/``*.pyd``/``*.dylib``)
-      lingering in the source tree from a previous in-place build under
-      a different Python interpreter — these would otherwise be packaged
-      into the wheel for the current interpreter
-      (ref: https://github.com/aio-libs/yarl/issues/1583).
-    """
+    """Filter the tempdir parent (#992) and stale `.so`/`.pyd`/`.dylib` (#1583)."""
     visited_directory_path = Path(visited_directory)
     visited_directory_subdirs_to_ignore = [
         subdir

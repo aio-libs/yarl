@@ -1,7 +1,4 @@
 Excluded stale native build artifacts (``*.so``, ``*.pyd``, ``*.dylib``)
-from being copied into the isolated PEP 517 build directory. Previously,
-shared libraries left in the source tree from an earlier build under a
-different Python interpreter (e.g. by ``cibuildwheel`` building multiple
-Python versions in the same checkout) could leak into the resulting
-wheel, causing wheels to bundle ``.so`` files for the wrong interpreter
-ABI -- by :user:`aiolibsbot`.
+from the isolated PEP 517 build directory, preventing wheels from
+bundling shared libraries for the wrong interpreter ABI
+-- by :user:`aiolibsbot`.
