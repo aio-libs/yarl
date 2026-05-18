@@ -1,6 +1,0 @@
-Switched the CI test matrix from ``actions/setup-python`` to
-``astral-sh/setup-uv`` for installing interpreters, cutting the
-``Setup Python`` step from 40-58s to a few seconds on macOS and
-Windows runners for variants not in the hosted tool-cache
-(notably the free-threaded ``3.14t``)
--- by :user:`bdraco`.
