@@ -1,0 +1,6 @@
+Switched the ``cibuildwheel`` build frontend to ``build[uv]`` so
+that ``uv`` provisions every build and test virtual environment
+in the wheel matrix. Test-dependency installation in particular
+drops from a multi-second ``pip install`` per ABI to a roughly
+sub-second ``uv`` resolve
+-- by :user:`bdraco`.
