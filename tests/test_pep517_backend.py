@@ -12,6 +12,11 @@ _PACKAGING_DIR = Path(__file__).resolve().parents[1] / "packaging"
 
 @pytest.fixture(scope="module")
 def backend() -> Iterator[ModuleType]:
+    # The PEP 517 backend imports ``setuptools.build_meta`` at module load
+    # time, which is not available in the minimal cibuildwheel test venv
+    # that exercises the built wheel.
+    pytest.importorskip("setuptools")
+
     sys.path.insert(0, str(_PACKAGING_DIR))
     try:
         # The in-tree backend lives under packaging/ rather than on the
