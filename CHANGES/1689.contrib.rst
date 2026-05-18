@@ -1,0 +1,4 @@
+Documented in :file:`AGENTS.md` that the coverage gate also
+applies to test code, so unreachable defensive ``raise`` guards
+and one-sided cleanup branches in tests will fail CI
+-- by :user:`bdraco`.

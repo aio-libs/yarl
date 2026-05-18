@@ -257,7 +257,6 @@ def test_with_class_that_implements__int__() -> None:
     """Allow classes that implement __int__ to be used in query strings."""
 
     class myint:
-
         def __int__(self) -> int:
             return 84
 

@@ -105,3 +105,6 @@ yarl/*.html
 .install-deps
 .pytest_cache
 pip-wheel-metadata
+
+# Claude Code per-checkout overrides
+CLAUDE.local.md
