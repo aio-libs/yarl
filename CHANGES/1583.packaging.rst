@@ -4,4 +4,4 @@ shared libraries left in the source tree from an earlier build under a
 different Python interpreter (e.g. by ``cibuildwheel`` building multiple
 Python versions in the same checkout) could leak into the resulting
 wheel, causing wheels to bundle ``.so`` files for the wrong interpreter
-ABI -- by :user:`koston`.
+ABI -- by :user:`aiolibsbot`.
