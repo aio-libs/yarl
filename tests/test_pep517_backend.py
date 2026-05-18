@@ -12,10 +12,13 @@ _PACKAGING_DIR = Path(__file__).resolve().parents[1] / "packaging"
 
 @pytest.fixture(scope="module")
 def backend() -> Iterator[ModuleType]:
-    # The PEP 517 backend imports ``setuptools.build_meta`` at module load
-    # time, which is not available in the minimal cibuildwheel test venv
-    # that exercises the built wheel.
+    # The PEP 517 backend imports ``setuptools.build_meta`` and (transitively
+    # via ``_cython_configuration``) ``expandvars`` at module load time.
+    # Neither is present in the minimal cibuildwheel test venv that exercises
+    # the built wheel, so skip cleanly if anyone runs the suite without the
+    # full dev environment.
     pytest.importorskip("setuptools")
+    pytest.importorskip("expandvars")
 
     sys.path.insert(0, str(_PACKAGING_DIR))
     try:
