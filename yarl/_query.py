@@ -17,7 +17,13 @@ Query = Union[
 
 
 def query_var(v: SimpleQuery) -> str:
-    """Convert a query variable to a string."""
+    """Convert a query variable to a string.
+
+    Note: Objects implementing the ``__int__`` data model method (typed as
+    ``SupportsInt``; e.g. ``uuid.UUID``) are converted via ``int()`` first.
+    Callers should convert such values to ``str`` explicitly if the string
+    representation is desired.
+    """
     cls = type(v)
     if cls is int:  # Fast path for non-subclassed int
         return str(v)
