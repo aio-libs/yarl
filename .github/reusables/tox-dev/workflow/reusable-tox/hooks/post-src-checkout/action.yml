@@ -1,0 +1,58 @@
+---
+
+inputs:
+  calling-job-context:
+    description: Calling job inputs encoded as a JSON string
+    type: string
+  current-job-steps:
+    description: >-
+      The `$ {{ steps }}` context passed from the reusable workflow's
+      tox job encoded as a JSON string. The caller passes it this input
+      as follows:
+      `current-job-steps: $ {{ toJSON(steps) }}`.
+    type: string
+  job-dependencies-context:
+    default: >-
+      {}
+    description: >-
+      The `$ {{ needs }}` context passed from the calling workflow
+      encoded as a JSON string. The caller is expected to form this
+      input as follows:
+      `job-dependencies-context: $ {{ toJSON(needs) }}`.
+    required: false
+    type: string
+
+runs:
+  using: composite
+  steps:
+  - name: Log setting up pre-commit cache
+    if: fromJSON(inputs.calling-job-context).toxenv == 'pre-commit'
+    run: >-
+      >&2 echo Caching ~/.cache/pre-commit based on
+      the contents of '.pre-commit-config.yaml'...
+    shell: bash
+  - name: Cache pre-commit.com virtualenvs
+    if: fromJSON(inputs.calling-job-context).toxenv == 'pre-commit'
+    uses: actions/cache@v5
+    with:
+      path: ~/.cache/pre-commit
+      key: >-
+        ${{
+          runner.os
+        }}-pre-commit-${{
+          hashFiles('.pre-commit-config.yaml')
+        }}
+  - name: Download every built dist for metadata-validation
+    if: fromJSON(inputs.calling-job-context).toxenv == 'metadata-validation'
+    uses: actions/download-artifact@v8
+    with:
+      path: dist
+      pattern: >-
+        ${{
+          fromJSON(
+            inputs.job-dependencies-context
+          ).pre-setup.outputs.dists-artifact-name
+        }}*
+      merge-multiple: true
+
+...
