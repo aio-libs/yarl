@@ -2354,8 +2354,8 @@ def test_human_repr_delimiters() -> None:
     s = url.human_repr()
     assert URL(s) == url
     assert (
-        s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B\\%5D^_`{|}~"
-        ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B\\%5D^_`{|}~"
+        s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
+        ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         "@хост.домен:8080"
         "/ !\"%23$%25&'()*+,-./:;<=>%3F@[\\]^_`{|}~"
         "? !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
@@ -2542,13 +2542,25 @@ def test_build_with_invalid_ipv6_host(host: str, is_authority: bool) -> None:
         r"http://example.com\path",
         r"http://example.com\../",
         r"http://\example.com",
+        r"http://example.com\foo@evil.com/",
+        r"http://user:pass@example.com\path",
+        r"http://example.com:80\foo/",
+        r"http://[::1]\path",
     ],
 )
 def test_url_with_backslash_in_netloc(url: str) -> None:
     with pytest.raises(
-        ValueError, match=r"backslash \('\\'\) is not allowed in the host"
+        ValueError, match=r"backslash \('\\'\) is not allowed in the authority"
     ):
         URL(url)
+
+
+def test_url_with_backslash_in_path_after_ipv6_host() -> None:
+    url = URL(r"http://[::1]/\path")
+
+    assert str(url) == r"http://[::1]/%5Cpath"
+    assert url.host == "::1"
+    assert url.path == r"/\path"
 
 
 @pytest.mark.parametrize("byte", ["\r", "\n", "\t"])
