@@ -4,7 +4,7 @@ requires = [
   # NOTE: provisioning of the in-tree build backend located under
   # NOTE: `packaging/pep517_backend/`.
   "expandvars",
-  "setuptools >= 47",  # Minimum required for `version = attr:`
+  "setuptools >= 82.0.1",  # Minimum required for `version = attr:`
   "tomli; python_version < '3.11'",
 ]
 backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
@@ -121,18 +121,36 @@ freethreading_compatible = "True"
 #error_on_unknown_names = "True"
 #error_on_uninitialized = "True"
 
-[tool.cibuildwheel]
-build-frontend = "build"
-enable = ["cpython-freethreading"]
-before-test = [
-  # NOTE: Attempt to have pip pre-compile PyYAML wheel with our build
-  # NOTE: constraints unset. The hope is that pip will cache that wheel
-  # NOTE: and the test env provisioning stage will pick up PyYAML from
-  # NOTE: said cache rather than attempting to build it with a conflicting.
-  # NOTE: Version of Cython.
-  # Ref: https://github.com/pypa/cibuildwheel/issues/1666
-  "PIP_CONSTRAINT= pip install PyYAML",
+[tool.ruff]
+# The packaging/pep517_backend/ tree has its own .ruff.toml and is linted
+# under that config via a separate pre-commit hook.
+extend-exclude = ["packaging/pep517_backend"]
+
+[tool.ruff.lint]
+# Keep this list small and intentional; the rest of the project still
+# relies on flake8 for general style. The rules below are ones we want
+# to enforce repo-wide as a baseline.
+select = [
+  # Import sorting. Replaces the dedicated isort pre-commit hook so the
+  # formatter (ruff format) and the import sorter (ruff check --select I)
+  # come from the same tool and rev.
+  "I",
+  # Imports must live at the top of the module. Late/inside-function
+  # imports must be opted into explicitly with `# noqa: PLC0415` and a
+  # comment explaining why (e.g. avoiding a heavy optional dependency
+  # in the import path). Enforced because AI-assisted contributions
+  # frequently introduce function-scoped imports that are unnecessary.
+  "PLC0415",
 ]
+
+# `build[uv]` makes cibuildwheel use `uv` for every venv it provisions,
+# both on the build side (passed to `python -m build` as `--installer=uv`)
+# and when materializing the test environment. uv resolves and installs
+# the wheel plus `requirements/test-cibuildwheel.txt` in roughly a second;
+# the previous pip-based path took noticeably longer per ABI and ran once
+# per matrix cell.
+[tool.cibuildwheel]
+build-frontend = "build[uv]"
 test-requires = "-r requirements/test-cibuildwheel.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
 # don't build PyPy wheels, install from source instead
@@ -148,6 +166,3 @@ PY_COLORS = "1"
 
 [tool.cibuildwheel.config-settings]
 pure-python = "false"
-
-[tool.cibuildwheel.windows]
-before-test = []  # Windows cmd has different syntax and pip chooses wheels

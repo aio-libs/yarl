@@ -1,9 +1,9 @@
 -r cython.txt
 covdefaults
-hypothesis>=6.0
-idna==3.11
-multidict==6.7.0
+hypothesis>=6.152.1
+idna==3.15
+multidict==6.7.1
 propcache==0.4.1
-pytest==9.0.2
-pytest-cov>=2.3.1
+pytest==9.0.3
+pytest-cov>=7.1.0
 pytest-xdist
