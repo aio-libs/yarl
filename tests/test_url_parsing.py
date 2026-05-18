@@ -621,3 +621,153 @@ def test_url_round_trips(
     assert parsed.host_subcomponent == hostname
     assert str(parsed) == url
     assert str(URL(str(parsed))) == url
+
+
+class TestPercentEncodedSchemeBypass:
+    """Regression tests for parser/serializer inconsistency with percent-encoded schemes.
+
+    When a URL contains a percent-encoded character in what would otherwise be a
+    scheme (e.g. ``ht%74p://...``), the parser correctly treats it as a relative
+    URL with no scheme. However, the requoter could decode the percent-encoding
+    and materialize a scheme in the serialized output, creating a mismatch between
+    parsed properties and ``str(url)`` / ``human_repr()``.
+
+    See: https://github.com/aio-libs/yarl/issues/1661
+    """
+
+    @pytest.mark.parametrize(
+        "input_url",
+        [
+            "ht%74p://127.0.0.1:8000/private",
+            "ht%74ps://evil.example/path",
+            "ja%76ascript:alert(1)",
+            "data%3Atext/html,xss",
+            "fi%6Ce:///etc/passwd",
+            "HT%54P://example.com",
+            "f%74p://files.example.com/pub",
+        ],
+        ids=[
+            "http-pct-encoded-t",
+            "https-pct-encoded-t",
+            "javascript-pct-encoded-v",
+            "data-pct-encoded-colon",
+            "file-pct-encoded-l",
+            "HTTP-uppercase-pct-encoded-T",
+            "ftp-pct-encoded-t",
+        ],
+    )
+    def test_str_does_not_introduce_scheme(self, input_url: str) -> None:
+        """str(URL(x)) must not introduce a scheme absent from parsed components."""
+        u = URL(input_url)
+        assert u.scheme == ""
+        assert u.host is None
+
+        reparsed = URL(str(u))
+        assert reparsed.scheme == u.scheme
+        assert reparsed.host == u.host
+
+    @pytest.mark.parametrize(
+        "input_url",
+        [
+            "ht%74p://127.0.0.1:8000/private",
+            "ht%74ps://evil.example/path",
+            "ja%76ascript:alert(1)",
+            "data%3Atext/html,xss",
+            "fi%6Ce:///etc/passwd",
+        ],
+        ids=[
+            "http-pct-encoded-t",
+            "https-pct-encoded-t",
+            "javascript-pct-encoded-v",
+            "data-pct-encoded-colon",
+            "file-pct-encoded-l",
+        ],
+    )
+    def test_human_repr_does_not_introduce_scheme(self, input_url: str) -> None:
+        """human_repr() must not introduce a scheme absent from parsed components."""
+        u = URL(input_url)
+        assert u.scheme == ""
+        assert u.host is None
+
+        reparsed = URL(u.human_repr())
+        assert reparsed.scheme == u.scheme
+        assert reparsed.host == u.host
+
+    def test_reparse_consistency(self) -> None:
+        """URL(str(URL(x))) must have the same security properties as URL(x)."""
+        u = URL("ht%74p://127.0.0.1:8000/private")
+        v = URL(str(u))
+
+        assert u.scheme == v.scheme == ""
+        assert u.host == v.host
+        assert u.host is None
+        assert u.raw_host == v.raw_host
+        assert u.absolute == v.absolute is False
+
+    def test_legitimate_scheme_not_affected(self) -> None:
+        """Legitimate URLs with real schemes must not be affected."""
+        u = URL("http://example.com/path")
+        assert u.scheme == "http"
+        assert u.host == "example.com"
+        assert str(u) == "http://example.com/path"
+        assert u.human_repr() == "http://example.com/path"
+
+    def test_relative_path_with_colon_not_affected(self) -> None:
+        """Relative paths with colons that aren't scheme-like must be preserved."""
+        # "not_scheme:path"; underscore is not in scheme_chars, so not a scheme
+        u = URL("not_scheme:path")
+        assert u.scheme == ""
+        assert str(u) == "not_scheme:path"
+
+    def test_relative_path_no_colon_not_affected(self) -> None:
+        """Simple relative paths without colons must be unaffected."""
+        u = URL("relative/path")
+        assert u.scheme == ""
+        assert str(u) == "relative/path"
+        assert u.human_repr() == "relative/path"
+
+    def test_colon_in_later_segment_not_affected(self) -> None:
+        """A colon in a later path segment (after /) is not a scheme delimiter."""
+        u = URL("/path/with:colon")
+        assert u.scheme == ""
+        assert str(u) == "/path/with:colon"
+
+    @pytest.mark.parametrize(
+        "input_url",
+        [
+            "0t%65st:foo",
+            "+ht%74p:foo",
+            "-ht%74p:foo",
+            ".ht%74p:foo",
+        ],
+        ids=[
+            "digit-start",
+            "plus-start",
+            "minus-start",
+            "dot-start",
+        ],
+    )
+    def test_non_alpha_start_pct_encoded_does_not_materialize_scheme(
+        self, input_url: str
+    ) -> None:
+        """split_url() accepts any scheme_chars in the first position, not just
+        ALPHA, so digit / "+" / "-" / "." starts must also be guarded against
+        scheme materialization on requote."""
+        u = URL(input_url)
+        assert u.scheme == ""
+        assert u.host is None
+
+        reparsed = URL(str(u))
+        assert reparsed.scheme == u.scheme
+        assert reparsed.host == u.host
+        assert reparsed.absolute is False
+
+    def test_relative_path_with_underscore_prefix_not_affected(self) -> None:
+        """Prefixes that cannot form a scheme (contain chars outside
+        scheme_chars) are left alone; the colon stays literal."""
+        # underscore is not in scheme_chars, so "no_scheme:" cannot form a
+        # scheme regardless of decoding.
+        u = URL("no_sch%65me:foo")
+        assert u.scheme == ""
+        assert ":" in str(u)
+        assert "%3A" not in str(u)

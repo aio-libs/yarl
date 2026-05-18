@@ -16,7 +16,7 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import SplitResult, uses_relative
+from urllib.parse import SplitResult, scheme_chars, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
@@ -68,6 +68,7 @@ if TYPE_CHECKING:
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_RELATIVE = frozenset(uses_relative)
+_SCHEME_CHARS = frozenset(scheme_chars)
 
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
@@ -161,6 +162,17 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+def _encode_relative_scheme_colon(path: str) -> str:
+    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``."""
+    colon_pos = path.find(":")
+    if colon_pos <= 0:
+        return path
+    for c in path[:colon_pos]:
+        if c not in _SCHEME_CHARS:
+            return path
+    return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
+
+
 @lru_cache
 def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
@@ -205,6 +217,8 @@ def encode_url(url_str: str) -> "URL":
         path = PATH_REQUOTER(path)
         if netloc and "." in path:
             path = normalize_path(path)
+        elif not scheme and not netloc:
+            path = _encode_relative_scheme_colon(path)
     if query:
         query = QUERY_REQUOTER(query)
     if fragment:
@@ -1488,6 +1502,8 @@ class URL:
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
+        if not self._scheme and not self._netloc:
+            path = _encode_relative_scheme_colon(path)
         query_string = "&".join(
             "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()

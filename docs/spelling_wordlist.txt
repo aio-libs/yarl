@@ -33,6 +33,7 @@ frontend
 glibc
 google
 hardcoded
+hostless
 hostnames
 macOS
 mailto
@@ -46,11 +47,13 @@ rc
 reStructuredText
 reencoding
 requote
+requoter
 requoting
 riscv
 riscv64
 runtimes
 sdist
+serializer
 subclass
 subclasses
 subcomponent
