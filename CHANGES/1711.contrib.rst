@@ -1,0 +1,7 @@
+Switched CI/CD to ``tox-dev/workflow``'s :file:`reusable-tox.yml`
+driven by an in-tree :file:`tox.ini`. The ``build``,
+``metadata-validation`` and ``lint`` (``pre-commit``,
+``spellcheck-docs``, ``build-docs``) jobs all run through the
+reusable workflow; MyPy coverage uploads to Coveralls from a
+``post-tox-job`` hook
+-- by :user:`bdraco`.
