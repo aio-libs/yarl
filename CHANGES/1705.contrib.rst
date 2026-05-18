@@ -1,0 +1,6 @@
+Switched the linter and CodSpeed CI jobs from ``actions/setup-python``
+to ``astral-sh/setup-uv``, matching the change already in the test
+matrix and removing the ``re-actors/cache-python-deps`` /
+``py-actions/py-dependency-install`` middleware in favour of
+``uv pip install`` directly
+-- by :user:`bdraco`.

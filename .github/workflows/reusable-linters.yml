@@ -29,19 +29,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v6
     - name: Setup Python ${{ env.PYTHON_LATEST }}
-      uses: actions/setup-python@v6
+      uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: ${{ env.PYTHON_LATEST }}
-    - name: >-
-        Calculate dependency files' combined hash value
-        for use in the cache key
-      id: calc-cache-key-files
-      uses: ./.github/actions/cache-keys
-    - name: Set up pip cache
-      uses: re-actors/cache-python-deps@release/v1
-      with:
-        cache-key-for-dependency-files: >-
-          ${{ steps.calc-cache-key-files.outputs.cache-key-for-dep-files }}
+        activate-environment: true
+        enable-cache: true
     - name: Cache pre-commit.com virtualenvs
       uses: actions/cache@v5
       with:
@@ -53,12 +45,9 @@ jobs:
             hashFiles('.pre-commit-config.yaml')
           }}
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v4
-      with:
-        path: requirements/lint.txt
+      run: uv pip install -r requirements/lint.txt
     - name: Self-install
-      run: |
-        pip install .
+      run: uv pip install .
     - name: Run linters
       run: |
         make lint
@@ -75,13 +64,13 @@ jobs:
     - name: Install spell checker
       run: |
         sudo apt install libenchant-2-dev
-        pip install -r requirements/doc-spelling.txt
+        uv pip install -r requirements/doc-spelling.txt
     - name: Run docs spelling
       run: |
         make doc-spelling
     - name: Prepare twine checker
       run: |
-        pip install -U build twine
+        uv pip install -U build twine
         python -m build --config-setting=pure-python=true
     - name: Run twine checker
       run: |
