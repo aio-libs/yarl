@@ -77,9 +77,10 @@ jobs:
     - name: Checkout project
       uses: actions/checkout@v6
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: astral-sh/setup-uv@v8
       with:
         python-version: ${{ env.PYTHON_LATEST }}
+        activate-environment: true
     - name: >-
         Calculate dependency files' combined hash value
         for use in the cache key
@@ -273,10 +274,10 @@ jobs:
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
-      uses: actions/setup-python@v6
+      uses: astral-sh/setup-uv@v8
       with:
         python-version: ${{ matrix.pyver }}
-        allow-prereleases: true
+        activate-environment: true
     - name: >-
         Calculate dependency files' combined hash value
         for use in the cache key
