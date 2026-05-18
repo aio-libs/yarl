@@ -445,6 +445,7 @@ default_role = "any"
 nitpicky = True
 nitpick_ignore = [
     ("envvar", "TMPDIR"),
+    ("envvar", "YARL_NO_BUILD_OPTIMIZATION_FLAGS"),
 ]
 
 # -- Options for towncrier_draft extension -----------------------------------

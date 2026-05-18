@@ -1,0 +1,8 @@
+Added an opt-out toggle for the PEP 517 backend exposed as the
+``no-build-optimization-flags`` config setting and the
+:envvar:`YARL_NO_BUILD_OPTIMIZATION_FLAGS` environment variable. When set
+to a truthy value (``1``, ``true``, ``on``), the build no longer injects
+the hardcoded release-mode flags (``-g0 -Ofast -DNDEBUG`` and ``-s``), so
+downstream packagers (Linux distributions, Homebrew, MacPorts, ...) can
+build with their own :envvar:`CFLAGS` and :envvar:`LDFLAGS` and keep debug
+symbols -- by :user:`aiolibsbot`.

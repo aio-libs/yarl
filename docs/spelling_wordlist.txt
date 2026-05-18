@@ -5,6 +5,7 @@ Changelog
 Codecov
 Cython
 GPG
+Homebrew
 IPv
 PRs
 PYX
@@ -59,6 +60,7 @@ subclasses
 subcomponent
 subtree
 svetlov
+truthy
 uncompiled
 unencoded
 unquoter

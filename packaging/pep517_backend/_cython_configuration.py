@@ -184,6 +184,7 @@ def patched_env(
     env: dict[str, str],
     *,
     cython_line_tracing_requested: bool,
+    no_build_optimization_flags_requested: bool = False,
     original_source_directory: Path | None = None,
     temporary_build_directory: Path | None = None,
 ) -> _c.Iterator[None]:
@@ -221,9 +222,14 @@ def patched_env(
             if cython_line_tracing_requested
             # Release mode:
             else (
-                '-g0',  # no debug symbols
-                '-Ofast',  # maximum optimization
-                '-DNDEBUG',  # disable assertions
+                ()
+                if no_build_optimization_flags_requested
+                # Downstream-packager mode: keep their own CFLAGS as-is.
+                else (
+                    '-g0',  # no debug symbols
+                    '-Ofast',  # maximum optimization
+                    '-DNDEBUG',  # disable assertions
+                )
             )
         ),
         *(
@@ -253,7 +259,10 @@ def patched_env(
             if cython_line_tracing_requested
             # Release mode:
             else (
-                '-s',  # remove all symbol table and relocation information
+                ()
+                if no_build_optimization_flags_requested
+                # Downstream-packager mode: keep their own LDFLAGS as-is.
+                else ('-s',)  # remove all symbol table and relocation info
             )
         ),
         # Finally, append the user-set env var, ensuring its top priority:
