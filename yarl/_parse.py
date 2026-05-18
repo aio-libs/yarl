@@ -57,6 +57,14 @@ def split_url(url: str) -> SplitURLType:
                 delim = wdelim  # use earliest delim position
         netloc = url[2:delim]
         url = url[delim:]
+        # Backslash is not valid in the authority component per RFC 3986.
+        # WHATWG parsers treat \ as a path separator for special schemes, so
+        # accepting it in the authority can cause host parsing ambiguity.
+        if "\\" in netloc:
+            raise ValueError(
+                "Invalid URL: backslash ('\\') is not allowed in the authority "
+                "component per RFC 3986."
+            )
         has_left_bracket = "[" in netloc
         has_right_bracket = "]" in netloc
         if (has_left_bracket and not has_right_bracket) or (
@@ -88,14 +96,6 @@ def split_url(url: str) -> SplitURLType:
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
-    # Backslash is not valid in the authority component per RFC 3986.
-    # WHATWG parsers treat \ as a path separator for special schemes, so
-    # accepting it in the authority can cause host parsing ambiguity.
-    if "\\" in netloc:
-        raise ValueError(
-            "Invalid URL: backslash ('\\') is not allowed in the authority "
-            "component per RFC 3986."
-        )
     if has_hash:
         url, _, fragment = url.partition("#")
     if has_question_mark:
