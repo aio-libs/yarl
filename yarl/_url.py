@@ -1493,8 +1493,8 @@ class URL:
 
     def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
-        user = human_quote(self.user, "#/:?@[]")
-        password = human_quote(self.password, "#/:?@[]")
+        user = human_quote(self.user, "#/:?@[]\\")
+        password = human_quote(self.password, "#/:?@[]\\")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
         path = human_quote(self.path, "#?")
