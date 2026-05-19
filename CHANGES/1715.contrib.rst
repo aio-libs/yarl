@@ -1,0 +1,5 @@
+Switched the CI ``test`` job from ``actions/setup-python`` to
+``astral-sh/setup-uv`` with ``uv pip install``. Pre-release
+interpreters skip the wheel cache so each run resolves freshly
+against the current snapshot
+-- by :user:`bdraco`.
