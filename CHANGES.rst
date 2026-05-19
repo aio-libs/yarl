@@ -14,6 +14,41 @@ Changelog
 
 .. towncrier release notes start
 
+v1.24.2
+=======
+
+*(2026-05-19)*
+
+
+Contributor-facing changes
+--------------------------
+
+- Switched the aarch64 and armv7l wheel builds to GitHub's native ARM
+  runners. The aarch64 wheels now build without QEMU emulation, and
+  armv7l runs on aarch64 hosts so its 32-bit ARM execution is far
+  cheaper than the previous aarch64-on-x86_64 path
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1724`.
+
+- Restored per-runner native arches in the Windows wheel matrix on tag
+  releases. The previous ``CIBW_ARCHS_WINDOWS=AMD64 ARM64`` setting made
+  both ``windows-latest`` and ``windows-11-arm`` cross-compile the other
+  arch, producing two artifacts with identically-named wheels whose
+  bytes differed; the deploy job's ``download-artifact ... merge-multiple``
+  step tore those writes together, yielding a wheel that PyPI rejected
+  with ``400 Invalid distribution file. ZIP archive not accepted:
+  Mis-matched data size`` during the 1.24.0 and 1.24.1 releases
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1725`.
+
+
+----
+
+
 v1.24.1
 =======
 

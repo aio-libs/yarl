@@ -1,5 +1,0 @@
-Switched the aarch64 and armv7l wheel builds to GitHub's native ARM
-runners. The aarch64 wheels now build without QEMU emulation, and
-armv7l runs on aarch64 hosts so its 32-bit ARM execution is far
-cheaper than the previous aarch64-on-x86_64 path
--- by :user:`bdraco`.
