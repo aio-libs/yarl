@@ -610,12 +610,16 @@ jobs:
         ${{ needs.pre-setup.outputs.sdist-artifact-name }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
       # CIBW_ARCHS_LINUX: Build emulated architectures if QEMU, else "auto"
+      # CIBW_BUILD_FRONTEND: override pyproject.toml's `build[uv]` because
+      # the pypa odd-arch containers do not ship `uv` preinstalled
       # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
       environment-variables: |-
         CIBW_ARCHS_LINUX=${{ matrix.qemu }}
 
         CIBW_ARCHS_MACOS=x86_64 arm64 universal2
+
+        CIBW_BUILD_FRONTEND=build
 
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false

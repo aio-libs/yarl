@@ -1,0 +1,6 @@
+Restored production of odd-arch wheels (``aarch64``, ``armv7l``,
+``ppc64le``, ``riscv64``, ``s390x``, both manylinux and musllinux)
+by overriding ``CIBW_BUILD_FRONTEND=build`` for that matrix.
+The default ``build[uv]`` frontend (from ``pyproject.toml``) needs
+``uv`` preinstalled in the build container, which the pypa
+odd-arch images do not currently ship -- by :user:`bdraco`.
