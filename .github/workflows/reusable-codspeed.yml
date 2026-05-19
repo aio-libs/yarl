@@ -57,7 +57,6 @@ env:
   PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
-  UV_PYTHON_PREFERENCE: only-managed  # avoid ancient system Python
 
 jobs:
 
@@ -98,6 +97,9 @@ jobs:
 
     - name: Setup Python 3.13
       id: python-install
+      # important: do not use system python
+      env:
+        UV_PYTHON_PREFERENCE: only-managed
       uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: 3.13

@@ -392,6 +392,9 @@ jobs:
 
     - name: Setup Python ${{ matrix.pyver }}
       id: python-install
+      # important: do not use system python
+      env:
+        UV_PYTHON_PREFERENCE: only-managed
       uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: ${{ matrix.pyver }}
