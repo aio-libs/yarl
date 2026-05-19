@@ -1,5 +1,6 @@
 [tool.towncrier]
   package = "yarl"
+  name = "yarl"
   filename = "CHANGES.rst"
   directory = "CHANGES/"
   title_format = "v{version}"

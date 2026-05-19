@@ -1,12 +1,14 @@
 include .coveragerc
 include pyproject.toml
 include pytest.ini
+include tox.ini
 include towncrier.toml
 include LICENSE
 include NOTICE
 include CHANGES.rst
 include README.rst
 graft .github/actions/
+graft .github/reusables/
 graft yarl
 graft packaging
 graft docs
