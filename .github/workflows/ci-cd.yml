@@ -680,17 +680,23 @@ jobs:
     - name: Check whether the GitHub Release already exists
       # Allows re-running the deploy job after a partial failure (e.g. PyPI
       # upload error) without the Make Release step failing with HTTP 422
-      # because the tag/release was created on a prior attempt.
+      # because the tag/release was created on a prior attempt. Treat
+      # only the literal `release not found` reply as "does not exist";
+      # other failures (auth, rate-limit, network) re-raise so the job
+      # fails loudly instead of falling through to Make Release.
       id: gh-release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TAG: ${{ github.ref_name }}
       run: |
         if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" \
-            >/dev/null 2>&1; then
+            >/dev/null 2>err; then
           echo 'exists=true' >> "${GITHUB_OUTPUT}"
-        else
+        elif grep -qx 'release not found' err; then
           echo 'exists=false' >> "${GITHUB_OUTPUT}"
+        else
+          cat err >&2
+          exit 1
         fi
     - name: Make Release
       if: steps.gh-release.outputs.exists != 'true'
