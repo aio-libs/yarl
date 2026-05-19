@@ -97,72 +97,29 @@ jobs:
 
     - name: Setup Python 3.13
       id: python-install
-      uses: actions/setup-python@v6
+      uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: 3.13
-    - name: >-
-        Calculate dependency files' combined hash value
-        for use in the cache key
-      id: calc-cache-key-files
-      uses: ./.github/actions/cache-keys
-    - name: Set up pip cache
-      uses: re-actors/cache-python-deps@release/v1
-      with:
-        cache-key-for-dependency-files: >-
-          ${{ steps.calc-cache-key-files.outputs.cache-key-for-dep-files }}
-
-    - name: Determine pre-compiled compatible wheel
+        activate-environment: true
+        enable-cache: true
+    - name: Install benchmark dependencies
+      run: uv pip install -r requirements/codspeed.txt
+    - name: Install ${{ inputs.pypi-project-name }} from a pre-built wheel
       if: inputs.pypi-project-name != ''
       env:
-        # NOTE: When `pip` is forced to colorize output piped into `jq`,
-        # NOTE: the latter can't parse it. So we're overriding the color
-        # NOTE: preference here via https://no-color.org.
-        # NOTE: Setting `FORCE_COLOR` to any value (including 0, an empty
-        # NOTE: string, or a "YAML null" `~`) doesn't have any effect and
-        # NOTE: `pip` (through its verndored copy of `rich`) treats the
-        # NOTE: presence of the variable as "force-color" regardless.
-        #
-        # NOTE: This doesn't actually work either, so we'll resort to unsetting
-        # NOTE: in the Bash script.
-        # NOTE: Ref: https://github.com/Textualize/rich/issues/2622
-        NO_COLOR: 1
         PROJECT_NAME: ${{ inputs.pypi-project-name }}
-      id: wheel-file
-      run: >
-        echo -n path= | tee -a "${GITHUB_OUTPUT}"
-
-
-        unset FORCE_COLOR
-
-
-        python
-        -X utf8
-        -u -I
-        -m pip install
+      run: >-
+        uv pip install
         --find-links=./dist
         --no-index
-        "${PROJECT_NAME}"
-        --force-reinstall
-        --no-color
         --no-deps
+        --force-reinstall
         --only-binary=:all:
-        --dry-run
-        --report=-
-        --quiet
-        | jq --raw-output .install[].download_info.url
-        | tee -a "${GITHUB_OUTPUT}"
-      shell: bash
-    - name: Install benchmark deps and the project from a pre-built wheel
-      if: inputs.pypi-project-name != ''
-      run: >-
-        python -Im pip install
-        -r requirements/codspeed.txt
-        '${{ steps.wheel-file.outputs.path }}'
-    - name: Install benchmark deps and the project from source
+        "${PROJECT_NAME}"
+    - name: Install the project from source
       if: inputs.pypi-project-name == ''
       run: >-
-        python -Im pip install
-        -r requirements/codspeed.txt
+        uv pip install
         .
         --config-setting=pure-python=false
         --config-setting=with-cython-tracing=false
