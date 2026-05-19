@@ -55,6 +55,10 @@ jobs:
         python-version: "3.13"
         activate-environment: true
         enable-cache: true
+    - name: Seed pip into the uv-managed venv
+      # aiohttp's `make .develop` shells out to `pip` / `python -m pip`,
+      # which uv's managed venvs omit by default.
+      run: uv pip install pip wheel setuptools
     - name: Provision the dev env
       run: make .develop
     - name: Cythonize yarl
