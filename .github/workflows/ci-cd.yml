@@ -603,8 +603,16 @@ jobs:
         include:
         # Build aarch64 natively on the GH-hosted ARM runner instead of
         # x86_64-under-QEMU; this drops the build from ~40 min of emulation
-        # to a few minutes of native execution.
+        # to a few minutes of native execution. Each `(qemu, tag)` combo
+        # is listed explicitly so the include unambiguously augments the
+        # existing matrix cell rather than relying on the partial-key
+        # merge behaviour of `matrix.include`.
         - qemu: aarch64
+          tag: ''
+          runner-vm-os: ubuntu-24.04-arm
+          native-arch: true
+        - qemu: aarch64
+          tag: musllinux
           runner-vm-os: ubuntu-24.04-arm
           native-arch: true
         # armv7l also builds on aarch64 hosts. We still register QEMU so
@@ -613,12 +621,16 @@ jobs:
         # emulation, aarch64-on-aarch64 hosting beats x86_64 by a wide
         # margin.
         - qemu: armv7l
+          tag: ''
+          runner-vm-os: ubuntu-24.04-arm
+        - qemu: armv7l
+          tag: musllinux
           runner-vm-os: ubuntu-24.04-arm
     uses: ./.github/workflows/reusable-cibuildwheel.yml
     with:
       check-name: >-
         Build ${{ matrix.tag }} wheels for ${{ matrix.qemu }}
-      qemu: ${{ matrix.native-arch && 'false' || 'true' }}
+      qemu: ${{ ! matrix.native-arch }}
       runner-vm-os: ${{ matrix.runner-vm-os || 'ubuntu-latest' }}
       timeout-minutes: 60
       source-tarball-name: >-
