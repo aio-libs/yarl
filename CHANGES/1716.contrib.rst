@@ -1,5 +1,0 @@
-Switched the ``Aiohttp`` workflow that runs the aiohttp test
-suite against the in-tree yarl checkout from
-``actions/setup-python`` to ``astral-sh/setup-uv`` with ``uv
-pip install``
--- by :user:`bdraco`.

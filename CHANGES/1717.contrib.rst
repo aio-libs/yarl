@@ -1,4 +1,0 @@
-Switched the ``Aiohttp`` workflow's ``make .develop`` step to
-install aiohttp's dev env through ``uv pip`` by passing
-``PIP="uv pip"``
--- by :user:`bdraco`.

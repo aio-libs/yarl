@@ -1,8 +1,0 @@
-Migrated the main tree from standalone ``black`` and ``isort``
-pre-commit hooks to ``ruff format`` and the ruff ``I`` lint rule,
-sharing the existing ``[tool.ruff]`` config in ``pyproject.toml``.
-``ruff-check`` now runs with ``--fix`` so import-order fixes apply
-on commit, and the orphan ``[isort]`` block in ``setup.cfg`` was
-removed. The ``packaging/pep517_backend/`` subtree keeps its own
-``.ruff.toml`` and is unaffected
--- by :user:`bdraco`.

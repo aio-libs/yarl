@@ -1,4 +1,0 @@
-Renamed the ``actions/checkout`` ``depth`` input to ``fetch-depth`` in the
-reusable codspeed workflow so the actionlint pre-commit hook passes and the
-intended shallow clone actually takes effect
--- by :user:`bdraco`.

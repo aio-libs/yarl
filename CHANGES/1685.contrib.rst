@@ -1,5 +1,0 @@
-Added an ``AGENTS.md`` orientation file at the repository root,
-covering the pull request template, ``CHANGES/`` news fragment
-conventions, draft-PR workflow, and the Cython quoter layout, so
-LLM contributors land changes that match project style
--- by :user:`bdraco`.
