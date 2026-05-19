@@ -11,11 +11,9 @@ PYX
 Towncrier
 Twitter
 UTF
-aarch64
 actionlint
 aiohttp
 armv
-armv7l
 ascii
 backend
 boolean
@@ -42,11 +40,8 @@ macOS
 mailto
 manylinux
 multi
-musllinux
 nightlies
-ppc64le
 pre
-preinstalled
 pydantic
 pytest
 rc
@@ -58,7 +53,6 @@ requoting
 riscv
 riscv64
 runtimes
-s390x
 sdist
 serializer
 subclass
