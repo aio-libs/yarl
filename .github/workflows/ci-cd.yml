@@ -274,7 +274,12 @@ jobs:
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
       # CIBW_ARCHS_*: on PR/non-tag, only build the arches that the test matrix
       # actually consumes (linux x86_64 from cibw default, macos arm64,
-      # windows AMD64). Tag releases keep the full arch set.
+      # windows AMD64). Tag releases keep the full arch set; CIBW_ARCHS_WINDOWS
+      # is pinned per runner so each Windows host builds only its native arch.
+      # Building both arches on both Windows runners produced two artifacts
+      # with identically-named wheels but different bytes, which the Deploy
+      # job's `download-artifact ... merge-multiple: true` step then tore
+      # together, yielding a wheel PyPI rejected with `Mis-matched data size`.
       environment-variables: |-
         CIBW_ARCHS_MACOS=${{
           (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
@@ -283,9 +288,7 @@ jobs:
         }}
 
         CIBW_ARCHS_WINDOWS=${{
-          (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
-          && 'AMD64 ARM64'
-          || 'AMD64'
+          matrix.runner-vm-os == 'windows-11-arm' && 'ARM64' || 'AMD64'
         }}
 
         CIBW_CONFIG_SETTINGS<<EOF
