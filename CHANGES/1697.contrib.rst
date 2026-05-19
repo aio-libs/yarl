@@ -1,8 +1,0 @@
-Enforced top-level imports across ``yarl`` and ``tests`` via the ruff
-``PLC0415`` rule, wired through a new ``ruff-check`` pre-commit hook.
-Function-scoped imports must now opt in with ``# noqa: PLC0415`` plus
-a comment explaining the import-time reason. Dropped the ``yesqa``
-hook, which could not recognize ruff-only codes and stripped the new
-``noqa`` comments as stale; a wider migration off flake8 onto ruff
-will follow separately
--- by :user:`bdraco`.

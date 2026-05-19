@@ -1,3 +1,0 @@
-Resolved a ruff ``ISC004`` violation in the PEP 517 build backend so the
-pre-commit ``ruff-check`` hook passes again
--- by :user:`bdraco`.
