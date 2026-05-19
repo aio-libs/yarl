@@ -14,6 +14,28 @@ Changelog
 
 .. towncrier release notes start
 
+v1.24.1
+=======
+
+*(2026-05-19)*
+
+
+Contributor-facing changes
+--------------------------
+
+- Allowed re-running the deploy job after a partial release failure: the
+  ``Make Release`` step now skips when the GitHub Release already exists,
+  and the PyPI publish step uses ``skip-existing`` so dists that were
+  already uploaded on a prior attempt do not break the retry
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1721`.
+
+
+----
+
+
 v1.24.0
 =======
 
