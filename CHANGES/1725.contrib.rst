@@ -1,0 +1,9 @@
+Restored per-runner native arches in the Windows wheel matrix on tag
+releases. The previous ``CIBW_ARCHS_WINDOWS=AMD64 ARM64`` setting made
+both ``windows-latest`` and ``windows-11-arm`` cross-compile the other
+arch, producing two artifacts with identically-named wheels whose
+bytes differed; the deploy job's ``download-artifact ... merge-multiple``
+step tore those writes together, yielding a wheel that PyPI rejected
+with ``400 Invalid distribution file. ZIP archive not accepted:
+Mis-matched data size`` during the 1.24.0 and 1.24.1 releases
+-- by :user:`bdraco`.
