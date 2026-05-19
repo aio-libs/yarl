@@ -57,6 +57,7 @@ env:
   PY_COLORS: 1  # Recognized by the `py` package, dependency of `pytest`
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
+  UV_PYTHON_PREFERENCE: only-managed  # avoid ancient system Python
 
 jobs:
 
