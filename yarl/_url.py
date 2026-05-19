@@ -1613,7 +1613,7 @@ def _encode_host(host: str, validate_host: bool) -> str:
             pass
         else:
             if sep and validate_host and (not zone or _ZONE_ID_UNSAFE_RE.search(zone)):
-                raise ValueError(f"Invalid characters in IPv6 zone ID: {zone!r}")
+                raise ValueError("Invalid characters in IPv6 zone ID")
             # These checks should not happen in the
             # LRU to keep the cache size small
             host = ip.compressed

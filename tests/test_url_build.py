@@ -45,8 +45,11 @@ def test_url_ipv4_in_ipv6() -> None:
 )
 def test_url_build_ipv6_zone_id_invalid_chars(zone: str) -> None:
     """Zone IDs with control characters must be rejected by validate_host."""
-    with pytest.raises(ValueError, match="Invalid characters in IPv6 zone ID"):
+    with pytest.raises(ValueError, match="Invalid characters in IPv6 zone ID") as ctx:
         URL.build(scheme="http", host=f"::1%{zone}", path="/")
+    error = str(ctx.value)
+    assert zone not in error
+    assert repr(zone) not in error
 
 
 @pytest.mark.parametrize(
