@@ -46,11 +46,15 @@ jobs:
       with:
         path: vendor/yarl
     - name: Setup Python
-      uses: actions/setup-python@v6
+      id: python-install
+      # important: do not use system python
+      env:
+        UV_PYTHON_PREFERENCE: only-managed
+      uses: astral-sh/setup-uv@v8.1.0
       with:
         python-version: "3.13"
-        cache: pip
-        cache-dependency-path: requirements/*.txt
+        activate-environment: true
+        enable-cache: true
     - name: Provision the dev env
       run: make .develop
     - name: Cythonize yarl
@@ -59,7 +63,7 @@ jobs:
     - name: Install yarl
       working-directory: vendor/yarl
       run: >-
-        python -m pip install -e .
+        uv pip install -e .
     - name: Run tests
       # aiohttp 3.14+ no longer enables xdist via its setup.cfg, so pass
       # --numprocesses=auto here to keep the run parallel on every branch.
