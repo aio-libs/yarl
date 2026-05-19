@@ -1,7 +1,0 @@
-Shrunk the CI wheel-build matrix on pull requests and non-tag pushes by
-restricting ``CIBW_ARCHS_MACOS`` to ``arm64``, ``CIBW_ARCHS_WINDOWS`` to
-``AMD64``, and skipping the ``windows-11-arm`` runner -- the test matrix only
-exercises those architectures, so the previously-built ``x86_64`` macOS and
-``ARM64`` Windows wheels were never installed. Tag releases still build the
-full architecture set
--- by :user:`aiolibsbot`.
