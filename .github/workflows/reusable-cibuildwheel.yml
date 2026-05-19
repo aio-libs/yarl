@@ -114,8 +114,10 @@ jobs:
           dist/${{ inputs.source-tarball-name }}
         # `build-frontend = "build[uv]"` (pyproject.toml) requires uv to be
         # available on the runner for Windows and macOS. Installing
-        # cibuildwheel with the `uv` extra bundles uv with it; Linux
-        # already has uv inside the manylinux/musllinux container.
+        # cibuildwheel with the `uv` extra bundles uv with it; the
+        # tested-arch manylinux/musllinux containers also ship uv
+        # preinstalled. The odd-arch containers do not, so the odd-arch
+        # matrix in `ci-cd.yml` overrides `CIBW_BUILD_FRONTEND=build`.
         extras: uv
 
     - name: Upload built artifacts for testing and publishing
