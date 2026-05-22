@@ -1,0 +1,7 @@
+Added ``UV_CONSTRAINT`` and ``UV_BUILD_CONSTRAINT`` alongside
+``PIP_CONSTRAINT`` and ``PIP_BUILD_CONSTRAINT`` in the
+``cibuildwheel`` environment so the :file:`requirements/cython.txt`
+pin is honored under the ``build[uv]`` frontend; ``uv pip``
+ignores the ``PIP_`` variables and reads only the ``UV_`` ones,
+while the ``PIP_`` variants are kept for the pip fallback path
+-- by :user:`bdraco`.

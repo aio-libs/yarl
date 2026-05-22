@@ -160,9 +160,12 @@ skip = "pp*"
 COLOR = "yes"
 FORCE_COLOR = "1"
 MYPY_FORCE_COLOR = "1"
+PIP_BUILD_CONSTRAINT = "requirements/cython.txt"
 PIP_CONSTRAINT = "requirements/cython.txt"
 PRE_COMMIT_COLOR = "always"
 PY_COLORS = "1"
+UV_BUILD_CONSTRAINT = "requirements/cython.txt"
+UV_CONSTRAINT = "requirements/cython.txt"
 
 [tool.cibuildwheel.config-settings]
 pure-python = "false"
