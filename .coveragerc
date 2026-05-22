@@ -24,6 +24,9 @@ omit =
   benchmark.py
   url_benchmark.py
   tests/*_benchmarks.py
+  # Build-time tooling, exercised by the wheel/sdist build legs not the unit
+  # suite; test_pep517_backend.py imports it only for `_exclude_dir_path`.
+  packaging/*
 
 [run]
 branch = true
