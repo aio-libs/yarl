@@ -403,7 +403,45 @@ def test_ipv6_zone_rfc6874() -> None:
     assert url.raw_host == "fe80::1%251"
     assert url.host == "fe80::1%1"
     assert url.host_subcomponent == "[fe80::1%251]"
+    assert url.host_port_subcomponent == "[fe80::1%251]"
+    assert url.authority == "fe80::1%1:80"
+    assert url.human_repr() == "http://[fe80::1%1]/"
     assert str(url) == "http://[fe80::1%251]/"
+    assert URL(str(url)) == url
+
+
+def test_ipv6_zone_rfc6874_named_zone() -> None:
+    url = URL("http://[fe80::1%25eth0]/")
+    assert url.raw_host == "fe80::1%25eth0"
+    assert url.host == "fe80::1%eth0"
+    assert url.host_subcomponent == "[fe80::1%25eth0]"
+    assert url.authority == "fe80::1%eth0:80"
+    assert url.human_repr() == "http://[fe80::1%eth0]/"
+    assert str(url) == "http://[fe80::1%25eth0]/"
+    assert URL(str(url)) == url
+
+
+def test_ipv6_zone_rfc6874_with_port() -> None:
+    url = URL("http://[fe80::1%251]:8080/")
+    assert url.raw_host == "fe80::1%251"
+    assert url.host == "fe80::1%1"
+    assert url.port == 8080
+    assert url.host_port_subcomponent == "[fe80::1%251]:8080"
+    assert url.authority == "fe80::1%1:8080"
+    assert str(url) == "http://[fe80::1%251]:8080/"
+
+
+def test_ipv6_zone_rfc6874_pct_encoded_inside_zone() -> None:
+    # Multiple ``%25`` sequences: ``_encode_host`` partitions on the
+    # first one (the RFC 6874 separator); ``.host`` then decodes every
+    # ``%25`` in the result, including the one that originally encoded
+    # a ``%`` inside the zone identifier.
+    url = URL("http://[fe80::1%25foo%252fbar]/")
+    assert url.raw_host == "fe80::1%25foo%252fbar"
+    assert url.host == "fe80::1%foo%2fbar"
+    assert url.host_subcomponent == "[fe80::1%25foo%252fbar]"
+    assert str(url) == "http://[fe80::1%25foo%252fbar]/"
+    assert URL(str(url)) == url
 
 
 def test_port_for_explicit_port() -> None:

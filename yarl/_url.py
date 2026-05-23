@@ -766,13 +766,18 @@ class URL:
 
         None for relative URLs.
 
+        For IPv6 hosts that carry an RFC 6874 zone identifier, the
+        ``%25`` zone separator is decoded back to ``%``; the encoded
+        form is still available via :attr:`raw_host` and
+        :attr:`host_subcomponent`.
+
         """
         if (raw := self.raw_host) is None:
             return None
         if raw and raw[-1].isdigit() or ":" in raw:
-            # IP addresses are never IDNA encoded
+            # IP addresses are never IDNA encoded; only the RFC 6874
+            # zone separator needs to be decoded.
             if "%25" in raw:
-                # Decode RFC 6874 zone ID separator
                 return raw.replace("%25", "%")
             return raw
         return _idna_decode(raw)
@@ -1560,10 +1565,11 @@ def _encode_host(host: str, validate_host: bool) -> str:
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
     if host and (host[-1].isdigit() or ":" in host):
-        if "%25" in host:
-            raw_ip, sep, zone = host.partition("%25")
-        else:
-            raw_ip, sep, zone = host.partition("%")
+        # RFC 6874 spells the IPv6 zone separator as the percent-encoded
+        # ``%25``; bare ``%`` is still accepted so that hosts constructed
+        # programmatically (e.g. ``with_host("fe80::1%1")``) keep working.
+        part = "%25" if "%25" in host else "%"
+        raw_ip, sep, zone = host.partition(part)
         # If it looks like an IP, we check with _ip_compressed_version
         # and fall-through if its not an IP address. This is a performance
         # optimization to avoid parsing IP addresses as much as possible
