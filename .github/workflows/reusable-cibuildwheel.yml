@@ -96,7 +96,7 @@ jobs:
       shell: python
 
     - name: Download the source distribution
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: ${{ inputs.dists-artifact-name }}
         path: dist/
@@ -112,6 +112,13 @@ jobs:
       with:
         package-dir: >-  # not necessarily a dir, we pass an acceptable sdist
           dist/${{ inputs.source-tarball-name }}
+        # `build-frontend = "build[uv]"` (pyproject.toml) requires uv to be
+        # available on the runner for Windows and macOS. Installing
+        # cibuildwheel with the `uv` extra bundles uv with it; the
+        # tested-arch manylinux/musllinux containers also ship uv
+        # preinstalled. The odd-arch containers do not, so the odd-arch
+        # matrix in `ci-cd.yml` overrides `CIBW_BUILD_FRONTEND=build`.
+        extras: uv
 
     - name: Upload built artifacts for testing and publishing
       uses: actions/upload-artifact@v7

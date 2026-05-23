@@ -14,6 +14,348 @@ Changelog
 
 .. towncrier release notes start
 
+v1.24.2
+=======
+
+*(2026-05-19)*
+
+
+Contributor-facing changes
+--------------------------
+
+- Switched the aarch64 and armv7l wheel builds to GitHub's native ARM
+  runners. The aarch64 wheels now build without QEMU emulation, and
+  armv7l runs on aarch64 hosts so its 32-bit ARM execution is far
+  cheaper than the previous aarch64-on-x86_64 path
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1724`.
+
+- Restored per-runner native arches in the Windows wheel matrix on tag
+  releases. The previous ``CIBW_ARCHS_WINDOWS=AMD64 ARM64`` setting made
+  both ``windows-latest`` and ``windows-11-arm`` cross-compile the other
+  arch, producing two artifacts with identically-named wheels whose
+  bytes differed; the deploy job's ``download-artifact ... merge-multiple``
+  step tore those writes together, yielding a wheel that PyPI rejected
+  with ``400 Invalid distribution file. ZIP archive not accepted:
+  Mis-matched data size`` during the 1.24.0 and 1.24.1 releases
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1725`.
+
+
+----
+
+
+v1.24.1
+=======
+
+*(2026-05-19)*
+
+
+Contributor-facing changes
+--------------------------
+
+- Allowed re-running the deploy job after a partial release failure: the
+  ``Make Release`` step now skips when the GitHub Release already exists,
+  and the PyPI publish step uses ``skip-existing`` so dists that were
+  already uploaded on a prior attempt do not break the retry
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1721`.
+
+
+----
+
+
+v1.24.0
+=======
+
+*(2026-05-19)*
+
+
+Bug fixes
+---------
+
+- Delayed importing pydantic until it's needed to avoid increased import time -- by :user:`Dreamsorcerer`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1607`, :issue:`1702`.
+
+- Fixed pickling of :class:`~yarl.URL` on Python 3.15, where ``SplitResult``
+  gained a ``__getstate__`` that requires attributes set by ``__init__``.
+  ``__getstate__`` now returns the raw 5-tuple instead of a ``SplitResult``
+  built via ``tuple.__new__``, so pickling no longer touches ``SplitResult``
+  serialization at all. Pickles produced by older yarl releases (which embed
+  a ``SplitResult``) continue to load unchanged
+  -- by :user:`befeleme`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1632`, :issue:`1642`, :issue:`1687`.
+
+- Fixed a parsing issue where URLs containing text before an opening bracket
+  in the host component (e.g. ``http://127.0.0.1[aa::ff]``) were silently accepted
+  instead of being rejected as strictly invalid per RFC 3986
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1654`.
+
+- Raise :exc:`ValueError` when a URL's authority component contains a
+  backslash, which is not a valid character per :rfc:`3986`
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1659`.
+
+- Fixed a host-confusion parsing bug where URLs containing multiple bracket
+  characters in the host component (e.g. ``http://[:localhost[]].google:80``)
+  were silently parsed as an unintended host. Both ``split_url()`` and
+  ``split_netloc()`` now raise :exc:`ValueError` when more than one ``[`` or
+  ``]`` is found in the authority, or when ``[`` does not appear at the start of
+  the host subcomponent, in compliance with :rfc:`3986` -- by
+  :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1661`.
+
+- Fixed a parser/serializer inconsistency where percent-encoded characters in
+  the scheme portion of a URL (e.g. ``ht%74p://...``) were decoded by the
+  requoter, causing ``str()`` and :py:meth:`~yarl.URL.human_repr` to emit an
+  absolute URL with a scheme and host while the parsed properties
+  (:attr:`~yarl.URL.scheme`, :attr:`~yarl.URL.host`, :attr:`~yarl.URL.absolute`)
+  reported a relative, hostless URL. The fix preserves the percent-encoding of
+  the colon (``%3A``) in relative paths whenever decoding it would materialize a
+  URL scheme -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1669`.
+
+- Fixed a parsing issue where URLs containing text after the closing bracket
+  of an IP-literal host (e.g. ``http://[::1]allowed.example:1/``) were silently
+  accepted and normalized to the bracketed IP address (``http://[::1]:1/``),
+  dropping the trailing suffix and changing the effective host identity.
+  Per RFC 3986, after the closing ``]`` only ``:`` followed by a port number or
+  end-of-authority is valid
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1672`.
+
+
+Features
+--------
+
+- Start building and shipping riscv64 wheels
+  -- by :user:`justeph`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1626`.
+
+
+Removals and backward incompatible breaking changes
+---------------------------------------------------
+
+- Dropped support for the experimental free-threaded build of Python 3.13 -- by :user:`ngoldbaum`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1667`.
+
+
+Improved documentation
+----------------------
+
+- Added a note in the :meth:`~yarl.URL.with_query` documentation explaining
+  that types implementing ``__int__`` (e.g. :class:`~uuid.UUID`) are
+  converted to integers, and advising users to cast to :class:`str` when the
+  human-readable representation is needed -- by :user:`r266-tech`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1638`, :issue:`1645`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Resolved a ruff ``ISC004`` violation in the PEP 517 build backend so the
+  pre-commit ``ruff-check`` hook passes again
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1674`.
+
+- Renamed the ``actions/checkout`` ``depth`` input to ``fetch-depth`` in the
+  reusable codspeed workflow so the actionlint pre-commit hook passes and the
+  intended shallow clone actually takes effect
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1676`.
+
+- Bumped the pinned ``pyupgrade`` pre-commit hook to ``v3.21.2`` so it stops
+  crashing on Python 3.14, which made ``tokenize.cookie_re`` bytes-only
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1677`.
+
+- The type preciseness coverage report generated by `MyPy
+  <https://mypy-lang.org>`__ is now uploaded to `Coveralls
+  <https://coveralls.io/github/aio-libs/yarl>`__ and
+  will not be included in the `Codecov views
+  <https://app.codecov.io/gh/aio-libs/yarl>`__ going forward
+  -- by :user:`webknjaz`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1680`.
+
+- Raised the per-matrix-cell timeout of the CI ``Test`` job from
+  5 to 10 minutes to prevent false failures on slower runners
+  -- by :user:`aiolibsbot`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1683`.
+
+- Added an ``AGENTS.md`` orientation file at the repository root,
+  covering the pull request template, ``CHANGES/`` news fragment
+  conventions, draft-PR workflow, and the Cython quoter layout, so
+  LLM contributors land changes that match project style
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1685`.
+
+- Documented in :file:`AGENTS.md` that the coverage gate also
+  applies to test code, so unreachable defensive ``raise`` guards
+  and one-sided cleanup branches in tests will fail CI
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1689`.
+
+- Shrunk the CI wheel-build matrix on pull requests and non-tag pushes by
+  restricting ``CIBW_ARCHS_MACOS`` to ``arm64``, ``CIBW_ARCHS_WINDOWS`` to
+  ``AMD64``, and skipping the ``windows-11-arm`` runner -- the test matrix only
+  exercises those architectures, so the previously-built ``x86_64`` macOS and
+  ``ARM64`` Windows wheels were never installed. Tag releases still build the
+  full architecture set
+  -- by :user:`aiolibsbot`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1692`.
+
+- Documented the docs spell check (``make doc-spelling``) in
+  :file:`AGENTS.md` as a pre-push gate, mirroring
+  `aio-libs/multidict#1345
+  <https://github.com/aio-libs/multidict/pull/1345>`__. The
+  spell checker reads every ``CHANGES/*.rst`` fragment as part
+  of the docs build, so an unknown technical word in a news
+  fragment fails CI before a human sees the PR
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1693`.
+
+- Added a ``CLAUDE.md`` at the repository root that imports
+  :file:`AGENTS.md` via Claude Code's ``@``-syntax, so the
+  project's LLM contributor rules load automatically when
+  working in Claude Code
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1696`.
+
+- Enforced top-level imports across ``yarl`` and ``tests`` via the ruff
+  ``PLC0415`` rule, wired through a new ``ruff-check`` pre-commit hook.
+  Function-scoped imports must now opt in with ``# noqa: PLC0415`` plus
+  a comment explaining the import-time reason. Dropped the ``yesqa``
+  hook, which could not recognize ruff-only codes and stripped the new
+  ``noqa`` comments as stale; a wider migration off flake8 onto ruff
+  will follow separately
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1697`.
+
+- Migrated the main tree from standalone ``black`` and ``isort``
+  pre-commit hooks to ``ruff format`` and the ruff ``I`` lint rule,
+  sharing the existing ``[tool.ruff]`` config in ``pyproject.toml``.
+  ``ruff-check`` now runs with ``--fix`` so import-order fixes apply
+  on commit, and the orphan ``[isort]`` block in ``setup.cfg`` was
+  removed. The ``packaging/pep517_backend/`` subtree keeps its own
+  ``.ruff.toml`` and is unaffected
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1698`.
+
+- Switched the ``cibuildwheel`` build frontend to ``build[uv]`` so
+  that ``uv`` provisions every build and test virtual environment
+  in the wheel matrix. Test-dependency installation in particular
+  drops from a multi-second ``pip install`` per ABI to a roughly
+  sub-second ``uv`` resolve
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1699`.
+
+- Restructured the root :file:`CLAUDE.md` to import contributor
+  context from a shared ``aio-libs`` layer
+  (``~/.claude/aio-libs/context.md``), a project-specific layer
+  (``~/.claude/aio-libs/yarl/context.md``), the in-tree
+  :file:`AGENTS.md`, and an optional per-checkout
+  :file:`CLAUDE.local.md` override (added to :file:`.gitignore`),
+  so shared ``aio-libs`` guidance can live outside the repository
+  while project rules continue to load automatically in Claude
+  Code -- by :user:`aiolibsbot`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1700`, :issue:`1701`.
+
+- Switched CI/CD to ``tox-dev/workflow``'s :file:`reusable-tox.yml`
+  driven by an in-tree :file:`tox.ini`. The ``build``,
+  ``metadata-validation`` and ``lint`` (``pre-commit``,
+  ``spellcheck-docs``, ``build-docs``) jobs all run through the
+  reusable workflow; MyPy coverage uploads to Coveralls from a
+  ``post-tox-job`` hook
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1711`.
+
+- Switched the CI ``test`` job from ``actions/setup-python`` to
+  ``astral-sh/setup-uv`` with ``uv pip install``. Pre-release
+  interpreters skip the wheel cache so each run resolves freshly
+  against the current snapshot
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1715`.
+
+- Switched the ``Aiohttp`` workflow that runs the aiohttp test
+  suite against the in-tree yarl checkout from
+  ``actions/setup-python`` to ``astral-sh/setup-uv`` with ``uv
+  pip install``
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1716`.
+
+- Switched the ``Aiohttp`` workflow's ``make .develop`` step to
+  install aiohttp's dev env through ``uv pip`` by passing
+  ``PIP="uv pip"``
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1717`.
+
+
+----
+
+
 1.23.0
 ======
 

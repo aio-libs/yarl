@@ -1,7 +1,0 @@
-Fixed pickling of :class:`~yarl.URL` on Python 3.15, where ``SplitResult``
-gained a ``__getstate__`` that requires attributes set by ``__init__``.
-``__getstate__`` now returns the raw 5-tuple instead of a ``SplitResult``
-built via ``tuple.__new__``, so pickling no longer touches ``SplitResult``
-serialization at all. Pickles produced by older yarl releases (which embed
-a ``SplitResult``) continue to load unchanged
--- by :user:`aiolibsbot`.

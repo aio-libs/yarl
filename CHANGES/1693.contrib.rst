@@ -1,8 +1,0 @@
-Documented the docs spell check (``make doc-spelling``) in
-:file:`AGENTS.md` as a pre-push gate, mirroring
-`aio-libs/multidict#1345
-<https://github.com/aio-libs/multidict/pull/1345>`__. The
-spell checker reads every ``CHANGES/*.rst`` fragment as part
-of the docs build, so an unknown technical word in a news
-fragment fails CI before a human sees the PR
--- by :user:`bdraco`.
