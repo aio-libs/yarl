@@ -1,2 +1,2 @@
 -r test.txt
-pytest-codspeed==5.0.2
+pytest-codspeed==5.0.3
