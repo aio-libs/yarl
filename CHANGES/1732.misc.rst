@@ -1,5 +1,5 @@
-Replaced chained ``str.replace()`` loops with a single
-``str.translate()`` call when stripping unsafe bytes in
-``split_url()`` and ``@:#?`` in ``_check_netloc()``, reducing
-per-parse allocations on the URL parsing hot path
+Skipped the ``str.replace()`` scan for ``@:#?`` in
+``_check_netloc()`` when the character is absent, mirroring the
+short-circuit already used for unsafe bytes in ``split_url()``
+and avoiding allocations on the URL parsing hot path
 -- by :user:`aiolibsbot`.
