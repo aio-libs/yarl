@@ -2,4 +2,4 @@ Replaced chained ``str.replace()`` loops with a single
 ``str.translate()`` call when stripping unsafe bytes in
 ``split_url()`` and ``@:#?`` in ``_check_netloc()``, reducing
 per-parse allocations on the URL parsing hot path
--- by :user:`bdraco`.
+-- by :user:`aiolibsbot`.
