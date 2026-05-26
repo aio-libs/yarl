@@ -16,6 +16,8 @@ WHATWG_C0_CONTROL_OR_SPACE = (
 
 # Unsafe bytes to be removed per WHATWG spec
 UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
+_UNSAFE_URL_BYTES_TRANS = str.maketrans("", "", "".join(UNSAFE_URL_BYTES_TO_REMOVE))
+_NETLOC_STRIP_TRANS = str.maketrans("", "", "@:#?")
 USES_AUTHORITY = frozenset(uses_netloc)
 
 SplitURLType = tuple[str, str, str, str, str]
@@ -27,9 +29,7 @@ def split_url(url: str) -> SplitURLType:
     # Only lstrip url as some applications rely on preserving trailing space.
     # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
     url = url.lstrip(WHATWG_C0_CONTROL_OR_SPACE)
-    for b in UNSAFE_URL_BYTES_TO_REMOVE:
-        if b in url:
-            url = url.replace(b, "")
+    url = url.translate(_UNSAFE_URL_BYTES_TRANS)
 
     scheme = netloc = query = fragment = ""
     i = url.find(":")
@@ -112,7 +112,7 @@ def _check_netloc(netloc: str) -> None:
 
     # ignore characters already included
     # but not the surrounding text
-    n = netloc.replace("@", "").replace(":", "").replace("#", "").replace("?", "")
+    n = netloc.translate(_NETLOC_STRIP_TRANS)
     normalized_netloc = unicodedata.normalize("NFKC", n)
     if n == normalized_netloc:
         return
