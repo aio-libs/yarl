@@ -1,7 +1,7 @@
 -r cython.txt
 covdefaults
 hypothesis>=6.154.1
-idna==3.16
+idna==3.17
 multidict==6.7.1
 propcache==0.4.1
 pytest==9.0.3
