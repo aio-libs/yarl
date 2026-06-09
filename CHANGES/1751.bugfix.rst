@@ -1,0 +1,4 @@
+Fixed the Cython quoting backend preserving lone surrogate code
+points that the pure-Python backend already dropped; both now drop
+them and produce identical output
+-- by :user:`rodrigobnogueira`.

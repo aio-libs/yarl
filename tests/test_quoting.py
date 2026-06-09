@@ -99,6 +99,31 @@ def test_quote_ignore_broken_unicode(quoter: type[_Quoter]) -> None:
     assert quoter()(s) == s
 
 
+def test_quote_drops_lone_surrogate(quoter: type[_Quoter]) -> None:
+    # A lone Unicode surrogate (0xD800..0xDFFF) cannot be UTF-8 encoded, so
+    # both quoters must drop it. When the surrogate is the only non-safe
+    # character, the C quoter used to leave it in the output; the Python
+    # quoter has always dropped it via errors="ignore". Keep every other
+    # character safe ASCII so the surrogate is the sole driver of any change;
+    # an unsafe character such as "/" would mask the bug by forcing a rewrite.
+    q = quoter()
+    assert q("\ud800") == ""
+    assert q("\udfff") == ""
+    assert q("a\ud800b") == "ab"
+    # The result must be pure ASCII, never a retained surrogate.
+    assert q("a\ud800b").encode("ascii") == b"ab"
+
+
+def test_quote_drops_surrogate_with_encoded_char(quoter: type[_Quoter]) -> None:
+    # Regression guard: mixing a lone surrogate with a character that does
+    # require percent-encoding ("é" -> %C3%A9) must drop the surrogate while
+    # still encoding the real character, on both backends.
+    q = quoter()
+    assert q("é\ud800") == "%C3%A9"
+    assert q("\ud800é") == "%C3%A9"
+    assert q("é\ud800é") == "%C3%A9%C3%A9"
+
+
 def test_unquote_to_bytes(unquoter: type[_Unquoter]) -> None:
     assert unquoter()("abc%20def") == "abc def"
     assert unquoter()("") == ""

@@ -146,7 +146,8 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
             return -1
         return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
     elif 0xD800 <= utf <= 0xDFFF:
-        # surogate pair, ignored
+        # lone surrogate, dropped to match str.encode("utf8", errors="ignore")
+        writer.changed = True
         return 0
     elif utf < 0x10000:
         if _write_pct(writer, <uint8_t>(0xe0 | (utf >> 12)), True) < 0:
