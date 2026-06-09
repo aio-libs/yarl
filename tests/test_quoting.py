@@ -125,9 +125,11 @@ def test_quote_drops_lone_surrogate(quoter: type[_Quoter]) -> None:
 
 
 def test_quote_drops_surrogate_with_encoded_char(quoter: type[_Quoter]) -> None:
-    # Regression guard: mixing a lone surrogate with a character that does
-    # require percent-encoding ("é" -> %C3%A9) must drop the surrogate while
-    # still encoding the real character, on both backends.
+    # Parity guard for the mixed case: a lone surrogate alongside a character
+    # that does require percent-encoding ("é" -> %C3%A9) must drop the
+    # surrogate while still encoding the real character, on both backends.
+    # This does not isolate the C bug ("é" forces a rewrite on its own, so it
+    # passes even unpatched); test_quote_drops_lone_surrogate is the guard.
     q = quoter()
     assert q("é\ud800") == "%C3%A9"
     assert q("\ud800é") == "%C3%A9"
