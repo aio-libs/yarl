@@ -99,6 +99,25 @@ def test_quote_ignore_broken_unicode(quoter: type[_Quoter]) -> None:
     assert quoter()(s) == s
 
 
+def test_quote_drops_surrogate_splitting_percent_escape(
+    quoter: type[_Quoter],
+) -> None:
+    # A lone surrogate cannot be UTF-8 encoded and is dropped. When one lands
+    # inside or next to a "%XX" escape while requoting, it must not stop the
+    # escape from being recognised: the pure-Python quoter strips surrogates
+    # before scanning, so the C quoter has to look through them too. Each case
+    # changes only because the surrogate is removed and the escape recombines.
+    q = quoter()
+    assert q("%\ud83420") == "%20"  # surrogate between "%" and the digits
+    assert q("%2\ud834A") == "*"  # surrogate between the two hex digits, %2A
+    assert q("%4\ud8341") == "A"  # recombines to a safe char, %41
+    assert q("%\ud8340A") == "%0A"  # recombines to a char that needs encoding
+    assert q("%\ud834e9") == "%E9"  # lowercase hex still normalised to upper
+    assert q("%\ud800\udfff20") == "%20"  # two surrogates skipped in a row
+    # Too few real characters after "%" to form an escape: "%" stays literal.
+    assert q("%a\ud800") == "%25a"
+
+
 def test_unquote_to_bytes(unquoter: type[_Unquoter]) -> None:
     assert unquoter()("abc%20def") == "abc def"
     assert unquoter()("") == ""
