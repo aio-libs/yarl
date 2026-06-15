@@ -7,36 +7,29 @@ from yarl._quoting import NO_EXTENSIONS, _Quoter, _Unquoter
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
+quoters = [_PyQuoter]
+quoter_ids = ["PyQuoter"]
+unquoters = [_PyUnquoter]
+unquoter_ids = ["PyUnquoter"]
+
 if not NO_EXTENSIONS:
-    from yarl._quoting_c import _Quoter as _CQuoter  # type: ignore[import-not-found]
-    from yarl._quoting_c import _Unquoter as _CUnquoter
+    quoting_c = pytest.importorskip("yarl._quoting_c")
+    if quoting_c:
+        quoters.append(quoting_c._Quoter)
+        quoter_ids.append("CQuoter")
 
-    @pytest.fixture(params=[_PyQuoter, _CQuoter], ids=["py_quoter", "c_quoter"])
-    def quoter(request: pytest.FixtureRequest) -> _PyQuoter | _CQuoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
-        return request.param
+        unquoters.append(quoting_c._Unquoter)
+        unquoter_ids.append("CUnquoter")
 
-    @pytest.fixture(params=[_PyUnquoter, _CUnquoter], ids=["py_unquoter", "c_unquoter"])
-    def unquoter(request: pytest.FixtureRequest) -> _PyUnquoter | _CUnquoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
-        return request.param
 
-    quoters = [_PyQuoter, _CQuoter]
-    quoter_ids = ["PyQuoter", "CQuoter"]
-    unquoters = [_PyUnquoter, _CUnquoter]
-    unquoter_ids = ["PyUnquoter", "CUnquoter"]
-else:
+@pytest.fixture(params=quoters, ids=quoter_ids)
+def quoter(request: pytest.FixtureRequest) -> _PyQuoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
+    return request.param  # type: ignore[no-any-return]
 
-    @pytest.fixture(params=[_PyQuoter], ids=["py_quoter"])
-    def quoter(request: pytest.FixtureRequest) -> _PyQuoter:
-        return request.param  # type: ignore[no-any-return]
 
-    @pytest.fixture(params=[_PyUnquoter], ids=["py_unquoter"])
-    def unquoter(request: pytest.FixtureRequest) -> _PyUnquoter:
-        return request.param  # type: ignore[no-any-return]
-
-    quoters = [_PyQuoter]
-    quoter_ids = ["PyQuoter"]
-    unquoters = [_PyUnquoter]
-    unquoter_ids = ["PyUnquoter"]
+@pytest.fixture(params=unquoters, ids=unquoter_ids)
+def unquoter(request: pytest.FixtureRequest) -> _PyUnquoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
+    return request.param  # type: ignore[no-any-return]
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions available but not imported")
