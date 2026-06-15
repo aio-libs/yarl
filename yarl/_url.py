@@ -375,8 +375,6 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ("_cache", "_scheme", "_netloc", "_path", "_query", "_fragment")
-
     _cache: _InternalURLCache
     _scheme: str
     _netloc: str
