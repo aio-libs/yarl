@@ -90,7 +90,7 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Check out src from Git
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: >-
         Calculate dependency files' combined hash value
         for use in the cache key
@@ -378,7 +378,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout project
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
