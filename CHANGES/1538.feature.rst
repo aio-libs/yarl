@@ -1,0 +1,15 @@
+Added a new method :py:meth:`~yarl.URL.relative_to`
+to get the relative path between URLs.
+
+Note that both URLs must have the same scheme, user, password, host and port:
+
+.. code-block:: pycon
+
+    >>> target = URL("http://example.com/path/to")
+    >>> base = URL("http://example.com/")
+    >>> target.relative_to(base)
+    URL('path/to')
+    >>> base.relative_to(target)
+    URL('../..')
+
+-- by :user:`babieiev`.
