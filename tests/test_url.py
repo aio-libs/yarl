@@ -1787,8 +1787,8 @@ def test_with_suffix_for_relative_path_starting_from_slash2() -> None:
 
 
 def test_with_suffix_empty() -> None:
-    url = URL("http://example.com/path/to").with_suffix("")
-    assert str(url) == "http://example.com/path/to"
+    with pytest.raises(ValueError, match="Invalid suffix ''"):
+        URL("http://example.com/path/to").with_suffix("")
 
 
 def test_with_suffix_non_ascii() -> None:

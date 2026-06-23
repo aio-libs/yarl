@@ -1,0 +1,4 @@
+Fixed :py:meth:`~yarl.URL.with_suffix` silently accepting an empty
+suffix. The validator expression relied on operator precedence and
+short-circuited for ``""``, so ``url.with_suffix("")`` returned the
+original URL instead of raising :
