@@ -1,0 +1,3 @@
+Dependabot has been restricted to the ``requirements`` subdirectory to
+avoid unintended updates outside dependency requirement files
+-- by :user:`bbhtt`.
