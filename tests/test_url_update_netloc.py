@@ -206,6 +206,28 @@ def test_with_invalid_host(host: str, is_authority: bool) -> None:
         url.with_host(host=host)
 
 
+@pytest.mark.parametrize(
+    ("host", "is_authority"),
+    [
+        ("user:pass@истори.рф", True),
+        ("evil.com@истори.рф", True),
+        ("a/b.истори.рф", False),
+        ("исто?ри.рф", False),
+        ("исто#ри.рф", False),
+    ],
+)
+def test_with_invalid_non_ascii_host(host: str, is_authority: bool) -> None:
+    # The IDNA 2003 codec fallback in _idna_encode() does not enforce the
+    # reg-name grammar, so reserved characters could previously survive in a
+    # non-ASCII host and produce a confusable authority (gh#955).
+    url = URL("http://example.com:123")
+    match = r"Host '[^']+' cannot contain '[^']+' \(at position \d+\)"
+    if is_authority:
+        match += ", if .* use 'authority' instead of 'host'"
+    with pytest.raises(ValueError, match=f"{match}$"):
+        url.with_host(host=host)
+
+
 def test_with_host_percent_encoded() -> None:
     url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123")
     url2 = url.with_host("%cf%80.org")

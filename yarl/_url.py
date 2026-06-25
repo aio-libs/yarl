@@ -1635,23 +1635,29 @@ def _encode_host(host: str, validate_host: bool) -> str:
 
     # IDNA encoding is slow, skip it for ASCII-only strings
     if host.isascii():
-        # Check for invalid characters explicitly; _idna_encode() does this
-        # for non-ascii host names.
         host = host.lower()
-        if validate_host and (invalid := NOT_REG_NAME.search(host)):
-            value, pos, extra = invalid.group(), invalid.start(), ""
-            if value == "@" or (value == ":" and "@" in host[pos:]):
-                # this looks like an authority string
-                extra = (
-                    ", if the value includes a username or password, "
-                    "use 'authority' instead of 'host'"
-                )
-            raise ValueError(
-                f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
-            ) from None
-        return host
+    else:
+        # _idna_encode() falls back to the stdlib 'idna' codec for hosts the
+        # idna package rejects (IDNA 2003 compatibility, see #152). That codec
+        # does not enforce the reg-name grammar, so reserved characters such
+        # as '@', ':' or '/' can survive in the encoded (now ASCII) host and
+        # produce a confusable authority. Validate the encoded result below.
+        host = _idna_encode(host)
 
-    return _idna_encode(host)
+    # Check for invalid characters explicitly; both branches above yield an
+    # ASCII host, so the reg-name check applies uniformly.
+    if validate_host and (invalid := NOT_REG_NAME.search(host)):
+        value, pos, extra = invalid.group(), invalid.start(), ""
+        if value == "@" or (value == ":" and "@" in host[pos:]):
+            # this looks like an authority string
+            extra = (
+                ", if the value includes a username or password, "
+                "use 'authority' instead of 'host'"
+            )
+        raise ValueError(
+            f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
+        ) from None
+    return host
 
 
 @rewrite_module

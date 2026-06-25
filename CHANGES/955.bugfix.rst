@@ -1,0 +1,7 @@
+Fixed non-ASCII hosts bypassing reg-name validation. The IDNA 2003 fallback
+used by host encoding did not enforce the :rfc:`3986#section-3.2.2`
+``reg-name`` grammar, so reserved characters such as ``@``, ``:`` or ``/`` in a
+non-ASCII host (e.g. ``URL.build(host="user:pass@bücher.example")``) survived
+encoding and produced a misleading authority. The encoded host is now
+validated and such values raise :exc:`ValueError`
+-- by :user:`alhudz`.
