@@ -2648,3 +2648,13 @@ def test_url_with_fullwidth_percent_rejected(percent_char: str) -> None:
         ValueError, match="contains invalid characters under NFKC normalization"
     ):
         URL(f"http://evil.com{percent_char}2e.internal/")
+
+
+@pytest.mark.parametrize(
+    "bad_port",
+    [True, False, 1.5, "8080", b"8080", object()],
+    ids=["bool-true", "bool-false", "float", "str", "bytes", "object"],
+)
+def test_build_rejects_non_int_port(bad_port) -> None:
+    with pytest.raises(TypeError, match="port is required to be int"):
+        URL.build(scheme="http", host="example.com", port=bad_port)
