@@ -1,0 +1,8 @@
+Fixed :meth:`~yarl.URL.build` accepting boolean values for the ``port``
+argument. Because :class:`bool` is a subclass of :class:`int`, the previous
+``isinstance(port, int)`` check accepted ``True`` and ``False``, and the
+constructor only later raised a ``ValueError`` after :func:`str` had
+already converted the boolean to the literal ``"True"`` or ``"False"``.
+``URL.build`` now rejects boolean ports with a clear :class:`TypeError` at
+the call site, matching the existing :meth:`~yarl.URL.with_port` validation
+-- by :user:`HrachShah`.
