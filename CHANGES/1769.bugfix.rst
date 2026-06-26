@@ -1,0 +1,5 @@
+Validate the port range in ``URL.build`` so out-of-range values now raise
+``ValueError`` at the call site rather than failing later when the netloc
+is split during ``str(url)`` or property access; matches the existing
+range check in ``URL.with_port``
+-- by :user:`HrachShah`.
