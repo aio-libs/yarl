@@ -43,6 +43,7 @@ macOS
 mailto
 manylinux
 multi
+netloc
 nightlies
 pre
 pydantic
@@ -69,4 +70,3 @@ unencoded
 unquoter
 v1
 yarl
-netloc

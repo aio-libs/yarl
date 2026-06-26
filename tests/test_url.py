@@ -2669,4 +2669,3 @@ def test_build_rejects_non_int_port() -> None:
         URL.build(scheme="http", host="example.com", port="8080")
     with pytest.raises(TypeError, match="port should be int or None"):
         URL.build(scheme="http", host="example.com", port=1.5)
-
