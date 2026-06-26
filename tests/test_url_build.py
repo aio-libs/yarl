@@ -109,13 +109,58 @@ def test_build_with_scheme_and_host() -> None:
             id="port-only",
         ),
         pytest.param(
-            "", TypeError, r"^The port is required to be int, got .*\.$", id="port-str"
+            "",
+            TypeError,
+            r"^The port is required to be int, got .*\.$",
+            id="port-str",
+        ),
+        pytest.param(
+            65536,
+            ValueError,
+            r"^port must be between 0 and 65535, got 65536$",
+            id="port-too-high",
+        ),
+        pytest.param(
+            -1,
+            ValueError,
+            r"^port must be between 0 and 65535, got -1$",
+            id="port-negative",
         ),
     ],
 )
 def test_build_with_port(port: int, exc: type[Exception], match: str) -> None:
     with pytest.raises(exc, match=match):
         URL.build(port=port)
+
+
+@pytest.mark.parametrize(
+    "port",
+    [65536, 99999, -1],
+    ids=("too-high", "way-too-high", "negative"),
+)
+def test_build_with_out_of_range_port(port: int) -> None:
+    """`URL.build` previously constructed an object whose port lay outside the
+    0..65535 range; the resulting `URL` looked superficially fine until
+    something forced `_cache_netloc()` (e.g. `str(url)` or accessing
+    `host_subcomponent`), at which point it raised `ValueError("Port out of
+    range 0-65535")` from deep inside `split_netloc()` instead of from the
+    call site. Raise eagerly at `build()` time, mirroring `URL.with_port`."""
+    with pytest.raises(ValueError, match=r"^port must be between 0 and 65535"):
+        URL.build(scheme="http", host="example.com", port=port)
+
+
+@pytest.mark.parametrize(
+    "port",
+    [65536, 99999, -1],
+    ids=("too-high", "way-too-high", "negative"),
+)
+def test_build_with_out_of_range_port_encoded(port: int) -> None:
+    """Same range check applies in the `encoded=True` path: `make_netloc()`
+    formats the port into the netloc as a plain `f"{host}:{port}"`, so an
+    out-of-range value silently became a string like `:65536` in `_netloc`
+    and only failed later during render."""
+    with pytest.raises(ValueError, match=r"^port must be between 0 and 65535"):
+        URL.build(scheme="http", host="example.com", port=port, encoded=True)
 
 
 def test_build_with_user() -> None:
