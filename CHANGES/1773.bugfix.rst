@@ -1,0 +1,7 @@
+Rejected non-string arguments to ``URL.with_path`` at the call site
+with a ``TypeError("Invalid path type")`` message, matching the contract
+already used by the sibling ``with_scheme``, ``with_host``, ``with_user``,
+``with_password`` and ``with_port`` helpers. Previously, a non-string
+argument was forwarded into the path quoter and surfaced as a vague
+``argument of type '...' is not iterable`` error one frame deep
+-- by :user:`HrachShah`.

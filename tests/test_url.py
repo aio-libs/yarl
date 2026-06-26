@@ -1433,6 +1433,32 @@ def test_with_path_query() -> None:
     assert str(url.with_path("/test")) == "http://example.com/test"
 
 
+def test_with_path_rejects_non_str() -> None:
+    # The sibling with_scheme / with_host / with_user / with_password /
+    # with_port helpers all raise TypeError("Invalid <thing> type") for
+    # non-str arguments. with_path did not; a non-str argument was
+    # forwarded to PATH_QUOTER (a Quoter instance that iterates the
+    # argument) and surfaced as a vague TypeError from inside the quoter.
+    # Pin the consistent contract: any non-str argument raises the same
+    # TypeError message at the call site, and None in particular is
+    # rejected rather than silently treated as an empty path.
+    url = URL("http://example.com")
+    for bad in (
+        None,
+        42,
+        3.14,
+        b"/foo",
+        bytearray(b"/foo"),
+        ["/foo"],
+        ("/foo",),
+        object(),
+    ):
+        with pytest.raises(TypeError, match="Invalid path type"):
+            url.with_path(bad)  # type: ignore[arg-type]
+    # A valid string path still round-trips end-to-end.
+    assert str(url.with_path("/test")) == "http://example.com/test"
+
+
 def test_with_path_fragment() -> None:
     url = URL("http://example.com#frag")
     assert str(url.with_path("/test")) == "http://example.com/test"
