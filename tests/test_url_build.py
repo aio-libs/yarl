@@ -145,9 +145,7 @@ def test_build_with_out_of_range_port(port: int) -> None:
     `host_subcomponent`), at which point it raised `ValueError("Port out of
     range 0-65535")` from deep inside `split_netloc()` instead of from the
     call site. Raise eagerly at `build()` time, mirroring `URL.with_port`."""
-    with pytest.raises(
-        ValueError, match=r"^port must be between 0 and 65535"
-    ):
+    with pytest.raises(ValueError, match=r"^port must be between 0 and 65535"):
         URL.build(scheme="http", host="example.com", port=port)
 
 
@@ -161,9 +159,7 @@ def test_build_with_out_of_range_port_encoded(port: int) -> None:
     formats the port into the netloc as a plain `f"{host}:{port}"`, so an
     out-of-range value silently became a string like `:65536` in `_netloc`
     and only failed later during render."""
-    with pytest.raises(
-        ValueError, match=r"^port must be between 0 and 65535"
-    ):
+    with pytest.raises(ValueError, match=r"^port must be between 0 and 65535"):
         URL.build(scheme="http", host="example.com", port=port, encoded=True)
 
 
