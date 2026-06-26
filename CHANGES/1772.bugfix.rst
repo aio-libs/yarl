@@ -1,0 +1,6 @@
+URL.build(port=...) now rejects boolean values up front with a TypeError
+at the call site, matching the behaviour of URL.with_port. The previous
+type check accepted True and False because boolean is a subclass of
+integer in Python, and the resulting ValueError surfaced from inside
+the netloc assembly one frame deeper than the call site
+-- by :user:`HrachShah`.

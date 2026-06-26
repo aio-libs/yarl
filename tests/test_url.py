@@ -2648,3 +2648,24 @@ def test_url_with_fullwidth_percent_rejected(percent_char: str) -> None:
         ValueError, match="contains invalid characters under NFKC normalization"
     ):
         URL(f"http://evil.com{percent_char}2e.internal/")
+
+
+def test_build_rejects_non_int_port() -> None:
+    """URL.build(port=...) must reject bool and non-int port values.
+
+    The previous guard ``not isinstance(port, int)`` accepted ``True`` and
+    ``False`` because ``bool`` is a subclass of ``int``. The accepted
+    bool then flowed into ``make_netloc`` and eventually ``str(port)``
+    inside ``ip_address()``, surfacing as ``ValueError: Invalid URL:
+    port can't be converted to integer`` one frame deeper than the
+    call site, with the wrong exception type. ``URL.with_port`` already
+    rejected bool with ``TypeError``; this brings ``URL.build`` in line.
+    """
+    with pytest.raises(TypeError, match="port should be int or None"):
+        URL.build(scheme="http", host="example.com", port=True)
+    with pytest.raises(TypeError, match="port should be int or None"):
+        URL.build(scheme="http", host="example.com", port=False)
+    with pytest.raises(TypeError, match="port should be int or None"):
+        URL.build(scheme="http", host="example.com", port="8080")
+    with pytest.raises(TypeError, match="port should be int or None"):
+        URL.build(scheme="http", host="example.com", port=1.5)
