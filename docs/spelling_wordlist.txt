@@ -17,6 +17,7 @@ aiohttp
 armv
 ascii
 backend
+behaviour
 boolean
 booleans
 bools
@@ -68,3 +69,4 @@ unencoded
 unquoter
 v1
 yarl
+netloc
