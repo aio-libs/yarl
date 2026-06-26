@@ -1,0 +1,8 @@
+Fixed :meth:`~yarl.URL.with_path` silently turning a bare-relative URL
+into an absolute-path reference when the new path did not start with
+``/``. Previously, ``URL("foo/bar").with_path("abs")`` returned
+``URL("/abs")``, which is a different reference (an absolute-path
+reference per :rfc:`3986#section-4.2`) and resolves differently against
+any base URL. The method now keeps bare-relative URLs bare-relative;
+passing an explicit ``"/abs"`` continues to produce the slash-prefixed
+result.
