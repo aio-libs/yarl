@@ -1205,6 +1205,8 @@ class URL:
         keep_fragment: bool = False,
     ) -> "URL":
         """Return a new URL with path replaced."""
+        if not isinstance(path, str):
+            raise TypeError("Invalid path type")
         netloc = self._netloc
         if not encoded:
             path = PATH_QUOTER(path)

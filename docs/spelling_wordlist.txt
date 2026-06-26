@@ -46,6 +46,7 @@ nightlies
 pre
 pydantic
 pytest
+quoter
 rc
 reStructuredText
 reencoding
