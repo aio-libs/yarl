@@ -1432,6 +1432,7 @@ def test_with_path_query() -> None:
     url = URL("http://example.com?a=b")
     assert str(url.with_path("/test")) == "http://example.com/test"
 
+
 def test_with_path_rejects_non_str() -> None:
     # The sibling with_scheme / with_host / with_user / with_password /
     # with_port helpers all raise TypeError("Invalid <thing> type") for
@@ -1442,7 +1443,16 @@ def test_with_path_rejects_non_str() -> None:
     # TypeError message at the call site, and None in particular is
     # rejected rather than silently treated as an empty path.
     url = URL("http://example.com")
-    for bad in (None, 42, 3.14, b"/foo", bytearray(b"/foo"), ["/foo"], ("/foo",), object()):
+    for bad in (
+        None,
+        42,
+        3.14,
+        b"/foo",
+        bytearray(b"/foo"),
+        ["/foo"],
+        ("/foo",),
+        object(),
+    ):
         with pytest.raises(TypeError, match="Invalid path type"):
             url.with_path(bad)  # type: ignore[arg-type]
     # A valid string path still round-trips end-to-end.
