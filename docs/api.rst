@@ -989,6 +989,28 @@ The path is encoded if needed.
 
    .. versionadded:: 1.9
 
+.. method:: URL.joinpath_safe(*other)
+
+   Like :meth:`URL.joinpath`, but treat each argument as a single opaque
+   path segment. ``/`` characters inside an argument are percent-encoded so
+   they cannot introduce additional segments, and segments that consist
+   entirely of ``.`` or ``..`` are percent-encoded so they cannot be
+   interpreted as relative-path indicators.
+
+   Use this method to compose URLs from untrusted input — it prevents path
+   traversal attacks like ``api / "object" / user_supplied`` where
+   ``user_supplied`` could otherwise be ``"../evil"``.
+
+   .. doctest::
+
+      >>> api = URL('https://api.example/api/v1/')
+      >>> api.joinpath_safe('object', '../evil')
+      URL('https://api.example/api/v1/object/..%2Fevil')
+      >>> api.joinpath_safe('..', 'etc/passwd')
+      URL('https://api.example/api/v1/%2E%2E/etc%2Fpasswd')
+
+   .. versionadded:: 1.24.0
+
 .. method:: URL.__truediv__(url)
 
    Shortcut for :meth:`URL.joinpath` with a single element and ``encoded=False``.
