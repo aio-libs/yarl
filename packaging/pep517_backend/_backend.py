@@ -237,19 +237,22 @@ def patched_dist_get_long_description() -> _c.Iterator[None]:
         _DistutilsDistributionMetadata.get_long_description = orig_func  # type: ignore[method-assign]
 
 
+# Skip stale native build artifacts so cross-interpreter `.so`/`.pyd`/`.dylib`
+# from prior in-place builds don't leak into the wheel. See #1583.
+_STALE_BUILD_ARTIFACT_SUFFIXES = ('.so', '.pyd', '.dylib')
+
+
 def _exclude_dir_path(
     excluded_dir_path: Path,
     visited_directory: str,
     _visited_dir_contents: list[str],
 ) -> list[str]:
-    """Prevent recursive directory traversal."""
-    # This stops the temporary directory from being copied
-    # into self recursively forever.
-    # Ref: https://github.com/aio-libs/yarl/issues/992
+    """Filter the tempdir parent (#992) and stale `.so`/`.pyd`/`.dylib` (#1583)."""
+    visited_directory_path = Path(visited_directory)
     visited_directory_subdirs_to_ignore = [
         subdir
         for subdir in _visited_dir_contents
-        if excluded_dir_path == Path(visited_directory) / subdir
+        if excluded_dir_path == visited_directory_path / subdir
     ]
     if visited_directory_subdirs_to_ignore:
         print(  # noqa: T201, WPS421
@@ -257,7 +260,24 @@ def _exclude_dir_path(
             'copied into itself recursively...',
             file=_standard_error_stream,
         )
-    return visited_directory_subdirs_to_ignore
+
+    stale_native_artifacts_to_ignore = [
+        entry
+        for entry in _visited_dir_contents
+        if entry.endswith(_STALE_BUILD_ARTIFACT_SUFFIXES)
+        and (visited_directory_path / entry).is_file()
+    ]
+    if stale_native_artifacts_to_ignore:
+        print(  # noqa: T201, WPS421
+            f'Skipping stale native build artifacts in '
+            f'`{visited_directory!s}`: '
+            f'{stale_native_artifacts_to_ignore!r}...',
+            file=_standard_error_stream,
+        )
+
+    return (
+        visited_directory_subdirs_to_ignore + stale_native_artifacts_to_ignore
+    )
 
 
 @contextmanager
