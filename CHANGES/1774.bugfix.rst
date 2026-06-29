@@ -1,0 +1,2 @@
+Fixed ``URL.join()`` to use percent-encoded path segments when merging relative references, preventing encoded characters like ``%2F`` from being decoded and corrupting the path structure.
+-- by :user:`muhamedfazalps`.
