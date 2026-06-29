@@ -1,0 +1,7 @@
+Fixed :py:meth:`~yarl.URL.with_suffix` silently accepting an empty suffix.
+The argument check parsed as
+``(suffix and not suffix[0] == ".") or (suffix == ".") or ("/" in suffix)``,
+so an empty string short-circuited past every clause and the URL was
+returned unchanged. Passing ``""`` now raises :py:class:`ValueError`
+like the other invalid suffix inputs
+-- by :user:`HrachShah`.
