@@ -1428,6 +1428,52 @@ def test_with_path_relative() -> None:
     assert str(url.with_path("/new")) == "/new"
 
 
+def test_with_path_relative_keeps_relative() -> None:
+    # A bare-relative URL ("foo/bar") stays bare-relative after
+    # with_path("abs") — it does NOT silently gain a leading slash and
+    # become an absolute-path reference ("/abs"), which would change how
+    # the URL resolves against any base URL.
+    url = URL("foo/bar")
+    assert str(url.with_path("abs")) == "abs"
+    assert url.with_path("abs").is_absolute() is False
+    assert url.with_path("abs")._path == "abs"
+
+
+def test_with_path_relative_keeps_relative_multi_segment() -> None:
+    url = URL("foo/bar")
+    assert str(url.with_path("a/b/c")) == "a/b/c"
+    assert url.with_path("a/b/c")._path == "a/b/c"
+
+
+def test_with_path_relative_explicit_slash() -> None:
+    # Passing a slash-prefixed path to with_path() on a bare-relative URL
+    # still works and produces a slash-prefixed result — only the
+    # implicit-promotion case is fixed.
+    url = URL("foo/bar")
+    assert str(url.with_path("/abs")) == "/abs"
+
+
+def test_with_path_relative_empty() -> None:
+    # An empty path on a bare-relative URL is unchanged — no leading
+    # slash is fabricated, and the result is still bare-relative.
+    url = URL("foo/bar")
+    assert str(url.with_path("")) == ""
+    assert url.with_path("")._path == ""
+
+
+def test_with_path_dot_segment_unchanged_for_bare_relative() -> None:
+    # Dot-segment normalization (./..) is intentionally skipped for
+    # bare-relative paths so the user's segment choice is preserved
+    # as-is. Compare to with_path() on an absolute URL, which calls
+    # normalize_path() to collapse "." and ".." segments per RFC 3986.
+    assert str(URL("foo/bar").with_path("./baz")) == "./baz"
+    assert str(URL("foo/bar").with_path("../baz")) == "../baz"
+    # Absolute URL still normalizes.
+    assert str(URL("http://example.com/foo/bar").with_path("./baz")) == (
+        "http://example.com/baz"
+    )
+
+
 def test_with_path_query() -> None:
     url = URL("http://example.com?a=b")
     assert str(url.with_path("/test")) == "http://example.com/test"
@@ -2176,6 +2222,36 @@ def test_join_absolute() -> None:
     url = URL("//www.python.org/%7Eguido")
     url2 = base.join(url)
     assert str(url2) == "http://www.python.org/~guido"
+
+
+def test_join_preserves_percent_encoded_slash_in_base_path() -> None:
+    # gh-1774: a percent-encoded '/' in a base path segment must not
+    # be decoded into a real separator when the RFC-3986 merge
+    # branch strips the last segment. The merged path is built from
+    # raw_parts, so the segment keeps its %2F encoding.
+    base = URL("http://x/a%2Fb/c")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%2Fb/d"
+    assert url2.raw_path == "/a%2Fb/d"
+
+
+def test_join_preserves_percent_encoded_space_in_base_path() -> None:
+    # gh-1774: %20 is decoded by parts (unquoted) but kept verbatim
+    # by raw_parts. The merge branch must use the encoded form so
+    # a literal space does not leak into the path string.
+    base = URL("http://x/a%20b/c")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%20b/d"
+    assert url2.raw_path == "/a%20b/d"
+
+
+def test_join_preserves_percent_encoding_with_dotdot_normalization() -> None:
+    # gh-1774: when the merged path needs normalize_path
+    # (because it contains '.' or '..'), the encoded segment must
+    # still survive the merge.
+    base = URL("http://x/a%2Fb/c/..")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%2Fb/d"
 
 
 def test_join_non_url() -> None:

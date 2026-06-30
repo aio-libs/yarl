@@ -1,0 +1,8 @@
+Fixed :meth:`~yarl.URL.join` decoding percent-encoded characters in
+the base URL's path when merging a relative reference. The merge
+branch in :rfc:`3986#section-5.3` is now built from ``raw_parts``
+instead of the percent-decoded ``parts``, so an encoded delimiter
+like ``%2F`` is preserved as a segment character rather than
+silently turned into a path separator. ``URL("http://x/a%2Fb/c").join(URL("d"))``
+now returns ``URL("http://x/a%2Fb/d")`` instead of
+``URL("http://x/a/b/d")``.
