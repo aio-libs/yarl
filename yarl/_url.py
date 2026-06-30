@@ -1215,9 +1215,7 @@ class URL:
         # bare-relative URL like "foo/bar" stays bare-relative after
         # .with_path("abs"), not "/abs" — the latter silently changes a
         # path-relative reference into an absolute-path reference.
-        if path and path[0] != "/" and (
-            netloc or self._path.startswith("/")
-        ):
+        if path and path[0] != "/" and (netloc or self._path.startswith("/")):
             path = f"/{path}"
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
