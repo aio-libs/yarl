@@ -2224,6 +2224,36 @@ def test_join_absolute() -> None:
     assert str(url2) == "http://www.python.org/~guido"
 
 
+def test_join_preserves_percent_encoded_slash_in_base_path() -> None:
+    # gh-1774: a percent-encoded '/' in a base path segment must not
+    # be decoded into a real separator when the RFC-3986 merge
+    # branch strips the last segment. The merged path is built from
+    # raw_parts, so the segment keeps its %2F encoding.
+    base = URL("http://x/a%2Fb/c")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%2Fb/d"
+    assert url2.raw_path == "/a%2Fb/d"
+
+
+def test_join_preserves_percent_encoded_space_in_base_path() -> None:
+    # gh-1774: %20 is decoded by parts (unquoted) but kept verbatim
+    # by raw_parts. The merge branch must use the encoded form so
+    # a literal space does not leak into the path string.
+    base = URL("http://x/a%20b/c")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%20b/d"
+    assert url2.raw_path == "/a%20b/d"
+
+
+def test_join_preserves_percent_encoding_with_dotdot_normalization() -> None:
+    # gh-1774: when the merged path needs normalize_path
+    # (because it contains '.' or '..'), the encoded segment must
+    # still survive the merge.
+    base = URL("http://x/a%2Fb/c/..")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%2Fb/d"
+
+
 def test_join_non_url() -> None:
     base = URL("http://example.com")
     with pytest.raises(TypeError):

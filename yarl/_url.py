@@ -1492,8 +1492,12 @@ class URL:
                 # …
                 # and relativizing ".."
                 # parts[0] is / for absolute urls,
-                # this join will add a double slash there
-                path = "/".join([*self.parts[:-1], ""]) + join_path
+                # this join will add a double slash there.
+                # Use raw_parts so a percent-encoded delimiter like
+                # %2F in a base-path segment round-trips; the decoded
+                # `parts` would turn %2F into a real '/' and split the
+                # path into extra segments (gh-1774).
+                path = "/".join([*self.raw_parts[:-1], ""]) + join_path
                 # which has to be removed
                 if orig_path[0] == "/":
                     path = path[1:]
