@@ -1210,7 +1210,12 @@ class URL:
             path = PATH_QUOTER(path)
             if netloc:
                 path = normalize_path(path) if "." in path else path
-        if path and path[0] != "/":
+        # Only prepend "/" to keep the path absolute when the URL has a
+        # netloc OR the original URL already used an absolute path. A
+        # bare-relative URL like "foo/bar" stays bare-relative after
+        # .with_path("abs"), not "/abs" — the latter silently changes a
+        # path-relative reference into an absolute-path reference.
+        if path and path[0] != "/" and (netloc or self._path.startswith("/")):
             path = f"/{path}"
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
