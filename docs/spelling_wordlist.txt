@@ -43,6 +43,7 @@ mailto
 manylinux
 multi
 nightlies
+netloc
 pre
 pydantic
 pytest
