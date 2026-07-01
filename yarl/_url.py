@@ -1431,12 +1431,7 @@ class URL:
         # and the previous behaviour surprised callers who wrote tests assuming
         # a "replaced" suffix always ends up in the name. Reject empty
         # explicitly so the failure surfaces at the API boundary.
-        if (
-            not suffix
-            or suffix[0] != "."
-            or suffix == "."
-            or "/" in suffix
-        ):
+        if not suffix or suffix[0] != "." or suffix == "." or "/" in suffix:
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
