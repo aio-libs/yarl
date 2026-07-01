@@ -1424,7 +1424,19 @@ class URL:
         """
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
-        if suffix and not suffix[0] == "." or suffix == "." or "/" in suffix:
+        # The previous guard parsed as ``(suffix and not suffix[0] == '.') or
+        # suffix == '.' or '/' in suffix``, which short-circuited on the empty
+        # string and let ``with_suffix('')`` silently become a no-op (a strip
+        # of the existing suffix). Empty is not a sensible suffix value here,
+        # and the previous behaviour surprised callers who wrote tests assuming
+        # a "replaced" suffix always ends up in the name. Reject empty
+        # explicitly so the failure surfaces at the API boundary.
+        if (
+            not suffix
+            or suffix[0] != "."
+            or suffix == "."
+            or "/" in suffix
+        ):
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
