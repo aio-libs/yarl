@@ -1,0 +1,2 @@
+Fixed :py:meth:`~yarl.URL.with_suffix` to reject an empty ``suffix`` argument
+with a clear :
