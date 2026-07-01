@@ -42,8 +42,8 @@ macOS
 mailto
 manylinux
 multi
-nightlies
 netloc
+nightlies
 pre
 pydantic
 pytest
