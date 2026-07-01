@@ -1786,9 +1786,11 @@ def test_with_suffix_for_relative_path_starting_from_slash2() -> None:
     assert url2.raw_parts == ("/", "a", "b.c")
 
 
-def test_with_suffix_empty() -> None:
-    url = URL("http://example.com/path/to").with_suffix("")
-    assert str(url) == "http://example.com/path/to"
+def test_with_suffix_empty_raises() -> None:
+    # Issue #1735: an empty suffix is no longer a silent no-op. It is rejected
+    # at the API boundary so callers do not depend on undocumented behaviour.
+    with pytest.raises(ValueError, match=r"Invalid suffix ''"):
+        URL("http://example.com/path/to").with_suffix("")
 
 
 def test_with_suffix_non_ascii() -> None:
