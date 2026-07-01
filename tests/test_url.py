@@ -1489,6 +1489,37 @@ def test_with_path_leading_slash() -> None:
     assert url.with_path("test").path == "/test"
 
 
+def test_with_path_preserves_bare_relative() -> None:
+    # Issue #1770: with_path must not silently promote a bare-relative
+    # URL (one without scheme/netloc) into an absolute-path reference
+    # when the new path does not start with "/".
+    url = URL("foo/bar")
+    new = url.with_path("abs")
+    assert str(new) == "abs"
+    assert new.raw_path == "abs"
+    assert not new.is_absolute()
+
+
+def test_with_path_explicit_slash_preserved_on_bare_relative() -> None:
+    # The same URL, with an explicit "/abs" path, must still produce
+    # the leading slash.
+    url = URL("foo/bar")
+    new = url.with_path("/abs")
+    assert str(new) == "/abs"
+    assert new.raw_path == "/abs"
+
+
+def test_with_path_no_netloc_join_round_trip() -> None:
+    # The original URL stays bare-relative across with_path, so the
+    # join round-trips through both directions without absorbing the
+    # leading-slash promotion from the previous behaviour.
+    url = URL("foo/bar")
+    new = url.with_path("abs")
+    assert new.join(URL("baz")) == URL("baz")
+    base = URL("http://example.com/x/y")
+    assert base.join(new) == URL("http://example.com/x/abs")
+
+
 # with_fragment
 
 

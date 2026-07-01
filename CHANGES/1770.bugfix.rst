@@ -1,0 +1,10 @@
+Fixed :py:meth:`~yarl.URL.with_path` to preserve the bare-relative
+status of a URL when the new path is given without a leading ``/``.
+Previously ``URL("foo/bar").with_path("abs")`` silently returned
+``URL("/abs")`` (an absolute-path reference), which changes how the
+URL resolves against any base. The leading ``/`` is now only added
+for URLs that have a netloc, so ``URL("foo/bar").with_path("abs")``
+returns ``URL("abs")`` and ``URL("foo/bar").with_path("/abs")`` still
+returns ``URL("/abs")``.
+
+-- by :user:`HrachShah`.

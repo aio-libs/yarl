@@ -42,6 +42,7 @@ macOS
 mailto
 manylinux
 multi
+netloc
 nightlies
 pre
 pydantic
