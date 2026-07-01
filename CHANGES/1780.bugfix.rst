@@ -1,0 +1,6 @@
+Fixed :attr:`~yarl.URL.raw_host` returning ASCII host labels in their
+original case for hosts that combine a non-ASCII label with an ASCII
+label that the strict ``idna`` package rejects (for example an
+underscore ``_dmarc`` label); the mismatched case meant the same URL
+rendered differently when parsed a second time
+-- by :user:`gaoflow`.
