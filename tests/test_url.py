@@ -2184,6 +2184,24 @@ def test_join_non_url() -> None:
         base.join("path/to")  # type: ignore[arg-type]
 
 
+def test_join_preserves_percent_encoded_slash() -> None:
+    # The merge branch must use raw_parts (encoded), not parts (decoded),
+    # so an encoded delimiter like %2F in the base path does not get
+    # decoded into a real / and split a single segment into two.
+    base = URL("http://example.com/a%2Fb/c")
+    url = URL("d")
+    assert str(base.join(url)) == "http://example.com/a%2Fb/d"
+
+
+def test_join_preserves_percent_encoded_space() -> None:
+    # Same shape but with %20 instead of %2F. The merge has to round-trip
+    # the encoded form; decoding it into a literal space would corrupt
+    # the path in a different way.
+    base = URL("http://example.com/a%20b/c")
+    url = URL("d")
+    assert str(base.join(url)) == "http://example.com/a%20b/d"
+
+
 NORMAL = [
     ("g:h", "g:h"),
     ("g", "http://a/b/c/g"),

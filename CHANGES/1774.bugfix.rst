@@ -1,0 +1,3 @@
+Fixed :py:meth:`~yarl.URL.join` to preserve percent-encoded characters in the
+base URL's path. The merge path was built from decoded path segments, which
+caused a literal percent-encoded delimiter like ``%2F`` to be re-int
