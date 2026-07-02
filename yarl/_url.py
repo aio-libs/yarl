@@ -1259,6 +1259,14 @@ class URL:
         """
         if not (new_query := get_str_query(*args, **kwargs)):
             return self
+        # A user-supplied string may start with "&" (e.g. "extend_query('&a=1')"
+        # or the result of a manual `URL.query_string` round-trip). Strip it so
+        # the join below never produces a literal "&" at the start of the query
+        # ("?&a=1") or a double "&" at the boundary ("a=1&&b=2").
+        if new_query[:1] == "&":
+            new_query = new_query.lstrip("&")
+            if not new_query:
+                return self
         if query := self._query:
             # both strings are already encoded so we can use a simple
             # string join

@@ -470,3 +470,41 @@ def test_extend_query_with_non_ascii_same_key() -> None:
         "&%F0%9D%95%A6=%F0%9D%95%A6&%F0%9D%95%A6=%F0%9D%95%A6"
     )
     assert url.extend_query({"𝕦": "𝕦"}) == expected
+
+
+def test_extend_query_strips_leading_ampersand() -> None:
+    """A user-supplied string starting with '&' is normalised, not joined verbatim.
+
+    Otherwise `extend_query('&b=2')` would produce a double-'&' join
+    (`a=1&&b=2`), and `URL('http://example.com/').extend_query('&a=1')`
+    would produce a literal '&' at the start of the query (`?&a=1`).
+    """
+    # Leading '&' on an empty query: previously produced '?&a=1'
+    url = URL("http://example.com/")
+    assert str(url.extend_query("&a=1")) == "http://example.com/?a=1"
+
+    # Leading '&' on a populated query: previously produced a=1&&b=2
+    url = URL("http://example.com/?a=1")
+    assert str(url.extend_query("&b=2")) == "http://example.com/?a=1&b=2"
+
+    # Chained extend_query where the second argument carries a leading '&'
+    url = URL("http://example.com/?a=1")
+    assert (
+        str(url.extend_query("b=2").extend_query("&c=3"))
+        == "http://example.com/?a=1&b=2&c=3"
+    )
+
+    # A bare '&' is a no-op (just an empty separator)
+    url = URL("http://example.com/?a=1")
+    assert url.extend_query("&") == url
+
+
+def test_extend_query_leading_ampersand_does_not_break_kwargs_or_dicts() -> None:
+    """The lstrip only applies to the str branch — kwargs / dicts are untouched."""
+    url = URL("http://example.com/?a=1")
+    # kwargs path
+    assert str(url.extend_query(b=2)) == "http://example.com/?a=1&b=2"
+    # dict path
+    assert str(url.extend_query({"b": 2})) == "http://example.com/?a=1&b=2"
+    # str path with no leading '&' — no regression
+    assert str(url.extend_query("b=2")) == "http://example.com/?a=1&b=2"
