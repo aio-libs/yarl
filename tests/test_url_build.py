@@ -78,6 +78,79 @@ def test_url_build_ipv6_zone_id_valid(zone: str) -> None:
     assert URL(str(u)).host == f"::1%{zone}"
 
 
+def test_url_build_ipv6_zone_id_bare_percent_round_trip() -> None:
+    """Programmatic hosts keep the bare ``%`` zone separator.
+
+    ``_encode_host`` falls back to partitioning on ``%`` when no
+    ``%25`` is present so that hosts constructed from RFC 4007 scoped
+    literals keep working; this pins that fallback (#998).
+    """
+    u = URL.build(scheme="http", host="fe80::1%eth0")
+    assert str(u) == "http://[fe80::1%eth0]"
+    assert u.raw_host == "fe80::1%eth0"
+    assert u.host == "fe80::1%eth0"
+    assert URL(str(u)) == u
+
+
+def test_url_build_ipv6_zone_id_numeric_scope_percent25() -> None:
+    """A literal ``%25`` in a programmatic host is read as the separator.
+
+    On Windows, zone identifiers are numeric, so the RFC 4007 literal
+    ``fe80::1%25`` means scope 25 and ``fe80::1%254`` means scope 254.
+    The current heuristic treats the ``%25`` byte sequence as the
+    RFC 6874 encoded separator instead: the first raises for an empty
+    zone and the second is parsed as zone ``4``. Documents current
+    behavior (#998); not an endorsement of it.
+    """
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL.build(scheme="http", host="fe80::1%25")
+    u = URL.build(scheme="http", host="fe80::1%254")
+    assert str(u) == "http://[fe80::1%254]"
+    assert u.raw_host == "fe80::1%254"
+    assert u.host == "fe80::1%4"
+
+
+@pytest.mark.parametrize(
+    "zone",
+    (
+        "e/h",
+        "a?b",
+        "a#c",
+    ),
+    ids=("slash", "question", "hash"),
+)
+def test_url_build_ipv6_zone_id_reserved_chars_break_round_trip(zone: str) -> None:
+    """Reserved characters in a zone produce URLs yarl cannot re-parse.
+
+    RFC 6874 §2 requires non-unreserved zone characters to be
+    percent-encoded; the liberal RFC 4007 policy emits them raw, so
+    the serialized URL fails yarl's own parser. Documents current
+    behavior (#998).
+    """
+    u = URL.build(scheme="http", host=f"fe80::1%{zone}", path="/x")
+    assert str(u) == f"http://[fe80::1%{zone}]/x"
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(str(u))
+
+
+def test_url_build_ipv6_zone_id_non_ascii_not_ascii_encodable() -> None:
+    """Non-ASCII zone identifiers make the URL non-ASCII-serializable."""
+    u = URL.build(scheme="http", host="fe80::1%日本語", path="/")
+    with pytest.raises(UnicodeEncodeError):
+        bytes(u)
+
+
+def test_url_build_ipv6_zone_id_empty_authority_not_validated() -> None:
+    """``authority=`` bypasses the empty-zone rejection of ``host=``.
+
+    The authority path uses ``validate_host=False``; documents the
+    asymmetry with ``test_url_build_ipv6_zone_id_empty`` (#998).
+    """
+    u = URL.build(scheme="http", authority="[fe80::1%25]")
+    assert str(u) == "http://[fe80::1%25]"
+    assert u.host == "fe80::1%"
+
+
 def test_build_with_scheme() -> None:
     u = URL.build(scheme="blob", path="path")
     assert str(u) == "blob:path"

@@ -1,0 +1,5 @@
+Expanded the test suite to pin IPv6 zone identifier handling per the
+:rfc:`6874` compatibility research: the ``%25`` and legacy bare ``%``
+separator forms, empty zone and reserved character corner cases,
+``encoded=True`` round-trips, and zone survival through URL mutation
+APIs -- by :user:`rodrigobnogueira`.

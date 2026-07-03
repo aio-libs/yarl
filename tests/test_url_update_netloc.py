@@ -171,6 +171,14 @@ def test_with_host() -> None:
     assert str(url.with_host("example.org")) == "http://example.org:123"
 
 
+def test_with_host_ipv6_zone_id_bare_percent() -> None:
+    """RFC 4007 scoped literals with a bare ``%`` work in with_host()."""
+    url = URL("http://example.com/x")
+    url2 = url.with_host("fe80::1%1")
+    assert str(url2) == "http://[fe80::1%1]/x"
+    assert url2.host == "fe80::1%1"
+
+
 def test_with_host_empty() -> None:
     url = URL("http://example.com:123")
     with pytest.raises(ValueError):

@@ -1,0 +1,4 @@
+Documented how :attr:`~yarl.URL.host` and :attr:`~yarl.URL.raw_host`
+expose :rfc:`6874` IPv6 zone identifiers and that the host subcomponent
+properties include the zone identifier verbatim
+-- by :user:`rodrigobnogueira`.
