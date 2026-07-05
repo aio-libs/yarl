@@ -2184,6 +2184,36 @@ def test_join_non_url() -> None:
         base.join("path/to")  # type: ignore[arg-type]
 
 
+# join - issue #1774: percent-encoded characters in the base path must round-trip
+# through join() (RFC 3986 §5.3 merge). Previously, URL.join built the merged
+# path from `self.parts`, which run the segments through UNQUOTER, so encoded
+# delimiters like %2F got turned into real '/' and the path structure shifted.
+
+
+def test_join_with_percent_encoded_delimiters() -> None:
+    base = URL("http://example.com/a%2Fb/c")
+    url = URL("d")
+    url2 = base.join(url)
+    assert str(url2) == "http://example.com/a%2Fb/d"
+
+
+def test_join_with_percent_encoded_space() -> None:
+    base = URL("http://example.com/x%20y/c")
+    url = URL("d")
+    url2 = base.join(url)
+    assert str(url2) == "http://example.com/x%20y/d"
+
+
+def test_join_with_percent_encoded_dot_segments() -> None:
+    base = URL("http://example.com/a%2Fb/c")
+    url = URL("d")
+    url2 = base.join(url)
+    assert str(url2) == "http://example.com/a%2Fb/d"
+    # and the merged path must be the same shape as the base path; the raw
+    # %2F stays encoded rather than getting re-interpreted as a separator.
+    assert url2.raw_parts == ("/", "a%2Fb", "d")
+
+
 NORMAL = [
     ("g:h", "g:h"),
     ("g", "http://a/b/c/g"),

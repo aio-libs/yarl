@@ -1,0 +1,10 @@
+Fixed :py:meth:`~yarl.URL.join` decoding percent-encoded characters in
+the base URL's path when merging a relative reference (RFC 3986 §5.3,
+the branch used when the base path does not end with ``/``). The merge
+was being built from ``self.parts``, which run the segments through
+the unquoter, so an encoded delimiter like ``%2F`` was turned into a
+real ``/`` and the path structure was corrupted. The merge now uses
+``self.raw_parts`` so the original encoding round-trips; for example,
+``URL("http://x/a%2Fb/c").join(URL("d"))`` now returns
+``"http://x/a%2Fb/d"`` instead of ``"http://x/a/b/d"``
+-- by :user:`HrachShah`.
