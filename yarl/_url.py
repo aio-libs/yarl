@@ -435,7 +435,7 @@ class URL:
             raise ValueError(
                 'Can\'t mix "authority" with "user", "password", "host" or "port".'
             )
-        if port is not None and not isinstance(port, int):
+        if port is not None and (isinstance(port, bool) or not isinstance(port, int)):
             raise TypeError(f"The port is required to be int, got {type(port)!r}.")
         if port and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
