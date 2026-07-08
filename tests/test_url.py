@@ -68,6 +68,22 @@ def test_repr() -> None:
     assert "URL('http://example.com')" == repr(url)
 
 
+def test_repr_masks_password() -> None:
+    """Password components are masked in repr so credentials do not leak."""
+    assert repr(URL("https://user:secret@example.com")) == \
+        "URL('https://user:******@example.com')"
+    # Empty password is left alone (no real secret to hide).
+    assert repr(URL("https://user:@example.com")) == \
+        "URL('https://user:@example.com')"
+    # Empty user + non-empty password still masks the password.
+    assert repr(URL("https://:secret@example.com")) == \
+        "URL('https://:******@example.com')"
+    # str() is unchanged: it still surfaces the real password for
+    # callers that explicitly opted in.
+    assert str(URL("https://user:secret@example.com")) == \
+        "https://user:secret@example.com"
+
+
 def test_origin() -> None:
     url = URL("http://user:password@example.com:8888/path/to?a=1&b=2")
     assert URL("http://example.com:8888") == url.origin()
