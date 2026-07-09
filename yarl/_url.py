@@ -1444,7 +1444,7 @@ class URL:
         """
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
-        if suffix and not suffix[0] == "." or suffix == "." or "/" in suffix:
+        if suffix and (suffix[0] != "." or suffix == "." or "/" in suffix):
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
