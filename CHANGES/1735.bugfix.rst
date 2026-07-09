@@ -1,0 +1,7 @@
+Parenthesized the suffix validation expression in
+:meth:`URL.with_suffix <yarl.URL.with_suffix>` so the clauses group as
+intended; the previous ``not suffix[0] == \".\"`` parsed with ``not``
+binding tighter than ``==`` and the leading ``suffix and`` short-circuit
+made the whole expression order-dependent, which was surprising to read
+and hid the intent of the check
+-- by :user:`hrachshah`.
