@@ -109,7 +109,7 @@ def test_build_with_scheme_and_host() -> None:
             id="port-only",
         ),
         pytest.param(
-            "", TypeError, r"^The port is required to be int, got .*\.$", id="port-str"
+            "", TypeError, r"^port should be int or None, got .*$", id="port-str"
         ),
     ],
 )
