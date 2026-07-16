@@ -10,7 +10,7 @@ PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
 PATH_REQUOTER = _Quoter(safe="@:", protected="/+")
 QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
 QUERY_REQUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
-QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True, requote=False)
+QUERY_PART_QUOTER = _Quoter(safe="?", qs=True, requote=False, unsafe="$'()*,/:@")
 FRAGMENT_QUOTER = _Quoter(safe="?/:@", requote=False)
 FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
