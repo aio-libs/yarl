@@ -50,6 +50,7 @@ class _Quoter:
         *,
         safe: str = "",
         protected: str = "",
+        unsafe: str = "",
         qs: bool = False,
         requote: bool = True,
     ) -> None:
@@ -65,6 +66,7 @@ class _Quoter:
             raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
         self._safe = safe
         self._protected = protected
+        self._unsafe = unsafe
         self._qs = qs
         self._requote = requote
 
@@ -82,12 +84,13 @@ class _Quoter:
         bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
-        safe = self._safe
-        safe += ALLOWED
+        safe_chars = set(self._safe)
+        safe_chars.update(ALLOWED)
         if not self._qs:
-            safe += QS
-        safe += self._protected
-        bsafe = safe.encode("ascii")
+            safe_chars.update(QS)
+        safe_chars.update(self._protected)
+        safe_chars.difference_update(self._unsafe)
+        bsafe = bytes(ord(ch) for ch in safe_chars)
         idx = 0
         while idx < len(bval):
             ch = bval[idx]
@@ -114,7 +117,7 @@ class _Quoter:
 
                     if unquoted in self._protected:
                         ret.extend(pct)
-                    elif unquoted in safe:
+                    elif unquoted in safe_chars:
                         ret.append(ord(unquoted))
                     else:
                         ret.extend(pct)
