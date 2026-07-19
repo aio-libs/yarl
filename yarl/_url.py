@@ -324,6 +324,8 @@ def build_pre_encoded_url(
             self._netloc = make_netloc(user, password, host, port)
     else:
         self._netloc = ""
+    if path and not scheme and not self._netloc and ":" in path:
+        path = _encode_relative_scheme_colon(path)
     self._path = path
     self._query = query_string
     self._fragment = fragment
@@ -338,6 +340,8 @@ def from_parts_uncached(
     self = object.__new__(URL)
     self._scheme = scheme
     self._netloc = netloc
+    if path and not scheme and not netloc and ":" in path:
+        path = _encode_relative_scheme_colon(path)
     self._path = path
     self._query = query
     self._fragment = fragment
@@ -544,6 +548,8 @@ class URL:
                 )
                 raise ValueError(msg)
 
+        if path and not self._scheme and not self._netloc and ":" in path:
+            path = _encode_relative_scheme_colon(path)
         self._path = path
         if not query and query_string:
             query_string = QUERY_QUOTER(query_string)
