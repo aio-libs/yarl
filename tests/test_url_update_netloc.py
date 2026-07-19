@@ -206,6 +206,24 @@ def test_with_invalid_host(host: str, is_authority: bool) -> None:
         url.with_host(host=host)
 
 
+@pytest.mark.parametrize(
+    "host",
+    [
+        "127.0.0.1／allowed.example",
+        "127.0.0.1？allowed.example",
+        "127.0.0.1＃allowed.example",
+    ],
+    ids=["fullwidth-solidus", "fullwidth-question", "fullwidth-number-sign"],
+)
+def test_with_host_delimiter_from_normalization(host: str) -> None:
+    # A non-ascii character that expands to a URL delimiter under IDNA/NFKC
+    # normalization must be rejected, matching the parser's _check_netloc.
+    url = URL("http://example.com:123")
+    match = r"cannot contain '[/?#]' after IDNA normalization to "
+    with pytest.raises(ValueError, match=match):
+        url.with_host(host)
+
+
 def test_with_host_percent_encoded() -> None:
     url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123")
     url2 = url.with_host("%cf%80.org")
