@@ -795,8 +795,10 @@ class URL:
         if (raw := self.raw_host) is None:
             return None
         if raw and raw[-1].isdigit() or ":" in raw:
-            # IP addresses are never IDNA encoded; only the RFC 6874
-            # zone separator needs to be decoded.
+            # IP addresses are never IDNA encoded. The replace decodes
+            # every %25 in the raw host, i.e. the RFC 6874 zone
+            # separator and any %25 that percent-encodes a literal %
+            # inside the zone identifier.
             if "%25" in raw:
                 return raw.replace("%25", "%")
             return raw
