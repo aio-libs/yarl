@@ -1651,7 +1651,18 @@ def _encode_host(host: str, validate_host: bool) -> str:
             ) from None
         return host
 
-    return _idna_encode(host)
+    encoded = _idna_encode(host)
+    # IDNA uses NFKC equivalence, so normalization can expand a non-ascii
+    # character into an ASCII delimiter (e.g. the fullwidth solidus U+FF0F
+    # becomes '/'). The ascii branch above rejects such delimiters directly;
+    # apply the same check to the IDNA output so the builder APIs agree with
+    # the parser's _check_netloc.
+    if validate_host and (invalid := NOT_REG_NAME.search(encoded)):
+        raise ValueError(
+            f"Host {host!r} cannot contain {invalid.group()!r} "
+            f"after IDNA normalization to {encoded!r}"
+        ) from None
+    return encoded
 
 
 @rewrite_module

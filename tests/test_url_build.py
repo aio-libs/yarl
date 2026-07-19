@@ -181,6 +181,23 @@ def test_build_with_invalid_host(host: str, is_authority: bool) -> None:
         URL.build(host=host)
 
 
+@pytest.mark.parametrize(
+    "host",
+    [
+        "127.0.0.1／allowed.example",
+        "127.0.0.1？allowed.example",
+        "127.0.0.1＃allowed.example",
+    ],
+    ids=["fullwidth-solidus", "fullwidth-question", "fullwidth-number-sign"],
+)
+def test_build_with_host_delimiter_from_normalization(host: str) -> None:
+    # A non-ascii character that expands to a URL delimiter under IDNA/NFKC
+    # normalization must be rejected, matching the parser's _check_netloc.
+    match = r"cannot contain '[/?#]' after IDNA normalization to "
+    with pytest.raises(ValueError, match=match):
+        URL.build(host=host)
+
+
 def test_build_with_authority() -> None:
     url = URL.build(scheme="http", authority="степан:bar@host.com:8000", path="/path")
     assert (
