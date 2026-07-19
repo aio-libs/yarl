@@ -872,3 +872,33 @@ class TestBuilderSchemeMaterialization:
         assert str(URL.build(path="req/req/req")) == "req/req/req"
         assert str(URL("").joinpath("req/req/req")) == "req/req/req"
         assert str(URL.build(path="req/req", encoded=True)) == "req/req"
+
+    @pytest.mark.parametrize("encoded", [False, True], ids=["decoded", "encoded"])
+    def test_with_path_scheme_shaped_relative(self, encoded: bool) -> None:
+        """with_path() prepends a slash, so a scheme cannot materialize."""
+        u = URL("").with_path("http://127.0.0.1/x", encoded=encoded)
+        assert u.scheme == ""
+        assert u.raw_host is None
+        assert str(u) == "/http://127.0.0.1/x"
+        assert URL(str(u)).raw_host is None
+
+    def test_relative_keeps_colon_after_slash(self) -> None:
+        """relative() on an absolute URL keeps a non-leading path colon."""
+        u = URL("http://example.com/a:b").relative()
+        assert u.scheme == ""
+        assert str(u) == "/a:b"
+        assert URL(str(u)).scheme == ""
+
+    def test_with_query_preserves_encoded_scheme_colon(self) -> None:
+        """A relative URL whose colon was already encoded stays encoded."""
+        u = URL.build(path="javascript:alert(1)").with_query(a="1")
+        assert u.scheme == ""
+        assert str(u) == "javascript%3Aalert(1)?a=1"
+        assert URL(str(u)).scheme == ""
+
+    def test_parent_of_scheme_shaped_relative(self) -> None:
+        """parent derives from an already-encoded path and stays relative."""
+        u = URL.build(path="a:b/c").parent
+        assert u.scheme == ""
+        assert str(u) == "a%3Ab"
+        assert URL(str(u)).scheme == ""
