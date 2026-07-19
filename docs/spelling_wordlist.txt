@@ -45,8 +45,10 @@ macOS
 mailto
 manylinux
 multi
+musllinux
 nightlies
 pre
+prebuilt
 pydantic
 pytest
 quoter
@@ -68,6 +70,7 @@ subcomponent
 subdirectory
 subtree
 svetlov
+toolchain
 tox
 uncompiled
 unencoded
