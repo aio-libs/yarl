@@ -580,6 +580,47 @@ class TestStripEmptyParts:
         assert u.query_string == ""
         assert u.fragment == ""
 
+    def test_truncated_utf_sequence(self) -> None:
+        # A truncated UTF-8 sequence decoded with surrogateescape yields lone
+        # surrogates. With encoded=True the caller takes responsibility for
+        # the value, so they are preserved verbatim; parsing the same path
+        # normally runs the quoter, which drops them, identically on the C
+        # and pure-Python backends.
+        raw_path = b"/P\xc3\xbcnktchen\xa0\xef\xb7#"
+        abspath, _hash_separator, frag = raw_path.decode(
+            "utf-8", "surrogateescape"
+        ).partition("#")
+        u = URL.build(path=abspath, query_string="", fragment=frag, encoded=True)
+        u2 = URL("/P%C3%BCnktchen\udca0\udcef\udcb7")
+        assert u.scheme == ""
+        assert u.user is None
+        assert u.password is None
+        assert u.path == "/Pünktchen\udca0\udcef\udcb7"
+        assert u.query_string == ""
+        assert u.fragment == ""
+        assert u2.raw_path == "/P%C3%BCnktchen"
+        assert u2.path == "/Pünktchen"
+
+    def test_truncated_utf_sequence_frag(self) -> None:
+        # Same as test_truncated_utf_sequence, with the lone surrogates
+        # appearing in the fragment as well as the path.
+        raw_path = b"/P\xc3\xbcnktchen\xa0\xef\xb7#P\xc3\xbcnktelchen\xa0\xef\xb6"
+        abspath, _hash_separator, frag = raw_path.decode(
+            "utf-8", "surrogateescape"
+        ).partition("#")
+        u = URL.build(path=abspath, query_string="", fragment=frag, encoded=True)
+        u2 = URL("/P%C3%BCnktchen\udca0\udcef\udcb7#Pünktelchen\udca0\udcef\udcb6")
+        assert u.scheme == ""
+        assert u.user is None
+        assert u.password is None
+        assert u.path == "/Pünktchen\udca0\udcef\udcb7"
+        assert u.query_string == ""
+        assert u.fragment == "Pünktelchen\udca0\udcef\udcb6"
+        assert u2.raw_path == "/P%C3%BCnktchen"
+        assert u2.path == "/Pünktchen"
+        assert u2.raw_fragment == "P%C3%BCnktelchen"
+        assert u2.fragment == "Pünktelchen"
+
 
 @pytest.mark.parametrize(
     ("scheme"),
