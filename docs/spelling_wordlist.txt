@@ -40,6 +40,7 @@ google
 hardcoded
 hostless
 hostnames
+ignorable
 macOS
 mailto
 manylinux

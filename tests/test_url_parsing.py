@@ -820,3 +820,126 @@ def test_raw_path_drops_lone_surrogate() -> None:
     assert url.raw_path == "/path"
     # raw_path is always percent-encoded ASCII; a retained surrogate is a bug.
     assert url.raw_path.encode("ascii") == b"/path"
+
+
+class TestBuilderSchemeMaterialization:
+    """Regression tests for scheme materialization via relative-path builders.
+
+    ``URL.build(path=...)``, ``joinpath()`` and the ``/`` operator,
+    ``with_name()`` and ``with_suffix()`` can build a hostless, schemeless URL
+    whose serialized form would otherwise reparse as an absolute or
+    executable-scheme URL. The scheme-shaped leading colon must be
+    percent-encoded so ``str(url)`` round-trips as the relative URL it reports
+    itself to be. This is the builder-side counterpart to the parser guard in
+    :class:`TestPercentEncodedSchemeBypass`.
+    """
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "http://127.0.0.1/internal-secret",
+            "javascript:alert(1)",
+            "data:text/html,xss",
+        ],
+        ids=["http-host", "javascript", "data"],
+    )
+    def test_build_path_does_not_introduce_scheme(self, value: str) -> None:
+        """URL.build(path=...) must not serialize to a scheme-shaped string."""
+        u = URL.build(path=value)
+        assert u.absolute is False
+        assert u.raw_host is None
+        assert u.scheme == ""
+
+        reparsed = URL(str(u))
+        assert reparsed.scheme == ""
+        assert reparsed.raw_host is None
+        assert reparsed.absolute is False
+
+    @pytest.mark.parametrize("encoded", [False, True], ids=["decoded", "encoded"])
+    def test_build_path_encoded_flag_does_not_introduce_scheme(
+        self, encoded: bool
+    ) -> None:
+        """The guard holds for both the decoded and pre-encoded build paths."""
+        u = URL.build(path="http://127.0.0.1/internal-secret", encoded=encoded)
+        assert u.scheme == ""
+        assert URL(str(u)).raw_host is None
+
+    def test_joinpath_does_not_introduce_scheme(self) -> None:
+        """joinpath() onto a relative base must not materialize a host."""
+        u = URL("").joinpath("http://127.0.0.1/internal-secret")
+        assert u.scheme == ""
+        assert u.raw_host is None
+        assert URL(str(u)).raw_host is None
+
+    def test_truediv_does_not_introduce_scheme(self) -> None:
+        """The / operator must not materialize an executable scheme."""
+        u = URL("") / "javascript:alert(1)"
+        assert u.scheme == ""
+        assert URL(str(u)).scheme == ""
+
+    def test_with_name_does_not_introduce_scheme(self) -> None:
+        """with_name() on a relative base must not materialize a scheme."""
+        u = URL("foo").with_name("javascript:alert(1)")
+        assert u.scheme == ""
+        assert URL(str(u)).scheme == ""
+
+    def test_with_suffix_does_not_introduce_scheme(self) -> None:
+        """with_suffix() on a relative base must not materialize a scheme."""
+        # "name" + ".a:b" -> "name.a:b"; ".", letters and digits are all
+        # scheme chars, so the colon would materialize scheme "name.a".
+        u = URL("name").with_suffix(".a:b")
+        assert u.scheme == ""
+        assert URL(str(u)).scheme == ""
+
+    def test_absolute_base_builder_keeps_colon(self) -> None:
+        """With an authority the path colon is not a delimiter and is kept."""
+        u = URL("http://example.com").joinpath("a:b")
+        assert str(u) == "http://example.com/a:b"
+        assert URL(str(u)).raw_host == "example.com"
+
+    def test_colon_after_slash_builder_not_affected(self) -> None:
+        """A colon in a non-leading path position is left literal."""
+        u = URL.build(path="/path/with:colon")
+        assert str(u) == "/path/with:colon"
+        assert URL(str(u)).scheme == ""
+
+    def test_build_path_human_repr_unchanged(self) -> None:
+        """human_repr() already encoded the colon and must be unchanged."""
+        u = URL.build(path="http://127.0.0.1/internal-secret")
+        assert u.human_repr() == "http%3A//127.0.0.1/internal-secret"
+
+    def test_relative_builder_without_colon_unchanged(self) -> None:
+        """A relative path with no colon needs no encoding and is kept as is."""
+        assert str(URL.build(path="req/req/req")) == "req/req/req"
+        assert str(URL("").joinpath("req/req/req")) == "req/req/req"
+        assert str(URL.build(path="req/req", encoded=True)) == "req/req"
+
+    @pytest.mark.parametrize("encoded", [False, True], ids=["decoded", "encoded"])
+    def test_with_path_scheme_shaped_relative(self, encoded: bool) -> None:
+        """with_path() prepends a slash, so a scheme cannot materialize."""
+        u = URL("").with_path("http://127.0.0.1/x", encoded=encoded)
+        assert u.scheme == ""
+        assert u.raw_host is None
+        assert str(u) == "/http://127.0.0.1/x"
+        assert URL(str(u)).raw_host is None
+
+    def test_relative_keeps_colon_after_slash(self) -> None:
+        """relative() on an absolute URL keeps a non-leading path colon."""
+        u = URL("http://example.com/a:b").relative()
+        assert u.scheme == ""
+        assert str(u) == "/a:b"
+        assert URL(str(u)).scheme == ""
+
+    def test_with_query_preserves_encoded_scheme_colon(self) -> None:
+        """A relative URL whose colon was already encoded stays encoded."""
+        u = URL.build(path="javascript:alert(1)").with_query(a="1")
+        assert u.scheme == ""
+        assert str(u) == "javascript%3Aalert(1)?a=1"
+        assert URL(str(u)).scheme == ""
+
+    def test_parent_of_scheme_shaped_relative(self) -> None:
+        """parent derives from an already-encoded path and stays relative."""
+        u = URL.build(path="a:b/c").parent
+        assert u.scheme == ""
+        assert str(u) == "a%3Ab"
+        assert URL(str(u)).scheme == ""

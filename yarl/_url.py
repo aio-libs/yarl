@@ -89,6 +89,50 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
+# Invisible default-ignorable / format code points that must not appear in a
+# host (soft hyphen, zero-width space, word joiner, bidi controls, variation
+# selectors, ...). Depending on the code point IDNA either silently deletes it
+# (so ``e<ZWSP>vil.com`` encodes to ``evil.com``) or folds it into a different
+# punycode host; either way the parsed host differs from the string an
+# application validated. The set is the union of two authoritative sources,
+# matching the two encoders _idna_encode dispatches to:
+#
+# 1. Unicode Default_Ignorable_Code_Point (uts46=True path via the ``idna``
+#    package). Ranges taken from the DerivedCoreProperties data file:
+#    https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt
+#    (the E0000..E0FFF block is contiguous under this property).
+# 2. RFC 3454 (Stringprep) Table B.1 "commonly mapped to nothing", used by the
+#    stdlib ``str.encode("idna")`` / IDNA2003 nameprep fallback:
+#    https://www.rfc-editor.org/rfc/rfc3454#appendix-B.1
+#    This is the source of U+1806, which is not Default_Ignorable.
+#
+# Coverage is pinned to the installed ``idna``/Unicode data by a sweep test
+# (test_default_ignorable_covers_idna_stripped in tests/test_url.py) that
+# brute-forces every code point through _idna_encode and fails if any point it
+# silently deletes is not matched here.
+_DEFAULT_IGNORABLE_RE = re.compile(
+    "["
+    "\u00ad"  # SOFT HYPHEN
+    "\u034f"  # COMBINING GRAPHEME JOINER
+    "\u061c"  # ARABIC LETTER MARK
+    "\u115f-\u1160"  # HANGUL CHOSEONG/JUNGSEONG FILLER
+    "\u17b4-\u17b5"  # KHMER VOWEL INHERENT AQ/AA
+    "\u1806"  # MONGOLIAN TODO SOFT HYPHEN (nameprep maps to nothing)
+    "\u180b-\u180f"  # MONGOLIAN FVS ONE..FOUR and VOWEL SEPARATOR
+    "\u200b-\u200f"  # ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
+    "\u202a-\u202e"  # bidi embedding/override controls
+    "\u2060-\u206f"  # WORD JOINER..NOMINAL DIGIT SHAPES
+    "\u3164"  # HANGUL FILLER
+    "\ufe00-\ufe0f"  # VARIATION SELECTOR-1..16
+    "\ufeff"  # ZERO WIDTH NO-BREAK SPACE (BOM)
+    "\uffa0"  # HALFWIDTH HANGUL FILLER
+    "\ufff0-\ufff8"  # reserved default-ignorables
+    "\U0001bca0-\U0001bca3"  # SHORTHAND FORMAT controls
+    "\U0001d173-\U0001d17a"  # MUSICAL SYMBOL begin/end controls
+    "\U000e0000-\U000e0fff"  # tags and VARIATION SELECTOR SUPPLEMENT
+    "]"
+)
+
 # Zone IDs are OS-specific text strings with no format defined by the RFCs:
 # https://datatracker.ietf.org/doc/html/rfc4007#section-11.2
 # RFC 9844 §6.3 recommends rejecting characters inappropriate for the
@@ -280,6 +324,8 @@ def build_pre_encoded_url(
             self._netloc = make_netloc(user, password, host, port)
     else:
         self._netloc = ""
+    if path and not scheme and not self._netloc and ":" in path:
+        path = _encode_relative_scheme_colon(path)
     self._path = path
     self._query = query_string
     self._fragment = fragment
@@ -294,6 +340,8 @@ def from_parts_uncached(
     self = object.__new__(URL)
     self._scheme = scheme
     self._netloc = netloc
+    if path and not scheme and not netloc and ":" in path:
+        path = _encode_relative_scheme_colon(path)
     self._path = path
     self._query = query
     self._fragment = fragment
@@ -500,6 +548,8 @@ class URL:
                 )
                 raise ValueError(msg)
 
+        if path and not self._scheme and not self._netloc and ":" in path:
+            path = _encode_relative_scheme_colon(path)
         self._path = path
         if not query and query_string:
             query_string = QUERY_QUOTER(query_string)
@@ -1653,6 +1703,17 @@ def _encode_host(host: str, validate_host: bool) -> str:
             ) from None
         return host
 
+    # IDNA/UTS-46 mapping silently deletes default-ignorable code points, which
+    # would turn e.g. ``e<ZWSP>vil.com`` into ``evil.com``, a different host
+    # than the string the caller supplied. Reject them on every path (this runs
+    # regardless of ``validate_host`` since the plain ``URL(str)`` constructor
+    # encodes with ``validate_host=False``) so the parsed host cannot diverge
+    # from the input, matching idna/httpx/urllib3.
+    if invalid := _DEFAULT_IGNORABLE_RE.search(host):
+        raise ValueError(
+            f"Host {host!r} cannot contain {invalid.group()!r} "
+            f"(at position {invalid.start()})"
+        ) from None
     encoded = _idna_encode(host)
     # IDNA uses NFKC equivalence, so normalization can expand a non-ascii
     # character into an ASCII delimiter (e.g. the fullwidth solidus U+FF0F

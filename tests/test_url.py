@@ -4,6 +4,7 @@ from urllib.parse import SplitResult, quote, unquote
 import pytest
 
 from yarl import URL
+from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -2756,3 +2757,64 @@ def test_url_with_fullwidth_percent_rejected(percent_char: str) -> None:
         ValueError, match="contains invalid characters under NFKC normalization"
     ):
         URL(f"http://evil.com{percent_char}2e.internal/")
+
+
+@pytest.mark.parametrize(
+    "ignorable",
+    [
+        "\u00ad",  # SOFT HYPHEN
+        "\u200b",  # ZERO WIDTH SPACE
+        "\u2060",  # WORD JOINER
+        "\u180e",  # MONGOLIAN VOWEL SEPARATOR
+        "\u1806",  # MONGOLIAN TODO SOFT HYPHEN (nameprep fallback strips it)
+        "\ufeff",  # ZERO WIDTH NO-BREAK SPACE
+        "\U000e0001",  # LANGUAGE TAG
+    ],
+    ids=[
+        "soft-hyphen",
+        "zwsp",
+        "word-joiner",
+        "mvs",
+        "todo-soft-hyphen",
+        "bom",
+        "language-tag",
+    ],
+)
+def test_url_host_with_default_ignorable_rejected(ignorable: str) -> None:
+    """Default-ignorable code points are stripped by IDNA, so reject them.
+
+    Otherwise ``URL("http://e<ZWSP>vil.com").host`` would collapse to
+    ``evil.com``, a different host than the string the caller validated.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(f"http://e{ignorable}vil.com/")
+
+
+def _idna_collapses(code_point: int) -> bool:
+    """True if IDNA encoding silently deletes ``code_point`` from a host."""
+    try:
+        return _idna_encode(f"ab{chr(code_point)}cd.com") == "abcd.com"
+    except UnicodeError:
+        return False
+
+
+def test_default_ignorable_covers_idna_stripped() -> None:
+    """_DEFAULT_IGNORABLE_RE must match every code point IDNA silently deletes.
+
+    This pins the hand-written character class to the installed ``idna`` and
+    Unicode data: if a future version starts deleting a code point the regex
+    does not cover, host confusion returns and this test fails loudly. The
+    ranges cover every plane that holds such code points (the highest is
+    ``U+E0FFF``); the empty planes in between hold none.
+    """
+    stripped = {
+        cp
+        for lo, hi in ((0x00A0, 0x20000), (0xE0000, 0xE1000))
+        for cp in range(lo, hi)
+        if not 0xD800 <= cp <= 0xDFFF and _idna_collapses(cp)
+    }
+    assert stripped, "expected IDNA to strip at least the known default-ignorables"
+    uncovered = sorted(
+        hex(cp) for cp in stripped if not _DEFAULT_IGNORABLE_RE.search(chr(cp))
+    )
+    assert not uncovered, f"IDNA strips these but the regex misses them: {uncovered}"
