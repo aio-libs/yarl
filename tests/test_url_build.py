@@ -198,6 +198,18 @@ def test_build_with_host_delimiter_from_normalization(host: str) -> None:
         URL.build(host=host)
 
 
+@pytest.mark.parametrize(
+    "ignorable",
+    ["\u00ad", "\u200b", "\u2060", "\ufeff"],
+    ids=["soft-hyphen", "zwsp", "word-joiner", "bom"],
+)
+def test_build_with_host_default_ignorable(ignorable: str) -> None:
+    # IDNA strips default-ignorable code points, so the builder must reject a
+    # host containing one instead of collapsing it to a different host.
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL.build(host=f"e{ignorable}vil.com")
+
+
 def test_build_with_authority() -> None:
     url = URL.build(scheme="http", authority="степан:bar@host.com:8000", path="/path")
     assert (

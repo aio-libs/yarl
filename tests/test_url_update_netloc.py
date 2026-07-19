@@ -224,6 +224,19 @@ def test_with_host_delimiter_from_normalization(host: str) -> None:
         url.with_host(host)
 
 
+@pytest.mark.parametrize(
+    "ignorable",
+    ["\u00ad", "\u200b", "\u2060", "\ufeff"],
+    ids=["soft-hyphen", "zwsp", "word-joiner", "bom"],
+)
+def test_with_host_default_ignorable(ignorable: str) -> None:
+    # IDNA strips default-ignorable code points, so with_host must reject a
+    # host containing one instead of collapsing it to a different host.
+    url = URL("http://example.com:123")
+    with pytest.raises(ValueError, match="cannot contain"):
+        url.with_host(f"e{ignorable}vil.com")
+
+
 def test_with_host_percent_encoded() -> None:
     url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123")
     url2 = url.with_host("%cf%80.org")

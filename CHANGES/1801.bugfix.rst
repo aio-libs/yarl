@@ -1,0 +1,7 @@
+Fixed host encoding accepting Unicode default-ignorable and format code
+points (such as soft hyphen, zero-width space, and word joiner) that IDNA
+normalization silently drops or otherwise folds into a different host,
+so the parsed host could differ from the input string; such hosts are now
+rejected on both the :class:`~yarl.URL` constructor and the builder APIs
+(:meth:`URL.build() <yarl.URL.build>` and :meth:`~yarl.URL.with_host`)
+-- by :user:`bdraco`.
