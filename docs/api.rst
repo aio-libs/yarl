@@ -171,6 +171,11 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Brackets are stripped for IPv6. Host is converted to lowercase,
    address is validated and converted to compressed form.
 
+   For IPv6 addresses that carry an :rfc:`6874` zone identifier, the
+   ``%25`` zone separator is decoded to ``%``, so the value matches the
+   scoped address format understood by :mod:`socket` and
+   :mod:`ipaddress`.
+
    .. doctest::
 
       >>> URL('http://example.com').host
@@ -181,11 +186,15 @@ There are two kinds of properties: *decoded* and *encoded* (with
       True
       >>> URL('http://[::1]').host
       '::1'
+      >>> URL('http://[fe80::1%25eth0]/').host
+      'fe80::1%eth0'
 
 .. attribute:: URL.raw_host
 
    IDNA decoded *host* part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
+
+   An :rfc:`6874` ``%25`` zone identifier separator is kept as-is.
 
    .. doctest::
 
@@ -193,11 +202,15 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'xn--n1agdj.xn--d1acufc'
       >>> URL('http://[::1]').raw_host
       '::1'
+      >>> URL('http://[fe80::1%25eth0]/').raw_host
+      'fe80::1%25eth0'
 
 .. attribute:: URL.host_subcomponent
 
    :rfc:`3986#section-3.2.2` host subcomponent part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
+
+   An :rfc:`6874` IPv6 zone identifier, if any, is included verbatim.
 
    .. doctest::
 
@@ -205,6 +218,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'xn--n1agdj.xn--d1acufc'
       >>> URL('http://[::1]').host_subcomponent
       '[::1]'
+      >>> URL('http://[fe80::1%25eth0]/').host_subcomponent
+      '[fe80::1%25eth0]'
 
    .. versionadded:: 1.13
 
@@ -228,6 +243,14 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'example.com'
       >>> URL('http://[::1]').host_port_subcomponent
       '[::1]'
+
+   .. note::
+
+      An :rfc:`6874` IPv6 zone identifier is included verbatim. Zone
+      identifiers have local significance only
+      (:rfc:`6874#section-4`), so callers that use this value to build
+      outgoing protocol elements such as the HTTP Host header need to
+      strip it first.
 
    .. versionadded:: 1.17
 
