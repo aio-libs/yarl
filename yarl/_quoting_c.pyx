@@ -159,7 +159,7 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
         if _write_pct(writer, <uint8_t>(0xc0 | (utf >> 6)), True) < 0:
             return -1
         return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
-    elif 0xD800 <= utf <= 0xDFFF:
+    elif _is_surrogate(symbol):
         # lone surrogate; invalid in UTF-8 so it is dropped, matching the
         # pure-Python quoter's errors="ignore" encode. Mark the writer as
         # changed so _do_quote returns the surrogate-free buffer rather than
