@@ -264,6 +264,24 @@ def test_host_with_underscore() -> None:
     assert "abc_def.com" == url.host
 
 
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("http://_DMARC.café/", "_dmarc.xn--caf-dma"),
+        ("http://H%EFST.café/", "h%efst.xn--caf-dma"),
+        ("http://ABC.%EF.café/", "abc.%ef.xn--caf-dma"),
+    ],
+)
+def test_idna_fallback_lowercases_ascii_labels(url: str, expected: str) -> None:
+    # A host mixing an IDN label with an ASCII label that the strict idna
+    # package rejects (e.g. an underscore DNS label) takes the stdlib IDNA
+    # fallback, which must still lowercase the ASCII labels to stay canonical
+    # and idempotent (RFC 3986 section 6.2.2.1).
+    url_obj = URL(url)
+    assert url_obj.raw_host == expected
+    assert str(url_obj) == str(URL(str(url_obj)))
+
+
 def test_raw_host_when_port_is_specified() -> None:
     url = URL("http://example.com:8888")
     assert "example.com" == url.raw_host

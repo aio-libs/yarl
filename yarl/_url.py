@@ -1587,7 +1587,11 @@ def _idna_encode(host: str) -> str:
     try:
         return idna.encode(host, uts46=True).decode("ascii")
     except UnicodeError:
-        return host.encode("idna").decode("ascii")
+        # The stdlib IDNA-2003 codec leaves already-ASCII labels untouched, so
+        # lowercase the host first to match the ASCII fast path and the
+        # idna.encode(uts46=True) result above (RFC 3986 section 6.2.2.1).
+        # Non-ASCII labels are case-folded again by the codec's nameprep step.
+        return host.lower().encode("idna").decode("ascii")
 
 
 @lru_cache(_DEFAULT_ENCODE_SIZE)
