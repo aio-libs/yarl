@@ -771,3 +771,11 @@ class TestPercentEncodedSchemeBypass:
         assert u.scheme == ""
         assert ":" in str(u)
         assert "%3A" not in str(u)
+
+
+def test_raw_path_drops_lone_surrogate() -> None:
+    """A lone surrogate in the path is dropped; raw_path stays ASCII."""
+    url = URL("http://example.com/\ud800path")
+    assert url.raw_path == "/path"
+    # raw_path is always percent-encoded ASCII; a retained surrogate is a bug.
+    assert url.raw_path.encode("ascii") == b"/path"
