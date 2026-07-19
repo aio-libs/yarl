@@ -4,6 +4,7 @@ CPython
 Changelog
 Codecov
 Cython
+Deprecations
 GPG
 IPv
 PRs
@@ -50,6 +51,7 @@ pytest
 quoter
 rc
 reStructuredText
+recode
 reencoding
 requote
 requoter
@@ -62,11 +64,13 @@ serializer
 subclass
 subclasses
 subcomponent
+subdirectory
 subtree
 svetlov
 tox
 uncompiled
 unencoded
+unobvious
 unquoter
 v1
 yarl

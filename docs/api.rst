@@ -895,7 +895,7 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path/to?arg#frag').with_name('new')
       URL('http://example.com/path/new')
       >>> URL('http://example.com/path/to').with_name("ім'я")
-      URL('http://example.com/path/%D1%96%D0%BC%27%D1%8F')
+      URL('http://example.com/path/%D1%96%D0%BC'%D1%8F')
 
 .. method:: URL.with_suffix(suffix, *, keep_query=False, keep_fragment=False)
 

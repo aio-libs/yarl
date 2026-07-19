@@ -1,0 +1,7 @@
+Fixed the in-tree PEP 517 build backend to import Cython at the point
+of use instead of module load time. The build front-ends that serve all
+the build hooks from a single long-running backend process, the way
+``pyproject-api`` under ``tox`` does, import the backend before the
+dynamically declared Cython build dependency is provisioned, so the
+accelerated build used to fail with a ``NameError``
+-- by :user:`rodrigobnogueira`.

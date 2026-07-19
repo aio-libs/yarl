@@ -173,6 +173,7 @@ jobs:
         toxenv:
         - pre-commit
         - spellcheck-docs
+        - doctest-docs
         - build-docs
         xfail:
         - false
