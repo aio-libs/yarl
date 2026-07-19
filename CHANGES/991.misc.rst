@@ -1,5 +1,0 @@
-Added regression tests ensuring that lone surrogates produced by
-decoding invalid UTF-8 with ``surrogateescape`` are preserved when
-building a URL with ``encoded=True`` and are dropped consistently by
-the C and pure-Python quoting backends when parsing
--- by :user:`pajod`.

@@ -14,6 +14,199 @@ Changelog
 
 .. towncrier release notes start
 
+v1.24.3
+=======
+
+*(2026-07-19)*
+
+
+Bug fixes
+---------
+
+- Fixed the :attr:`~yarl.URL.host` property incorrectly returning the
+  percent-encoded zone ID separator ``%25`` instead of decoding it to ``%``
+  for IPv6 Zone ID URLs (e.g. ``http://[fe80::1%251]/`` now correctly exposes
+  ``.host`` as ``fe80::1%1`` per :rfc:`6874`)
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1653`.
+
+- Fixed ``_check_netloc()`` missing ``%`` from its NFKC normalization character
+  check, which allowed Unicode characters U+FF05 (FULLWIDTH PERCENT SIGN) and
+  U+FE6A (SMALL PERCENT SIGN) to produce a literal ``%`` in ``url.host`` via
+  the standard library IDNA fallback
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1655`.
+
+- Fixed :meth:`~yarl.URL.build` failing to validate characters in the zone ID
+  portion of IPv6 addresses when ``validate_host=True``, allowing control
+  characters such as CR, LF, and NUL to pass through into ``url.host``.
+  Zone IDs now reject ASCII control characters and the empty string (a bare
+  trailing ``%``) per
+  `RFC 9844 §6.3 <https://datatracker.ietf.org/doc/html/rfc9844#section-6-3>`_
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1655`.
+
+- Fixed the Cython quoting backend retaining a lone surrogate code
+  point when it was the only character forcing a rewrite; the
+  pure-Python backend already dropped lone surrogates, so both now
+  drop them and produce identical output
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1751`.
+
+- Fixed the Cython quoting backend percent-encoding the ``%`` of a
+  ``%XX`` escape when a lone surrogate fell within it, instead of
+  dropping the surrogate and keeping the escape; it now matches the
+  pure-Python backend and produces identical output
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1752`.
+
+- Fixed the Cython quoter preserving lone surrogate characters
+  (``U+D800``..``U+DFFF``) instead of dropping them; it now matches the
+  pure-Python quoter, which strips them, so both backends produce the
+  same output for the same input -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1799`.
+
+- Fixed :meth:`URL.build() <yarl.URL.build>` and
+  :meth:`~yarl.URL.with_host` accepting hosts that expand to a URL
+  delimiter (``/``, ``?`` or ``#``) under IDNA normalization; such hosts
+  are now rejected, so the builder APIs agree with the parser
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1800`.
+
+- Fixed host encoding accepting Unicode default-ignorable and format code
+  points (such as soft hyphen, zero-width space, and word joiner) that IDNA
+  normalization silently drops or otherwise folds into a different host,
+  so the parsed host could differ from the input string; such hosts are now
+  rejected on both the :class:`~yarl.URL` constructor and the builder APIs
+  (:meth:`URL.build() <yarl.URL.build>` and :meth:`~yarl.URL.with_host`)
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1801`.
+
+- Fixed :meth:`~yarl.URL.build`, :meth:`~yarl.URL.joinpath` (and the ``/``
+  operator), :meth:`~yarl.URL.with_name`, and :meth:`~yarl.URL.with_suffix`
+  building a URL with no host and no scheme whose serialized string could be
+  parsed back as an absolute or executable-scheme URL; a scheme-shaped leading
+  colon in a relative path is now percent-encoded, matching the parser and
+  :meth:`~yarl.URL.human_repr` -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1802`.
+
+
+Improved documentation
+----------------------
+
+- Documented how :attr:`~yarl.URL.host` and :attr:`~yarl.URL.raw_host`
+  expose :rfc:`6874` IPv6 zone identifiers and that the host subcomponent
+  properties include the zone identifier verbatim
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`998`.
+
+- Fixed the stale ``with_name()`` example output in the API reference; the
+  apostrophe is a character that :rfc:`3986` allows unencoded in path
+  segments -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1784`.
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- The ``setuptools`` build dependency lower bound has been restored to be
+  ``>= 47`` after an incorrect automated increase in :pr:`1657`
+  -- by :user:`bbhtt`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1764`.
+
+- Fixed the in-tree PEP 517 build backend to import Cython at the point
+  of use instead of module load time. The build front-ends that serve all
+  the build hooks from a single long-running backend process, the way
+  ``pyproject-api`` under ``tox`` does, import the backend before the
+  dynamically declared Cython build dependency is provisioned, so the
+  accelerated build used to fail with a ``NameError``
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1784`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Added ``UV_CONSTRAINT`` and ``UV_BUILD_CONSTRAINT`` alongside
+  ``PIP_CONSTRAINT`` and ``PIP_BUILD_CONSTRAINT`` in the
+  ``cibuildwheel`` environment so the :file:`requirements/cython.txt`
+  pin is honored under the ``build[uv]`` frontend; ``uv pip``
+  ignores the ``PIP_`` variables and reads only the ``UV_`` ones,
+  while the ``PIP_`` variants are kept for the pip fallback path
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1729`.
+
+- Dependabot has been restricted to the ``requirements`` subdirectory to
+  avoid unintended updates outside dependency requirement files
+  -- by :user:`bbhtt`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1764`.
+
+- Started running the Sphinx ``doctest`` builder in CI through the
+  ``doctest-docs`` tox environment, which existed but was never wired
+  into the lint matrix and never installed the package whose examples it
+  runs. Also added spelling word list entries so the spell check passes
+  with dictionary backends other than the one CI uses
+  -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1784`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Added regression tests ensuring that lone surrogates produced by
+  decoding invalid UTF-8 with ``surrogateescape`` are preserved when
+  building a URL with ``encoded=True`` and are dropped consistently by
+  the C and pure-Python quoting backends when parsing
+  -- by :user:`pajod`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`991`.
+
+- Expanded the test suite to pin IPv6 zone identifier handling per the
+  :rfc:`6874` compatibility research: the ``%25`` and legacy bare ``%``
+  separator forms, empty zone and reserved character corner cases,
+  ``encoded=True`` round-trips, and zone survival through URL mutation
+  APIs -- by :user:`rodrigobnogueira`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`998`.
+
+
+----
+
+
 v1.24.2
 =======
 
