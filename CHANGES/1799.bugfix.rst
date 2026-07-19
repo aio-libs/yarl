@@ -1,4 +1,0 @@
-Fixed the Cython quoter preserving lone surrogate characters
-(``U+D800``..``U+DFFF``) instead of dropping them; it now matches the
-pure-Python quoter, which strips them, so both backends produce the
-same output for the same input -- by :user:`bdraco`.

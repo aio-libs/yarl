@@ -1,5 +1,0 @@
-Fixed :meth:`URL.build() <yarl.URL.build>` and
-:meth:`~yarl.URL.with_host` accepting hosts that expand to a URL
-delimiter (``/``, ``?`` or ``#``) under IDNA normalization; such hosts
-are now rejected, so the builder APIs agree with the parser
--- by :user:`bdraco`.

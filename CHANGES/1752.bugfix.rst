@@ -1,5 +1,0 @@
-Fixed the Cython quoting backend percent-encoding the ``%`` of a
-``%XX`` escape when a lone surrogate fell within it, instead of
-dropping the surrogate and keeping the escape; it now matches the
-pure-Python backend and produces identical output
--- by :user:`rodrigobnogueira`.

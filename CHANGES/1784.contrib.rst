@@ -1,6 +1,0 @@
-Started running the Sphinx ``doctest`` builder in CI through the
-``doctest-docs`` tox environment, which existed but was never wired
-into the lint matrix and never installed the package whose examples it
-runs. Also added spelling word list entries so the spell check passes
-with dictionary backends other than the one CI uses
--- by :user:`rodrigobnogueira`.
