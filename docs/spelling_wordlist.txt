@@ -68,5 +68,6 @@ tox
 uncompiled
 unencoded
 unquoter
+untrusted
 v1
 yarl

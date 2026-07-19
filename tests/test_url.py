@@ -1241,6 +1241,98 @@ def test_joinpath_backtrack_to_base() -> None:
     assert new_url.raw_path == "/"
 
 
+@pytest.mark.parametrize(
+    "base,to_join,expected",
+    [
+        pytest.param(
+            "/api/v1/",
+            ("object/id", "../evil_function"),
+            "http://example.com/api/v1/object%2Fid/..%2Fevil_function",
+            id="issue-1631-prevent-traversal",
+        ),
+        pytest.param(
+            "/api/v1/",
+            ("..",),
+            "http://example.com/api/v1/%2E%2E",
+            id="standalone-double-dot",
+        ),
+        pytest.param(
+            "/api/v1/",
+            (".",),
+            "http://example.com/api/v1/%2E",
+            id="standalone-single-dot",
+        ),
+        pytest.param(
+            "/api/v1/",
+            ("..", "..", "etc/passwd"),
+            "http://example.com/api/v1/%2E%2E/%2E%2E/etc%2Fpasswd",
+            id="multi-traversal-blocked",
+        ),
+        pytest.param(
+            "/path",
+            ("file.txt",),
+            "http://example.com/path/file.txt",
+            id="dot-in-segment-preserved",
+        ),
+        pytest.param(
+            "/path",
+            ("a/b/c",),
+            "http://example.com/path/a%2Fb%2Fc",
+            id="slashes-encoded",
+        ),
+        pytest.param(
+            "/path",
+            ("a b",),
+            "http://example.com/path/a%20b",
+            id="space-encoded",
+        ),
+        pytest.param(
+            "/path",
+            ("%2E%2E",),
+            "http://example.com/path/%252E%252E",
+            id="percent-literal-is-encoded",
+        ),
+        pytest.param(
+            "",
+            ("foo", "bar"),
+            "http://example.com/foo/bar",
+            id="simple-segments",
+        ),
+        pytest.param(
+            "/p",
+            (),
+            "http://example.com/p",
+            id="no-segments",
+        ),
+    ],
+)
+def test_joinpath_safe(base: str, to_join: tuple[str, ...], expected: str) -> None:
+    url = URL(f"http://example.com{base}")
+    assert str(url.joinpath_safe(*to_join)) == expected
+
+
+def test_joinpath_safe_prevents_traversal_to_parent() -> None:
+    """joinpath_safe must never reduce the path below the base."""
+    base = URL("https://api.example/api/v1/")
+    user_input = "../evil_function"
+    result = base.joinpath_safe("object/id", user_input)
+    # No traversal occurred: still under /api/v1/
+    assert result.path.startswith("/api/v1/")
+    assert "evil_function" not in result.path.split("/")[1:4]
+
+
+def test_joinpath_safe_rejects_non_str() -> None:
+    with pytest.raises(TypeError):
+        URL("http://example.com").joinpath_safe(123)  # type: ignore[arg-type]
+
+
+def test_joinpath_safe_round_trip_via_parts() -> None:
+    """Path segments survive as opaque values."""
+    url = URL("http://example.com/").joinpath_safe("a/b", "..", "c.d")
+    # parts decodes percent-encoding, so we get the original segment back
+    assert url.parts[-3:] == ("a/b", "..", "c.d")
+
+
 def test_joinpath_single_empty_segments() -> None:
     """joining standalone empty segments does not create empty segments"""
     a = URL("/1//2///3")
