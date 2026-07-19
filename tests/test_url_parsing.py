@@ -580,6 +580,53 @@ class TestStripEmptyParts:
         assert u.query_string == ""
         assert u.fragment == ""
 
+    @pytest.mark.parametrize(
+        ("raw_path", "parsed_url", "expected_raw_fragment", "expected_fragment"),
+        [
+            pytest.param(
+                b"/P\xc3\xbcnktchen\xa0\xef\xb7#",
+                "/P%C3%BCnktchen\udca0\udcef\udcb7",
+                "",
+                "",
+                id="path-only",
+            ),
+            pytest.param(
+                b"/P\xc3\xbcnktchen\xa0\xef\xb7#P\xc3\xbcnktelchen\xa0\xef\xb6",
+                "/P%C3%BCnktchen\udca0\udcef\udcb7#Pünktelchen\udca0\udcef\udcb6",
+                "P%C3%BCnktelchen",
+                "Pünktelchen",
+                id="path-and-fragment",
+            ),
+        ],
+    )
+    def test_truncated_utf_sequence(
+        self,
+        raw_path: bytes,
+        parsed_url: str,
+        expected_raw_fragment: str,
+        expected_fragment: str,
+    ) -> None:
+        # A truncated UTF-8 sequence decoded with surrogateescape yields lone
+        # surrogates. With encoded=True the caller takes responsibility for
+        # the value, so they are preserved verbatim; parsing the same URL
+        # normally runs the quoter, which drops them from the path and the
+        # fragment alike, identically on the C and pure-Python backends.
+        abspath, _hash_separator, frag = raw_path.decode(
+            "utf-8", "surrogateescape"
+        ).partition("#")
+        u = URL.build(path=abspath, query_string="", fragment=frag, encoded=True)
+        u2 = URL(parsed_url)
+        assert u.scheme == ""
+        assert u.user is None
+        assert u.password is None
+        assert u.path == "/Pünktchen\udca0\udcef\udcb7"
+        assert u.query_string == ""
+        assert u.fragment == frag
+        assert u2.raw_path == "/P%C3%BCnktchen"
+        assert u2.path == "/Pünktchen"
+        assert u2.raw_fragment == expected_raw_fragment
+        assert u2.fragment == expected_fragment
+
 
 @pytest.mark.parametrize(
     ("scheme"),
