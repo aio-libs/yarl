@@ -432,3 +432,37 @@ def test_build_uppercase_host() -> None:
         encoded=False,
     )
     assert u.host == "upper.case"
+
+
+def test_build_query_dict_encodes_reserved_chars() -> None:
+    """Reserved characters in dict query values are percent-encoded.
+
+    See https://github.com/aio-libs/yarl/issues/1073
+    """
+    u = URL.build(
+        scheme="https",
+        host="foo",
+        query={"deviceUdid": '${"freemarker.template.utility.Execute"?new()("ls")}'},
+    )
+    assert str(u) == (
+        "https://foo/?deviceUdid="
+        "%24%7B%22freemarker.template.utility.Execute%22?new%28%29%28%22ls%22%29%7D"
+    )
+
+
+def test_build_query_dict_keeps_exclaim_and_question() -> None:
+    """! and ? are the only reserved characters left unencoded in dict queries."""
+    u = URL.build(scheme="https", host="foo", query={"a": "b!c?d"})
+    assert str(u) == "https://foo/?a=b!c?d"
+
+
+def test_build_query_string_does_not_encode_reserved_chars() -> None:
+    """Literal query strings are not re-encoded for reserved characters."""
+    u = URL.build(scheme="https", host="foo", query="foo=ba=r")
+    assert str(u) == "https://foo/?foo=ba=r"
+
+
+def test_build_query_dict_encodes_equals_and_ampersand() -> None:
+    """= and & are still encoded in dict query values."""
+    u = URL.build(scheme="https", host="foo", query={"foo": "ba=r"})
+    assert str(u) == "https://foo/?foo=ba%3Dr"

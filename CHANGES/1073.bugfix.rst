@@ -1,0 +1,5 @@
+Fixed reserved characters (e.g. ``$``, ``(``, ``)``, ``*``, ``,``, ``/``, ``:``,
+``@``, ``'``) not being percent-encoded in query values passed as a mapping to
+:meth:`URL.build() <yarl.URL.build>`, :meth:`~yarl.URL.with_query`, and
+:meth:`~yarl.URL.update_query`; ``!`` and ``?`` are still left unencoded, and
+literal query strings are unaffected -- by :user:`pctablet505`.

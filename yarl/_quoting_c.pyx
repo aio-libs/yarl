@@ -68,6 +68,10 @@ cdef inline void set_bit(uint8_t array[], uint64_t ch) noexcept:
     array[ch >> 3] |= (1 << (ch & 7))
 
 
+cdef inline void clear_bit(uint8_t array[], uint64_t ch) noexcept:
+    array[ch >> 3] &= ~(1 << (ch & 7))
+
+
 memset(ALLOWED_TABLE, 0, sizeof(ALLOWED_TABLE))
 memset(ALLOWED_NOTQS_TABLE, 0, sizeof(ALLOWED_NOTQS_TABLE))
 
@@ -185,7 +189,8 @@ cdef class _Quoter:
     cdef uint8_t _protected_table[16]
 
     def __init__(
-            self, *, str safe='', str protected='', bint qs=False, bint requote=True,
+            self, *, str safe='', str protected='', str unsafe='',
+            bint qs=False, bint requote=True,
     ):
         cdef Py_UCS4 ch
 
@@ -211,6 +216,12 @@ cdef class _Quoter:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
             set_bit(self._safe_table, ch)
             set_bit(self._protected_table, ch)
+
+        for ch in unsafe:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+            clear_bit(self._safe_table, ch)
+            clear_bit(self._protected_table, ch)
 
     def __call__(self, val):
         if val is None:
