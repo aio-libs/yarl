@@ -152,7 +152,7 @@ select = [
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
 test-requires = "-r requirements/test-cibuildwheel.txt"
-test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
+test-command = 'pytest -v -m "not hypothesis" --no-cov --ignore={project}/tests/test_pep517_backend.py {project}/tests'
 # don't build PyPy wheels, install from source instead
 skip = "pp*"
 

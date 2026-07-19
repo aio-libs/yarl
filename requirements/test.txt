@@ -1,4 +1,10 @@
 -r test-cibuildwheel.txt
+# Needed to import the in-tree PEP 517 backend in tests/test_pep517_backend.py.
+# Without these the test skips on every platform, leaving the backend code it
+# exercises uncovered and dropping total coverage below the fail-under gate.
+# Mirrors the build-system requirements in pyproject.toml. The cibuildwheel
+# test env omits these since its test-command ignores that test file.
+expandvars
 # pydantic-core has no binary wheels for freethreading mode,
 # let's skip testing it during wheels building.
 # The regular test run is sufficient for testing pydantic integration.
@@ -6,3 +12,4 @@
 # After implementing PEP 780 '"free-threading" not in sys_abi_features' could
 # be used instead of extraction of test-cibuildwheel.txt file.
 pydantic>=2.13.4; sys_platform == 'linux'
+setuptools >= 82.0.1

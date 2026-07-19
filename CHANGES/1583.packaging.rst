@@ -1,0 +1,3 @@
+Excluded stale native build artifacts (``*.so``, ``*.pyd``, ``*.dylib``)
+from the isolated :pep:`517` build directory, preventing wheels from
+bundling shared libraries for the wrong interpreter ABI -- by :user:`aiolibsbot`.
