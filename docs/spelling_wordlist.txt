@@ -17,6 +17,7 @@ aiohttp
 armv
 ascii
 backend
+backends
 boolean
 booleans
 bools
@@ -46,6 +47,7 @@ nightlies
 pre
 pydantic
 pytest
+quoter
 rc
 reStructuredText
 reencoding

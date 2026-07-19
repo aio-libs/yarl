@@ -99,6 +99,16 @@ def test_quote_ignore_broken_unicode(quoter: type[_Quoter]) -> None:
     assert quoter()(s) == s
 
 
+def test_quote_lone_surrogate_only_trigger(quoter: type[_Quoter]) -> None:
+    # A lone surrogate that is the only character needing attention must be
+    # dropped, not preserved. The path quoter keeps ``/`` safe, so without a
+    # fix the C quoter returned the input unchanged (surrogate included) while
+    # the Python quoter dropped it, letting a prefix check diverge from what
+    # is serialised on the wire.
+    s = quoter(safe="/", protected="/")("/\ud800admin")
+    assert s == "/admin"
+
+
 def test_unquote_to_bytes(unquoter: type[_Unquoter]) -> None:
     assert unquoter()("abc%20def") == "abc def"
     assert unquoter()("") == ""
