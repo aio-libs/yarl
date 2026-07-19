@@ -1,0 +1,6 @@
+Fixed :meth:`~yarl.URL.build`, :meth:`~yarl.URL.joinpath` (and the ``/``
+operator), :meth:`~yarl.URL.with_name`, and :meth:`~yarl.URL.with_suffix`
+building a URL with no host and no scheme whose serialized string could be
+parsed back as an absolute or executable-scheme URL; a scheme-shaped leading
+colon in a relative path is now percent-encoded, matching the parser and
+:meth:`~yarl.URL.human_repr` -- by :user:`bdraco`.
