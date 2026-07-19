@@ -14,6 +14,28 @@ Changelog
 
 .. towncrier release notes start
 
+v1.24.4
+=======
+
+*(2026-07-19)*
+
+
+Packaging updates and notes for downstreams
+-------------------------------------------
+
+- Stopped installing ``hypothesis`` in the wheel-build test environment. The
+  property-based quoting tests that need it are skipped there already, and
+  building it from source on architectures without a prebuilt wheel (such as
+  ``armv7l`` musllinux, where the build pulls in a Rust toolchain) was failing
+  the wheel jobs -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1804`.
+
+
+----
+
+
 v1.24.3
 =======
 
