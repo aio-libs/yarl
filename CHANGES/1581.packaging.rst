@@ -1,0 +1,7 @@
+Restored coverage collection for Cython modules in CI. The
+``translate-cython`` step was regenerating the C files without the
+``linetrace`` directive ever since line tracing became opt-in, leaving
+the ``Cython.Coverage`` plugin nothing to report; additionally, Cython
+3.1+ routes tracing through ``sys.monitoring`` on CPython 3.12+, which
+the plugin cannot consume, so traced builds now request the legacy
+tracing hooks explicitly -- by :user:`rodrigobnogueira`.
