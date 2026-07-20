@@ -1,3 +1,5 @@
+import platform
+import sys
 from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
@@ -2798,6 +2800,15 @@ def _idna_collapses(code_point: int) -> bool:
         return False
 
 
+@pytest.mark.skipif(
+    sys.platform != "linux" or platform.machine() != "x86_64",
+    reason=(
+        "Exhaustive IDNA sweep iterates ~140k code points; its result does not "
+        "depend on the architecture, so it only runs on a native Linux x86_64 "
+        "runner. It is too heavy for QEMU-emulated wheel-build arches, where it "
+        "crashes the test workers."
+    ),
+)
 def test_default_ignorable_covers_idna_stripped() -> None:
     """_DEFAULT_IGNORABLE_RE must match every code point IDNA silently deletes.
 
