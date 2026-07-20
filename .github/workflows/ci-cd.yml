@@ -86,7 +86,7 @@ jobs:
       upstream-repository-id: ${{ env.UPSTREAM_REPOSITORY_ID }}
     steps:
     - name: Switch to using Python ${{ env.PYTHON_LATEST }} by default
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Check out src from Git
