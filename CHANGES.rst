@@ -14,6 +14,28 @@ Changelog
 
 .. towncrier release notes start
 
+v1.24.5
+=======
+
+*(2026-07-19)*
+
+
+Contributor-facing changes
+--------------------------
+
+- Restricted the exhaustive IDNA default-ignorable sweep test to a native
+  Linux x86_64 runner. It iterates roughly 140,000 code points and its result
+  does not depend on the architecture, so running it under emulated wheel
+  builds only added minutes and intermittently crashed the test workers
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1806`.
+
+
+----
+
+
 v1.24.4
 =======
 
