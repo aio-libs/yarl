@@ -4,7 +4,7 @@
 # (via -m "not hypothesis" plus an importorskip). Keeping it out of
 # test-cibuildwheel.txt avoids building it from source on arches without a
 # prebuilt wheel (e.g. armv7l musllinux, where the source build needs Rust).
-hypothesis>=6.158.0
+hypothesis>=6.159.0
 # pydantic-core has no binary wheels for freethreading mode,
 # let's skip testing it during wheels building.
 # The regular test run is sufficient for testing pydantic integration.
