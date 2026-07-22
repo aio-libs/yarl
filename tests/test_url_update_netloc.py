@@ -40,6 +40,24 @@ def test_with_scheme_for_relative_file_url() -> None:
     assert expected.with_scheme("file") == expected
 
 
+@pytest.mark.parametrize(
+    "scheme",
+    (
+        "http://evil.example",
+        "//evil.example",
+        "http:",
+        "ht tp",
+        "1http",
+    ),
+    ids=("authority", "slashes", "trailing-colon", "space", "leading-digit"),
+)
+def test_with_scheme_outside_rfc3986_grammar(scheme: str) -> None:
+    """A scheme carrying a delimiter would re-point the rendered URL."""
+    url = URL("http://good.example/p")
+    with pytest.raises(ValueError, match="cannot contain"):
+        url.with_scheme(scheme)
+
+
 def test_with_scheme_invalid_type() -> None:
     url = URL("http://example.com")
     with pytest.raises(TypeError):
