@@ -89,6 +89,13 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
+# scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+# https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
+# This pattern matches the first character that is *not* allowed there, so a
+# scheme carrying a delimiter (most importantly ':' or '/') can be rejected
+# before it is written into the URL.
+NOT_SCHEME = re.compile(r"\A[^a-zA-Z]|[^a-zA-Z0-9+\-.]")
+
 # Invisible default-ignorable / format code points that must not appear in a
 # host (soft hyphen, zero-width space, word joiner, bidi controls, variation
 # selectors, ...). Depending on the code point IDNA either silently deletes it
@@ -209,6 +216,18 @@ class _InternalURLCache(TypedDict, total=False):
 def rewrite_module(obj: _T) -> _T:
     obj.__module__ = "yarl"
     return obj
+
+
+def _validate_scheme(scheme: str) -> None:
+    """Check a scheme against the RFC 3986 grammar.
+
+    An empty scheme is allowed; it stands for a relative URL.
+    """
+    if scheme and (invalid := NOT_SCHEME.search(scheme)):
+        raise ValueError(
+            f"Scheme {scheme!r} cannot contain {invalid.group()!r} "
+            f"(at position {invalid.start()})"
+        )
 
 
 def _encode_relative_scheme_colon(path: str) -> str:
@@ -518,6 +537,7 @@ class URL:
                 fragment,
             )
 
+        _validate_scheme(scheme)
         self = object.__new__(URL)
         self._scheme = scheme
         _host: str | None = None
@@ -1156,6 +1176,7 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         lower_scheme = scheme.lower()
+        _validate_scheme(lower_scheme)
         netloc = self._netloc
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (
