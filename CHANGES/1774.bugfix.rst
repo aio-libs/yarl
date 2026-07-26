@@ -1,0 +1,2 @@
+Preserved URL-encoded characters in base paths when joining relative URLs.
+-- by :user:`utkarshalpha`.
