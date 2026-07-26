@@ -224,6 +224,7 @@ def test_host_subcomponent(host: str) -> None:
         ("http://example.com:80", "example.com"),
         ("http://example.com:8080", "example.com:8080"),
         ("http://[::1]:8080", "[::1]:8080"),
+        ("//user@", None),
     ],
 )
 def test_host_port_subcomponent(input: str, result: str) -> None:
