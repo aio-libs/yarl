@@ -1,4 +1,4 @@
 Fixed an :exc:`IndexError` when constructing a :class:`~yarl.URL` from a
 malformed authority that contains brackets but ends with ``@`` (empty host
-after userinfo). These inputs now raise :exc:`ValueError`, consistent with
+after the ``@``). These inputs now raise :exc:`ValueError`, consistent with
 other invalid bracketed hosts.
