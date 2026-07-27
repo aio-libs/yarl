@@ -54,21 +54,32 @@ class _Quoter:
         qs: bool = False,
         requote: bool = True,
     ) -> None:
-        if not safe.isascii() or not protected.isascii():
-            raise ValueError("Only safe symbols with ORD < 128 are allowed")
-        # A safe '%' would be left alone while requoting decodes '%XX', and a
-        # safe ' ' would be left alone while qs turns it into '+'
-        if requote and ("%" in safe or "%" in protected):
-            raise ValueError(
-                "safe and protected cannot contain '%' when requote is enabled"
-            )
-        if qs and (" " in safe or " " in protected):
-            raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
+        for ch in safe + protected + unsafe:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+
         self._safe = safe
         self._protected = protected
         self._unsafe = unsafe
         self._qs = qs
         self._requote = requote
+
+        safe_chars = set(ALLOWED)
+        if not qs:
+            safe_chars.update(QS)
+        safe_chars.update(safe)
+        safe_chars.update(protected)
+        safe_chars.difference_update(unsafe)
+        # A safe '%' would be left alone while requoting decodes '%XX', and a
+        # safe ' ' would be left alone while qs turns it into '+'
+        if requote and "%" in safe_chars:
+            raise ValueError(
+                "safe and protected cannot contain '%' when requote is enabled"
+            )
+        if qs and " " in safe_chars:
+            raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
+        self._safe_chars = safe_chars
+        self._bsafe = bytes(sorted(ord(ch) for ch in safe_chars))
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -84,13 +95,8 @@ class _Quoter:
         bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
-        safe_chars = set(self._safe)
-        safe_chars.update(ALLOWED)
-        if not self._qs:
-            safe_chars.update(QS)
-        safe_chars.update(self._protected)
-        safe_chars.difference_update(self._unsafe)
-        bsafe = bytes(ord(ch) for ch in safe_chars)
+        safe_chars = self._safe_chars
+        bsafe = self._bsafe
         idx = 0
         while idx < len(bval):
             ch = bval[idx]

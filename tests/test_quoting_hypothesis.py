@@ -44,12 +44,20 @@ else:
 _ASCII_TEXT = st.text(alphabet=st.characters(max_codepoint=127))
 
 
-@given(safe=_ASCII_TEXT, protected=_ASCII_TEXT, qs=st.booleans(), requote=st.booleans())
-def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
+@given(
+    safe=_ASCII_TEXT,
+    protected=_ASCII_TEXT,
+    unsafe=_ASCII_TEXT,
+    qs=st.booleans(),
+    requote=st.booleans(),
+)
+def test_fuzz__PyQuoter(  # type: ignore[misc]
+    safe: str, protected: str, unsafe: str, qs: bool, requote: bool
+) -> None:
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
     assume(not (requote and ("%" in safe or "%" in protected)))
     assume(not (qs and (" " in safe or " " in protected)))
-    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    _PyQuoter(safe=safe, protected=protected, unsafe=unsafe, qs=qs, requote=requote)
 
 
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
