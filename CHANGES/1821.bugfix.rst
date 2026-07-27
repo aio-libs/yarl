@@ -1,0 +1,5 @@
+Fixed an :exc:`IndexError` in :attr:`~yarl.URL.host_port_subcomponent` when
+the URL has an empty host (for example ``URL("//user@")``). The property now
+returns ``None`` for an empty host, matching the documented
+"host-and-port string or ``None``" contract.
+

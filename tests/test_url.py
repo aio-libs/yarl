@@ -224,9 +224,11 @@ def test_host_subcomponent(host: str) -> None:
         ("http://example.com:80", "example.com"),
         ("http://example.com:8080", "example.com:8080"),
         ("http://[::1]:8080", "[::1]:8080"),
+        # Empty host after userinfo — property must not IndexError (#1821)
+        ("//user@", None),
     ],
 )
-def test_host_port_subcomponent(input: str, result: str) -> None:
+def test_host_port_subcomponent(input: str, result: str | None) -> None:
     url = URL(input)
     assert url.host_port_subcomponent == result
 
@@ -441,6 +443,10 @@ def test_ipfuture_brackets_not_allowed() -> None:
         "http://[:evil.com[]].bank.com:443",
         "http://[:127.0.0.1[]]:80",
         "http://[v1.:attacker[]].bank.com:80",
+        # Bracketed authority ending at '@' — empty hostinfo must ValueError (#1822)
+        "http://[::1]@",
+        "//[]@",
+        "//a[b]c@",
     ),
     ids=(
         "host-confusion-with-port",
@@ -449,6 +455,9 @@ def test_ipfuture_brackets_not_allowed() -> None:
         "domain-allowlist-bypass",
         "private-ip-injection",
         "ipvfuture-bracket-abuse",
+        "bracketed-authority-ending-at-sign",
+        "empty-bracketed-authority-at-sign",
+        "bracket-in-middle-authority-at-sign",
     ),
 )
 def test_malformed_bracketed_host_rejected(url: str) -> None:
