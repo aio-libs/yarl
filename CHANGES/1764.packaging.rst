@@ -1,3 +1,0 @@
-The ``setuptools`` build dependency lower bound has been restored to be
-``>= 47`` after an incorrect automated increase in :pr:`1657`
--- by :user:`bbhtt`.

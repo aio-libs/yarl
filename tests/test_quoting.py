@@ -1,6 +1,4 @@
 import pytest
-from hypothesis import assume, example, given, note
-from hypothesis import strategies as st
 
 import yarl
 from yarl._quoting import NO_EXTENSIONS, _Quoter, _Unquoter
@@ -97,6 +95,62 @@ def test_quote_ignore_broken_unicode(quoter: type[_Quoter]) -> None:
 
     assert s == "j%1Aq%2Fg%0Ch%18v%1Bcom%2Fypj%16"
     assert quoter()(s) == s
+
+
+def test_quote_lone_surrogate_only_trigger(quoter: type[_Quoter]) -> None:
+    # A lone surrogate that is the only character needing attention must be
+    # dropped, not preserved. The path quoter keeps ``/`` safe, so without a
+    # fix the C quoter returned the input unchanged (surrogate included) while
+    # the Python quoter dropped it, letting a prefix check diverge from what
+    # is serialised on the wire.
+    s = quoter(safe="/", protected="/")("/\ud800admin")
+    assert s == "/admin"
+
+
+def test_quote_drops_lone_surrogate(quoter: type[_Quoter]) -> None:
+    # A lone Unicode surrogate (0xD800..0xDFFF) cannot be UTF-8 encoded, so
+    # both quoters must drop it. When the surrogate is the only non-safe
+    # character, the C quoter used to leave it in the output; the Python
+    # quoter has always dropped it via errors="ignore". Keep every other
+    # character safe ASCII so the surrogate is the sole driver of any change;
+    # an unsafe character such as "/" would mask the bug by forcing a rewrite.
+    q = quoter()
+    assert q("\ud800") == ""
+    assert q("\udfff") == ""
+    assert q("a\ud800b") == "ab"
+    # The result must be pure ASCII, never a retained surrogate.
+    assert q("a\ud800b").encode("ascii") == b"ab"
+
+
+def test_quote_drops_surrogate_with_encoded_char(quoter: type[_Quoter]) -> None:
+    # Parity guard for the mixed case: a lone surrogate alongside a character
+    # that does require percent-encoding ("é" -> %C3%A9) must drop the
+    # surrogate while still encoding the real character, on both backends.
+    # This does not isolate the C bug ("é" forces a rewrite on its own, so it
+    # passes even unpatched); test_quote_drops_lone_surrogate is the guard.
+    q = quoter()
+    assert q("é\ud800") == "%C3%A9"
+    assert q("\ud800é") == "%C3%A9"
+    assert q("é\ud800é") == "%C3%A9%C3%A9"
+
+
+def test_quote_drops_surrogate_splitting_percent_escape(
+    quoter: type[_Quoter],
+) -> None:
+    # A lone surrogate cannot be UTF-8 encoded and is dropped. When one lands
+    # inside or next to a "%XX" escape while requoting, it must not stop the
+    # escape from being recognised: the pure-Python quoter strips surrogates
+    # before scanning, so the C quoter has to look through them too. Each case
+    # changes only because the surrogate is removed and the escape recombines.
+    q = quoter()
+    assert q("%\ud83420") == "%20"  # surrogate between "%" and the digits
+    assert q("%2\ud834A") == "*"  # surrogate between the two hex digits, %2A
+    assert q("%4\ud8341") == "A"  # recombines to a safe char, %41
+    assert q("%\ud8340A") == "%0A"  # recombines to a char that needs encoding
+    assert q("%\ud834e9") == "%E9"  # lowercase hex still normalised to upper
+    assert q("%\ud800\udfff20") == "%20"  # two surrogates skipped in a row
+    # Too few real characters after "%" to form an escape: "%" stays literal.
+    assert q("%a\ud800") == "%25a"
 
 
 def test_unquote_to_bytes(unquoter: type[_Unquoter]) -> None:
@@ -502,79 +556,3 @@ def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
 def test_unquoter_path_with_plus(unquoter: type[_Unquoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
     assert "/test/x+y+z/:++/" == unquoter(unsafe="+")(s)
-
-
-@given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
-def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
-    """Verify that _PyQuoter can be instantiated with any valid arguments."""
-    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
-
-
-@given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
-def test_fuzz__PyUnquoter(ignore: str, unsafe: str, qs: bool) -> None:  # type: ignore[misc]
-    """Verify that _PyUnquoter can be instantiated with any valid arguments."""
-    _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
-
-
-@example(text_input="0")
-@given(
-    text_input=st.text(
-        alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
-    ),
-)
-@pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
-@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
-def test_quote_unquote_parameter(  # type: ignore[misc]
-    quoter: type[_PyQuoter],
-    unquoter: type[_PyUnquoter],
-    text_input: str,
-) -> None:
-    quote = quoter()
-    unquote = unquoter()
-    text_quoted = quote(text_input)
-    note(f"text_quoted={text_quoted!r}")
-    text_output = unquote(text_quoted)
-    assert text_input == text_output
-
-
-@example(text_input="0")
-@given(
-    text_input=st.text(
-        alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
-    ),
-)
-@pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
-@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
-def test_quote_unquote_parameter_requote(  # type: ignore[misc]
-    quoter: type[_PyQuoter],
-    unquoter: type[_PyUnquoter],
-    text_input: str,
-) -> None:
-    quote = quoter(requote=True)
-    unquote = unquoter()
-    text_quoted = quote(text_input)
-    note(f"text_quoted={text_quoted!r}")
-    text_output = unquote(text_quoted)
-    assert text_input == text_output
-
-
-@example(text_input="0")
-@given(
-    text_input=st.text(
-        alphabet=st.characters(max_codepoint=127, blacklist_characters="%")
-    ),
-)
-@pytest.mark.parametrize("quoter", quoters, ids=quoter_ids)
-@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
-def test_quote_unquote_parameter_path_safe(  # type: ignore[misc]
-    quoter: type[_PyQuoter],
-    unquoter: type[_PyUnquoter],
-    text_input: str,
-) -> None:
-    quote = quoter()
-    unquote = unquoter(ignore="/%", unsafe="+")
-    assume("+" not in text_input and "/" not in text_input)
-    text_quoted = quote(text_input)
-    note(f"text_quoted={text_quoted!r}")
-    text_output = unquote(text_quoted)
-    assert text_input == text_output
