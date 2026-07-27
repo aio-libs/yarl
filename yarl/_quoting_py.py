@@ -29,11 +29,24 @@ class _Quoter:
         qs: bool = False,
         requote: bool = True,
     ) -> None:
+        for ch in safe + protected + unsafe:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+
         self._safe = safe
         self._protected = protected
         self._unsafe = unsafe
         self._qs = qs
         self._requote = requote
+
+        safe_chars = set(ALLOWED)
+        if not qs:
+            safe_chars.update("+&=;")
+        safe_chars.update(safe)
+        safe_chars.update(protected)
+        safe_chars.difference_update(unsafe)
+        self._safe_chars = safe_chars
+        self._bsafe = bytes(sorted(ord(ch) for ch in safe_chars))
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -49,13 +62,8 @@ class _Quoter:
         bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
-        safe_chars = set(self._safe)
-        safe_chars.update(ALLOWED)
-        if not self._qs:
-            safe_chars.update("+&=;")
-        safe_chars.update(self._protected)
-        safe_chars.difference_update(self._unsafe)
-        bsafe = bytes(ord(ch) for ch in safe_chars)
+        safe_chars = self._safe_chars
+        bsafe = self._bsafe
         idx = 0
         while idx < len(bval):
             ch = bval[idx]

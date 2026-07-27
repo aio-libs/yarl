@@ -38,10 +38,22 @@ else:
     unquoter_ids = ["PyUnquoter"]
 
 
-@given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
-def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
-    """Verify that _PyQuoter can be instantiated with any valid arguments."""
-    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+@given(
+    safe=st.text(alphabet=st.characters(max_codepoint=127)),
+    protected=st.text(alphabet=st.characters(max_codepoint=127)),
+    unsafe=st.text(alphabet=st.characters(max_codepoint=127)),
+    qs=st.booleans(),
+    requote=st.booleans(),
+)
+def test_fuzz__PyQuoter(  # type: ignore[misc]
+    safe: str, protected: str, unsafe: str, qs: bool, requote: bool
+) -> None:
+    """Verify that _PyQuoter can be instantiated with any valid arguments.
+
+    Table symbols with ORD > 127 are rejected by both quoters, so the
+    alphabet is restricted to ASCII.
+    """
+    _PyQuoter(safe=safe, protected=protected, unsafe=unsafe, qs=qs, requote=requote)
 
 
 @given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
