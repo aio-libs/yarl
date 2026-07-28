@@ -246,7 +246,10 @@ def encode_url(url_str: str) -> "URL":
                 raise ValueError(msg)
             else:
                 host = ""
-        host = _encode_host(host, validate_host=False)
+        # Same host validation as URL.build(host=...): reject NUL/C0 controls,
+        # unsafe IPv6 zone identifiers, and IDNA/NFKC mappings that inject
+        # delimiters into the host (see #1829).
+        host = _encode_host(host, validate_host=True)
         # Remove brackets as host encoder adds back brackets for IPv6 addresses
         cache["raw_host"] = host[1:-1] if "[" in host else host
         cache["explicit_port"] = port
@@ -1706,9 +1709,8 @@ def _encode_host(host: str, validate_host: bool) -> str:
     # IDNA/UTS-46 mapping silently deletes default-ignorable code points, which
     # would turn e.g. ``e<ZWSP>vil.com`` into ``evil.com``, a different host
     # than the string the caller supplied. Reject them on every path (this runs
-    # regardless of ``validate_host`` since the plain ``URL(str)`` constructor
-    # encodes with ``validate_host=False``) so the parsed host cannot diverge
-    # from the input, matching idna/httpx/urllib3.
+    # regardless of ``validate_host``) so the parsed host cannot diverge from
+    # the input, matching idna/httpx/urllib3.
     if invalid := _DEFAULT_IGNORABLE_RE.search(host):
         raise ValueError(
             f"Host {host!r} cannot contain {invalid.group()!r} "
