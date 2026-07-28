@@ -1,5 +1,6 @@
 Enabled host validation for the plain :class:`~yarl.URL` string constructor
-so it rejects the same invalid hosts as :meth:`~yarl.URL.build` (NUL and other
-C0 controls, unsafe IPv6 zone identifiers, and IDNA/NFKC mappings that inject
-delimiters into the host). Previously these values were accepted by
-``URL(str)`` and could produce non-reparsable serializations.
+so it rejects the same invalid hosts as :meth:`~yarl.URL.build`, including
+NUL and other control characters, unsafe IPv6 zone identifiers, and hosts
+that expand to URL delimiters under IDNA normalization. Previously these
+values were accepted by ``URL(str)`` and could produce strings that yarl
+itself could not parse again.
