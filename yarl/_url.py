@@ -902,6 +902,9 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
+        if not raw:
+            # Empty host (e.g. "//user@") — no host/port subcomponent (#1821).
+            return None
         if raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.

@@ -79,7 +79,13 @@ def split_url(url: str) -> SplitURLType:
             # host subcomponent (e.g. 'http://[:localhost[]].google:80'),
             # which would otherwise resolve to an unintended host.
             hostinfo = netloc.rpartition("@")[2]
-            if hostinfo[0] != "[" or hostinfo.count("[") > 1 or hostinfo.count("]") > 1:
+            # Empty hostinfo after "@" (e.g. "http://[::1]@") must not IndexError (#1822).
+            if (
+                not hostinfo
+                or hostinfo[0] != "["
+                or hostinfo.count("[") > 1
+                or hostinfo.count("]") > 1
+            ):
                 raise ValueError("Invalid IPv6 URL")
             bracketed_host, _, after_bracket = hostinfo[1:].partition("]")
             # Per RFC 3986 §3.2.2, after the closing ']' of an IP-literal
