@@ -79,7 +79,6 @@ def split_url(url: str) -> SplitURLType:
             # host subcomponent (e.g. 'http://[:localhost[]].google:80'),
             # which would otherwise resolve to an unintended host.
             hostinfo = netloc.rpartition("@")[2]
-            # Empty hostinfo after "@" (e.g. "http://[::1]@") must not IndexError (#1822).
             if (
                 not hostinfo
                 or hostinfo[0] != "["
