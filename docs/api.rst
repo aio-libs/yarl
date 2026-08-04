@@ -608,6 +608,13 @@ section generates a new :class:`URL` instance.
       Only one of ``query`` or ``query_string`` should be passed then ValueError
       will be raised.
 
+   .. note::
+
+      Unless ``encoded=True`` is passed, the host subcomponent of ``authority``
+      is validated as a :rfc:`3986` *reg-name*, the same way ``host`` is, and a
+      :exc:`ValueError` is raised when it holds a character that would change
+      how the serialized URL parses.
+
 .. method:: URL.with_scheme(scheme)
 
    Return a new URL with *scheme* replaced:
