@@ -229,6 +229,21 @@ class TestPort:
         with pytest.raises(ValueError):
             URL("//h:-80/path")
 
+    @pytest.mark.parametrize(
+        "port",
+        [
+            "+80",  # leading sign
+            " 80",  # leading whitespace
+            "80 ",  # trailing whitespace
+            "8_0",  # underscore digit separator
+            "８０",  # fullwidth digits
+            "٨٠",  # arabic-indic digits
+        ],
+    )
+    def test_non_ascii_digit_port(self, port: str) -> None:
+        with pytest.raises(ValueError):
+            URL(f"//h:{port}/path")
+
 
 class TestUserInfo:
     def test_canonical(self) -> None:

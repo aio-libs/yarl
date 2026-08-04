@@ -1,0 +1,5 @@
+Rejected URLs whose port subcomponent is not made up solely of ASCII
+digits (e.g. ``//host:+80``, ``//host:8_0`` or a port written with
+non-ASCII decimal digits), which :func:`int` previously accepted while
+RFC 3986 section 3.2.3 defines the port as ``*DIGIT``
+-- by :user:`Samin061`.
