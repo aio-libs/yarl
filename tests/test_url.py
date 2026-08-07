@@ -472,6 +472,11 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
     assert url.port == 8080
 
 
+def test_bracketed_host_followed_by_empty_host_is_invalid() -> None:
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL("http://[::1]@")
+
+
 def test_ipv4_zone() -> None:
     # I'm unsure if it is correct.
     url = URL("http://1.2.3.4%тест%42:123")
@@ -2045,6 +2050,12 @@ def test_no_scheme2() -> None:
     assert url.raw_host is None
     assert url.raw_path == "example.com/a/b"
     assert str(url) == "example.com/a/b"
+
+
+def test_host_port_subcomponent_with_empty_host() -> None:
+    url = URL("//user@")
+    assert url.raw_host == ""
+    assert url.host_port_subcomponent is None
 
 
 def test_from_non_allowed() -> None:
