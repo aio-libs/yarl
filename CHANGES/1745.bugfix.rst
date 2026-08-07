@@ -1,0 +1,6 @@
+Rejected URL authorities whose port is not made up solely of ASCII
+digits (e.g. ``http://h:80_80/``, ``http://h:+80/`` or a port written with
+non-ASCII decimal digits), which were previously accepted because ``int()``
+tolerates underscores, a leading sign, surrounding whitespace and non-ASCII
+decimal digits, letting a malformed authority resolve to an unexpected port per
+:rfc:`3986#section-3.2.3` -- by :user:`alhudz`.
