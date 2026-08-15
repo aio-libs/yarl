@@ -10,10 +10,7 @@ _site-packages-to-src-mapping =
   *\Lib\site-packages
 
 [report]
-# Global per-job floor only. It says nothing about whether the Cython
-# modules were measured; CI asserts that separately. With them measured
-# the macOS jobs bottom out just under 98.3, since they skip
-# platform-specific tests.
+# Per-job floor; the macOS jobs skip platform-specific tests and sit lowest.
 fail_under = 98
 # Without this, fail_under is compared against a total rounded to zero
 # decimals, so the floor above would really be 97.5.
