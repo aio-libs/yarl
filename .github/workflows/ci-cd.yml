@@ -464,6 +464,15 @@ jobs:
         -v
         --cov-report xml
         --junitxml=.test-results/pytest/test.xml
+    - name: Check that the Cython modules were measured
+      if: >-  # Same condition as the C-file generation step above
+        !matrix.no-extensions
+        && (
+          github.event_name != 'push'
+          || !contains(github.ref, 'refs/tags/')
+        )
+      run: >-  # Exits non-zero when no *.pyx made it into the report at all
+        python -Im coverage report --include='*.pyx' --fail-under=90
     - name: Produce markdown test summary from JUnit
       if: >-
         !cancelled()

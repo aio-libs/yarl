@@ -217,10 +217,10 @@ def patched_env(
                 # Cython-specific settings:
                 '-DCYTHON_TRACE=1',
                 '-DCYTHON_TRACE_NOGIL=1',
-                # Cython 3.1+ routes tracing through sys.monitoring on
-                # CPython 3.12+, but the Cython.Coverage plugin only
-                # receives events from the coverage.py "ctrace" core, so
-                # the legacy tracing hooks must be requested explicitly:
+                # Cython defaults this on for CPython 3.13+, routing
+                # tracing through sys.monitoring, which the
+                # Cython.Coverage plugin cannot consume. Ask for the
+                # legacy tracing hooks instead:
                 '-DCYTHON_USE_SYS_MONITORING=0',
             )
             if cython_line_tracing_requested

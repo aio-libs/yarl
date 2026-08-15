@@ -10,10 +10,14 @@ _site-packages-to-src-mapping =
   *\Lib\site-packages
 
 [report]
-# Per-job floor: with the Cython modules measured again, macOS jobs skip
-# platform-specific tests and bottom out around 98.4, below the previous
-# threshold that was calibrated while *.pyx files went unmeasured.
+# Global per-job floor only. It says nothing about whether the Cython
+# modules were measured; CI asserts that separately. With them measured
+# the macOS jobs bottom out just under 98.3, since they skip
+# platform-specific tests.
 fail_under = 98
+# Without this, fail_under is compared against a total rounded to zero
+# decimals, so the floor above would really be 97.5.
+precision = 2
 skip_covered = true
 skip_empty = true
 show_missing = true
