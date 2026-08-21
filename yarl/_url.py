@@ -1262,7 +1262,7 @@ class URL:
             path = PATH_QUOTER(path)
             if netloc:
                 path = normalize_path(path) if "." in path else path
-        if path and path[0] != "/":
+        if path and path[0] != "/" and (netloc or (self._path and self._path[0] == "/")):
             path = f"/{path}"
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
