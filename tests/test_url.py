@@ -30,3 +30,62 @@ def test_inheritance() -> None:
         "<class 'test_url.test_inheritance.<locals>.MyURL'> "
         "from URL is forbidden" == str(ctx.value)
     )
+
+
+def test_str_subclass() -> None:
+    class S(str):
+        pass
+
+    assert str(URL(S("http://example.com"))) == "http://example.com"
+
+
+def test_is() -> None:
+    u1 = URL("http://example.com")
+    u2 = URL(u1)
+    assert u1 is u2
+
+
+def test_bool() -> None:
+    assert URL("http://example.com")
+    assert not URL()
+    assert not URL("")
+
+
+def test_absolute_url_without_host() -> None:
+    with pytest.raises(ValueError):
+        URL("http://:8080/")
+
+
+def test_url_is_not_str() -> None:
+    url = URL("http://example.com")
+    assert not isinstance(url, str)  # type: ignore[unreachable]
+
+
+def test_str() -> None:
+    url = URL("http://example.com:8888/path/to?a=1&b=2")
+    assert str(url) == "http://example.com:8888/path/to?a=1&b=2"
+
+
+def test_repr() -> None:
+    url = URL("http://example.com")
+    assert "URL('http://example.com')" == repr(url)
+
+
+def test_origin() -> None:
+    url = URL("http://user:password@example.com:8888/path/to?a=1&b=2")
+    assert URL("http://example.com:8888") == url.origin()
+
+
+def test_origin_is_equal_to_self() -> None:
+    url = URL("http://example.com:8888")
+    assert url.origin() == url
+
+
+def test_origin_with_no_auth() -> None:
+    url = URL("http://example.com:8888/path/to?a=1&b=2")
+    assert URL("http://example.com:8888") == url.origin()
+
+
+def test_origin_nonascii() -> None:
+    url = URL("http://user:password@оун-упа.укр:8888/path/to?a=1&b=2")
+    assert str(url.origin()) == "http://xn----8sb1bdhvc.xn--j1amh:8888"
