@@ -1,0 +1,4 @@
+Fixed :meth:`URL.join() <yarl.URL.join>` decoding percent-encoded
+characters (such as ``%2F`` or ``%20``) in the base URL's path when
+merging in a relative reference, corrupting the resulting path -- by
+:user:`afonsojanu`.
