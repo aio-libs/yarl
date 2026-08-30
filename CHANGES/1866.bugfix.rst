@@ -1,0 +1,2 @@
+Preserved square brackets when serializing valid future-version IP literals.
+-- by :user:`lprnmns`

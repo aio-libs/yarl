@@ -236,6 +236,32 @@ def test_host_subcomponent_return_idna_encoded_host() -> None:
     assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
 
 
+@pytest.mark.parametrize(
+    ("value", "expected_host_subcomponent", "expected_host_port_subcomponent"),
+    [
+        ("http://[v1.-1]/", "[v1.-1]", "[v1.-1]"),
+        ("http://[v1.-1]:8080/", "[v1.-1]", "[v1.-1]:8080"),
+        ("http://v1.-1/", "v1.-1", "v1.-1"),
+    ],
+)
+def test_ipvfuture_brackets_are_preserved(
+    value: str, expected_host_subcomponent: str, expected_host_port_subcomponent: str
+) -> None:
+    url = URL(value)
+    assert str(url) == value
+    assert url.raw_host == "v1.-1"
+    assert url.host_subcomponent == expected_host_subcomponent
+    assert url.host_port_subcomponent == expected_host_port_subcomponent
+
+
+def test_build_authority_ipvfuture_brackets_are_preserved() -> None:
+    url = URL.build(scheme="http", authority="[v1.-1]:8080", path="/")
+    assert str(url) == "http://[v1.-1]:8080/"
+    assert url.raw_host == "v1.-1"
+    assert url.host_subcomponent == "[v1.-1]"
+    assert url.host_port_subcomponent == "[v1.-1]:8080"
+
+
 def test_invalid_idna_hyphen_encoding() -> None:
     url = URL("http://x-----xn1agdj.tld")
     assert url.host == "x-----xn1agdj.tld"

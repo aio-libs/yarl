@@ -227,12 +227,14 @@ def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: str | None
+    is_bracketed_host = False
     scheme, netloc, path, query, fragment = split_url(url_str)
     if not netloc:  # netloc
         host = ""
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
             # Complex netloc
+            is_bracketed_host = netloc.rpartition("@")[2].startswith("[")
             username, password, host, port = split_netloc(netloc)
         else:
             username = password = port = None
@@ -247,7 +249,16 @@ def encode_url(url_str: str) -> "URL":
             else:
                 host = ""
         host = _encode_host(host, validate_host=False)
-        # Remove brackets as host encoder adds back brackets for IPv6 addresses
+        if (
+            is_bracketed_host
+            and host.startswith("v")
+            and "." in host
+            and not host.startswith("[")
+        ):
+            # IPvFuture literals do not contain a colon, so _encode_host
+            # cannot infer that their brackets are required.
+            host = f"[{host}]"
+        # Remove brackets as host encoder adds back brackets for IP literals
         cache["raw_host"] = host[1:-1] if "[" in host else host
         cache["explicit_port"] = port
         if password is None and username is None:
@@ -522,8 +533,17 @@ class URL:
         self._scheme = scheme
         _host: str | None = None
         if authority:
+            is_bracketed_host = authority.rpartition("@")[2].startswith("[")
             user, password, _host, port = split_netloc(authority)
             _host = _encode_host(_host, validate_host=False) if _host else ""
+            if (
+                is_bracketed_host
+                and _host
+                and _host.startswith("v")
+                and "." in _host
+                and not _host.startswith("[")
+            ):
+                _host = f"[{_host}]"
         elif host:
             _host = _encode_host(host, validate_host=True)
         else:
@@ -874,7 +894,8 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        return f"[{raw}]" if ":" in raw else raw
+        is_bracketed = self._netloc.rpartition("@")[2].startswith("[")
+        return f"[{raw}]" if ":" in raw or is_bracketed else raw
 
     @cached_property
     def host_port_subcomponent(self) -> str | None:
@@ -909,10 +930,11 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
+        is_bracketed = self._netloc.rpartition("@")[2].startswith("[")
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
-            return f"[{raw}]" if ":" in raw else raw
-        return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
+            return f"[{raw}]" if ":" in raw or is_bracketed else raw
+        return f"[{raw}]:{port}" if ":" in raw or is_bracketed else f"{raw}:{port}"
 
     @cached_property
     def port(self) -> int | None:
