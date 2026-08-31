@@ -268,6 +268,21 @@ def test_decoded_ipvfuture_authority_preserves_brackets() -> None:
     assert url.human_repr() == "http://user:pass@[v1.-1]:8080/path"
 
 
+def test_decoded_ipvfuture_with_colon_preserves_brackets() -> None:
+    url = URL("http://user:pass@[v1.fe80:8080]:9090/path")
+    assert url.authority == "user:pass@[v1.fe80:8080]:9090"
+    assert url.human_repr() == "http://user:pass@[v1.fe80:8080]:9090/path"
+
+
+def test_userinfo_bracket_does_not_bracket_regular_host() -> None:
+    url = URL.build(
+        scheme="http", authority="user[foo]@example.com", path="/", encoded=True
+    )
+    assert url.host_subcomponent == "example.com"
+    assert url.authority == "user[foo]@example.com:80"
+    assert url.human_repr() == "http://user%5Bfoo%5D@example.com/"
+
+
 def test_invalid_idna_hyphen_encoding() -> None:
     url = URL("http://x-----xn1agdj.tld")
     assert url.host == "x-----xn1agdj.tld"

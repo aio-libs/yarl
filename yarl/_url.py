@@ -796,8 +796,8 @@ class URL:
         if (
             host
             and host_subcomponent
-            and ":" not in host
             and host_subcomponent.startswith("[")
+            and (":" not in host or (host[0].lower() == "v" and "." in host))
         ):
             host = f"[{host}]"
         return make_netloc(self.user, self.password, host, self.port)
@@ -903,7 +903,8 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        is_ip_literal = ":" in raw or "[" in self._netloc
+        hostinfo = self._netloc.rpartition("@")[2]
+        is_ip_literal = ":" in raw or hostinfo.startswith("[")
         return f"[{raw}]" if is_ip_literal else raw
 
     @cached_property
