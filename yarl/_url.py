@@ -894,11 +894,7 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        is_ip_literal = ":" in raw or (
-            raw[:1] == "v"
-            and "." in raw
-            and self._netloc.rpartition("@")[2].startswith("[")
-        )
+        is_ip_literal = ":" in raw or "[" in self._netloc
         return f"[{raw}]" if is_ip_literal else raw
 
     @cached_property
@@ -925,24 +921,19 @@ class URL:
         - `http://[::1]` -> `[::1]`
 
         """
-        if (raw := self.raw_host) is None:
+        if (host := self.host_subcomponent) is None:
             return None
-        if raw[-1] == ".":
+        if host[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
             # See https://github.com/aio-libs/aiohttp/issues/3636.
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
-            raw = raw.rstrip(".")
-        is_ip_literal = ":" in raw or (
-            raw[:1] == "v"
-            and "." in raw
-            and self._netloc.rpartition("@")[2].startswith("[")
-        )
+            host = host.rstrip(".")
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
-            return f"[{raw}]" if is_ip_literal else raw
-        return f"[{raw}]:{port}" if is_ip_literal else f"{raw}:{port}"
+            return host
+        return f"{host}:{port}"
 
     @cached_property
     def port(self) -> int | None:
