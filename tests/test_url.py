@@ -262,6 +262,12 @@ def test_build_authority_ipvfuture_brackets_are_preserved() -> None:
     assert url.host_port_subcomponent == "[v1.-1]:8080"
 
 
+def test_decoded_ipvfuture_authority_preserves_brackets() -> None:
+    url = URL("http://user:pass@[v1.-1]:8080/path")
+    assert url.authority == "user:pass@[v1.-1]:8080"
+    assert url.human_repr() == "http://user:pass@[v1.-1]:8080/path"
+
+
 def test_invalid_idna_hyphen_encoding() -> None:
     url = URL("http://x-----xn1agdj.tld")
     assert url.host == "x-----xn1agdj.tld"

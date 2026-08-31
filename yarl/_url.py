@@ -791,7 +791,16 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return make_netloc(self.user, self.password, self.host, self.port)
+        host = self.host
+        host_subcomponent = self.host_subcomponent
+        if (
+            host
+            and host_subcomponent
+            and ":" not in host
+            and host_subcomponent.startswith("[")
+        ):
+            host = f"[{host}]"
+        return make_netloc(self.user, self.password, host, self.port)
 
     @cached_property
     def raw_user(self) -> str | None:
@@ -1583,7 +1592,10 @@ class URL:
         """Return decoded human readable string for URL representation."""
         user = human_quote(self.user, "#/:?@[]\\")
         password = human_quote(self.password, "#/:?@[]\\")
-        if (host := self.host) and ":" in host:
+        host_subcomponent = self.host_subcomponent
+        if (host := self.host) and (
+            ":" in host or (host_subcomponent and host_subcomponent.startswith("["))
+        ):
             host = f"[{host}]"
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
