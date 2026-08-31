@@ -894,8 +894,12 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        is_bracketed = self._netloc.rpartition("@")[2].startswith("[")
-        return f"[{raw}]" if ":" in raw or is_bracketed else raw
+        is_ip_literal = ":" in raw or (
+            raw[:1] == "v"
+            and "." in raw
+            and self._netloc.rpartition("@")[2].startswith("[")
+        )
+        return f"[{raw}]" if is_ip_literal else raw
 
     @cached_property
     def host_port_subcomponent(self) -> str | None:
@@ -930,11 +934,15 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
-        is_bracketed = self._netloc.rpartition("@")[2].startswith("[")
+        is_ip_literal = ":" in raw or (
+            raw[:1] == "v"
+            and "." in raw
+            and self._netloc.rpartition("@")[2].startswith("[")
+        )
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
-            return f"[{raw}]" if ":" in raw or is_bracketed else raw
-        return f"[{raw}]:{port}" if ":" in raw or is_bracketed else f"{raw}:{port}"
+            return f"[{raw}]" if is_ip_literal else raw
+        return f"[{raw}]:{port}" if is_ip_literal else f"{raw}:{port}"
 
     @cached_property
     def port(self) -> int | None:
