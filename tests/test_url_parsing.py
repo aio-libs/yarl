@@ -184,6 +184,20 @@ class TestHost:
         assert u.query_string == ""
         assert u.fragment == ""
 
+    @pytest.mark.parametrize(
+        "value",
+        (
+            "http://[::1]@",
+            "//[]@",
+            "//a[b]c@",
+        ),
+    )
+    def test_bracketed_authority_ending_in_at_rejected(self, value: str) -> None:
+        # Regression: malformed authorities ending in "@" used to leak
+        # IndexError from `hostinfo[0]` on an empty `hostinfo` string.
+        with pytest.raises(ValueError):
+            URL(value)
+
 
 class TestPort:
     def test_canonical(self) -> None:
