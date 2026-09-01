@@ -1,0 +1,3 @@
+Restored coverage collection for Cython modules on Linux and macOS, which
+had reported nothing since line tracing became opt-in
+-- by :user:`rodrigobnogueira`.

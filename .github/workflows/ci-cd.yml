@@ -430,6 +430,7 @@ jobs:
         --only-binary=:all:
         '${{ env.PROJECT_NAME }}'
     - name: Produce the C-files for the Coverage.py Cython plugin
+      id: translate-cython  # consumed by the measurement check below
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
         && (
@@ -489,6 +490,18 @@ jobs:
         pytest --no-cov -vvvvv --lf -rA
         && exit 1
       shell: bash
+    # `!cancelled()` keeps a coverage drop from muting this check, since
+    # `Run unittests` enforces `fail_under` and would fail first. Windows
+    # never gets CYTHON_TRACE: the defines travel through CFLAGS, and MSVC
+    # ignores those.
+    - name: Check that the Cython modules were measured
+      if: >-
+        !cancelled()
+        && steps.translate-cython.outcome == 'success'
+        && runner.os != 'Windows'
+      run: >-  # Non-zero when the module reached the report with no data
+        python -Im coverage report --no-skip-covered
+        --include='yarl/_quoting_c.pyx' --fail-under=0
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()

@@ -10,7 +10,11 @@ _site-packages-to-src-mapping =
   *\Lib\site-packages
 
 [report]
-fail_under = 98.95
+# Per-job floor; the macOS jobs skip platform-specific tests and sit lowest.
+fail_under = 98
+# Without this, fail_under is compared against a total rounded to zero
+# decimals, so the floor above would really be 97.5.
+precision = 2
 skip_covered = true
 skip_empty = true
 show_missing = true
