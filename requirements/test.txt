@@ -11,4 +11,4 @@ hypothesis>=6.165.3
 #
 # After implementing PEP 780 '"free-threading" not in sys_abi_features' could
 # be used instead of extraction of test-cibuildwheel.txt file.
-pydantic>=2.13.4; sys_platform == 'linux'
+pydantic>=2.13.5; sys_platform == 'linux'
