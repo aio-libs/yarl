@@ -246,7 +246,12 @@ def encode_url(url_str: str) -> "URL":
                 raise ValueError(msg)
             else:
                 host = ""
-        host = _encode_host(host, validate_host=False)
+        # The parser historically encoded without validation, which let
+        # control characters (NUL/C0) and IDNA-normalized delimiters into
+        # the host, producing a ``str(url)`` that yarl cannot re-parse
+        # (#1829). Validate like the builder APIs do, but keep accepting an
+        # empty IPv6 zone identifier, which parsing has always allowed (#998).
+        host = _encode_host(host, validate_host=True, reject_empty_zone=False)
         # Remove brackets as host encoder adds back brackets for IPv6 addresses
         cache["raw_host"] = host[1:-1] if "[" in host else host
         cache["explicit_port"] = port
@@ -1643,7 +1648,9 @@ def _idna_encode(host: str) -> str:
 
 
 @lru_cache(_DEFAULT_ENCODE_SIZE)
-def _encode_host(host: str, validate_host: bool) -> str:
+def _encode_host(
+    host: str, validate_host: bool, *, reject_empty_zone: bool = True
+) -> str:
     """Encode host part of URL."""
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
@@ -1676,7 +1683,13 @@ def _encode_host(host: str, validate_host: bool) -> str:
         except ValueError:
             pass
         else:
-            if sep and validate_host and (not zone or _ZONE_ID_UNSAFE_RE.search(zone)):
+            if (
+                sep
+                and validate_host
+                and (
+                    (reject_empty_zone and not zone) or _ZONE_ID_UNSAFE_RE.search(zone)
+                )
+            ):
                 raise ValueError("Invalid characters in zone identifier")
             # These checks should not happen in the
             # LRU to keep the cache size small
