@@ -1,0 +1,13 @@
+Enabled host validation for the plain :class:`~yarl.URL` string
+constructor so it rejects the same invalid hosts as
+:meth:`~yarl.URL.build`, including NUL and other control characters, unsafe
+IPv6 zone identifiers, and hosts that expand to URL delimiters under
+IDNA normalization. Previously these values were accepted by ``URL(str)``
+and could produce strings that yarl itself could not parse again.
+
+URL construction is now roughly 20% slower on the
+``test_empty_path_safe_uncached`` CodSpeed micro-benchmark because
+``_encode_host(..., validate_host=True)`` runs additional IDNA / control-
+character / zone-id checks on every parse. The same path runs for
+``URL.build(host=...)`` already, so this just aligns the two entry
+points; the cost is intentional and matches the security benefit.
