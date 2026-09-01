@@ -1,0 +1,5 @@
+Validated the host subcomponent of ``authority`` in :meth:`yarl.URL.build`
+as an :rfc:`3986` ``reg-name``, the same way the ``host`` argument already
+was. A delimiter such as ``/``, ``?``, ``#`` or CRLF previously survived
+into the ``netloc``, so parsing ``str(url)`` back gave a different host than
+:attr:`yarl.URL.host` reported -- by :user:`Samin061`.

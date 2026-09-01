@@ -523,7 +523,11 @@ class URL:
         _host: str | None = None
         if authority:
             user, password, _host, port = split_netloc(authority)
-            _host = _encode_host(_host, validate_host=False) if _host else ""
+            # The authority is user input here, so its host subcomponent gets
+            # the same reg-name validation as the ``host=`` argument. Without
+            # it a delimiter (``/``, ``?``, ``#``, CR, LF, ...) survives into
+            # the netloc and str(url) reparses to a different host.
+            _host = _encode_host(_host, validate_host=True) if _host else ""
         elif host:
             _host = _encode_host(host, validate_host=True)
         else:
