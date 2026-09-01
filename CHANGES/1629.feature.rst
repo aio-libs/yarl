@@ -1,0 +1,2 @@
+Mask the password component in ``yarl.URL.__repr__`` to prevent accidental credential exposure in logs and debug
+output -- by :user:`mbaas038` and :user:`jhbuhrman`.
