@@ -2,7 +2,7 @@
 covdefaults
 idna==3.18
 multidict==6.7.1
-propcache==0.4.1
+propcache==0.5.2
 pytest==9.1.1
 pytest-cov>=7.1.0
 pytest-xdist
