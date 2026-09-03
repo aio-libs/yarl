@@ -224,6 +224,8 @@ def test_host_subcomponent(host: str) -> None:
         ("http://example.com:80", "example.com"),
         ("http://example.com:8080", "example.com:8080"),
         ("http://[::1]:8080", "[::1]:8080"),
+        ("http://[fe80::1%25eth0]", "[fe80::1]"),
+        ("http://[fe80::1%eth0]:8080", "[fe80::1]:8080"),
     ],
 )
 def test_host_port_subcomponent(input: str, result: str) -> None:
@@ -497,7 +499,7 @@ def test_ipv6_zone_rfc6874() -> None:
     assert url.raw_host == "fe80::1%251"
     assert url.host == "fe80::1%1"
     assert url.host_subcomponent == "[fe80::1%251]"
-    assert url.host_port_subcomponent == "[fe80::1%251]"
+    assert url.host_port_subcomponent == "[fe80::1]"
     assert url.authority == "fe80::1%1:80"
     assert url.human_repr() == "http://[fe80::1%1]/"
     assert str(url) == "http://[fe80::1%251]/"
@@ -509,6 +511,7 @@ def test_ipv6_zone_rfc6874_named_zone() -> None:
     assert url.raw_host == "fe80::1%25eth0"
     assert url.host == "fe80::1%eth0"
     assert url.host_subcomponent == "[fe80::1%25eth0]"
+    assert url.host_port_subcomponent == "[fe80::1]"
     assert url.authority == "fe80::1%eth0:80"
     assert url.human_repr() == "http://[fe80::1%eth0]/"
     assert str(url) == "http://[fe80::1%25eth0]/"
@@ -520,7 +523,7 @@ def test_ipv6_zone_rfc6874_with_port() -> None:
     assert url.raw_host == "fe80::1%251"
     assert url.host == "fe80::1%1"
     assert url.port == 8080
-    assert url.host_port_subcomponent == "[fe80::1%251]:8080"
+    assert url.host_port_subcomponent == "[fe80::1]:8080"
     assert url.authority == "fe80::1%1:8080"
     assert str(url) == "http://[fe80::1%251]:8080/"
 
@@ -549,7 +552,7 @@ def test_ipv6_zone_bare_percent_parse() -> None:
     assert url.raw_host == "fe80::1%eth0"
     assert url.host == "fe80::1%eth0"
     assert url.host_subcomponent == "[fe80::1%eth0]"
-    assert url.host_port_subcomponent == "[fe80::1%eth0]:8080"
+    assert url.host_port_subcomponent == "[fe80::1]:8080"
     assert url.authority == "fe80::1%eth0:8080"
     assert url.human_repr() == "http://[fe80::1%eth0]:8080/"
     assert str(url) == "http://[fe80::1%eth0]:8080/"
