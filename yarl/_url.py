@@ -227,12 +227,14 @@ def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: str | None
+    is_bracketed_host = False
     scheme, netloc, path, query, fragment = split_url(url_str)
     if not netloc:  # netloc
         host = ""
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
             # Complex netloc
+            is_bracketed_host = netloc.rpartition("@")[2].startswith("[")
             username, password, host, port = split_netloc(netloc)
         else:
             username = password = port = None
@@ -247,7 +249,16 @@ def encode_url(url_str: str) -> "URL":
             else:
                 host = ""
         host = _encode_host(host, validate_host=False)
-        # Remove brackets as host encoder adds back brackets for IPv6 addresses
+        if (
+            is_bracketed_host
+            and host.startswith("v")
+            and "." in host
+            and not host.startswith("[")
+        ):
+            # IPvFuture literals do not contain a colon, so _encode_host
+            # cannot infer that their brackets are required.
+            host = f"[{host}]"
+        # Remove brackets as host encoder adds back brackets for IP literals
         cache["raw_host"] = host[1:-1] if "[" in host else host
         cache["explicit_port"] = port
         if password is None and username is None:
@@ -522,8 +533,17 @@ class URL:
         self._scheme = scheme
         _host: str | None = None
         if authority:
+            is_bracketed_host = authority.rpartition("@")[2].startswith("[")
             user, password, _host, port = split_netloc(authority)
             _host = _encode_host(_host, validate_host=False) if _host else ""
+            if (
+                is_bracketed_host
+                and _host
+                and _host.startswith("v")
+                and "." in _host
+                and not _host.startswith("[")
+            ):
+                _host = f"[{_host}]"
         elif host:
             _host = _encode_host(host, validate_host=True)
         else:
@@ -771,7 +791,16 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return make_netloc(self.user, self.password, self.host, self.port)
+        host = self.host
+        host_subcomponent = self.host_subcomponent
+        if (
+            host
+            and host_subcomponent
+            and host_subcomponent.startswith("[")
+            and (":" not in host or (host[0].lower() == "v" and "." in host))
+        ):
+            host = f"[{host}]"
+        return make_netloc(self.user, self.password, host, self.port)
 
     @cached_property
     def raw_user(self) -> str | None:
@@ -874,7 +903,9 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        return f"[{raw}]" if ":" in raw else raw
+        hostinfo = self._netloc.rpartition("@")[2]
+        is_ip_literal = ":" in raw or hostinfo.startswith("[")
+        return f"[{raw}]" if is_ip_literal else raw
 
     @cached_property
     def host_port_subcomponent(self) -> str | None:
@@ -900,19 +931,19 @@ class URL:
         - `http://[::1]` -> `[::1]`
 
         """
-        if (raw := self.raw_host) is None:
+        if (host := self.host_subcomponent) is None:
             return None
-        if raw[-1] == ".":
+        if host[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
             # See https://github.com/aio-libs/aiohttp/issues/3636.
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
-            raw = raw.rstrip(".")
+            host = host.rstrip(".")
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
-            return f"[{raw}]" if ":" in raw else raw
-        return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
+            return host
+        return f"{host}:{port}"
 
     @cached_property
     def port(self) -> int | None:
@@ -1562,7 +1593,10 @@ class URL:
         """Return decoded human readable string for URL representation."""
         user = human_quote(self.user, "#/:?@[]\\")
         password = human_quote(self.password, "#/:?@[]\\")
-        if (host := self.host) and ":" in host:
+        host_subcomponent = self.host_subcomponent
+        if (host := self.host) and (
+            ":" in host or (host_subcomponent and host_subcomponent.startswith("["))
+        ):
             host = f"[{host}]"
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
