@@ -7,7 +7,7 @@ from yarl import URL
 if TYPE_CHECKING:
     import pydantic
 else:
-    pydantic = pytest.importorskip("pydantic")
+    pydantic = pytest.importorskip("pydantic", minversion="2.0")
 
 
 class TstModel(pydantic.BaseModel):
