@@ -8,8 +8,8 @@ Deprecations
 GPG
 IPv
 PRs
-Pydantic
 PYX
+Pydantic
 Towncrier
 Twitter
 UTF
