@@ -86,7 +86,7 @@ jobs:
       upstream-repository-id: ${{ env.UPSTREAM_REPOSITORY_ID }}
     steps:
     - name: Switch to using Python ${{ env.PYTHON_LATEST }} by default
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Check out src from Git
@@ -765,7 +765,7 @@ jobs:
         skip-existing: true
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.4.0
+      uses: sigstore/gh-action-sigstore-python@v3.5.0
       with:
         inputs: >-
           ./dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
