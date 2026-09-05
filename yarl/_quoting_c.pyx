@@ -82,6 +82,10 @@ cdef inline void set_bit(uint8_t array[], uint64_t ch) noexcept:
     array[ch >> 3] |= (1 << (ch & 7))
 
 
+cdef inline void unset_bit(uint8_t array[], uint64_t ch) noexcept:
+    array[ch >> 3] &= ~(1 << (ch & 7))
+
+
 memset(ALLOWED_TABLE, 0, sizeof(ALLOWED_TABLE))
 memset(ALLOWED_NOTQS_TABLE, 0, sizeof(ALLOWED_NOTQS_TABLE))
 
@@ -197,6 +201,7 @@ cdef class _Quoter:
 
     cdef uint8_t _safe_table[16]
     cdef uint8_t _protected_table[16]
+    cdef bint _safe_percent
 
     def __init__(
             self, *, str safe='', str protected='', bint qs=False, bint requote=True,
@@ -226,6 +231,12 @@ cdef class _Quoter:
             set_bit(self._safe_table, ch)
             set_bit(self._protected_table, ch)
 
+        self._safe_percent = (
+            self._requote and bit_at(self._safe_table, c'%')
+        )
+        if self._safe_percent:
+            unset_bit(self._safe_table, c'%')
+
     def __call__(self, val):
         if val is None:
             return None
@@ -247,8 +258,9 @@ cdef class _Quoter:
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
 
-        # If everything in the string is in the safe
-        # table and all ASCII, we can skip quoting
+        # If everything in the string is in the safe table and all ASCII,
+        # we can skip quoting. Percent is removed from the table when it is
+        # safe and requoting is enabled because it may introduce an escape.
         while idx:
             idx -= 1
             ch = PyUnicode_READ(kind, data, idx)
@@ -309,7 +321,10 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                        if bit_at(self._safe_table, ch):
+                        if (
+                            bit_at(self._safe_table, ch)
+                            or (ch == c'%' and self._safe_percent)
+                        ):
                             if _write_char(writer, ch, True) < 0:
                                 raise
                             continue

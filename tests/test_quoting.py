@@ -200,6 +200,23 @@ def test_default_quoting_percent(quoter: type[_Quoter]) -> None:
     assert "%2525" == result
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("%41", "A"),
+        ("%4a", "J"),
+        ("%", "%25"),
+        ("%zz", "%25zz"),
+        ("%25", "%"),
+        ("%2f%2F", "%2F%2F"),
+    ],
+)
+def test_requoting_percent_when_percent_is_safe(
+    value: str, expected: str, quoter: type[_Quoter]
+) -> None:
+    assert quoter(safe="%", requote=True)(value) == expected
+
+
 def test_default_quoting_partial(quoter: type[_Quoter]) -> None:
     partial_quote = "ab[]cd"
     expected = "ab%5B%5Dcd"
