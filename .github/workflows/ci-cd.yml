@@ -491,9 +491,10 @@ jobs:
         && exit 1
       shell: bash
     # `!cancelled()` keeps a coverage drop from muting this check, since
-    # `Run unittests` enforces `fail_under` and would fail first. Windows
-    # never gets CYTHON_TRACE: the defines travel through CFLAGS, and MSVC
-    # ignores those.
+    # `Run unittests` enforces `fail_under` and would fail first.
+    # Windows gets no CYTHON_TRACE: the defines ride on CFLAGS, and
+    # setuptools forwards those only to the Unix compiler -- MSVCCompiler
+    # never reads them. Not a platform limitation, just unwired.
     - name: Check that the Cython modules were measured
       if: >-
         !cancelled()
