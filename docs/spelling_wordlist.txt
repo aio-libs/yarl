@@ -24,6 +24,7 @@ booleans
 bools
 changelog
 changelogs
+cibuildwheel
 codspeed
 config
 de
@@ -50,6 +51,7 @@ nightlies
 pre
 prebuilt
 pydantic
+pyproject
 pytest
 quoter
 rc
@@ -70,6 +72,7 @@ subcomponent
 subdirectory
 subtree
 svetlov
+toml
 toolchain
 tox
 uncompiled
