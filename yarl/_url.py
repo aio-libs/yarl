@@ -884,6 +884,9 @@ class URL:
 
         This value is suitable for use in the Host header of an HTTP request.
 
+        IPv6 zone identifiers are omitted because they have local significance
+        only and must not be sent in an outgoing HTTP Host header.
+
         None for relative URLs.
 
         https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
@@ -902,6 +905,10 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
+        if ":" in raw:
+            # RFC 6874 zone identifiers are local to the sending host and
+            # must not be included in outgoing protocol elements.
+            raw = raw.partition("%")[0]
         if raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
