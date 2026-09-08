@@ -902,7 +902,7 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        if raw[-1] == ".":
+        if raw[-1:] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
             # See https://github.com/aio-libs/aiohttp/issues/3636.
