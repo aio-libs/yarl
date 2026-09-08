@@ -76,5 +76,6 @@ uncompiled
 unencoded
 unobvious
 unquoter
+untrusted
 v1
 yarl
