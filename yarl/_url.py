@@ -902,6 +902,10 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
+        # Empty host (e.g. URL("//user@")) is not a usable Host header value.
+        # Return None rather than IndexError from raw[-1].
+        if not raw:
+            return None
         if raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
