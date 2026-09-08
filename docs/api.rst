@@ -218,6 +218,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'xn--n1agdj.xn--d1acufc'
       >>> URL('http://[::1]').host_subcomponent
       '[::1]'
+      >>> URL('http://[v1.-1]').host_subcomponent
+      '[v1.-1]'
       >>> URL('http://[fe80::1%25eth0]/').host_subcomponent
       '[fe80::1%25eth0]'
 
@@ -239,6 +241,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'xn--n1agdj.xn--d1acufc:81'
       >>> URL('https://[::1]:8443').host_port_subcomponent
       '[::1]:8443'
+      >>> URL('http://[v1.-1]:8080').host_port_subcomponent
+      '[v1.-1]:8080'
       >>> URL('http://example.com./').host_port_subcomponent
       'example.com'
       >>> URL('http://[::1]').host_port_subcomponent
