@@ -570,17 +570,15 @@ def test_ipv6_zone_bare_percent_hex_ambiguous() -> None:
 
 
 def test_ipv6_zone_empty_zone_parse() -> None:
-    """The string-parse path accepts empty zone identifiers.
+    """Empty zone identifiers are rejected on the string-parse path.
 
-    ``URL.build(host=...)`` rejects them (RFC 9844 §6.3), but parsing
-    uses ``validate_host=False``; this documents the asymmetry (#998).
+    Matches ``URL.build(host=...)`` (RFC 9844 §6.3). Previously the
+    parser used ``validate_host=False`` and accepted these (#998 / #1829).
     """
-    url = URL("http://[fe80::1%25]/")
-    assert url.raw_host == "fe80::1%25"
-    assert url.host == "fe80::1%"
-    url = URL("http://[fe80::1%]/")
-    assert url.raw_host == "fe80::1%"
-    assert url.host == "fe80::1%"
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL("http://[fe80::1%25]/")
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL("http://[fe80::1%]/")
 
 
 def test_ipv6_zone_rfc6874_multiple_percent25() -> None:
@@ -2759,6 +2757,74 @@ def test_url_with_fullwidth_percent_rejected(percent_char: str) -> None:
         ValueError, match="contains invalid characters under NFKC normalization"
     ):
         URL(f"http://evil.com{percent_char}2e.internal/")
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "a\x00b",
+        "a\x01b",
+        "a\x1fb",
+        "a\x7fb",
+        "a b",
+    ],
+    ids=["nul", "soh", "us", "del", "space"],
+)
+def test_url_str_rejects_invalid_reg_name_host(host: str) -> None:
+    """``URL(str)`` validates hosts the same way as ``URL.build(host=...)``.
+
+    Before #1829 the parser used ``validate_host=False``, so NUL/C0 controls
+    and other non-reg-name characters survived into ``.host`` /
+    ``host_port_subcomponent`` even though the builder rejected them.
+
+    Note: ``/``, ``?``, and ``#`` never reach host validation on the string
+    path because ``split_url`` treats them as path/query/fragment separators.
+    """
+    with pytest.raises(
+        ValueError, match=r"Host '[^']+' cannot contain '[^']+' \(at position \d+\)"
+    ):
+        URL(f"http://{host}/")
+
+
+@pytest.mark.parametrize(
+    "zone",
+    ("\x00evil", "\x01", "\x7f"),
+    ids=("null-byte", "soh", "del"),
+)
+def test_url_str_rejects_ipv6_zone_control_chars(zone: str) -> None:
+    """IPv6 zone identifiers with CTL characters are rejected when parsing.
+
+    CR/LF/TAB never reach this check: the parser strips them earlier
+    (WHATWG C0 removal), so they are covered separately.
+    """
+    with pytest.raises(
+        ValueError, match="Invalid characters in zone identifier"
+    ) as ctx:
+        URL(f"http://[fe80::1%25{zone}]/")
+    error = str(ctx.value)
+    assert zone not in error
+    assert repr(zone) not in error
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "［",  # U+FF3B FULLWIDTH LEFT SQUARE BRACKET -> '['
+        "］",  # U+FF3D FULLWIDTH RIGHT SQUARE BRACKET -> ']'
+        "＼",  # U+FF3C FULLWIDTH REVERSE SOLIDUS -> '\\'
+    ],
+    ids=["fw-lbracket", "fw-rbracket", "fw-backslash"],
+)
+def test_url_str_rejects_idna_delimiter_injection(host: str) -> None:
+    """IDNA/NFKC must not inject delimiters into a parsed host (#1829).
+
+    Without validation, ``str(URL(...))`` could become non-reparsable
+    (e.g. fullwidth brackets encode to ``[`` / ``]``). Fullwidth solidus
+    and similar ``/?#`` mappings are already rejected earlier by
+    ``_check_netloc``; these cases specifically need ``validate_host``.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(f"//{host}")
 
 
 @pytest.mark.parametrize(
