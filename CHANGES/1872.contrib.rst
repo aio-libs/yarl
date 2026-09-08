@@ -1,0 +1,2 @@
+Skipped the Pydantic integration tests when only Pydantic 1 is installed
+-- by :user:`ryux1`.
