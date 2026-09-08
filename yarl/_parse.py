@@ -159,10 +159,13 @@ def split_netloc(
     if not port_str:
         return username or None, password, hostname or None, None
 
-    try:
-        port = int(port_str)
-    except ValueError:
+    # RFC 3986 section 3.2.3 defines the port as *DIGIT (ASCII 0-9 only).
+    # int() additionally accepts surrounding whitespace, a leading sign,
+    # underscore digit separators and non-ASCII decimal digits, any of which
+    # would let a malformed authority resolve to an unexpected port.
+    if not (port_str.isascii() and port_str.isdigit()):
         raise ValueError("Invalid URL: port can't be converted to integer")
+    port = int(port_str)
     if not (0 <= port <= 65535):
         raise ValueError("Port out of range 0-65535")
     return username or None, password, hostname or None, port

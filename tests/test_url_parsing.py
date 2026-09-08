@@ -229,6 +229,13 @@ class TestPort:
         with pytest.raises(ValueError):
             URL("//h:-80/path")
 
+    @pytest.mark.parametrize("port", ["80_80", "+80", " 80", "80 ", "８０"])
+    def test_non_digit_port(self, port: str) -> None:
+        # int() accepts underscores, a sign, whitespace and non-ASCII digits,
+        # none of which are valid per RFC 3986 port = *DIGIT.
+        with pytest.raises(ValueError):
+            URL(f"//h:{port}/path")
+
 
 class TestUserInfo:
     def test_canonical(self) -> None:
