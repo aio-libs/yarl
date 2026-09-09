@@ -314,7 +314,6 @@ jobs:
           || (matrix.tag == 'musllinux') && '*-manylinux_*'
         || '*-musllinux_*'
         }}
-        pp*
         EOF
 
   metadata-validation:
@@ -668,7 +667,7 @@ jobs:
           (matrix.tag == 'musllinux')
           && '*-manylinux_*'
           || '*-musllinux_*'
-        }} pp*
+        }}
 
   deploy:
     name: Deploy
