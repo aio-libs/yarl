@@ -1717,10 +1717,14 @@ def _encode_host(host: str, validate_host: bool) -> str:
     encoded = _idna_encode(host)
     # IDNA uses NFKC equivalence, so normalization can expand a non-ascii
     # character into an ASCII delimiter (e.g. the fullwidth solidus U+FF0F
-    # becomes '/'). The ascii branch above rejects such delimiters directly;
-    # apply the same check to the IDNA output so the builder APIs agree with
-    # the parser's _check_netloc.
-    if validate_host and (invalid := NOT_REG_NAME.search(encoded)):
+    # becomes '/'). split_url's _check_netloc screens '/?#@:%' but not '[',
+    # ']' or '\\', so a host like ``exa［mple`` (fullwidth '[') slips
+    # through the parser and _idna_encode turns it into ``exa[mple``, a netloc
+    # that str(url) then renders but yarl itself rejects on re-parse. Run the
+    # check on every path (like the default-ignorable check above, which also
+    # ignores validate_host) so the parsed host cannot diverge from what the
+    # serialized URL means.
+    if invalid := NOT_REG_NAME.search(encoded):
         raise ValueError(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"after IDNA normalization to {encoded!r}"

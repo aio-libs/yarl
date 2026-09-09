@@ -1,0 +1,6 @@
+Fixed the :class:`~yarl.URL` string parser accepting a host that IDNA
+normalization expands into a URL delimiter (``[``, ``]`` or ``\``); yarl
+rendered the delimiter into ``str(url)`` but then rejected it on
+re-parsing, so the value did not round-trip. Such hosts are now rejected
+during parsing, matching :meth:`URL.build() <yarl.URL.build>` and
+:meth:`~yarl.URL.with_host` -- by :user:`Samin061`.
