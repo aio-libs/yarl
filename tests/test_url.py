@@ -2295,6 +2295,18 @@ def test_join_non_url() -> None:
         base.join("path/to")  # type: ignore[arg-type]
 
 
+def test_join_preserves_percent_encoding_in_base_path() -> None:
+    base = URL("http://x/a%2Fb/c")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%2Fb/d"
+
+
+def test_join_preserves_percent_encoded_space_in_base_path() -> None:
+    base = URL("http://x/a%20b/c")
+    url2 = base.join(URL("d"))
+    assert str(url2) == "http://x/a%20b/d"
+
+
 NORMAL = [
     ("g:h", "g:h"),
     ("g", "http://a/b/c/g"),
