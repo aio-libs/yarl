@@ -902,6 +902,8 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
+        if not raw:
+            return None
         if raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
