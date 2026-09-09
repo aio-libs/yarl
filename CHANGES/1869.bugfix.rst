@@ -1,0 +1,2 @@
+Made the C and Python quoting backends agree when percent signs are marked safe
+and requoting is enabled -- by :user:`joaogabriel15`.

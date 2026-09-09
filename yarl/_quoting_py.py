@@ -32,6 +32,7 @@ class _Quoter:
         self._protected = protected
         self._qs = qs
         self._requote = requote
+        self._safe_percent = requote and ("%" in safe or "%" in protected)
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -52,6 +53,8 @@ class _Quoter:
         if not self._qs:
             safe += "+&=;"
         safe += self._protected
+        if self._safe_percent:
+            safe = safe.replace("%", "")
         bsafe = safe.encode("ascii")
         idx = 0
         while idx < len(bval):
@@ -79,7 +82,7 @@ class _Quoter:
 
                     if unquoted in self._protected:
                         ret.extend(pct)
-                    elif unquoted in safe:
+                    elif unquoted in safe or (unquoted == "%" and self._safe_percent):
                         ret.append(ord(unquoted))
                     else:
                         ret.extend(pct)
