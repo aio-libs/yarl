@@ -1,6 +1,6 @@
 -r cython.txt
 covdefaults
-idna==3.18
+idna==3.19
 multidict==6.7.1
 propcache==0.4.1
 pytest==9.1.1
