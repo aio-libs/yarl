@@ -174,6 +174,39 @@ def test_safe(quoter: type[_Quoter]) -> None:
     assert ret == quote_by_default
 
 
+def test_unsafe(quoter: type[_Quoter]) -> None:
+    # Test setting 'unsafe' parameter forces quoting of allowed characters
+    allowed_by_default = "$'()*,"
+    assert quoter(qs=True)(allowed_by_default) == allowed_by_default
+
+    ret = quoter(qs=True, unsafe=allowed_by_default)(allowed_by_default)
+    assert ret == "%24%27%28%29%2A%2C"
+
+
+def test_unsafe_takes_precedence(quoter: type[_Quoter]) -> None:
+    # Test 'unsafe' overrides both 'safe' and 'protected'
+    assert quoter(safe="/")("/") == "/"
+    assert quoter(safe="/", unsafe="/")("/") == "%2F"
+
+    assert quoter(protected="/")("/") == "/"
+    assert quoter(protected="/", unsafe="/")("/") == "%2F"
+
+
+def test_non_ascii_safe_is_rejected(quoter: type[_Quoter]) -> None:
+    with pytest.raises(ValueError, match="ORD < 128"):
+        quoter(safe="é")
+
+
+def test_non_ascii_protected_is_rejected(quoter: type[_Quoter]) -> None:
+    with pytest.raises(ValueError, match="ORD < 128"):
+        quoter(protected="é")
+
+
+def test_non_ascii_unsafe_is_rejected(quoter: type[_Quoter]) -> None:
+    with pytest.raises(ValueError, match="ORD < 128"):
+        quoter(unsafe="é")
+
+
 _SHOULD_QUOTE = [chr(num) for num in range(32)]
 _SHOULD_QUOTE.append(r'<>#"{}|\^[]`')
 _SHOULD_QUOTE.append(chr(127))  # For 0x7F
