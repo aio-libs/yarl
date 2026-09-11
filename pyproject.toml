@@ -3,7 +3,6 @@ requires = [
   # NOTE: The following build dependencies are necessary for initial
   # NOTE: provisioning of the in-tree build backend located under
   # NOTE: `packaging/pep517_backend/`.
-  "expandvars",
   "setuptools >= 47",  # Minimum required for `version = attr:`
   "tomli; python_version < '3.11'",
 ]
@@ -13,11 +12,6 @@ build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
 [tool.local.cython]
 # This attr can contain multiple globs
 src = ["yarl/*.pyx"]
-
-[tool.local.cython.env]
-# Env vars provisioned during cythonize call
-#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
-#LDFLAGS = "${LDFLAGS}"
 
 [tool.local.cython.flags]
 # This section can contain the following booleans:
@@ -65,11 +59,6 @@ freethreading_compatible = "True"
 [tool.local.cythonize]
 # This attr can contain multiple globs
 src = ["yarl/*.pyx"]
-
-[tool.local.cythonize.env]
-# Env vars provisioned during cythonize call
-#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
-#LDFLAGS = "${LDFLAGS}"
 
 [tool.local.cythonize.flags]
 # This section can contain the following booleans:

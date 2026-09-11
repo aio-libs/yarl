@@ -52,7 +52,7 @@ def run_main_program(argv: _c.Sequence[str]) -> int | str:
         translate_cython_cli_args,
     )
 
-    with _patched_cython_env(config['env'], cython_line_tracing_requested=True):
+    with _patched_cython_env(cython_line_tracing_requested=True):
         return _translate_cython_cli_cmd(  # type: ignore[no-any-return,no-untyped-call]
             cython_sources,
             cython_options,
