@@ -3,7 +3,6 @@ requires = [
   # NOTE: The following build dependencies are necessary for initial
   # NOTE: provisioning of the in-tree build backend located under
   # NOTE: `packaging/pep517_backend/`.
-  "expandvars",
   "setuptools >= 47",  # Minimum required for `version = attr:`
   "tomli; python_version < '3.11'",
 ]
