@@ -1600,6 +1600,27 @@ def test_with_path_leading_slash() -> None:
     assert url.with_path("test").path == "/test"
 
 
+@pytest.mark.parametrize(
+    ("original_url", "new_path", "expected_str", "expected_path"),
+    [
+        pytest.param("foo/bar", "abs", "abs", "abs", id="bare-stays-bare"),
+        pytest.param("foo/bar", "/abs", "/abs", "/abs", id="explicit-slash-preserved"),
+        pytest.param("/foo", "abs", "/abs", "/abs", id="absolute-keeps-slash"),
+        pytest.param("//h/p", "x", "//h/x", "/x", id="netloc-keeps-slash"),
+    ],
+)
+def test_with_path_leading_slash_preservation(
+    original_url: str,
+    new_path: str,
+    expected_str: str,
+    expected_path: str,
+) -> None:
+    u = URL(original_url).with_path(new_path)
+    assert str(u) == expected_str
+    assert u.path == expected_path
+    assert u.raw_path == expected_path
+
+
 # with_fragment
 
 

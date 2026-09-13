@@ -922,11 +922,11 @@ class TestBuilderSchemeMaterialization:
 
     @pytest.mark.parametrize("encoded", [False, True], ids=["decoded", "encoded"])
     def test_with_path_scheme_shaped_relative(self, encoded: bool) -> None:
-        """with_path() prepends a slash, so a scheme cannot materialize."""
+        """with_path() preserves bare-relative URL, so a scheme-shaped colon is encoded."""
         u = URL("").with_path("http://127.0.0.1/x", encoded=encoded)
         assert u.scheme == ""
         assert u.raw_host is None
-        assert str(u) == "/http://127.0.0.1/x"
+        assert str(u) == "http%3A//127.0.0.1/x"
         assert URL(str(u)).raw_host is None
 
     def test_relative_keeps_colon_after_slash(self) -> None:

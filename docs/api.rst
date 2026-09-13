@@ -679,6 +679,8 @@ section generates a new :class:`URL` instance.
 
    Return a new URL with *path* replaced, encode *path* if needed.
 
+   A leading slash is added only when needed to keep the reference valid.
+
    If ``keep_query=True`` or ``keep_fragment=True`` it retains the existing query or fragment in the URL.
 
    .. versionchanged:: 1.18
