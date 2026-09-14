@@ -16,7 +16,7 @@ from cpython.unicode cimport (
     PyUnicode_KIND,
     PyUnicode_READ,
 )
-from libc.stdint cimport uint8_t, uint64_t
+from libc.stdint cimport uint8_t, uint32_t, uint64_t
 from libc.string cimport memcpy, memset
 
 from string import ascii_letters, digits
@@ -348,12 +348,36 @@ cdef class _Quoter:
 
 # Strict UTF-8 as accepted by CPython's decoder, see table 3-7 of the
 # Unicode standard.
+DEF UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
+DEF UTF8_CONT_MAX = 0xBF
+DEF UTF8_CONT_PAYLOAD = 0x3F
+DEF UTF8_CONT_BITS = 6
+DEF UTF8_LEAD2_MIN = 0xC2  # 0xC0 and 0xC1 only start overlong encodings
+DEF UTF8_LEAD2_MAX = 0xDF
+DEF UTF8_LEAD2_PAYLOAD = 0x1F
+DEF UTF8_LEAD3_MIN = 0xE0
+DEF UTF8_LEAD3_MAX = 0xEF
+DEF UTF8_LEAD3_PAYLOAD = 0x0F
+DEF UTF8_LEAD4_MIN = 0xF0
+DEF UTF8_LEAD4_MAX = 0xF4  # higher lead bytes encode past U+10FFFF
+DEF UTF8_LEAD4_PAYLOAD = 0x07
+# Lead bytes that narrow the range of the byte right after them
+DEF UTF8_LEAD_E0 = 0xE0
+DEF UTF8_E0_CONT_MIN = 0xA0  # E0 80..9F would be overlong
+DEF UTF8_LEAD_ED = 0xED
+DEF UTF8_ED_CONT_MAX = 0x9F  # ED A0..BF would be a surrogate
+DEF UTF8_LEAD_F0 = 0xF0
+DEF UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
+DEF UTF8_LEAD_F4 = 0xF4
+DEF UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
+
+
 cdef inline Py_ssize_t _utf8_sequence_length(uint8_t lead) noexcept:
-    if 0xC2 <= lead <= 0xDF:
+    if UTF8_LEAD2_MIN <= lead <= UTF8_LEAD2_MAX:
         return 2
-    if 0xE0 <= lead <= 0xEF:
+    if UTF8_LEAD3_MIN <= lead <= UTF8_LEAD3_MAX:
         return 3
-    if 0xF0 <= lead <= 0xF4:
+    if UTF8_LEAD4_MIN <= lead <= UTF8_LEAD4_MAX:
         return 4
     return 0
 
@@ -362,26 +386,29 @@ cdef inline bint _utf8_is_continuation(
     uint8_t lead, Py_ssize_t pos, Py_UCS4 byte
 ) noexcept:
     if pos == 1:
-        if lead == 0xE0:
-            return 0xA0 <= byte <= 0xBF
-        if lead == 0xED:
-            return 0x80 <= byte <= 0x9F
-        if lead == 0xF0:
-            return 0x90 <= byte <= 0xBF
-        if lead == 0xF4:
-            return 0x80 <= byte <= 0x8F
-    return 0x80 <= byte <= 0xBF
+        if lead == UTF8_LEAD_E0:
+            return UTF8_E0_CONT_MIN <= byte <= UTF8_CONT_MAX
+        if lead == UTF8_LEAD_ED:
+            return UTF8_CONT_MIN <= byte <= UTF8_ED_CONT_MAX
+        if lead == UTF8_LEAD_F0:
+            return UTF8_F0_CONT_MIN <= byte <= UTF8_CONT_MAX
+        if lead == UTF8_LEAD_F4:
+            return UTF8_CONT_MIN <= byte <= UTF8_F4_CONT_MAX
+    return UTF8_CONT_MIN <= byte <= UTF8_CONT_MAX
 
 
 cdef inline Py_UCS4 _utf8_decode(const uint8_t *buf, Py_ssize_t length) noexcept:
+    cdef uint32_t code_point
+    cdef Py_ssize_t i
     if length == 2:
-        return ((buf[0] & 0x1F) << 6) | (buf[1] & 0x3F)
-    if length == 3:
-        return ((buf[0] & 0x0F) << 12) | ((buf[1] & 0x3F) << 6) | (buf[2] & 0x3F)
-    return (
-        ((buf[0] & 0x07) << 18) | ((buf[1] & 0x3F) << 12)
-        | ((buf[2] & 0x3F) << 6) | (buf[3] & 0x3F)
-    )
+        code_point = buf[0] & UTF8_LEAD2_PAYLOAD
+    elif length == 3:
+        code_point = buf[0] & UTF8_LEAD3_PAYLOAD
+    else:
+        code_point = buf[0] & UTF8_LEAD4_PAYLOAD
+    for i in range(1, length):
+        code_point = (code_point << UTF8_CONT_BITS) | (buf[i] & UTF8_CONT_PAYLOAD)
+    return <Py_UCS4>code_point
 
 
 # Output buffer for _Unquoter, holding code points instead of bytes.
