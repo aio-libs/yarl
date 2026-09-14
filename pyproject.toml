@@ -153,8 +153,6 @@ select = [
 build-frontend = "build[uv]"
 test-requires = "-r requirements/test-cibuildwheel.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
-# don't build PyPy wheels, install from source instead
-skip = "pp*"
 
 [tool.cibuildwheel.environment]
 COLOR = "yes"

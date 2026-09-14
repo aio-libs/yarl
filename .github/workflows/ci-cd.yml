@@ -314,7 +314,6 @@ jobs:
           || (matrix.tag == 'musllinux') && '*-manylinux_*'
         || '*-musllinux_*'
         }}
-        pp*
         EOF
 
   metadata-validation:
@@ -399,7 +398,7 @@ jobs:
       # important: do not use system python
       env:
         UV_PYTHON_PREFERENCE: only-managed
-      uses: astral-sh/setup-uv@v8.3.2
+      uses: astral-sh/setup-uv@v10.1.0
       with:
         python-version: ${{ matrix.pyver }}
         activate-environment: true
@@ -668,7 +667,7 @@ jobs:
           (matrix.tag == 'musllinux')
           && '*-manylinux_*'
           || '*-musllinux_*'
-        }} pp*
+        }}
 
   deploy:
     name: Deploy
@@ -752,7 +751,7 @@ jobs:
         skip-existing: true
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.4.0
+      uses: sigstore/gh-action-sigstore-python@v3.5.0
       with:
         inputs: >-
           ./dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
