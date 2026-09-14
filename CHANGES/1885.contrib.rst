@@ -1,0 +1,5 @@
+Stopped running the test suite inside the wheel build jobs on pull
+requests for the Python versions that the test matrix already runs
+against the same wheels, which shortens the path to the test results.
+Release builds still test every wheel
+-- by :user:`bdraco`.
