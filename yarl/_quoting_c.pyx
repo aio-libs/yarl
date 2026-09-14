@@ -434,6 +434,21 @@ cdef inline int _ucs4_write_char(UCS4Writer* writer, Py_UCS4 ch) except -1:
     return 0
 
 
+ctypedef fused _narrow_ucs:
+    Py_UCS1
+    Py_UCS2
+
+
+cdef inline void _widen_to_ucs4(
+    Py_UCS4 *out, const _narrow_ucs *src, Py_ssize_t length
+) noexcept:
+    # No public API copies part of a str into a UCS4 buffer; CPython widens
+    # with the same plain loop internally.
+    cdef Py_ssize_t i
+    for i in range(length):
+        out[i] = src[i]
+
+
 cdef inline int _ucs4_write_slice(
     UCS4Writer* writer,
     int kind,
@@ -443,21 +458,14 @@ cdef inline int _ucs4_write_slice(
 ) except -1:
     cdef Py_ssize_t length = end - start
     cdef Py_UCS4 *out
-    cdef const Py_UCS1 *src1
-    cdef const Py_UCS2 *src2
-    cdef Py_ssize_t i
     if length <= 0:
         return 0
     _ucs4_reserve(writer, length)
     out = writer.buf + writer.pos
     if kind == PyUnicode_1BYTE_KIND:
-        src1 = <const Py_UCS1*>data + start
-        for i in range(length):
-            out[i] = src1[i]
+        _widen_to_ucs4(out, <const Py_UCS1*>data + start, length)
     elif kind == PyUnicode_2BYTE_KIND:
-        src2 = <const Py_UCS2*>data + start
-        for i in range(length):
-            out[i] = src2[i]
+        _widen_to_ucs4(out, <const Py_UCS2*>data + start, length)
     else:
         memcpy(out, <const Py_UCS4*>data + start, length * sizeof(Py_UCS4))
     writer.pos += length
