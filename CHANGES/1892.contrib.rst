@@ -1,0 +1,3 @@
+Switched the tag release checks in the CI workflow to
+``github.ref_type`` so every release gate reads the same way
+-- by :user:`bdraco`.
