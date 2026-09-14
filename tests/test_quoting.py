@@ -550,6 +550,30 @@ def test_space(quoter: type[_Quoter]) -> None:
     assert quoter()(s) == "%25%20A"
 
 
+@pytest.mark.parametrize(
+    ("safe", "protected"),
+    [("\u00e9", ""), ("", "\u00e9"), ("/\u65e5", "+")],
+    ids=["safe", "protected", "mixed"],
+)
+def test_quoter_non_ascii_arguments(
+    quoter: type[_Quoter], safe: str, protected: str
+) -> None:
+    with pytest.raises(
+        ValueError, match="Only safe symbols with ORD < 128 are allowed"
+    ):
+        quoter(safe=safe, protected=protected)
+
+
+@pytest.mark.parametrize("unsafe", ["\u00e9", "+\u65e5"])
+def test_unquoter_non_ascii_unsafe(unquoter: type[_Unquoter], unsafe: str) -> None:
+    with pytest.raises(UnicodeEncodeError):
+        unquoter(unsafe=unsafe)
+
+
+def test_unquoter_non_ascii_ignore(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(ignore="\u00e9")("a%C3%A9b%C3%A8") == "a%C3%A9b\u00e8"
+
+
 def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
     assert "/test/x+y%2Bz/:+%2B/" == quoter(safe="@:", protected="/+")(s)

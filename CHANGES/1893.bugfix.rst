@@ -1,0 +1,3 @@
+Made the pure Python quoter and unquoter reject non-ASCII ``safe``,
+``protected`` and ``unsafe`` characters when they are created, the same way
+the C extension does -- by :user:`bdraco`.
