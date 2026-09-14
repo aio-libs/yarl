@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 import yarl
@@ -556,3 +558,79 @@ def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
 def test_unquoter_path_with_plus(unquoter: type[_Unquoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
     assert "/test/x+y+z/:++/" == unquoter(unsafe="+")(s)
+
+
+def test_unquote_long_plain_returns_same_object(unquoter: type[_Unquoter]) -> None:
+    s = "abc/def" * 4096
+    assert unquoter(plus=True)(s) is s
+
+
+def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(plus=True)("a+b" * 4096) == "a b" * 4096
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "input", "expected"),
+    [
+        pytest.param({}, "a" * 8192 + "%20", "a" * 8192 + " ", id="run_then_escape"),
+        pytest.param({}, "%20" + "a" * 8192, " " + "a" * 8192, id="escape_then_run"),
+        pytest.param(
+            {},
+            "a" * 100 + "%e2%82" + "b" * 100,
+            "a" * 100 + "%e2%82" + "b" * 100,
+            id="incomplete_sequence_between_runs",
+        ),
+        pytest.param(
+            {},
+            "a" * 100 + "%e2%82",
+            "a" * 100 + "%e2%82",
+            id="incomplete_sequence_at_end",
+        ),
+        pytest.param(
+            {},
+            "a" * 100 + "%e2%82%zz" + "b",
+            "a" * 100 + "%e2%82%zzb",
+            id="incomplete_sequence_then_invalid_escape",
+        ),
+        pytest.param(
+            {"plus": True},
+            "a+%e2%82+b%C3%A9",
+            "a %e2%82 bé",
+            id="incomplete_sequence_then_plus",
+        ),
+        pytest.param(
+            {"unsafe": "/"},
+            "a" * 100 + "%e2%82/" + "b" * 100,
+            "a" * 100 + "%e2%82%2F" + "b" * 100,
+            id="incomplete_sequence_then_unsafe",
+        ),
+        pytest.param(
+            {"unsafe": "+", "plus": True},
+            "a+b%2Bc/" * 100,
+            "a+b+c/" * 100,
+            id="unsafe_plus_is_kept",
+        ),
+        pytest.param(
+            {"unsafe": "%"},
+            "a" * 100 + "%zz%41",
+            "a" * 100 + "%25zzA",
+            id="unsafe_percent",
+        ),
+        pytest.param(
+            {"qs": True},
+            "a=1%26b" + "c" * 100 + "+d",
+            "a=1%26b" + "c" * 100 + " d",
+            id="qs_requote_between_runs",
+        ),
+        pytest.param(
+            {"ignore": "/%", "unsafe": "+"},
+            "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
+            "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
+            id="path_safe_non_ascii_runs",
+        ),
+    ],
+)
+def test_unquote_runs(  # type: ignore[misc]
+    unquoter: type[_Unquoter], kwargs: dict[str, Any], input: str, expected: str
+) -> None:
+    assert unquoter(**kwargs)(input) == expected

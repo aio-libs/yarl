@@ -6,7 +6,8 @@ there via ``-m "not hypothesis"``). ``importorskip`` skips this module when
 ``hypothesis`` is not installed.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+from urllib.parse import quote, quote_plus, unquote_plus
 
 import pytest
 
@@ -112,3 +113,84 @@ def test_quote_unquote_parameter_path_safe(  # type: ignore[misc]
     note(f"text_quoted={text_quoted!r}")
     text_output = unquote(text_quoted)
     assert text_input == text_output
+
+
+# The unquoter configurations used by yarl itself, see yarl/_quoters.py
+UNQUOTER_KWARGS = [
+    {},
+    {"unsafe": "+"},
+    {"ignore": "/%", "unsafe": "+"},
+    {"qs": True},
+    {"plus": True},
+]
+
+_LONG_RUN = st.integers(min_value=0, max_value=5000).map(lambda n: "a" * n)
+_NO_SURROGATE_TEXT = st.text(alphabet=st.characters(codec="utf-8"))
+_QUOTED = _NO_SURROGATE_TEXT.map(quote)
+# Plain text, long runs, and every kind of escape the unquoter handles,
+# including invalid and incomplete UTF-8 sequences.
+_UNQUOTE_PIECES = st.one_of(
+    st.text(),
+    _LONG_RUN,
+    _QUOTED,
+    st.sampled_from(
+        [
+            "%",
+            "+",
+            "/",
+            "=",
+            "&",
+            ";",
+            "%2B",
+            "%2b",
+            "%25",
+            "%2F",
+            "%3D",
+            "%26",
+            "%e2%82",
+            "%e2%82%ac",
+            "%ff",
+            "%C3",
+            "%ed%a0%80",
+            "%c0%af",  # overlong 2 byte
+            "%e0%80%af",  # overlong 3 byte
+            "%f0%80%80%af",  # overlong 4 byte
+            "%f4%90%80%80",  # above U+10FFFF
+            "%f0%9f%98",  # truncated 4 byte
+            "%4",
+            "%zz",
+            "%%41",
+        ]
+    ),
+)
+
+
+@pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
+@pytest.mark.parametrize("kwargs", UNQUOTER_KWARGS)
+@given(pieces=st.lists(_UNQUOTE_PIECES))
+def test_c_and_py_unquoter_match(  # type: ignore[misc]
+    kwargs: dict[str, Any], pieces: list[str]
+) -> None:
+    val = "".join(pieces)
+    assert _CUnquoter(**kwargs)(val) == _PyUnquoter(**kwargs)(val)
+
+
+# Pieces never form an incomplete or invalid UTF-8 escape (text pieces
+# exclude '%', quote() emits whole sequences, %zz is not an escape), so
+# urllib.parse.unquote_plus agrees with yarl
+_VALID_UNQUOTE_PIECES = st.one_of(
+    st.text(alphabet=st.characters(blacklist_characters="%")),
+    _LONG_RUN,
+    _QUOTED,
+    _NO_SURROGATE_TEXT.map(quote_plus),
+    st.sampled_from(["+", "%2B", "%25", "%zz"]),
+)
+
+
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
+@given(pieces=st.lists(_VALID_UNQUOTE_PIECES))
+def test_unquoter_plus_matches_unquote_plus(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], pieces: list[str]
+) -> None:
+    val = "".join(pieces)
+    assert unquoter(plus=True)(val) == unquote_plus(val)
