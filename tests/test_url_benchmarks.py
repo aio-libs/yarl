@@ -8,6 +8,7 @@ except ImportError:  # pragma: no branch  # only hit in cibuildwheel
     pytestmark = pytest.mark.skip("pytest-codspeed needs to be installed")
 
 from yarl import URL
+from yarl._parse import query_to_pairs
 
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]
@@ -39,6 +40,12 @@ QUERY_SEQ = {str(i): tuple(str(j) for j in range(10)) for i in range(10)}
 SIMPLE_QUERY = {str(i): str(i) for i in range(10)}
 SIMPLE_INT_QUERY = {str(i): i for i in range(10)}
 QUERY_STRING = "x=y&z=1"
+FORM_QUERY_STRINGS = {
+    "many_fields": "&".join(f"field{i}=value{i}" for i in range(1000)),
+    "many_fields_pct": "&".join(f"f%C3%A9{i}=v+%E2%82%AC+{i}" for i in range(1000)),
+    "long_value": "text=" + "lorem+ipsum+dolor+sit+amet%2C+" * 512,
+    "repeated_key": "x&" * 1000,
+}
 
 
 class _SubClassedStr(str):
@@ -838,3 +845,15 @@ def test_parse_query_uncached(benchmark: "BenchmarkFixture", url: URL) -> None:
     def _run() -> None:
         for _ in range(100):
             URL._parsed_query.wrapped(url)
+
+
+@pytest.mark.parametrize(
+    "query_string",
+    FORM_QUERY_STRINGS.values(),
+    ids=FORM_QUERY_STRINGS.keys(),
+)
+def test_query_to_pairs(benchmark: "BenchmarkFixture", query_string: str) -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(10):
+            query_to_pairs(query_string)

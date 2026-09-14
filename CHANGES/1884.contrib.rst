@@ -1,0 +1,3 @@
+Added CodSpeed benchmarks for unquoting long strings, decoding
+``+`` as a space, and parsing large query strings
+-- by :user:`bdraco`.
