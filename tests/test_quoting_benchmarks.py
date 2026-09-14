@@ -30,6 +30,7 @@ LONG_DENSE_PCT = "%C3%A9%20" * 1024
 LONG_UTF8_TEXT_PCT = "%E6%97%A5%E6%9C%AC+text+%C3%A9t%C3%A9+" * 256
 LONG_PLUS = "a+b" * 4096
 LONG_PATH_WITH_PCT = "/path%20to/%E2%82%AC" * 256
+LONG_PATH_WITH_ENCODED_DELIMS = "/a%2Fb/100%25+off%2Bsale%20%E2%82%AC" * 256
 LONG_MULTI_UNSAFE = "user/name@" * 1024
 FORM_TEXT_PCT = "Please+leave+the+package%2C+thanks%21+%E6%B3%A8%E6%96%87+" * 16
 
@@ -160,6 +161,13 @@ def test_path_safe_unquoter_long_pct(benchmark: "BenchmarkFixture") -> None:
             PATH_SAFE_UNQUOTER(LONG_PATH_WITH_PCT)
 
 
+def test_path_safe_unquoter_encoded_delims(benchmark: "BenchmarkFixture") -> None:
+    @benchmark
+    def _run() -> None:
+        for _ in range(10):
+            PATH_SAFE_UNQUOTER(LONG_PATH_WITH_ENCODED_DELIMS)
+
+
 def test_multi_unsafe_unquoter_long(benchmark: "BenchmarkFixture") -> None:
     @benchmark
     def _run() -> None:
@@ -178,7 +186,11 @@ PY_UNQUOTER_CASES = {
     "plus_form_text": (_PyUnquoter(plus=True), FORM_TEXT_PCT, 10),
     "plus_long_plus": (_PyUnquoter(plus=True), LONG_PLUS, 1),
     "qs_long_pct": (_PyUnquoter(qs=True), LONG_QUERY_WITH_PCT, 10),
-    "path_safe_long_pct": (_PyUnquoter(ignore="/%", unsafe="+"), LONG_PATH_WITH_PCT, 1),
+    "path_safe_encoded_delims": (
+        _PyUnquoter(ignore="/%", unsafe="+"),
+        LONG_PATH_WITH_ENCODED_DELIMS,
+        1,
+    ),
     "multi_unsafe_long": (_PyUnquoter(unsafe="/@"), LONG_MULTI_UNSAFE, 1),
 }
 
