@@ -152,6 +152,11 @@ _UNQUOTE_PIECES = st.one_of(
             "%ff",
             "%C3",
             "%ed%a0%80",
+            "%c0%af",  # overlong 2 byte
+            "%e0%80%af",  # overlong 3 byte
+            "%f0%80%80%af",  # overlong 4 byte
+            "%f4%90%80%80",  # above U+10FFFF
+            "%f0%9f%98",  # truncated 4 byte
             "%4",
             "%zz",
             "%%41",
@@ -170,7 +175,9 @@ def test_c_and_py_unquoter_match(  # type: ignore[misc]
     assert _CUnquoter(**kwargs)(val) == _PyUnquoter(**kwargs)(val)
 
 
-# No bare '%', so every escape is valid UTF-8 and urllib agrees with yarl
+# Pieces never form an incomplete or invalid UTF-8 escape (text pieces
+# exclude '%', quote() emits whole sequences, %zz is not an escape), so
+# urllib.parse.unquote_plus agrees with yarl
 _VALID_UNQUOTE_PIECES = st.one_of(
     st.text(alphabet=st.characters(blacklist_characters="%")),
     _LONG_RUN,
