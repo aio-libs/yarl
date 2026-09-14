@@ -509,6 +509,27 @@ def test_unquote_plus_to_space_unsafe(unquoter: type[_Unquoter]) -> None:
     assert unquoter(unsafe="+", qs=True)("a+b") == "a+b"
 
 
+@pytest.mark.parametrize(
+    ("qs", "plus"), [(True, False), (False, True)], ids=["qs", "plus"]
+)
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("a+b", "a b"),
+        ("a b", "a%20b"),
+        ("a%20b", "a%20b"),
+        ("a+b c+d", "a b%20c d"),
+        ("a+b" * 200, "a b" * 200),
+    ],
+    ids=["plus", "literal_space", "escaped_space", "mixed", "long"],
+)
+def test_unquote_plus_to_space_with_unsafe_space(
+    unquoter: type[_Unquoter], qs: bool, plus: bool, value: str, expected: str
+) -> None:
+    # A '+' decoded to a space must not be percent-encoded as an unsafe space
+    assert unquoter(unsafe=" ", qs=qs, plus=plus)(value) == expected
+
+
 def test_unquote_multiple_unsafe(unquoter: type[_Unquoter]) -> None:
     assert unquoter(unsafe="!@#$")("a!@#$b") == "a%21%40%23%24b"
 
