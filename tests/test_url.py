@@ -2511,7 +2511,12 @@ def test_human_repr_delimiters() -> None:
         fragment=" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
     )
     s = url.human_repr()
-    assert URL(s) == url
+    # ``human_repr()`` decodes the query, so re-parsing its output goes through
+    # the literal-string path, which deliberately leaves sub-delimiters such as
+    # "$'()*" unencoded. The dict passed to ``URL.build()`` above goes through
+    # QUERY_PART_QUOTER instead, which now percent-encodes them (see #1073).
+    # Both URLs carry the same query, but no longer the same raw query string.
+    assert URL(s).query == url.query
     assert (
         s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
