@@ -1,4 +1,4 @@
-Added tests that check the C and pure Python unquoters produce the same
-output, including long runs and invalid or incomplete UTF-8 escapes, and
-that ``plus=True`` matches :func:`urllib.parse.unquote_plus` for valid
-input -- by :user:`bdraco`.
+Added tests that check the C and pure Python unquoting implementations
+produce the same output, including long runs and invalid or incomplete
+UTF-8 escapes, and that ``plus=True`` matches
+:func:`urllib.parse.unquote_plus` for valid input -- by :user:`bdraco`.
