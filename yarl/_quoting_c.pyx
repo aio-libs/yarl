@@ -637,6 +637,10 @@ cdef class _Unquoter:
         """Return the index of the next '%' or unsafe character, or end."""
         cdef Py_ssize_t found
         cdef Py_ssize_t i
+        # Each search looks for a single character, so a hit cannot return
+        # right away; the search for another character may still find an
+        # earlier match. Narrowing end limits those searches to before the hit.
+        # For the unquoters in _quoters.py this is only the search for '%'.
         for i in range(self._special_len):
             found = PyUnicode_FindChar(val, self._special_char[i], start, end, 1)
             if found != -1:
