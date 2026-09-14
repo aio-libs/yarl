@@ -521,7 +521,7 @@ def test_unquote_plus_to_space_unsafe(unquoter: type[_Unquoter]) -> None:
         ("a+b c+d", "a b%20c d"),
         ("a+b" * 200, "a b" * 200),
     ],
-    ids=["plus", "literal_space", "escaped_space", "mixed", "long"],
+    ids=["plus_sign", "literal_space", "escaped_space", "mixed", "long"],
 )
 def test_unquote_plus_to_space_with_unsafe_space(
     unquoter: type[_Unquoter], qs: bool, plus: bool, value: str, expected: str
