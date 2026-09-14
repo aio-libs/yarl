@@ -334,8 +334,7 @@ cdef class _Quoter:
 
         if not writer.changed:
             return val
-        else:
-            return PyUnicode_DecodeASCII(writer.buf, writer.pos, "strict")
+        return PyUnicode_DecodeASCII(writer.buf, writer.pos, "strict")
 
     cdef inline int _write(self, Writer *writer, Py_UCS4 ch):
         if self._qs:
