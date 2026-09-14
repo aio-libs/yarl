@@ -34,6 +34,10 @@ DEF BUF_SIZE = 8 * 1024  # 8KiB
 DEF UCS4_BUF_SIZE = 256
 
 DEF ASCII_LIMIT = 0x80  # code points below this are ASCII
+# Bitmaps with one bit per ASCII character
+DEF BYTE_BITS_SHIFT = 3  # log2 of the 8 bits in a byte
+DEF BYTE_BIT_MASK = 7
+DEF ASCII_TABLE_SIZE = ASCII_LIMIT >> BYTE_BITS_SHIFT
 DEF HEX_DIGIT_BITS = 4
 DEF HEX_DIGIT_MASK = 0x0F
 DEF HEX_LETTER_VALUE = 10  # value of the hex digit A
@@ -120,22 +124,22 @@ cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2) noexcept:
     return digit1 << HEX_DIGIT_BITS | digit2
 
 
-cdef uint8_t ALLOWED_TABLE[16]
-cdef uint8_t ALLOWED_NOTQS_TABLE[16]
+cdef uint8_t ALLOWED_TABLE[ASCII_TABLE_SIZE]
+cdef uint8_t ALLOWED_NOTQS_TABLE[ASCII_TABLE_SIZE]
 
 
 cdef inline bint bit_at(uint8_t array[], uint64_t ch) noexcept:
-    return array[ch >> 3] & (1 << (ch & 7))
+    return array[ch >> BYTE_BITS_SHIFT] & (1 << (ch & BYTE_BIT_MASK))
 
 
 cdef inline void set_bit(uint8_t array[], uint64_t ch) noexcept:
-    array[ch >> 3] |= (1 << (ch & 7))
+    array[ch >> BYTE_BITS_SHIFT] |= (1 << (ch & BYTE_BIT_MASK))
 
 
 memset(ALLOWED_TABLE, 0, sizeof(ALLOWED_TABLE))
 memset(ALLOWED_NOTQS_TABLE, 0, sizeof(ALLOWED_NOTQS_TABLE))
 
-for i in range(128):
+for i in range(ASCII_LIMIT):
     if chr(i) in ALLOWED:
         set_bit(ALLOWED_TABLE, i)
         set_bit(ALLOWED_NOTQS_TABLE, i)
@@ -267,8 +271,8 @@ cdef class _Quoter:
     cdef bint _qs
     cdef bint _requote
 
-    cdef uint8_t _safe_table[16]
-    cdef uint8_t _protected_table[16]
+    cdef uint8_t _safe_table[ASCII_TABLE_SIZE]
+    cdef uint8_t _protected_table[ASCII_TABLE_SIZE]
 
     def __init__(
             self, *, str safe='', str protected='', bint qs=False, bint requote=True,
@@ -287,13 +291,13 @@ cdef class _Quoter:
                    ALLOWED_TABLE,
                    sizeof(self._safe_table))
         for ch in safe:
-            if ord(ch) > 127:
+            if ord(ch) >= ASCII_LIMIT:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
             set_bit(self._safe_table, ch)
 
         memset(self._protected_table, 0, sizeof(self._protected_table))
         for ch in protected:
-            if ord(ch) > 127:
+            if ord(ch) >= ASCII_LIMIT:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
             set_bit(self._safe_table, ch)
             set_bit(self._protected_table, ch)
@@ -323,7 +327,7 @@ cdef class _Quoter:
         while idx:
             idx -= 1
             ch = PyUnicode_READ(kind, data, idx)
-            if ch >= 128 or not bit_at(self._safe_table, ch):
+            if ch >= ASCII_LIMIT or not bit_at(self._safe_table, ch):
                 must_quote = 1
                 break
 
@@ -374,7 +378,7 @@ cdef class _Quoter:
                     ch = <Py_UCS4>chl
                     surrogate_skipped = pos1 != idx or pos2 != pos1 + 1
                     idx = pos2 + 1
-                    if ch < 128:
+                    if ch < ASCII_LIMIT:
                         if bit_at(self._protected_table, ch):
                             if _write_pct(writer, ch, True) < 0:
                                 raise
@@ -405,7 +409,7 @@ cdef class _Quoter:
             if ch == ' ':
                 return _write_char(writer, '+', True)
 
-        if ch < 128 and bit_at(self._safe_table, ch):
+        if ch < ASCII_LIMIT and bit_at(self._safe_table, ch):
             return _write_char(writer, ch, False)
 
         return _write_utf8(writer, ch)
