@@ -1,5 +1,7 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
+from cpython.object cimport PyObject
+from cpython.tuple cimport PyTuple_GET_ITEM
 from cpython.unicode cimport (
     Py_UCS1,
     Py_UCS2,
@@ -34,19 +36,17 @@ DEF UCS4_BUF_SIZE = 256
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
         return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
-    else:
-        return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
+    return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
 
 
 cdef inline int _from_hex(Py_UCS4 v) noexcept:
     if '0' <= v <= '9':
         return <int>(v) - 0x30  # ord('0') == 0x30
-    elif 'A' <= v <= 'F':
+    if 'A' <= v <= 'F':
         return <int>(v) - 0x41 + 10  # ord('A') == 0x41
-    elif 'a' <= v <= 'f':
+    if 'a' <= v <= 'f':
         return <int>(v) - 0x61 + 10  # ord('a') == 0x61
-    else:
-        return -1
+    return -1
 
 
 cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
@@ -67,7 +67,7 @@ cdef inline Py_ssize_t _skip_surrogates(
     return idx
 
 
-cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2) noexcept:
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
         return -1
@@ -162,37 +162,36 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
 
     if utf < 0x80:
         return _write_pct(writer, <uint8_t>utf, True)
-    elif utf < 0x800:
+    if utf < 0x800:
         if _write_pct(writer, <uint8_t>(0xc0 | (utf >> 6)), True) < 0:
             return -1
         return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
-    elif _is_surrogate(symbol):
+    if _is_surrogate(symbol):
         # lone surrogate; invalid in UTF-8 so it is dropped, matching the
         # pure-Python quoter's errors="ignore" encode. Mark the writer as
         # changed so _do_quote returns the surrogate-free buffer rather than
         # the untouched input string.
         writer.changed = True
         return 0
-    elif utf < 0x10000:
+    if utf < 0x10000:
         if _write_pct(writer, <uint8_t>(0xe0 | (utf >> 12)), True) < 0:
             return -1
         if _write_pct(writer, <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
                       True) < 0:
             return -1
         return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
-    elif utf > 0x10FFFF:
+    if utf > 0x10FFFF:
         # symbol is too large
         return 0
-    else:
-        if _write_pct(writer,  <uint8_t>(0xf0 | (utf >> 18)), True) < 0:
-            return -1
-        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 12) & 0x3f)),
-                      True) < 0:
-            return -1
-        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
-                      True) < 0:
-            return -1
-        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+    if _write_pct(writer,  <uint8_t>(0xf0 | (utf >> 18)), True) < 0:
+        return -1
+    if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 12) & 0x3f)),
+                  True) < 0:
+        return -1
+    if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
+                  True) < 0:
+        return -1
+    return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
 
 
 # --------------------- end writer --------------------------
@@ -487,7 +486,7 @@ cdef class _Unquoter:
     def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
         cdef _Quoter qs_quoter = _Quoter(qs=True)
         self._ignore = ignore
-        self._has_non_ascii_ignore = any(ord(c) > 0x7F for c in ignore)
+        self._has_non_ascii_ignore = not ignore.isascii()
         self._plus_is_space = (qs or plus) and '+' not in unsafe
         # unsafe may only be ascii characters
         self._special = ('%' + unsafe.replace('+', '')).encode('ascii')
@@ -615,10 +614,10 @@ cdef class _Unquoter:
         )
 
     cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
-        cdef object requote
+        cdef PyObject *requote
         if ch < 0x80:
-            requote = self._requote[<Py_ssize_t>ch]
-            if requote is not None:
+            requote = PyTuple_GET_ITEM(self._requote, ch)
+            if requote != <PyObject*>None:
                 return _ucs4_write_str(writer, <str>requote)
         elif self._has_non_ascii_ignore and ch in self._ignore:
             return _ucs4_write_str(writer, self._quoter(chr(ch)))
