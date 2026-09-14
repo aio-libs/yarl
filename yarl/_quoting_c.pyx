@@ -1,9 +1,15 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
 from cpython.unicode cimport (
+    Py_UCS1,
+    Py_UCS2,
     PyUnicode_DATA,
     PyUnicode_DecodeASCII,
-    PyUnicode_DecodeUTF8Stateful,
+    PyUnicode_1BYTE_KIND,
+    PyUnicode_2BYTE_KIND,
+    PyUnicode_4BYTE_KIND,
+    PyUnicode_FindChar,
+    PyUnicode_FromKindAndData,
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
@@ -23,6 +29,7 @@ cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
+DEF UCS4_BUF_SIZE = 256
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
     if v < 10:
@@ -341,30 +348,159 @@ cdef class _Quoter:
         return _write_utf8(writer, ch)
 
 
+# Strict UTF-8 as accepted by CPython's decoder, see table 3-7 of the
+# Unicode standard.
+cdef inline Py_ssize_t _utf8_sequence_length(uint8_t lead) noexcept:
+    if 0xC2 <= lead <= 0xDF:
+        return 2
+    if 0xE0 <= lead <= 0xEF:
+        return 3
+    if 0xF0 <= lead <= 0xF4:
+        return 4
+    return 0
+
+
+cdef inline bint _utf8_is_continuation(
+    uint8_t lead, Py_ssize_t pos, Py_UCS4 byte
+) noexcept:
+    if pos == 1:
+        if lead == 0xE0:
+            return 0xA0 <= byte <= 0xBF
+        if lead == 0xED:
+            return 0x80 <= byte <= 0x9F
+        if lead == 0xF0:
+            return 0x90 <= byte <= 0xBF
+        if lead == 0xF4:
+            return 0x80 <= byte <= 0x8F
+    return 0x80 <= byte <= 0xBF
+
+
+cdef inline Py_UCS4 _utf8_decode(const uint8_t *buf, Py_ssize_t length) noexcept:
+    if length == 2:
+        return ((buf[0] & 0x1F) << 6) | (buf[1] & 0x3F)
+    if length == 3:
+        return ((buf[0] & 0x0F) << 12) | ((buf[1] & 0x3F) << 6) | (buf[2] & 0x3F)
+    return (
+        ((buf[0] & 0x07) << 18) | ((buf[1] & 0x3F) << 12)
+        | ((buf[2] & 0x3F) << 6) | (buf[3] & 0x3F)
+    )
+
+
+# Output buffer for _Unquoter, holding code points instead of bytes.
+cdef struct UCS4Writer:
+    Py_UCS4 *buf
+    bint heap_allocated_buf
+    Py_ssize_t size
+    Py_ssize_t pos
+
+
+cdef inline void _init_ucs4_writer(UCS4Writer* writer, Py_UCS4* buf) noexcept:
+    writer.buf = buf
+    writer.heap_allocated_buf = False
+    writer.size = UCS4_BUF_SIZE
+    writer.pos = 0
+
+
+cdef inline void _release_ucs4_writer(UCS4Writer* writer) noexcept:
+    if writer.heap_allocated_buf:
+        PyMem_Free(writer.buf)
+
+
+cdef inline int _ucs4_reserve(UCS4Writer* writer, Py_ssize_t extra) except -1:
+    cdef Py_ssize_t size = writer.pos + extra
+    cdef Py_UCS4 *buf
+    if size <= writer.size:
+        return 0
+    if size < writer.size * 2:
+        size = writer.size * 2
+    if writer.heap_allocated_buf:
+        buf = <Py_UCS4*>PyMem_Realloc(writer.buf, size * sizeof(Py_UCS4))
+    else:
+        buf = <Py_UCS4*>PyMem_Malloc(size * sizeof(Py_UCS4))
+        if buf != NULL:
+            memcpy(buf, writer.buf, writer.pos * sizeof(Py_UCS4))
+    if buf == NULL:
+        PyErr_NoMemory()
+        return -1
+    writer.buf = buf
+    writer.heap_allocated_buf = True
+    writer.size = size
+    return 0
+
+
+cdef inline int _ucs4_write_char(UCS4Writer* writer, Py_UCS4 ch) except -1:
+    if writer.pos == writer.size:
+        _ucs4_reserve(writer, 1)
+    writer.buf[writer.pos] = ch
+    writer.pos += 1
+    return 0
+
+
+cdef inline int _ucs4_write_slice(
+    UCS4Writer* writer,
+    int kind,
+    const void *data,
+    Py_ssize_t start,
+    Py_ssize_t end,
+) except -1:
+    cdef Py_ssize_t length = end - start
+    cdef Py_UCS4 *out
+    cdef const Py_UCS1 *src1
+    cdef const Py_UCS2 *src2
+    cdef Py_ssize_t i
+    if length <= 0:
+        return 0
+    _ucs4_reserve(writer, length)
+    out = writer.buf + writer.pos
+    if kind == PyUnicode_1BYTE_KIND:
+        src1 = <const Py_UCS1*>data + start
+        for i in range(length):
+            out[i] = src1[i]
+    elif kind == PyUnicode_2BYTE_KIND:
+        src2 = <const Py_UCS2*>data + start
+        for i in range(length):
+            out[i] = src2[i]
+    else:
+        memcpy(out, <const Py_UCS4*>data + start, length * sizeof(Py_UCS4))
+    writer.pos += length
+    return 0
+
+
+cdef inline int _ucs4_write_str(UCS4Writer* writer, str s) except -1:
+    return _ucs4_write_slice(
+        writer, PyUnicode_KIND(s), PyUnicode_DATA(s), 0, PyUnicode_GET_LENGTH(s)
+    )
+
+
 cdef class _Unquoter:
     cdef str _ignore
-    cdef bint _has_ignore
-    cdef str _unsafe
-    cdef bytes _unsafe_bytes
-    cdef Py_ssize_t _unsafe_bytes_len
-    cdef const unsigned char * _unsafe_bytes_char
-    cdef bint _qs
-    cdef bint _plus  # to match urllib.parse.unquote_plus
+    cdef bint _has_non_ascii_ignore
+    cdef bint _plus_is_space  # to match urllib.parse.unquote_plus
+    # '%' followed by the unsafe characters, except '+' which is never
+    # percent-encoded when it appears literally.
+    cdef bytes _special
+    cdef const unsigned char *_special_char
+    cdef Py_ssize_t _special_len
+    # What to write for each decoded ASCII character, None to write it as is.
+    cdef tuple _requote
     cdef _Quoter _quoter
-    cdef _Quoter _qs_quoter
 
     def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
+        cdef _Quoter qs_quoter = _Quoter(qs=True)
         self._ignore = ignore
-        self._has_ignore = bool(self._ignore)
-        self._unsafe = unsafe
-        # unsafe may only be extended ascii characters (0-255)
-        self._unsafe_bytes = self._unsafe.encode('ascii')
-        self._unsafe_bytes_len = len(self._unsafe_bytes)
-        self._unsafe_bytes_char = self._unsafe_bytes
-        self._qs = qs
-        self._plus = plus
+        self._has_non_ascii_ignore = any(ord(c) > 0x7F for c in ignore)
+        self._plus_is_space = (qs or plus) and '+' not in unsafe
+        # unsafe may only be ascii characters
+        self._special = ('%' + unsafe.replace('+', '')).encode('ascii')
+        self._special_char = self._special
+        self._special_len = len(self._special)
         self._quoter = _Quoter()
-        self._qs_quoter = _Quoter(qs=True)
+        self._requote = tuple(
+            qs_quoter(c) if qs and c in '+=&;'
+            else self._quoter(c) if c in unsafe or c in ignore
+            else None
+            for c in map(chr, range(0x80))
+        )
 
     def __call__(self, val):
         if val is None:
@@ -382,102 +518,128 @@ cdef class _Unquoter:
         if length == 0:
             return val
 
-        cdef list ret = []
-        cdef char buffer[4]
+        # A literal '+' never takes part in an escape sequence, so turning
+        # every '+' into a space up front gives the same result as doing it
+        # in the loop below.
+        if self._plus_is_space and PyUnicode_FindChar(val, '+', 0, length, 1) != -1:
+            val = val.replace('+', ' ')
+        # Skip straight to the first character that may need rewriting;
+        # most strings have none and are returned as is.
+        cdef Py_ssize_t idx = self._find_special(val, 0, length)
+        if idx == length:
+            return val
+
+        cdef Py_UCS4 stack_buf[UCS4_BUF_SIZE]
+        cdef UCS4Writer writer
+        _init_ucs4_writer(&writer, stack_buf)
+        try:
+            if length > UCS4_BUF_SIZE:
+                # The output is rarely longer than the input
+                _ucs4_reserve(&writer, length)
+            return self._unquote_from(&writer, val, length, idx)
+        finally:
+            _release_ucs4_writer(&writer)
+
+    cdef str _unquote_from(
+        self, UCS4Writer* writer, str val, Py_ssize_t length, Py_ssize_t idx
+    ):
+        cdef uint8_t buffer[4]
         cdef Py_ssize_t buflen = 0
-        cdef Py_ssize_t consumed
-        cdef str unquoted
         cdef Py_UCS4 ch = 0
         cdef long chl = 0
-        cdef Py_ssize_t idx = 0
-        cdef Py_ssize_t start_pct
+        cdef Py_ssize_t run_end
+        cdef bint changed = 0
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
-        cdef bint changed = 0
+        _ucs4_write_slice(writer, kind, data, 0, idx)
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
             if ch == '%' and idx <= length - 2:
-                changed = 1
                 chl = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
                 )
                 if chl != -1:
+                    changed = 1
                     ch = <Py_UCS4>chl
                     idx += 2
-                    assert buflen < 4
-                    buffer[buflen] = ch
-                    buflen += 1
-                    try:
-                        unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
-                                                                NULL, &consumed)
-                    except UnicodeDecodeError:
-                        start_pct = idx - buflen * 3
-                        buffer[0] = ch
-                        buflen = 1
-                        ret.append(val[start_pct : idx - 3])
-                        try:
-                            unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
-                                                                    NULL, &consumed)
-                        except UnicodeDecodeError:
-                            buflen = 0
-                            ret.append(val[idx - 3 : idx])
+                    if buflen:
+                        if _utf8_is_continuation(buffer[0], buflen, ch):
+                            buffer[buflen] = <uint8_t>ch
+                            buflen += 1
+                            if buflen == _utf8_sequence_length(buffer[0]):
+                                self._write_unquoted(
+                                    writer, _utf8_decode(buffer, buflen)
+                                )
+                                buflen = 0
                             continue
-                    if not unquoted:
-                        assert consumed == 0
-                        continue
-                    assert consumed == buflen
-                    buflen = 0
-                    if self._qs and unquoted in '+=&;':
-                        ret.append(self._qs_quoter(unquoted))
-                    elif (
-                        (self._unsafe_bytes_len and unquoted in self._unsafe) or
-                        (self._has_ignore and unquoted in self._ignore)
-                    ):
-                        ret.append(self._quoter(unquoted))
+                        # Not a valid sequence, keep the pending escapes as is
+                        # and start over from this byte.
+                        _ucs4_write_slice(
+                            writer, kind, data, idx - 3 - buflen * 3, idx - 3
+                        )
+                        buflen = 0
+                    if ch < 0x80:
+                        self._write_unquoted(writer, ch)
+                    elif _utf8_sequence_length(<uint8_t>ch):
+                        buffer[0] = <uint8_t>ch
+                        buflen = 1
                     else:
-                        ret.append(unquoted)
+                        _ucs4_write_slice(writer, kind, data, idx - 3, idx)
                     continue
-                else:
-                    ch = '%'
 
             if buflen:
-                start_pct = idx - 1 - buflen * 3
-                ret.append(val[start_pct : idx - 1])
+                _ucs4_write_slice(writer, kind, data, idx - 1 - buflen * 3, idx - 1)
                 buflen = 0
 
-            if ch == '+':
-                if (
-                    (not self._qs and not self._plus) or
-                    (self._unsafe_bytes_len and self._is_char_unsafe(ch))
-                ):
-                    ret.append('+')
-                else:
-                    changed = 1
-                    ret.append(' ')
-                continue
-
-            if self._unsafe_bytes_len and self._is_char_unsafe(ch):
+            if self._is_literal_unsafe(ch):
                 changed = 1
-                ret.append('%')
-                h = hex(ord(ch)).upper()[2:]
-                for ch in h:
-                    ret.append(ch)
+                _ucs4_write_char(writer, '%')
+                _ucs4_write_str(writer, hex(ord(ch)).upper()[2:])
                 continue
 
-            ret.append(ch)
+            # Copy everything up to the next character that may need
+            # rewriting in one go.
+            run_end = self._find_special(val, idx, length)
+            _ucs4_write_slice(writer, kind, data, idx - 1, run_end)
+            idx = run_end
 
         if not changed:
             return val
 
         if buflen:
-            ret.append(val[length - buflen * 3 : length])
+            _ucs4_write_slice(writer, kind, data, length - buflen * 3, length)
 
-        return ''.join(ret)
+        return PyUnicode_FromKindAndData(
+            PyUnicode_4BYTE_KIND, writer.buf, writer.pos
+        )
 
-    cdef inline bint _is_char_unsafe(self, Py_UCS4 ch):
-        for i in range(self._unsafe_bytes_len):
-            if ch == self._unsafe_bytes_char[i]:
+    cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
+        cdef object requote
+        if ch < 0x80:
+            requote = self._requote[<Py_ssize_t>ch]
+            if requote is not None:
+                return _ucs4_write_str(writer, <str>requote)
+        elif self._has_non_ascii_ignore and ch in self._ignore:
+            return _ucs4_write_str(writer, self._quoter(chr(ch)))
+        return _ucs4_write_char(writer, ch)
+
+    cdef inline Py_ssize_t _find_special(
+        self, str val, Py_ssize_t start, Py_ssize_t end
+    ) except -1:
+        """Return the index of the next '%' or unsafe character, or end."""
+        cdef Py_ssize_t found
+        cdef Py_ssize_t i
+        for i in range(self._special_len):
+            found = PyUnicode_FindChar(val, self._special_char[i], start, end, 1)
+            if found != -1:
+                end = found
+        return end
+
+    cdef inline bint _is_literal_unsafe(self, Py_UCS4 ch) noexcept:
+        cdef Py_ssize_t i
+        for i in range(1, self._special_len):
+            if ch == self._special_char[i]:
                 return True
         return False
