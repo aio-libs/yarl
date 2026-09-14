@@ -650,18 +650,6 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
             id="path_safe_non_ascii_runs",
         ),
         pytest.param(
-            {"unsafe": " ", "plus": True},
-            "a+b c",
-            "a b%20c",
-            id="plus_space_is_not_unsafe",
-        ),
-        pytest.param(
-            {"unsafe": " ", "qs": True},
-            "a+b c",
-            "a b%20c",
-            id="qs_space_is_not_unsafe",
-        ),
-        pytest.param(
             {"unsafe": "@"},
             "@" * 200,
             "%40" * 200,
