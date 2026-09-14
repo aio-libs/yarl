@@ -281,6 +281,9 @@ jobs:
       # with identically-named wheels but different bytes, which the Deploy
       # job's `download-artifact ... merge-multiple: true` step then tore
       # together, yielding a wheel PyPI rejected with `Mis-matched data size`.
+      # CIBW_TEST_SKIP: on PR/non-tag, skip the in-build test run; the `test`
+      # job installs and tests these same wheels in parallel. Tag releases
+      # build arches the `test` job never installs, so they still test here.
       environment-variables: |-
         CIBW_ARCHS_MACOS=${{
           (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
@@ -313,6 +316,14 @@ jobs:
           *-win32'
           || (matrix.tag == 'musllinux') && '*-manylinux_*'
         || '*-musllinux_*'
+        }}
+        EOF
+
+        CIBW_TEST_SKIP<<EOF
+        ${{
+          github.ref_type != 'tag'
+          && '*'
+          || ''
         }}
         EOF
 
@@ -349,6 +360,8 @@ jobs:
     strategy:
       matrix:
         pyver:
+        - 3.15t
+        - 3.15
         - 3.14t
         - 3.14
         - 3.13
