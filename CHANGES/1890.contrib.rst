@@ -1,0 +1,4 @@
+Added tests that check the C and pure Python unquoting implementations
+agree for any combination of ``unsafe``, ``ignore``, ``qs`` and ``plus``,
+including output that grows past the input length and non-ASCII
+``ignore`` characters -- by :user:`bdraco`.

@@ -628,6 +628,42 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             id="path_safe_non_ascii_runs",
         ),
+        pytest.param(
+            {"unsafe": " ", "plus": True},
+            "a+b c",
+            "a b%20c",
+            id="plus_space_is_not_unsafe",
+        ),
+        pytest.param(
+            {"unsafe": " ", "qs": True},
+            "a+b c",
+            "a b%20c",
+            id="qs_space_is_not_unsafe",
+        ),
+        pytest.param(
+            {"unsafe": "@"},
+            "@" * 200,
+            "%40" * 200,
+            id="output_longer_than_short_input",
+        ),
+        pytest.param(
+            {"unsafe": "@"},
+            "@" * 1000,
+            "%40" * 1000,
+            id="output_longer_than_long_input",
+        ),
+        pytest.param(
+            {"ignore": "\u00e9"},
+            "a%C3%A9b%C3%A8",
+            "a%C3%A9b\u00e8",
+            id="non_ascii_ignore",
+        ),
+        pytest.param(
+            {"unsafe": "/@"},
+            "a/" * 1000 + "%2F",
+            "a%2F" * 1000 + "%2F",
+            id="many_unsafe_characters",
+        ),
     ],
 )
 def test_unquote_runs(  # type: ignore[misc]
