@@ -321,7 +321,7 @@ jobs:
 
         CIBW_TEST_SKIP<<EOF
         ${{
-          (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+          github.ref_type != 'tag'
           && '*'
           || ''
         }}
