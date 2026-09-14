@@ -500,9 +500,21 @@ jobs:
         !cancelled()
         && steps.translate-cython.outcome == 'success'
         && runner.os != 'Windows'
-      run: >-  # Non-zero when the module reached the report with no data
-        python -Im coverage report --no-skip-covered
-        --include='yarl/_quoting_c.pyx' --fail-under=0
+      # `--fail-under=0`: the floor is already enforced by the test run, and
+      # here it would only print a failure line after the JSON.
+      run: |  # A `.pyx` with nothing recorded is how #1581 went unnoticed
+        python -Im coverage json --fail-under=0 -o - | python -c '
+        import json, sys
+        pyx = {
+            path: info["summary"]["covered_lines"]
+            for path, info in json.load(sys.stdin)["files"].items()
+            if path.endswith(".pyx")
+        }
+        if not pyx or not all(pyx.values()):
+            sys.exit(f"Cython modules with no measured lines: {pyx}")
+        print(f"Measured lines: {pyx}")
+        '
+      shell: bash
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
