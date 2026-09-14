@@ -302,11 +302,10 @@ cdef class _Quoter:
         if val is None:
             return None
         if type(val) is not str:
-            if isinstance(val, str):
-                # derived from str
-                val = str(val)
-            else:
+            if not isinstance(val, str):
                 raise TypeError("Argument should be str")
+            # derived from str
+            val = str(val)
         return self._do_quote_or_skip(<str>val)
 
     cdef str _do_quote_or_skip(self, str val):
@@ -585,11 +584,10 @@ cdef class _Unquoter:
         if val is None:
             return None
         if type(val) is not str:
-            if isinstance(val, str):
-                # derived from str
-                val = str(val)
-            else:
+            if not isinstance(val, str):
                 raise TypeError("Argument should be str")
+            # derived from str
+            val = str(val)
         return self._do_unquote(<str>val)
 
     cdef str _do_unquote(self, str val):
