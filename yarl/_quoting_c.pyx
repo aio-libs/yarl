@@ -16,7 +16,7 @@ from cpython.unicode cimport (
     PyUnicode_KIND,
     PyUnicode_READ,
 )
-from libc.stdint cimport uint8_t, uint32_t, uint64_t
+from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
 from string import ascii_letters, digits
@@ -33,19 +33,62 @@ cdef str QS = '+&=;'
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 DEF UCS4_BUF_SIZE = 256
 
+DEF ASCII_LIMIT = 0x80  # code points below this are ASCII
+DEF HEX_DIGIT_BITS = 4
+DEF HEX_DIGIT_MASK = 0x0F
+DEF HEX_LETTER_VALUE = 10  # value of the hex digit A
+DEF PCT_HEX_LEN = 2  # the XX in %XX
+DEF PCT_ESCAPE_LEN = 3  # %XX
+
+# UTF-8, see table 3-7 of the Unicode standard. The decoder is as strict as
+# CPython's.
+DEF UTF8_MAX_BYTES = 4
+DEF UTF8_2BYTE_LIMIT = 0x800  # code points below these limits use 2, 3 bytes
+DEF UTF8_3BYTE_LIMIT = 0x10000
+DEF MAX_CODE_POINT = 0x10FFFF
+DEF SURROGATE_MIN = 0xD800
+DEF SURROGATE_MAX = 0xDFFF
+DEF UTF8_CONT_MARKER = 0x80  # 10xxxxxx
+DEF UTF8_LEAD2_MARKER = 0xC0  # 110xxxxx
+DEF UTF8_LEAD3_MARKER = 0xE0  # 1110xxxx
+DEF UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
+DEF UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
+DEF UTF8_CONT_MAX = 0xBF
+DEF UTF8_CONT_PAYLOAD = 0x3F
+DEF UTF8_CONT_BITS = 6
+DEF UTF8_LEAD2_MIN = 0xC2  # 0xC0 and 0xC1 only start overlong encodings
+DEF UTF8_LEAD2_MAX = 0xDF
+DEF UTF8_LEAD2_PAYLOAD = 0x1F
+DEF UTF8_LEAD3_MIN = 0xE0
+DEF UTF8_LEAD3_MAX = 0xEF
+DEF UTF8_LEAD3_PAYLOAD = 0x0F
+DEF UTF8_LEAD4_MIN = 0xF0
+DEF UTF8_LEAD4_MAX = 0xF4  # higher lead bytes encode past U+10FFFF
+DEF UTF8_LEAD4_PAYLOAD = 0x07
+# Lead bytes that narrow the range of the byte right after them
+DEF UTF8_LEAD_E0 = 0xE0
+DEF UTF8_E0_CONT_MIN = 0xA0  # E0 80..9F would be overlong
+DEF UTF8_LEAD_ED = 0xED
+DEF UTF8_ED_CONT_MAX = 0x9F  # ED A0..BF would be a surrogate
+DEF UTF8_LEAD_F0 = 0xF0
+DEF UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
+DEF UTF8_LEAD_F4 = 0xF4
+DEF UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
+
+
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
-    if v < 10:
-        return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
-    return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
+    if v < HEX_LETTER_VALUE:
+        return <Py_UCS4>(v + ord('0'))
+    return <Py_UCS4>(v - HEX_LETTER_VALUE + ord('A'))
 
 
 cdef inline int _from_hex(Py_UCS4 v) noexcept:
     if '0' <= v <= '9':
-        return <int>(v) - 0x30  # ord('0') == 0x30
+        return <int>v - ord('0')
     if 'A' <= v <= 'F':
-        return <int>(v) - 0x41 + 10  # ord('A') == 0x41
+        return <int>v - ord('A') + HEX_LETTER_VALUE
     if 'a' <= v <= 'f':
-        return <int>(v) - 0x61 + 10  # ord('a') == 0x61
+        return <int>v - ord('a') + HEX_LETTER_VALUE
     return -1
 
 
@@ -54,7 +97,7 @@ cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
 
 
 cdef inline bint _is_surrogate(Py_UCS4 ch) noexcept:
-    return 0xD800 <= ch <= 0xDFFF
+    return SURROGATE_MIN <= ch <= SURROGATE_MAX
 
 
 cdef inline Py_ssize_t _skip_surrogates(
@@ -74,7 +117,7 @@ cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2) noexcept:
     cdef int digit2 = _from_hex(d2)
     if digit2 < 0:
         return -1
-    return digit1 << 4 | digit2
+    return digit1 << HEX_DIGIT_BITS | digit2
 
 
 cdef uint8_t ALLOWED_TABLE[16]
@@ -152,20 +195,24 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
 cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed):
     if _write_char(writer, '%', changed) < 0:
         return -1
-    if _write_char(writer, _to_hex(<uint8_t>ch >> 4), changed) < 0:
+    if _write_char(writer, _to_hex(<uint8_t>ch >> HEX_DIGIT_BITS), changed) < 0:
         return -1
-    return _write_char(writer, _to_hex(<uint8_t>ch & 0x0f), changed)
+    return _write_char(writer, _to_hex(<uint8_t>ch & HEX_DIGIT_MASK), changed)
 
 
 cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
     cdef uint64_t utf = <uint64_t> symbol
 
-    if utf < 0x80:
+    if utf < ASCII_LIMIT:
         return _write_pct(writer, <uint8_t>utf, True)
-    if utf < 0x800:
-        if _write_pct(writer, <uint8_t>(0xc0 | (utf >> 6)), True) < 0:
+    if utf < UTF8_2BYTE_LIMIT:
+        if _write_pct(
+            writer, <uint8_t>(UTF8_LEAD2_MARKER | (utf >> UTF8_CONT_BITS)), True
+        ) < 0:
             return -1
-        return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
+        return _write_pct(
+            writer, <uint8_t>(UTF8_CONT_MARKER | (utf & UTF8_CONT_PAYLOAD)), True
+        )
     if _is_surrogate(symbol):
         # lone surrogate; invalid in UTF-8 so it is dropped, matching the
         # pure-Python quoter's errors="ignore" encode. Mark the writer as
@@ -173,25 +220,44 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
         # the untouched input string.
         writer.changed = True
         return 0
-    if utf < 0x10000:
-        if _write_pct(writer, <uint8_t>(0xe0 | (utf >> 12)), True) < 0:
+    if utf < UTF8_3BYTE_LIMIT:
+        if _write_pct(
+            writer, <uint8_t>(UTF8_LEAD3_MARKER | (utf >> 2 * UTF8_CONT_BITS)), True
+        ) < 0:
             return -1
-        if _write_pct(writer, <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
-                      True) < 0:
+        if _write_pct(
+            writer,
+            <uint8_t>(UTF8_CONT_MARKER | ((utf >> UTF8_CONT_BITS) & UTF8_CONT_PAYLOAD)),
+            True,
+        ) < 0:
             return -1
-        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
-    if utf > 0x10FFFF:
+        return _write_pct(
+            writer, <uint8_t>(UTF8_CONT_MARKER | (utf & UTF8_CONT_PAYLOAD)), True
+        )
+    if utf > MAX_CODE_POINT:
         # symbol is too large
         return 0
-    if _write_pct(writer,  <uint8_t>(0xf0 | (utf >> 18)), True) < 0:
+    if _write_pct(
+        writer, <uint8_t>(UTF8_LEAD4_MARKER | (utf >> 3 * UTF8_CONT_BITS)), True
+    ) < 0:
         return -1
-    if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 12) & 0x3f)),
-                  True) < 0:
+    if _write_pct(
+        writer,
+        <uint8_t>(
+            UTF8_CONT_MARKER | ((utf >> 2 * UTF8_CONT_BITS) & UTF8_CONT_PAYLOAD)
+        ),
+        True,
+    ) < 0:
         return -1
-    if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
-                  True) < 0:
+    if _write_pct(
+        writer,
+        <uint8_t>(UTF8_CONT_MARKER | ((utf >> UTF8_CONT_BITS) & UTF8_CONT_PAYLOAD)),
+        True,
+    ) < 0:
         return -1
-    return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+    return _write_pct(
+        writer, <uint8_t>(UTF8_CONT_MARKER | (utf & UTF8_CONT_PAYLOAD)), True
+    )
 
 
 # --------------------- end writer --------------------------
@@ -346,32 +412,6 @@ cdef class _Quoter:
         return _write_utf8(writer, ch)
 
 
-# Strict UTF-8 as accepted by CPython's decoder, see table 3-7 of the
-# Unicode standard.
-DEF UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
-DEF UTF8_CONT_MAX = 0xBF
-DEF UTF8_CONT_PAYLOAD = 0x3F
-DEF UTF8_CONT_BITS = 6
-DEF UTF8_LEAD2_MIN = 0xC2  # 0xC0 and 0xC1 only start overlong encodings
-DEF UTF8_LEAD2_MAX = 0xDF
-DEF UTF8_LEAD2_PAYLOAD = 0x1F
-DEF UTF8_LEAD3_MIN = 0xE0
-DEF UTF8_LEAD3_MAX = 0xEF
-DEF UTF8_LEAD3_PAYLOAD = 0x0F
-DEF UTF8_LEAD4_MIN = 0xF0
-DEF UTF8_LEAD4_MAX = 0xF4  # higher lead bytes encode past U+10FFFF
-DEF UTF8_LEAD4_PAYLOAD = 0x07
-# Lead bytes that narrow the range of the byte right after them
-DEF UTF8_LEAD_E0 = 0xE0
-DEF UTF8_E0_CONT_MIN = 0xA0  # E0 80..9F would be overlong
-DEF UTF8_LEAD_ED = 0xED
-DEF UTF8_ED_CONT_MAX = 0x9F  # ED A0..BF would be a surrogate
-DEF UTF8_LEAD_F0 = 0xF0
-DEF UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
-DEF UTF8_LEAD_F4 = 0xF4
-DEF UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
-
-
 cdef inline Py_ssize_t _utf8_sequence_length(uint8_t lead) noexcept:
     if UTF8_LEAD2_MIN <= lead <= UTF8_LEAD2_MAX:
         return 2
@@ -398,17 +438,23 @@ cdef inline bint _utf8_is_continuation(
 
 
 cdef inline Py_UCS4 _utf8_decode(const uint8_t *buf, Py_ssize_t length) noexcept:
-    cdef uint32_t code_point
-    cdef Py_ssize_t i
     if length == 2:
-        code_point = buf[0] & UTF8_LEAD2_PAYLOAD
-    elif length == 3:
-        code_point = buf[0] & UTF8_LEAD3_PAYLOAD
-    else:
-        code_point = buf[0] & UTF8_LEAD4_PAYLOAD
-    for i in range(1, length):
-        code_point = (code_point << UTF8_CONT_BITS) | (buf[i] & UTF8_CONT_PAYLOAD)
-    return <Py_UCS4>code_point
+        return (
+            (buf[0] & UTF8_LEAD2_PAYLOAD) << UTF8_CONT_BITS
+            | (buf[1] & UTF8_CONT_PAYLOAD)
+        )
+    if length == 3:
+        return (
+            (buf[0] & UTF8_LEAD3_PAYLOAD) << 2 * UTF8_CONT_BITS
+            | (buf[1] & UTF8_CONT_PAYLOAD) << UTF8_CONT_BITS
+            | (buf[2] & UTF8_CONT_PAYLOAD)
+        )
+    return (
+        (buf[0] & UTF8_LEAD4_PAYLOAD) << 3 * UTF8_CONT_BITS
+        | (buf[1] & UTF8_CONT_PAYLOAD) << 2 * UTF8_CONT_BITS
+        | (buf[2] & UTF8_CONT_PAYLOAD) << UTF8_CONT_BITS
+        | (buf[3] & UTF8_CONT_PAYLOAD)
+    )
 
 
 # Output buffer for _Unquoter, holding code points instead of bytes.
@@ -532,7 +578,7 @@ cdef class _Unquoter:
             qs_quoter(c) if qs and c in '+=&;'
             else self._quoter(c) if c in unsafe or c in ignore
             else None
-            for c in map(chr, range(0x80))
+            for c in map(chr, range(ASCII_LIMIT))
         )
 
     def __call__(self, val):
@@ -576,7 +622,7 @@ cdef class _Unquoter:
     cdef str _unquote_from(
         self, UCS4Writer* writer, str val, Py_ssize_t length, Py_ssize_t idx
     ):
-        cdef uint8_t buffer[4]
+        cdef uint8_t buffer[UTF8_MAX_BYTES]
         cdef Py_ssize_t buflen = 0
         cdef Py_UCS4 ch = 0
         cdef long chl = 0
@@ -588,7 +634,7 @@ cdef class _Unquoter:
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
-            if ch == '%' and idx <= length - 2:
+            if ch == '%' and idx <= length - PCT_HEX_LEN:
                 chl = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
@@ -596,7 +642,7 @@ cdef class _Unquoter:
                 if chl != -1:
                     changed = 1
                     ch = <Py_UCS4>chl
-                    idx += 2
+                    idx += PCT_HEX_LEN
                     if buflen:
                         if _utf8_is_continuation(buffer[0], buflen, ch):
                             buffer[buflen] = <uint8_t>ch
@@ -610,20 +656,28 @@ cdef class _Unquoter:
                         # Not a valid sequence, keep the pending escapes as is
                         # and start over from this byte.
                         _ucs4_write_slice(
-                            writer, kind, data, idx - 3 - buflen * 3, idx - 3
+                            writer,
+                            kind,
+                            data,
+                            idx - PCT_ESCAPE_LEN - buflen * PCT_ESCAPE_LEN,
+                            idx - PCT_ESCAPE_LEN,
                         )
                         buflen = 0
-                    if ch < 0x80:
+                    if ch < ASCII_LIMIT:
                         self._write_unquoted(writer, ch)
                     elif _utf8_sequence_length(<uint8_t>ch):
                         buffer[0] = <uint8_t>ch
                         buflen = 1
                     else:
-                        _ucs4_write_slice(writer, kind, data, idx - 3, idx)
+                        _ucs4_write_slice(
+                            writer, kind, data, idx - PCT_ESCAPE_LEN, idx
+                        )
                     continue
 
             if buflen:
-                _ucs4_write_slice(writer, kind, data, idx - 1 - buflen * 3, idx - 1)
+                _ucs4_write_slice(
+                    writer, kind, data, idx - 1 - buflen * PCT_ESCAPE_LEN, idx - 1
+                )
                 buflen = 0
 
             if self._is_literal_unsafe(ch):
@@ -642,7 +696,9 @@ cdef class _Unquoter:
             return val
 
         if buflen:
-            _ucs4_write_slice(writer, kind, data, length - buflen * 3, length)
+            _ucs4_write_slice(
+                writer, kind, data, length - buflen * PCT_ESCAPE_LEN, length
+            )
 
         return PyUnicode_FromKindAndData(
             PyUnicode_4BYTE_KIND, writer.buf, writer.pos
@@ -650,7 +706,7 @@ cdef class _Unquoter:
 
     cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
         cdef PyObject *requote
-        if ch < 0x80:
+        if ch < ASCII_LIMIT:
             requote = PyTuple_GET_ITEM(self._requote, ch)
             if requote != <PyObject*>None:
                 return _ucs4_write_str(writer, <str>requote)
