@@ -1,5 +1,5 @@
-import codecs
 import re
+from collections.abc import Callable
 from string import ascii_letters, ascii_lowercase, digits
 from typing import overload
 
@@ -14,9 +14,22 @@ ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
 _IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
-_IS_HEX_STR = re.compile("[A-Fa-f0-9][A-Fa-f0-9]")
-
-utf8_decoder = codecs.getincrementaldecoder("utf-8")
+_HEXDIGITS = "0123456789abcdefABCDEF"
+# Every two hex digit escape body, in any case, to the byte it encodes
+_PCT_BYTES = {a + b: int(a + b, 16) for a in _HEXDIGITS for b in _HEXDIGITS}
+# Strict UTF-8 as accepted by CPython's decoder, see table 3-7 of the Unicode
+# standard: lead byte to the sequence length and the range of the second byte.
+_UTF8_LEADS = {
+    **{lead: (2, 0x80, 0xBF) for lead in range(0xC2, 0xE0)},
+    0xE0: (3, 0xA0, 0xBF),
+    **{lead: (3, 0x80, 0xBF) for lead in range(0xE1, 0xF0)},
+    0xED: (3, 0x80, 0x9F),
+    0xF0: (4, 0x90, 0xBF),
+    0xF1: (4, 0x80, 0xBF),
+    0xF2: (4, 0x80, 0xBF),
+    0xF3: (4, 0x80, 0xBF),
+    0xF4: (4, 0x80, 0x8F),
+}
 
 
 class _Quoter:
@@ -127,12 +140,24 @@ class _Unquoter:
         qs: bool = False,
         plus: bool = False,
     ) -> None:
-        self._ignore = ignore
-        self._unsafe = unsafe
-        self._qs = qs
-        self._plus = plus  # to match urllib.parse.unquote_plus
-        self._quoter = _Quoter()
-        self._qs_quoter = _Quoter(qs=True)
+        # to match urllib.parse.unquote_plus
+        self._plus_is_space = (qs or plus) and "+" not in unsafe
+        # '+' is never percent-encoded when it appears literally
+        self._literal_unsafe = literal_unsafe = unsafe.replace("+", "")
+        self._find_special: Callable[[str, int], int]
+        if literal_unsafe:
+            search = re.compile("[" + re.escape("%" + literal_unsafe) + "]").search
+            self._find_special = lambda s, i: (
+                -1 if (m := search(s, i)) is None else m.start()
+            )
+        else:
+            self._find_special = lambda s, i: s.find("%", i)
+        quoter = _Quoter()
+        qs_quoter = _Quoter(qs=True)
+        # Decoded characters that are written back percent-encoded
+        self._requote = {c: qs_quoter(c) for c in "+=&;"} if qs else {}
+        for c in unsafe + ignore:
+            self._requote.setdefault(c, quoter(c))
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -145,67 +170,74 @@ class _Unquoter:
             raise TypeError("Argument should be str")
         if not val:
             return ""
-        decoder = utf8_decoder()
+        if self._plus_is_space and "+" in val:
+            val = val.replace("+", " ")
+        find_special = self._find_special
+        if (pos := find_special(val, 0)) == -1:
+            return val
+        literal_unsafe = self._literal_unsafe
+        requote = self._requote
         ret = []
+        # Bytes of an incomplete UTF-8 sequence, their escapes are still in
+        # val right before idx
+        pending = bytearray()
+        need = low = high = 0
+        # idx is the end of the part of val already handled; plain runs
+        # between special characters are appended as a single slice.
         idx = 0
-        while idx < len(val):
-            ch = val[idx]
-            idx += 1
-            if ch == "%" and idx <= len(val) - 2:
-                pct = val[idx : idx + 2]
-                if _IS_HEX_STR.fullmatch(pct):
-                    b = bytes([int(pct, base=16)])
-                    idx += 2
-                    try:
-                        unquoted = decoder.decode(b)
-                    except UnicodeDecodeError:
-                        start_pct = idx - 3 - len(decoder.buffer) * 3
-                        ret.append(val[start_pct : idx - 3])
-                        decoder.reset()
-                        try:
-                            unquoted = decoder.decode(b)
-                        except UnicodeDecodeError:
-                            ret.append(val[idx - 3 : idx])
-                            continue
-                    if not unquoted:
-                        continue
-                    if self._qs and unquoted in "+=&;":
-                        to_add = self._qs_quoter(unquoted)
-                        if to_add is None:  # pragma: no cover
-                            raise RuntimeError("Cannot quote None")
-                        ret.append(to_add)
-                    elif unquoted in self._unsafe or unquoted in self._ignore:
-                        to_add = self._quoter(unquoted)
-                        if to_add is None:  # pragma: no cover
-                            raise RuntimeError("Cannot quote None")
-                        ret.append(to_add)
+        length = len(val)
+        while pos != -1:
+            if pending and pos > idx:
+                ret.append(val[idx - len(pending) * 3 : idx])
+                pending.clear()
+            if pos > idx:
+                ret.append(val[idx:pos])
+            idx = pos + 1
+            ch = val[pos]
+            byte = _PCT_BYTES.get(val[idx : idx + 2]) if ch == "%" else None
+            if byte is not None:
+                idx += 2
+                if pending:
+                    if low <= byte <= high:
+                        pending.append(byte)
+                        low, high = 0x80, 0xBF
+                        if len(pending) == need:
+                            unquoted = pending.decode()
+                            ret.append(requote.get(unquoted, unquoted))
+                            pending.clear()
+                        byte = None
                     else:
-                        ret.append(unquoted)
-                    continue
-
-            if decoder.buffer:
-                start_pct = idx - 1 - len(decoder.buffer) * 3
-                ret.append(val[start_pct : idx - 1])
-                decoder.reset()
-
-            if ch == "+":
-                if (not self._qs and not self._plus) or ch in self._unsafe:
-                    ret.append("+")
+                        # Not a valid sequence, flush the pending escapes and
+                        # start over from this byte
+                        ret.append(val[idx - 3 - len(pending) * 3 : idx - 3])
+                        pending.clear()
+                if byte is None:
+                    pass
+                elif byte < 0x80:
+                    unquoted = chr(byte)
+                    ret.append(requote.get(unquoted, unquoted))
+                elif byte in _UTF8_LEADS:
+                    need, low, high = _UTF8_LEADS[byte]
+                    pending.append(byte)
                 else:
-                    ret.append(" ")
-                continue
-
-            if ch in self._unsafe:
-                ret.append("%")
-                h = hex(ord(ch)).upper()[2:]
-                for ch in h:
+                    ret.append(val[idx - 3 : idx])
+            else:
+                if pending:
+                    ret.append(val[idx - 1 - len(pending) * 3 : idx - 1])
+                    pending.clear()
+                if ch in literal_unsafe:
+                    ret.append("%" + hex(ord(ch)).upper()[2:])
+                else:
                     ret.append(ch)
-                continue
+            # Escapes usually come in a row, skip the search for those
+            if idx < length and val[idx] == "%":
+                pos = idx
+            else:
+                pos = find_special(val, idx)
 
-            ret.append(ch)
-
-        if decoder.buffer:
-            ret.append(val[-len(decoder.buffer) * 3 :])
+        if pending:
+            ret.append(val[idx - len(pending) * 3 : idx])
+        ret.append(val[idx:])
 
         ret2 = "".join(ret)
         if ret2 == val:
