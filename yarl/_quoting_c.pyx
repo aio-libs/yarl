@@ -580,7 +580,14 @@ cdef class _Unquoter:
     cdef tuple _requote
     cdef _Quoter _quoter
 
-    def __init__(self, *, ignore="", qs=False, plus=False, replace_invalid=False):
+    def __init__(
+        self,
+        *,
+        str ignore="",
+        bint qs=False,
+        bint plus=False,
+        bint replace_invalid=False,
+    ):
         cdef _Quoter qs_quoter = _Quoter(qs=True)
         cdef Py_UCS4 ch
         # Requoting leaves these characters as is, so they would be decoded
