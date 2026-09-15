@@ -240,6 +240,21 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
     assert c_unquoter(val) == py_unquoter(val)
 
 
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
+@given(
+    pieces=st.lists(_ANY_CONFIG_PIECES),
+    ignore=st.text(alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日"]), max_size=4),
+    qs=st.booleans(),
+    plus=st.booleans(),
+)
+def test_unquoter_output_is_never_longer(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], pieces: list[str], ignore: str, qs: bool, plus: bool
+) -> None:
+    # The C unquoter sizes its output buffer to the input length
+    val = "".join(pieces)
+    assert len(unquoter(ignore=ignore, qs=qs, plus=plus)(val)) <= len(val)
+
+
 _QUOTER_CONFIG_CHARS = " %+/@:?=&;#![]~-._aZ0\t\u00e9"
 _QUOTE_PIECES = st.one_of(
     st.text(),
