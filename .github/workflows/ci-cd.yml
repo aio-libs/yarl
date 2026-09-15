@@ -648,6 +648,10 @@ jobs:
       # the pypa odd-arch containers do not ship `uv` preinstalled
       # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      # CIBW_TEST_SKIP: riscv64 has no native runner, so every wheel is built
+      # and tested under QEMU; installing the test dependencies and running
+      # the suite takes longer than building, and six Python versions do not
+      # fit in the job timeout. The other emulated arches still run the suite.
       environment-variables: |-
         CIBW_ARCHS_LINUX=${{ matrix.qemu }}
 
@@ -669,6 +673,10 @@ jobs:
           && '*-manylinux_*'
           || '*-musllinux_*'
         }}
+
+        CIBW_TEST_SKIP<<EOF
+        ${{ matrix.qemu == 'riscv64' && '*' || '' }}
+        EOF
 
   deploy:
     name: Deploy
