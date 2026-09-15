@@ -564,8 +564,6 @@ cdef inline Py_ssize_t _find_percent(
 
 
 cdef class _Unquoter:
-    cdef str _ignore
-    cdef bint _has_non_ascii_ignore
     # '+' means a space in query strings and in urllib.parse.unquote_plus
     cdef bint _plus_is_space
     # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
@@ -592,15 +590,12 @@ cdef class _Unquoter:
             for ch in QS:
                 set_bit(self._keep_escaped, ch)
         for ch in ignore:
-            if ch < ASCII_LIMIT:
-                if bit_at(decoded_anyway, ch):
-                    raise ValueError(
-                        f"ignore cannot contain {ch!r}, it is decoded anyway"
-                    )
-                set_bit(self._keep_escaped, ch)
-        self._ignore = ignore
+            if ch >= ASCII_LIMIT:
+                raise ValueError(f"ignore cannot contain {ch!r}, it is not ASCII")
+            if bit_at(decoded_anyway, ch):
+                raise ValueError(f"ignore cannot contain {ch!r}, it is decoded anyway")
+            set_bit(self._keep_escaped, ch)
         self._replace_invalid = replace_invalid
-        self._has_non_ascii_ignore = not ignore.isascii()
         self._plus_is_space = qs or plus
 
     def __call__(self, val):
@@ -667,7 +662,7 @@ cdef class _Unquoter:
                             buffer[buflen] = <uint8_t>ch
                             buflen += 1
                             if buflen == need:
-                                self._write_non_ascii(writer, buffer, buflen)
+                                _ucs4_write_char(writer, _utf8_decode(buffer, buflen))
                                 buflen = 0
                             continue
                         # Not a valid sequence, write the pending escapes as invalid
@@ -732,15 +727,3 @@ cdef class _Unquoter:
             _ucs4_write_char(writer, REPLACEMENT_CHARACTER)
         else:
             _ucs4_write_slice(writer, kind, data, start, end)
-
-    cdef inline void _write_non_ascii(
-        self, UCS4Writer* writer, const uint8_t *utf8, Py_ssize_t utf8_len
-    ) noexcept:
-        """Write the character encoded as utf8[:utf8_len], or its escapes."""
-        cdef Py_UCS4 ch = _utf8_decode(utf8, utf8_len)
-        cdef Py_ssize_t i
-        if not (self._has_non_ascii_ignore and ch in self._ignore):
-            _ucs4_write_char(writer, ch)
-            return
-        for i in range(utf8_len):
-            _ucs4_write_pct(writer, utf8[i])
