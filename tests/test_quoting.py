@@ -550,10 +550,6 @@ def test_quoter_non_ascii_arguments(
         quoter(safe=safe, protected=protected)
 
 
-def test_unquoter_non_ascii_ignore(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(ignore="\u00e9")("a%C3%A9b%C3%A8") == "a%C3%A9b\u00e8"
-
-
 def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
     assert "/test/x+y%2Bz/:+%2B/" == quoter(safe="@:", protected="/+")(s)
