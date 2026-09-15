@@ -644,6 +644,12 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             id="path_safe_non_ascii_runs",
         ),
+        pytest.param(
+            {"ignore": "\u00e9"},
+            "a%C3%A9b%C3%A8",
+            "a%C3%A9b\u00e8",
+            id="non_ascii_ignore",
+        ),
     ],
 )
 def test_unquote_runs(  # type: ignore[misc]
