@@ -13,6 +13,7 @@ _IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
 # Every two hex digit escape body, in any case, to the byte it encodes
 _PCT_BYTES = {a + b: int(a + b, 16) for a in hexdigits for b in hexdigits}
 _ASCII_LIMIT = 0x80
+_ASCII_CHARS = tuple(map(chr, range(_ASCII_LIMIT)))
 _UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
 _UTF8_CONT_MAX = 0xBF
 _UTF8_CONT_PAYLOAD = 0x3F
@@ -176,7 +177,7 @@ class _Unquoter:
         self._plus_is_space = qs or plus
         # What to write for each decoded ASCII character, its escape when it
         # is ignored or a query string delimiter
-        self._ascii_output = [chr(byte) for byte in range(_ASCII_LIMIT)]
+        self._ascii_output = list(_ASCII_CHARS)
         for ch in ignore + (QS if qs else ""):
             self._ascii_output[ord(ch)] = f"%{ord(ch):02X}"
 
