@@ -1134,7 +1134,7 @@ Query parsing
                       :func:`urllib.parse.parse_qsl`. An empty query
                       string always returns an empty list, as it does
                       with :func:`urllib.parse.parse_qsl` on Python 3.11
-                      and later; on Python 3.10 the stdlib raises
+                      and later; on Python 3.10 it raises
                       :exc:`ValueError` when *max_fields* is ``0``.
 
    :param str encoding: the encoding used to decode percent-encoded
