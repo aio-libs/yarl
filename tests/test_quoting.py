@@ -536,6 +536,56 @@ def test_space(quoter: type[_Quoter]) -> None:
     assert quoter()(s) == "%25%20A"
 
 
+@pytest.mark.parametrize(
+    ("safe", "protected"),
+    [("\u00e9", ""), ("", "\u00e9"), ("/\u65e5", "+")],
+    ids=["safe", "protected", "mixed"],
+)
+def test_quoter_non_ascii_arguments(
+    quoter: type[_Quoter], safe: str, protected: str
+) -> None:
+    with pytest.raises(
+        ValueError, match="Only safe symbols with ORD < 128 are allowed"
+    ):
+        quoter(safe=safe, protected=protected)
+
+
+@pytest.mark.parametrize(
+    ("safe", "protected", "qs", "requote", "match"),
+    [
+        ("%", "", False, True, "'%' when requote"),
+        ("", "%", False, True, "'%' when requote"),
+        ("@%", "/", True, True, "'%' when requote"),
+        (" ", "", True, False, "' ' when qs"),
+        ("", " ", True, False, "' ' when qs"),
+        ("?/ ", "=", True, True, "' ' when qs"),
+    ],
+)
+def test_quoter_conflicting_safe(
+    quoter: type[_Quoter],
+    safe: str,
+    protected: str,
+    qs: bool,
+    requote: bool,
+    match: str,
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        quoter(safe=safe, protected=protected, qs=qs, requote=requote)
+
+
+@pytest.mark.parametrize(
+    ("safe", "requote", "value", "expected"),
+    [
+        ("%", False, "%41 %", "%41%20%"),
+        (" ", True, "a b%41", "a bA"),
+    ],
+)
+def test_quoter_percent_or_space_safe(
+    quoter: type[_Quoter], safe: str, requote: bool, value: str, expected: str
+) -> None:
+    assert quoter(safe=safe, requote=requote)(value) == expected
+
+
 def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
     assert "/test/x+y%2Bz/:+%2B/" == quoter(safe="@:", protected="/+")(s)
@@ -607,6 +657,12 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             id="path_safe_non_ascii_runs",
+        ),
+        pytest.param(
+            {"ignore": "\u00e9"},
+            "a%C3%A9b%C3%A8",
+            "a%C3%A9b\u00e8",
+            id="non_ascii_ignore",
         ),
     ],
 )
