@@ -18,12 +18,12 @@ from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
 if TYPE_CHECKING:
-    from hypothesis import assume, example, given, note, reject
+    from hypothesis import assume, example, given, note
     from hypothesis import strategies as st
 else:
     pytest.importorskip("hypothesis")
 
-    from hypothesis import assume, example, given, note, reject
+    from hypothesis import assume, example, given, note
     from hypothesis import strategies as st
 
 if not NO_EXTENSIONS:
@@ -239,6 +239,17 @@ _ANY_CONFIG_IGNORE = st.text(
     ),
     max_size=4,
 )
+# qs together with an ignore it accepts, for tests that need a working unquoter
+_ACCEPTED_QS_AND_IGNORE = st.booleans().flatmap(
+    lambda qs: st.tuples(
+        st.just(qs),
+        _ANY_CONFIG_IGNORE.map(
+            lambda ignore: (
+                ignore if qs else ignore.translate({ord(c): None for c in "+&=;"})
+            )
+        ),
+    )
+)
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
@@ -273,29 +284,22 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
-    ignore=_ANY_CONFIG_IGNORE,
-    qs=st.booleans(),
+    qs_and_ignore=_ACCEPTED_QS_AND_IGNORE,
     plus=st.booleans(),
     replace_invalid=st.booleans(),
 )
 def test_unquoter_output_is_never_longer(  # type: ignore[misc]
     unquoter: type[_PyUnquoter],
     pieces: list[str],
-    ignore: str,
-    qs: bool,
+    qs_and_ignore: tuple[bool, str],
     plus: bool,
     replace_invalid: bool,
 ) -> None:
     # Unquoting never makes a string longer; implementations may rely on this
     # to size an output buffer to the input
     val = "".join(pieces)
-    try:
-        unquote = unquoter(
-            ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
-        )
-    except ValueError:
-        # Rejected configurations are checked by the C and Python match test
-        reject()
+    qs, ignore = qs_and_ignore
+    unquote = unquoter(ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid)
     assert len(unquote(val)) <= len(val)
 
 
