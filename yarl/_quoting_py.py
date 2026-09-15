@@ -28,6 +28,14 @@ class _Quoter:
         qs: bool = False,
         requote: bool = True,
     ) -> None:
+        # A safe '%' would be left alone while requoting decodes '%XX', and a
+        # safe ' ' would be left alone while qs turns it into '+'
+        if requote and ("%" in safe or "%" in protected):
+            raise ValueError(
+                "safe and protected cannot contain '%' when requote is enabled"
+            )
+        if qs and (" " in safe or " " in protected):
+            raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
         self._safe = safe
         self._protected = protected
         self._qs = qs
