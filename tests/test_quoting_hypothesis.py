@@ -217,8 +217,12 @@ _ANY_CONFIG_PIECES = st.one_of(
             "%61",
             "%C3%A9",
             "%E6%97%A5",
+            "%F0%9F%98%80",
         ]
     ),
+)
+_ANY_CONFIG_IGNORE = st.text(
+    alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日", "\U0001f600"]), max_size=4
 )
 
 
@@ -227,7 +231,7 @@ _ANY_CONFIG_PIECES = st.one_of(
 @example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
-    ignore=st.text(alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日"]), max_size=4),
+    ignore=_ANY_CONFIG_IGNORE,
     qs=st.booleans(),
     plus=st.booleans(),
 )
@@ -238,6 +242,22 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
     c_unquoter = _CUnquoter(ignore=ignore, qs=qs, plus=plus)
     py_unquoter = _PyUnquoter(ignore=ignore, qs=qs, plus=plus)
     assert c_unquoter(val) == py_unquoter(val)
+
+
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
+@given(
+    pieces=st.lists(_ANY_CONFIG_PIECES),
+    ignore=_ANY_CONFIG_IGNORE,
+    qs=st.booleans(),
+    plus=st.booleans(),
+)
+def test_unquoter_output_is_never_longer(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], pieces: list[str], ignore: str, qs: bool, plus: bool
+) -> None:
+    # Unquoting never makes a string longer; implementations may rely on this
+    # to size an output buffer to the input
+    val = "".join(pieces)
+    assert len(unquoter(ignore=ignore, qs=qs, plus=plus)(val)) <= len(val)
 
 
 _QUOTER_CONFIG_CHARS = " %+/@:?=&;#![]~-._aZ0\t\u00e9"

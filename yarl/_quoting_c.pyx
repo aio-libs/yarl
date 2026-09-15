@@ -31,54 +31,58 @@ cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
 
-DEF BUF_SIZE = 8 * 1024  # 8KiB
-DEF UCS4_BUF_SIZE = 256
+cdef enum:
+    BUF_SIZE = 8 * 1024  # 8KiB
 
-DEF ASCII_LIMIT = 0x80  # code points below this are ASCII
-# Bitmaps with one bit per ASCII character
-DEF BYTE_BITS_SHIFT = 3  # log2 of the 8 bits in a byte
-DEF BYTE_BIT_MASK = 7
-DEF ASCII_TABLE_SIZE = ASCII_LIMIT >> BYTE_BITS_SHIFT
-DEF HEX_DIGIT_BITS = 4
-DEF HEX_DIGIT_MASK = 0x0F
-DEF HEX_LETTER_VALUE = 10  # value of the hex digit A
-DEF PCT_HEX_LEN = 2  # the XX in %XX
-DEF PCT_ESCAPE_LEN = 3  # %XX
+    ASCII_LIMIT = 0x80  # code points below this are ASCII
+    # Bitmaps with one bit per ASCII character
+    BYTE_BITS_SHIFT = 3  # log2 of the 8 bits in a byte
+    BYTE_BIT_MASK = (1 << BYTE_BITS_SHIFT) - 1
+    ASCII_TABLE_SIZE = ASCII_LIMIT >> BYTE_BITS_SHIFT
+    HEX_DIGIT_BITS = 4
+    HEX_DIGIT_MASK = (1 << HEX_DIGIT_BITS) - 1
+    HEX_LETTER_VALUE = 10  # value of the hex digit A
 
-# UTF-8, see table 3-7 of the Unicode standard. The decoder is as strict as
-# CPython's.
-DEF UTF8_MAX_BYTES = 4
-DEF UTF8_2BYTE_LIMIT = 0x800  # code points below these limits use 2, 3 bytes
-DEF UTF8_3BYTE_LIMIT = 0x10000
-DEF MAX_CODE_POINT = 0x10FFFF
-DEF SURROGATE_MIN = 0xD800
-DEF SURROGATE_MAX = 0xDFFF
-DEF UTF8_CONT_MARKER = 0x80  # 10xxxxxx
-DEF UTF8_LEAD2_MARKER = 0xC0  # 110xxxxx
-DEF UTF8_LEAD3_MARKER = 0xE0  # 1110xxxx
-DEF UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
-DEF UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
-DEF UTF8_CONT_MAX = 0xBF
-DEF UTF8_CONT_PAYLOAD = 0x3F
-DEF UTF8_CONT_BITS = 6
-DEF UTF8_LEAD2_MIN = 0xC2  # 0xC0 and 0xC1 only start overlong encodings
-DEF UTF8_LEAD2_MAX = 0xDF
-DEF UTF8_LEAD2_PAYLOAD = 0x1F
-DEF UTF8_LEAD3_MIN = 0xE0
-DEF UTF8_LEAD3_MAX = 0xEF
-DEF UTF8_LEAD3_PAYLOAD = 0x0F
-DEF UTF8_LEAD4_MIN = 0xF0
-DEF UTF8_LEAD4_MAX = 0xF4  # higher lead bytes encode past U+10FFFF
-DEF UTF8_LEAD4_PAYLOAD = 0x07
-# Lead bytes that narrow the range of the byte right after them
-DEF UTF8_LEAD_E0 = 0xE0
-DEF UTF8_E0_CONT_MIN = 0xA0  # E0 80..9F would be overlong
-DEF UTF8_LEAD_ED = 0xED
-DEF UTF8_ED_CONT_MAX = 0x9F  # ED A0..BF would be a surrogate
-DEF UTF8_LEAD_F0 = 0xF0
-DEF UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
-DEF UTF8_LEAD_F4 = 0xF4
-DEF UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
+    # UTF-8, see table 3-7 of the Unicode standard
+    UTF8_2BYTE_LIMIT = 0x800  # code points below these limits use 2, 3 bytes
+    UTF8_3BYTE_LIMIT = 0x10000
+    MAX_CODE_POINT = 0x10FFFF
+    SURROGATE_MIN = 0xD800
+    SURROGATE_MAX = 0xDFFF
+    UTF8_CONT_MARKER = 0x80  # 10xxxxxx
+    UTF8_LEAD2_MARKER = 0xC0  # 110xxxxx
+    UTF8_LEAD3_MARKER = 0xE0  # 1110xxxx
+    UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
+    UTF8_CONT_BITS = 6
+    UTF8_CONT_PAYLOAD = (1 << UTF8_CONT_BITS) - 1
+
+    # Unquoter output buffer on the stack, longer inputs use the heap
+    UCS4_BUF_SIZE = 256
+    PCT_HEX_LEN = 2  # the XX in %XX
+    PCT_ESCAPE_LEN = 3  # %XX
+
+    # UTF-8 decoding, as strict as CPython's decoder
+    UTF8_MAX_BYTES = 4
+    UTF8_CONT_MIN = UTF8_CONT_MARKER  # continuation bytes are 10xxxxxx
+    UTF8_CONT_MAX = UTF8_CONT_MARKER | UTF8_CONT_PAYLOAD
+    UTF8_LEAD2_MIN = 0xC2  # 0xC0 and 0xC1 only start overlong encodings
+    UTF8_LEAD2_MAX = 0xDF
+    UTF8_LEAD2_PAYLOAD = 0x1F
+    UTF8_LEAD3_MIN = UTF8_LEAD3_MARKER
+    UTF8_LEAD3_MAX = 0xEF
+    UTF8_LEAD3_PAYLOAD = 0x0F
+    UTF8_LEAD4_MIN = UTF8_LEAD4_MARKER
+    UTF8_LEAD4_MAX = 0xF4  # higher lead bytes encode past U+10FFFF
+    UTF8_LEAD4_PAYLOAD = 0x07
+    # Lead bytes that narrow the range of the byte right after them
+    UTF8_LEAD_E0 = UTF8_LEAD3_MIN
+    UTF8_E0_CONT_MIN = 0xA0  # E0 80..9F would be overlong
+    UTF8_LEAD_ED = 0xED
+    UTF8_ED_CONT_MAX = 0x9F  # ED A0..BF would be a surrogate
+    UTF8_LEAD_F0 = UTF8_LEAD4_MIN
+    UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
+    UTF8_LEAD_F4 = UTF8_LEAD4_MAX
+    UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
 
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
