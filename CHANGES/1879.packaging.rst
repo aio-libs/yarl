@@ -1,0 +1,2 @@
+Removed the ``expandvars`` build dependency and unused environment variable
+configuration in the build backend -- by :user:`f321x`.

@@ -8,8 +8,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from sys import version_info as _python_version_tuple
 
-from expandvars import expandvars
-
 from ._compat import load_toml_from_string
 from ._transformers import (
     get_cli_kwargs_from_config,
@@ -24,7 +22,6 @@ if _t.TYPE_CHECKING:
 class Config(_t.TypedDict):
     """Data structure for the TOML config."""
 
-    env: dict[str, str]
     flags: dict[str, bool]
     kwargs: dict[str, str | dict[str, str]]
     src: list[str]
@@ -39,12 +36,7 @@ def get_local_cython_config() -> Config:
     This basically reads entries from::
 
         [tool.local.cython]
-        # Env vars provisioned during cythonize call
         src = ["src/**/*.pyx"]
-
-        [tool.local.cython.env]
-        # Env vars provisioned during cythonize call
-        LDFLAGS = "-lssh"
 
         [tool.local.cython.flags]
         # This section can contain the following booleans:
@@ -96,12 +88,7 @@ def get_local_cythonize_config() -> Config:
     This basically reads entries from::
 
         [tool.local.cythonize]
-        # Env vars provisioned during cythonize call
         src = ["src/**/*.pyx"]
-
-        [tool.local.cythonize.env]
-        # Env vars provisioned during cythonize call
-        LDFLAGS = "-lssh"
 
         [tool.local.cythonize.flags]
         # This section can contain the following booleans:
@@ -181,27 +168,19 @@ def make_cythonize_cli_args_from_config(
 
 @contextmanager
 def patched_env(
-    env: dict[str, str],
     *,
     cython_line_tracing_requested: bool,
     original_source_directory: Path | None = None,
     temporary_build_directory: Path | None = None,
 ) -> _c.Iterator[None]:
-    """Temporary set given env vars.
-
-    :param env: tmp env vars to set
-    :type env: dict
+    """Temporarily configure compiler and linker flags.
 
     :yields: None
     """
     orig_env = os.environ.copy()
-    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}  # type: ignore[no-untyped-call]
-    os.environ.update(expanded_env)
 
     os.environ['CFLAGS'] = ' '.join((
-        # First, low priority hardcoded value from the `pyproject.toml` config:
-        expanded_env.get('CFLAGS', ''),
-        # Next, add dynamically computed compiler flags:
+        # First, add dynamically computed compiler flags:
         *(
             # Debug mode:
             (
@@ -241,9 +220,7 @@ def patched_env(
     )).strip()
 
     os.environ['LDFLAGS'] = ' '.join((
-        # First, low priority hardcoded value from the `pyproject.toml` config:
-        expanded_env.get('LDFLAGS', ''),
-        # Next, add dynamically computed linker flags:
+        # First, add dynamically computed linker flags:
         *(
             # Debug mode:
             (
