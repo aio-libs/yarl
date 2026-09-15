@@ -12,7 +12,6 @@ from urllib.parse import parse_qsl, quote, quote_plus, unquote_plus
 
 import pytest
 
-import yarl
 from yarl import query_to_pairs
 from yarl._quoting import NO_EXTENSIONS
 from yarl._quoting_py import _Quoter as _PyQuoter
@@ -354,9 +353,8 @@ def test_query_to_pairs_matches_parse_qsl(  # type: ignore[misc]
 ) -> None:
     query_string = "".join(pieces)
     with pytest.MonkeyPatch.context() as monkeypatch:
-        monkeypatch.setattr(
-            yarl._parse, "UNQUOTER_PLUS", unquoter(plus=True, replace_invalid=True)
-        )
+        unquote = unquoter(plus=True, replace_invalid=True)
+        monkeypatch.setattr("yarl._parse.UNQUOTER_PLUS", unquote)
         result = query_to_pairs(query_string)
     assert result == parse_qsl(query_string, keep_blank_values=True)
 

@@ -2,7 +2,6 @@ from urllib.parse import parse_qsl, quote, quote_plus
 
 import pytest
 
-import yarl
 from yarl import URL, query_to_pairs
 from yarl._quoting import NO_EXTENSIONS
 from yarl._quoting_py import _Unquoter as _PyUnquoter
@@ -21,9 +20,8 @@ else:
 
 @pytest.fixture(params=unquoters, ids=unquoter_ids)
 def unquoter(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        yarl._parse, "UNQUOTER_PLUS", request.param(plus=True, replace_invalid=True)
-    )
+    unquote = request.param(plus=True, replace_invalid=True)
+    monkeypatch.setattr("yarl._parse.UNQUOTER_PLUS", unquote)
 
 
 QUERY_STRINGS = [
