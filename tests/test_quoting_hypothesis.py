@@ -177,6 +177,66 @@ def test_c_and_py_unquoter_match(  # type: ignore[misc]
     assert _CUnquoter(**kwargs)(val) == _PyUnquoter(**kwargs)(val)
 
 
+# Characters that change how the unquoter behaves when they are in ignore,
+# plus ones that do nothing special, so any configuration is covered and not
+# just the ones in yarl/_quoters.py.
+_CONFIG_CHARS = [
+    " ",
+    "+",
+    "%",
+    "/",
+    "@",
+    "=",
+    "&",
+    ";",
+    "?",
+    "#",
+    "!",
+    ":",
+    "\t",
+    "a",
+    "Z",
+    "0",
+]
+_ANY_CONFIG_PIECES = st.one_of(
+    _UNQUOTE_PIECES,
+    st.sampled_from(_CONFIG_CHARS),
+    st.sampled_from(
+        [
+            "%20",
+            "%40",
+            "%3F",
+            "%23",
+            "%21",
+            "%3A",
+            "%3B",
+            "%09",
+            "%61",
+            "%C3%A9",
+            "%E6%97%A5",
+        ]
+    ),
+)
+
+
+@pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
+@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False)
+@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True)
+@given(
+    pieces=st.lists(_ANY_CONFIG_PIECES),
+    ignore=st.text(alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日"]), max_size=4),
+    qs=st.booleans(),
+    plus=st.booleans(),
+)
+def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
+    pieces: list[str], ignore: str, qs: bool, plus: bool
+) -> None:
+    val = "".join(pieces)
+    c_unquoter = _CUnquoter(ignore=ignore, qs=qs, plus=plus)
+    py_unquoter = _PyUnquoter(ignore=ignore, qs=qs, plus=plus)
+    assert c_unquoter(val) == py_unquoter(val)
+
+
 # Pieces never form an incomplete or invalid UTF-8 escape (text pieces
 # exclude '%', quote() emits whole sequences, %zz is not an escape), so
 # urllib.parse.unquote_plus agrees with yarl
