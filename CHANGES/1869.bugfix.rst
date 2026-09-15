@@ -1,4 +1,0 @@
-Made the C and pure Python quoting implementations reject ``%`` in ``safe``
-or ``protected`` when requoting and a space in ``safe`` or ``protected`` for
-query strings, since the two implementations disagreed on those
-configurations -- by :user:`bdraco`.

@@ -1,2 +1,0 @@
-Removed unused string constants from the C and pure Python quoting modules
--- by :user:`bdraco`.

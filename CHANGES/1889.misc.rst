@@ -1,3 +1,0 @@
-Improved performance of the pure Python unquoter, especially for long
-strings and strings with many percent-encoded characters
--- by :user:`bdraco`.

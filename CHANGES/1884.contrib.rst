@@ -1,4 +1,0 @@
-Added CodSpeed benchmarks for unquoting long strings, decoding
-``+`` as a space, and parsing real world form bodies and large query
-strings
--- by :user:`bdraco`.

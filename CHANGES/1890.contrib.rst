@@ -1,3 +1,0 @@
-Added tests that check the C and pure Python unquoting implementations
-agree for any combination of ``ignore``, ``qs`` and ``plus``, including
-non-ASCII ``ignore`` characters -- by :user:`bdraco`.

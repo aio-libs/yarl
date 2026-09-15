@@ -14,6 +14,177 @@ Changelog
 
 .. towncrier release notes start
 
+v1.25.0
+=======
+
+*(2026-09-15)*
+
+
+Bug fixes
+---------
+
+- Made the C and pure Python quoting implementations reject ``%`` in ``safe``
+  or ``protected`` when requoting and a space in ``safe`` or ``protected`` for
+  query strings, since the two implementations disagreed on those
+  configurations -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1869`.
+
+- Made the pure Python quoter reject non-ASCII ``safe`` and ``protected``
+  characters when it is created, the same way the C extension does
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1893`.
+
+- Fixed :attr:`URL.query <yarl.URL.query>` returning empty fields and keeping
+  invalid percent-encoded UTF-8 as is, a regression in 1.19.0. It matches
+  :func:`urllib.parse.parse_qsl` again, and so do the methods built on it,
+  :meth:`~yarl.URL.update_query`, :meth:`~yarl.URL.without_query_params` and
+  :meth:`~yarl.URL.human_repr`, which also no longer double encode those escapes
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1899`.
+
+
+Features
+--------
+
+- Added :func:`~yarl.query_to_pairs`, a faster replacement for
+  :func:`urllib.parse.parse_qsl` with ``keep_blank_values=True`` that also
+  takes ``max_fields`` and ``encoding`` arguments -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1899`.
+
+
+Contributor-facing changes
+--------------------------
+
+- Added CodSpeed benchmarks for unquoting long strings, decoding
+  ``+`` as a space, and parsing real world form bodies and large query
+  strings
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1884`.
+
+- Stopped running the test suite inside the wheel build jobs outside of
+  release builds, since the test matrix already installs and tests the
+  same wheels, and added Python 3.15 and 3.15t to the test matrix so
+  those wheels stay covered. Release builds still test every wheel, and
+  all release checks in the CI workflow now use ``github.ref_type``
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1885`, :issue:`1892`.
+
+- Added tests that check the C and pure Python unquoting implementations
+  produce the same output, including long runs and invalid or incomplete
+  UTF-8 escapes, and that ``plus=True`` matches
+  :func:`urllib.parse.unquote_plus` for valid input -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1888`.
+
+- Added tests that check the C and pure Python unquoting implementations
+  agree for any combination of ``ignore``, ``qs`` and ``plus``, including
+  non-ASCII ``ignore`` characters -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1890`.
+
+- Added CodSpeed benchmarks for the pure Python unquoter, which is used
+  when the C extension is not available, and for unquoting with several
+  unsafe characters -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1891`.
+
+- Added tests that check the C and pure Python unquoting implementations
+  never return a string longer than their input -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1896`.
+
+- Added tests that pin how the C and pure Python unquoting implementations
+  handle overlong, surrogate and out of range UTF-8 escapes, the smallest and
+  largest valid sequences, and sequences interrupted by other characters, so
+  they also run when hypothesis is not installed -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1898`.
+
+
+Miscellaneous internal changes
+------------------------------
+
+- Improved performance of the C unquoter, especially for long strings and
+  strings with many percent-encoded characters -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1886`.
+
+- Improved performance of the pure Python unquoter, especially for long
+  strings and strings with many percent-encoded characters
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1889`.
+
+- Removed the unused ``unsafe`` option from the internal unquoting classes;
+  the unquoting done by :class:`~yarl.URL` never depended on it
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1894`.
+
+- Replaced magic numbers in the C quoting helpers with named constants
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1897`.
+
+- Made the internal unquoting classes, C and pure Python, reject ``ignore``
+  characters that are decoded anyway, such as letters or ``+`` when not parsing
+  a query string, instead of silently accepting them -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1900`.
+
+- Removed unused string constants from the C and pure Python quoting modules
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1901`.
+
+- Simplified the C unquoter so it writes the escapes for ignored characters
+  itself instead of calling the quoter, which also made it slightly faster
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1902`.
+
+- Made the internal unquoting classes, C and pure Python, reject non-ASCII
+  ``ignore`` characters, as the quoting classes already do for ``safe``
+  -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1903`.
+
+- Simplified the pure Python unquoter so it writes the escapes for ignored
+  characters itself instead of calling the quoter, which also made decoding
+  escaped ASCII characters faster -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1904`.
+
+
+----
+
+
 v1.24.5
 =======
 

@@ -1,3 +1,0 @@
-Added CodSpeed benchmarks for the pure Python unquoter, which is used
-when the C extension is not available, and for unquoting with several
-unsafe characters -- by :user:`bdraco`.
