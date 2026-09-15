@@ -125,16 +125,13 @@ class _Unquoter:
         self,
         *,
         ignore: str = "",
-        unsafe: str = "",
         qs: bool = False,
         plus: bool = False,
     ) -> None:
-        # unsafe may only be ascii characters, like the C unquoter
-        unsafe.encode("ascii")
         self._ignore = ignore
-        self._unsafe = unsafe
         self._qs = qs
-        self._plus = plus  # to match urllib.parse.unquote_plus
+        # '+' means a space in query strings and in urllib.parse.unquote_plus
+        self._plus_is_space = qs or plus
         self._quoter = _Quoter()
         self._qs_quoter = _Quoter(qs=True)
 
@@ -178,7 +175,7 @@ class _Unquoter:
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
                         ret.append(to_add)
-                    elif unquoted in self._unsafe or unquoted in self._ignore:
+                    elif unquoted in self._ignore:
                         to_add = self._quoter(unquoted)
                         if to_add is None:  # pragma: no cover
                             raise RuntimeError("Cannot quote None")
@@ -192,18 +189,8 @@ class _Unquoter:
                 ret.append(val[start_pct : idx - 1])
                 decoder.reset()
 
-            if ch == "+":
-                if (not self._qs and not self._plus) or ch in self._unsafe:
-                    ret.append("+")
-                else:
-                    ret.append(" ")
-                continue
-
-            if ch in self._unsafe:
-                ret.append("%")
-                h = hex(ord(ch)).upper()[2:]
-                for ch in h:
-                    ret.append(ch)
+            if ch == "+" and self._plus_is_space:
+                ret.append(" ")
                 continue
 
             ret.append(ch)
