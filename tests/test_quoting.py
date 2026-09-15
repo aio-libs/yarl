@@ -382,20 +382,18 @@ def test_quote_percent_last_character(quoter: type[_Quoter]) -> None:
     assert quoter()("%") == "%25"
 
 
-def test_unquote_unsafe(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="@")("%40") == "%40"
+@pytest.mark.parametrize("value", ["%40", "%40abc"])
+def test_unquote_ignore(unquoter: type[_Unquoter], value: str) -> None:
+    assert unquoter(ignore="@")(value) == value
 
 
-def test_unquote_unsafe2(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="@")("%40abc") == "%40abc"
-
-
-def test_unquote_unsafe3(unquoter: type[_Unquoter]) -> None:
+def test_unquote_qs_keeps_escaped_delimiters(unquoter: type[_Unquoter]) -> None:
     assert unquoter(qs=True)("a%2Bb=?%3D%2B%26") == "a%2Bb=?%3D%2B%26"
 
 
-def test_unquote_unsafe4(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="@")("a@b") == "a%40b"
+def test_unquote_unsafe_not_supported(unquoter: type[_Unquoter]) -> None:
+    with pytest.raises(TypeError):
+        unquoter(unsafe="+")  # type: ignore[call-arg]
 
 
 @pytest.mark.parametrize(
@@ -413,8 +411,8 @@ def test_unquote_non_utf8(unquoter: type[_Unquoter], input: str, expected: str) 
     assert unquoter()(input) == expected
 
 
-def test_unquote_unsafe_non_utf8(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="\n")("%e2%82%0a") == "%e2%82%0A"
+def test_unquote_ignore_non_utf8(unquoter: type[_Unquoter]) -> None:
+    assert unquoter(ignore="\n")("%e2%82%0a") == "%e2%82%0A"
 
 
 def test_unquote_plus_non_utf8(unquoter: type[_Unquoter]) -> None:
@@ -505,18 +503,6 @@ def test_unquote_without_plus_plus(unquoter: type[_Unquoter]) -> None:
     assert unquoter(plus=False)("a+b") == "a+b"
 
 
-def test_unquote_plus_to_space_unsafe(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="+", qs=True)("a+b") == "a+b"
-
-
-def test_unquote_multiple_unsafe(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="!@#$")("a!@#$b") == "a%21%40%23%24b"
-
-
-def test_unquote_explict_empty_unsafe(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(unsafe="")("a!@#$b") == "a!@#$b"
-
-
 def test_quote_qs_with_colon(quoter: type[_Quoter]) -> None:
     s = quoter(safe="=+&?/:@", qs=True)("next=http%3A//example.com/")
     assert s == "next=http://example.com/"
@@ -555,9 +541,9 @@ def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
     assert "/test/x+y%2Bz/:+%2B/" == quoter(safe="@:", protected="/+")(s)
 
 
-def test_unquoter_path_with_plus(unquoter: type[_Unquoter]) -> None:
+def test_unquote_keeps_literal_plus(unquoter: type[_Unquoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
-    assert "/test/x+y+z/:++/" == unquoter(unsafe="+")(s)
+    assert "/test/x+y+z/:++/" == unquoter()(s)
 
 
 def test_unquote_long_plain_returns_same_object(unquoter: type[_Unquoter]) -> None:
@@ -599,22 +585,16 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
             id="incomplete_sequence_then_plus",
         ),
         pytest.param(
-            {"unsafe": "/"},
-            "a" * 100 + "%e2%82/" + "b" * 100,
-            "a" * 100 + "%e2%82%2F" + "b" * 100,
-            id="incomplete_sequence_then_unsafe",
+            {"ignore": "/"},
+            "a" * 100 + "%e2%82%2F/" + "b" * 100,
+            "a" * 100 + "%e2%82%2F/" + "b" * 100,
+            id="incomplete_sequence_then_ignored",
         ),
         pytest.param(
-            {"unsafe": "+", "plus": True},
-            "a+b%2Bc/" * 100,
-            "a+b+c/" * 100,
-            id="unsafe_plus_is_kept",
-        ),
-        pytest.param(
-            {"unsafe": "%"},
-            "a" * 100 + "%zz%41",
-            "a" * 100 + "%25zzA",
-            id="unsafe_percent",
+            {"ignore": "%"},
+            "a" * 100 + "%zz%41%25",
+            "a" * 100 + "%zzA%25",
+            id="ignored_percent",
         ),
         pytest.param(
             {"qs": True},
@@ -623,7 +603,7 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
             id="qs_requote_between_runs",
         ),
         pytest.param(
-            {"ignore": "/%", "unsafe": "+"},
+            {"ignore": "/%"},
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             id="path_safe_non_ascii_runs",

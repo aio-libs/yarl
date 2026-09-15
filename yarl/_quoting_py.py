@@ -1,5 +1,4 @@
 import re
-from collections.abc import Callable
 from string import ascii_letters, ascii_lowercase, digits
 from typing import overload
 
@@ -136,27 +135,16 @@ class _Unquoter:
         self,
         *,
         ignore: str = "",
-        unsafe: str = "",
         qs: bool = False,
         plus: bool = False,
     ) -> None:
-        # to match urllib.parse.unquote_plus
-        self._plus_is_space = (qs or plus) and "+" not in unsafe
-        # '+' is never percent-encoded when it appears literally
-        self._literal_unsafe = literal_unsafe = unsafe.replace("+", "")
-        self._find_special: Callable[[str, int], int]
-        if literal_unsafe:
-            search = re.compile("[" + re.escape("%" + literal_unsafe) + "]").search
-            self._find_special = lambda s, i: (
-                -1 if (m := search(s, i)) is None else m.start()
-            )
-        else:
-            self._find_special = lambda s, i: s.find("%", i)
+        # '+' means a space in query strings and in urllib.parse.unquote_plus
+        self._plus_is_space = qs or plus
         quoter = _Quoter()
         qs_quoter = _Quoter(qs=True)
         # Decoded characters that are written back percent-encoded
         self._requote = {c: qs_quoter(c) for c in "+=&;"} if qs else {}
-        for c in unsafe + ignore:
+        for c in ignore:
             self._requote.setdefault(c, quoter(c))
 
     @overload
@@ -172,10 +160,8 @@ class _Unquoter:
             return ""
         if self._plus_is_space and "+" in val:
             val = val.replace("+", " ")
-        find_special = self._find_special
-        if (pos := find_special(val, 0)) == -1:
+        if (pos := val.find("%")) == -1:
             return val
-        literal_unsafe = self._literal_unsafe
         requote = self._requote
         ret = []
         # Bytes of an incomplete UTF-8 sequence, their escapes are still in
@@ -183,9 +169,8 @@ class _Unquoter:
         pending = bytearray()
         need = low = high = 0
         # idx is the end of the part of val already handled; plain runs
-        # between special characters are appended as a single slice.
+        # between '%' characters are appended as a single slice.
         idx = 0
-        length = len(val)
         while pos != -1:
             if pending and pos > idx:
                 ret.append(val[idx - len(pending) * 3 : idx])
@@ -193,9 +178,7 @@ class _Unquoter:
             if pos > idx:
                 ret.append(val[idx:pos])
             idx = pos + 1
-            ch = val[pos]
-            byte = _PCT_BYTES.get(val[idx : idx + 2]) if ch == "%" else None
-            if byte is not None:
+            if (byte := _PCT_BYTES.get(val[idx : idx + 2])) is not None:
                 idx += 2
                 if pending:
                     if low <= byte <= high:
@@ -222,18 +205,12 @@ class _Unquoter:
                 else:
                     ret.append(val[idx - 3 : idx])
             else:
+                # A '%' that does not start an escape is kept as is
                 if pending:
                     ret.append(val[idx - 1 - len(pending) * 3 : idx - 1])
                     pending.clear()
-                if ch in literal_unsafe:
-                    ret.append("%" + hex(ord(ch)).upper()[2:])
-                else:
-                    ret.append(ch)
-            # Escapes usually come in a row, skip the search for those
-            if idx < length and val[idx] == "%":
-                pos = idx
-            else:
-                pos = find_special(val, idx)
+                ret.append("%")
+            pos = val.find("%", idx)
 
         if pending:
             ret.append(val[idx - len(pending) * 3 : idx])
