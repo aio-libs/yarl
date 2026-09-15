@@ -28,6 +28,8 @@ class _Quoter:
         qs: bool = False,
         requote: bool = True,
     ) -> None:
+        if not safe.isascii() or not protected.isascii():
+            raise ValueError("Only safe symbols with ORD < 128 are allowed")
         self._safe = safe
         self._protected = protected
         self._qs = qs
