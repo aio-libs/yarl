@@ -1123,8 +1123,8 @@ Query parsing
 
    The result is the same as :func:`urllib.parse.parse_qsl` called with
    ``keep_blank_values=True``: empty fields are skipped, ``+`` is decoded as a
-   space and invalid percent-encoded sequences are replaced with
-   ``U+FFFD``.
+   space, percent-encoded bytes that are not valid in *encoding* are replaced
+   with ``U+FFFD`` and malformed escapes such as ``%zz`` are kept as is.
 
    :param str query_string: the query string to parse.
 
