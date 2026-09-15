@@ -606,6 +606,28 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
 
 
 @pytest.mark.parametrize(
+    ("kwargs", "value"),
+    [
+        pytest.param({"qs": True}, "%26%3D%2B%3B" * 100, id="qs_requoted_escapes"),
+        pytest.param({"ignore": "/%"}, "%2F%25" * 200, id="ignored_escapes"),
+        pytest.param(
+            {"ignore": "\u00e9\u65e5\U0001f600"},
+            "%C3%A9%E6%97%A5%F0%9F%98%80" * 100,
+            id="non_ascii_ignored_escapes",
+        ),
+        pytest.param({}, "%e2%82%ff%zz%4" * 100 + "%", id="invalid_escapes"),
+        pytest.param({"plus": True}, "+" * 300, id="plus"),
+    ],
+)
+def test_unquote_output_as_long_as_input(  # type: ignore[misc]
+    unquoter: type[_Unquoter], kwargs: dict[str, Any], value: str
+) -> None:
+    # The longest possible output is exactly as long as the input;
+    # implementations may rely on this to size an output buffer to the input
+    assert len(unquoter(**kwargs)(value)) == len(value)
+
+
+@pytest.mark.parametrize(
     ("kwargs", "input", "expected"),
     [
         pytest.param({}, "a" * 8192 + "%20", "a" * 8192 + " ", id="run_then_escape"),
