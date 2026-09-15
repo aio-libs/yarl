@@ -11,7 +11,7 @@ try:
 except ImportError:  # pragma: no branch  # only hit in cibuildwheel
     pytestmark = pytest.mark.skip("pytest-codspeed needs to be installed")
 
-from yarl._parse import query_to_pairs
+from yarl import query_to_pairs
 
 # Stable stand-ins for random tokens; standard base64 exercises %2B, %2F, %3D
 TOKEN = base64.b64encode(bytes(range(48))).decode()

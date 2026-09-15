@@ -1,0 +1,6 @@
+Fixed :attr:`URL.query <yarl.URL.query>` returning empty fields and keeping
+invalid percent-encoded UTF-8 as is, a regression in 1.19.0. It matches
+:func:`urllib.parse.parse_qsl` again, and so do the methods built on it,
+:meth:`~yarl.URL.update_query`, :meth:`~yarl.URL.without_query_params` and
+:meth:`~yarl.URL.human_repr`, which also no longer double encode those escapes
+-- by :user:`bdraco`.

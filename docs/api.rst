@@ -1112,6 +1112,50 @@ Default port substitution
       False
 
 
+Query parsing
+-------------
+
+.. function:: query_to_pairs(query_string, *, max_fields=None, encoding="utf-8")
+
+   Parse a percent-encoded query string, for example the body of an
+   ``application/x-www-form-urlencoded`` request, into a :class:`list` of
+   decoded ``(name, value)`` pairs.
+
+   The result is the same as :func:`urllib.parse.parse_qsl` called with
+   ``keep_blank_values=True``: empty fields are skipped, ``+`` is decoded as a
+   space, percent-encoded bytes that are not valid in *encoding* are replaced
+   with ``U+FFFD`` and malformed escapes such as ``%zz`` are kept as is.
+
+   :param str query_string: the query string to parse.
+
+   :param max_fields: the maximum number of fields to accept, or ``None``
+                      for no limit. Fields are counted the same way as
+                      the *max_num_fields* argument of
+                      :func:`urllib.parse.parse_qsl`. An empty query
+                      string returns an empty list on every Python
+                      version, even when *max_fields* is ``0``;
+                      :func:`urllib.parse.parse_qsl` raises
+                      :exc:`ValueError` for that case on Python 3.10 only.
+
+   :param str encoding: the encoding used to decode percent-encoded
+                        sequences.
+
+   :raises ValueError: if the query string has more than *max_fields*
+                       fields.
+
+   .. doctest::
+
+      >>> from yarl import query_to_pairs
+      >>> query_to_pairs("name=Jane+Doe&tag=a&tag=b%26c&empty=")
+      [('name', 'Jane Doe'), ('tag', 'a'), ('tag', 'b&c'), ('empty', '')]
+      >>> query_to_pairs("a=1&b=2&c=3", max_fields=2)
+      Traceback (most recent call last):
+        ...
+      ValueError: Max number of fields exceeded
+
+   .. versionadded:: 1.25
+
+
 Cache control
 -------------
 

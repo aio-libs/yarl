@@ -8,10 +8,11 @@ there via ``-m "not hypothesis"``). ``importorskip`` skips this module when
 
 import re
 from typing import TYPE_CHECKING, Any
-from urllib.parse import quote, quote_plus, unquote_plus
+from urllib.parse import parse_qsl, quote, quote_plus, unquote_plus
 
 import pytest
 
+from yarl import query_to_pairs
 from yarl._quoting import NO_EXTENSIONS
 from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
@@ -126,7 +127,7 @@ UNQUOTER_KWARGS = [
     {},
     {"ignore": "/%"},
     {"qs": True},
-    {"plus": True},
+    {"plus": True, "replace_invalid": True},
 ]
 
 _LONG_RUN = st.integers(min_value=0, max_value=5000).map(lambda n: "a" * n)
@@ -227,20 +228,25 @@ _ANY_CONFIG_IGNORE = st.text(
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
-@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False)
-@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True)
+@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False, replace_invalid=False)
+@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True, replace_invalid=True)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
     ignore=_ANY_CONFIG_IGNORE,
     qs=st.booleans(),
     plus=st.booleans(),
+    replace_invalid=st.booleans(),
 )
 def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
-    pieces: list[str], ignore: str, qs: bool, plus: bool
+    pieces: list[str], ignore: str, qs: bool, plus: bool, replace_invalid: bool
 ) -> None:
     val = "".join(pieces)
-    c_unquoter = _CUnquoter(ignore=ignore, qs=qs, plus=plus)
-    py_unquoter = _PyUnquoter(ignore=ignore, qs=qs, plus=plus)
+    c_unquoter = _CUnquoter(
+        ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
+    )
+    py_unquoter = _PyUnquoter(
+        ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
+    )
     assert c_unquoter(val) == py_unquoter(val)
 
 
@@ -250,14 +256,21 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
     ignore=_ANY_CONFIG_IGNORE,
     qs=st.booleans(),
     plus=st.booleans(),
+    replace_invalid=st.booleans(),
 )
 def test_unquoter_output_is_never_longer(  # type: ignore[misc]
-    unquoter: type[_PyUnquoter], pieces: list[str], ignore: str, qs: bool, plus: bool
+    unquoter: type[_PyUnquoter],
+    pieces: list[str],
+    ignore: str,
+    qs: bool,
+    plus: bool,
+    replace_invalid: bool,
 ) -> None:
     # Unquoting never makes a string longer; implementations may rely on this
     # to size an output buffer to the input
     val = "".join(pieces)
-    assert len(unquoter(ignore=ignore, qs=qs, plus=plus)(val)) <= len(val)
+    unquote = unquoter(ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid)
+    assert len(unquote(val)) <= len(val)
 
 
 _QUOTER_CONFIG_CHARS = " %+/@:?=&;#![]~-._aZ0\t\u00e9"
@@ -315,3 +328,60 @@ def test_unquoter_plus_matches_unquote_plus(  # type: ignore[misc]
 ) -> None:
     val = "".join(pieces)
     assert unquoter(plus=True)(val) == unquote_plus(val)
+
+
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
+@given(pieces=st.lists(_UNQUOTE_PIECES))
+def test_unquoter_replace_invalid_matches_unquote_plus(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], pieces: list[str]
+) -> None:
+    val = "".join(pieces)
+    assert unquoter(plus=True, replace_invalid=True)(val) == unquote_plus(val)
+
+
+_QUERY_PIECES = st.one_of(
+    _UNQUOTE_PIECES,
+    _NO_SURROGATE_TEXT.map(quote_plus),
+    st.sampled_from(["&", "&&", "=", "%C3", "%A9", "%E9", "%ED", "%80"]),
+)
+
+
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
+@given(pieces=st.lists(_QUERY_PIECES))
+def test_query_to_pairs_matches_parse_qsl(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], pieces: list[str]
+) -> None:
+    query_string = "".join(pieces)
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        unquote = unquoter(plus=True, replace_invalid=True)
+        monkeypatch.setattr("yarl._parse.UNQUOTER_PLUS", unquote)
+        result = query_to_pairs(query_string)
+    assert result == parse_qsl(query_string, keep_blank_values=True)
+
+
+@given(
+    pieces=st.lists(_QUERY_PIECES),
+    encoding=st.sampled_from(["utf-8", "UTF8", "latin-1", "cp1252"]),
+    max_fields=st.none() | st.integers(min_value=0, max_value=20),
+)
+def test_query_to_pairs_matches_parse_qsl_options(  # type: ignore[misc]
+    pieces: list[str], encoding: str, max_fields: int | None
+) -> None:
+    query_string = "".join(pieces)
+    # parse_qsl on Python 3.10 counts one field in an empty query string
+    assume(query_string)
+    try:
+        expected = parse_qsl(
+            query_string,
+            keep_blank_values=True,
+            encoding=encoding,
+            max_num_fields=max_fields,
+        )
+    except ValueError:
+        with pytest.raises(ValueError, match="Max number of fields exceeded"):
+            query_to_pairs(query_string, max_fields=max_fields, encoding=encoding)
+    else:
+        assert (
+            query_to_pairs(query_string, max_fields=max_fields, encoding=encoding)
+            == expected
+        )
