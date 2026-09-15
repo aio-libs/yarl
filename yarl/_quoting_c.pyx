@@ -23,10 +23,7 @@ from libc.string cimport memcpy, memset
 from string import ascii_letters, digits
 
 
-cdef str GEN_DELIMS = ":/?#[]@"
 cdef str SUB_DELIMS_WITHOUT_QS = "!$'()*,"
-cdef str SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + '+?=;'
-cdef str RESERVED = GEN_DELIMS + SUB_DELIMS
 cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'

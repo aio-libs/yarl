@@ -3,11 +3,7 @@ from string import ascii_letters, ascii_lowercase, digits, hexdigits
 from typing import overload
 
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
-BPCT_ALLOWED = {f"%{i:02X}".encode("ascii") for i in range(256)}
-GEN_DELIMS = ":/?#[]@"
 SUB_DELIMS_WITHOUT_QS = "!$'()*,"
-SUB_DELIMS = SUB_DELIMS_WITHOUT_QS + "+&=;"
-RESERVED = GEN_DELIMS + SUB_DELIMS
 UNRESERVED = ascii_letters + digits + "-._~"
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
