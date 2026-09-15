@@ -14,6 +14,26 @@ Changelog
 
 .. towncrier release notes start
 
+v1.25.1
+=======
+
+*(2026-09-15)*
+
+
+Contributor-facing changes
+--------------------------
+
+- Stopped running the test suite inside the riscv64 wheel builds; every wheel
+  for that architecture is built under emulation and the test run did not fit
+  in the job timeout -- by :user:`bdraco`.
+
+  *Related issues and pull requests on GitHub:*
+  :issue:`1906`.
+
+
+----
+
+
 v1.25.0
 =======
 
