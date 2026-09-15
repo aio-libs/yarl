@@ -1,4 +1,0 @@
-Added tests that pin how the C and pure Python unquoting implementations
-handle overlong, surrogate and out of range UTF-8 escapes, the smallest and
-largest valid sequences, and sequences interrupted by other characters, so
-they also run when hypothesis is not installed -- by :user:`bdraco`.

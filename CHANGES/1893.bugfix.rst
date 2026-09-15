@@ -1,3 +1,0 @@
-Made the pure Python quoter reject non-ASCII ``safe`` and ``protected``
-characters when it is created, the same way the C extension does
--- by :user:`bdraco`.
