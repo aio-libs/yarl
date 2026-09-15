@@ -83,6 +83,7 @@ cdef enum:
     UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
     UTF8_LEAD_F4 = UTF8_LEAD4_MAX
     UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
+    REPLACEMENT_CHARACTER = 0xFFFD
 
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
@@ -572,13 +573,17 @@ cdef class _Unquoter:
     cdef bint _has_non_ascii_ignore
     # '+' means a space in query strings and in urllib.parse.unquote_plus
     cdef bint _plus_is_space
+    # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
+    # instead of keeping them as is
+    cdef bint _replace_invalid
     # What to write for each decoded ASCII character, None to write it as is.
     cdef tuple _requote
     cdef _Quoter _quoter
 
-    def __init__(self, *, ignore="", qs=False, plus=False):
+    def __init__(self, *, ignore="", qs=False, plus=False, replace_invalid=False):
         cdef _Quoter qs_quoter = _Quoter(qs=True)
         self._ignore = ignore
+        self._replace_invalid = replace_invalid
         self._has_non_ascii_ignore = not ignore.isascii()
         self._plus_is_space = qs or plus
         self._quoter = _Quoter()
@@ -658,9 +663,9 @@ cdef class _Unquoter:
                                 )
                                 buflen = 0
                             continue
-                        # Not a valid sequence, keep the pending escapes as is
+                        # Not a valid sequence, write the pending escapes as invalid
                         # and start over from this byte.
-                        _ucs4_write_slice(
+                        self._write_invalid(
                             writer,
                             kind,
                             data,
@@ -676,13 +681,13 @@ cdef class _Unquoter:
                         buffer[0] = <uint8_t>ch
                         buflen = 1
                     else:
-                        _ucs4_write_slice(
+                        self._write_invalid(
                             writer, kind, data, idx - PCT_ESCAPE_LEN, idx
                         )
                     continue
 
             if buflen:
-                _ucs4_write_slice(
+                self._write_invalid(
                     writer, kind, data, idx - 1 - buflen * PCT_ESCAPE_LEN, idx - 1
                 )
                 buflen = 0
@@ -696,13 +701,27 @@ cdef class _Unquoter:
             return val
 
         if buflen:
-            _ucs4_write_slice(
+            self._write_invalid(
                 writer, kind, data, length - buflen * PCT_ESCAPE_LEN, length
             )
 
         return PyUnicode_FromKindAndData(
             PyUnicode_4BYTE_KIND, writer.buf, writer.pos
         )
+
+    cdef inline void _write_invalid(
+        self,
+        UCS4Writer* writer,
+        int kind,
+        const void *data,
+        Py_ssize_t start,
+        Py_ssize_t end,
+    ) noexcept:
+        """Write the escapes in val[start:end] that are not valid UTF-8."""
+        if self._replace_invalid:
+            _ucs4_write_char(writer, REPLACEMENT_CHARACTER)
+        else:
+            _ucs4_write_slice(writer, kind, data, start, end)
 
     cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
         cdef PyObject *requote

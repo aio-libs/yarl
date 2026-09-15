@@ -162,7 +162,11 @@ class _Unquoter:
         ignore: str = "",
         qs: bool = False,
         plus: bool = False,
+        replace_invalid: bool = False,
     ) -> None:
+        # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
+        # instead of keeping them as is
+        self._invalid = "\ufffd" if replace_invalid else ""
         # '+' means a space in query strings and in urllib.parse.unquote_plus
         self._plus_is_space = qs or plus
         quoter = _Quoter()
@@ -188,6 +192,7 @@ class _Unquoter:
         if (pos := val.find("%")) == -1:
             return val
         requote = self._requote
+        invalid = self._invalid
         ret = []
         # An incomplete UTF-8 sequence: the number of bytes seen, where its
         # escapes start in val and the code point decoded so far
@@ -198,8 +203,8 @@ class _Unquoter:
         while pos != -1:
             byte = _PCT_BYTES.get(val[pos + 1 : pos + 3])
             if pending and (pos > idx or byte is None or not low <= byte <= high):
-                # Not a valid sequence, keep the pending escapes as is
-                ret.append(val[pending_start:idx])
+                # Not a valid sequence, write the pending escapes as invalid
+                ret.append(invalid or val[pending_start:idx])
                 pending = 0
             if pos > idx:
                 ret.append(val[idx:pos])
@@ -227,11 +232,11 @@ class _Unquoter:
                 pending = 1
                 pending_start = pos
             else:
-                ret.append(val[pos:idx])
+                ret.append(invalid or val[pos:idx])
             pos = val.find("%", idx)
 
         if pending:
-            ret.append(val[pending_start:idx])
+            ret.append(invalid or val[pending_start:idx])
         ret.append(val[idx:])
 
         ret2 = "".join(ret)

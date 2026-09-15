@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import unquote_plus
 
 import pytest
 
@@ -450,6 +451,34 @@ def test_unquote_utf8_edges(
     unquoter: type[_Unquoter], value: str, expected: str
 ) -> None:
     assert unquoter()(value) == expected
+
+
+# The same sequences as urllib.parse.unquote, which uses CPython's decoder with
+# errors="replace": one U+FFFD for each maximal invalid subsequence.
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("%e2%82", "\ufffd", id="incomplete_at_end"),
+        pytest.param("%e2%82ac", "\ufffdac", id="incomplete_then_run"),
+        pytest.param("%e2%82%f8", "\ufffd\ufffd", id="incomplete_then_invalid"),
+        pytest.param("%e2%82%2b", "\ufffd+", id="incomplete_then_ascii_escape"),
+        pytest.param("%e2%82%e2%82%ac", "\ufffd\u20ac", id="incomplete_then_valid"),
+        pytest.param("%e2%82%zz", "\ufffd%zz", id="incomplete_then_bad_escape"),
+        pytest.param("%E2%82ab%AC", "\ufffdab\ufffd", id="interrupted_by_run"),
+        pytest.param("%C0%AF", "\ufffd\ufffd", id="overlong"),
+        pytest.param("%ED%A0%80", "\ufffd\ufffd\ufffd", id="surrogate"),
+        pytest.param("%F4%90%80%80", "\ufffd" * 4, id="above_max_code_point"),
+        pytest.param(
+            "a%C3\u00e9%A9b", "a\ufffd\u00e9\ufffdb", id="interrupted_by_char"
+        ),
+        pytest.param("%C3%A9%25%zz", "\u00e9%%zz", id="valid_and_bad_escapes"),
+    ],
+)
+def test_unquote_replace_invalid(
+    unquoter: type[_Unquoter], value: str, expected: str
+) -> None:
+    assert unquoter(replace_invalid=True)(value) == expected
+    assert unquote_plus(value) == expected
 
 
 def test_unquote_ignore_non_utf8(unquoter: type[_Unquoter]) -> None:

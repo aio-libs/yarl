@@ -13,7 +13,7 @@ from yarl._quoting_py import _Unquoter as _PyUnquoter
 QUOTER_SLASH_SAFE = _Quoter(safe="/")
 QUOTER = _Quoter()
 UNQUOTER = _Unquoter()
-UNQUOTER_PLUS = _Unquoter(plus=True)
+UNQUOTER_PLUS = _Unquoter(plus=True, replace_invalid=True)
 QS_UNQUOTER = _Unquoter(qs=True)
 PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")
 QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)

@@ -17,7 +17,8 @@ FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 UNQUOTER = _Unquoter()
 PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")
 QS_UNQUOTER = _Unquoter(qs=True)
-UNQUOTER_PLUS = _Unquoter(plus=True)  # to match urllib.parse.unquote_plus
+# to match urllib.parse.unquote_plus
+UNQUOTER_PLUS = _Unquoter(plus=True, replace_invalid=True)
 
 
 def human_quote(s: str | None, unsafe: str) -> str | None:
