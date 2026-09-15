@@ -303,6 +303,18 @@ cdef class _Quoter:
             set_bit(self._safe_table, ch)
             set_bit(self._protected_table, ch)
 
+        # Protected characters are in the safe table too. A safe '%' would be
+        # left alone while requoting decodes '%XX', and a safe ' ' would be
+        # left alone while qs turns it into '+'
+        if self._requote and bit_at(self._safe_table, c'%'):
+            raise ValueError(
+                "safe and protected cannot contain '%' when requote is enabled"
+            )
+        if self._qs and bit_at(self._safe_table, c' '):
+            raise ValueError(
+                "safe and protected cannot contain ' ' when qs is enabled"
+            )
+
     def __call__(self, val):
         if val is None:
             return None
