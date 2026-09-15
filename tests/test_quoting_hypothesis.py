@@ -40,7 +40,10 @@ else:
     unquoter_ids = ["PyUnquoter"]
 
 
-@given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
+_ASCII_TEXT = st.text(alphabet=st.characters(max_codepoint=127))
+
+
+@given(safe=_ASCII_TEXT, protected=_ASCII_TEXT, qs=st.booleans(), requote=st.booleans())
 def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
     assume(not (requote and ("%" in safe or "%" in protected)))
@@ -237,7 +240,7 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
     assert c_unquoter(val) == py_unquoter(val)
 
 
-_QUOTER_CONFIG_CHARS = " %+/@:?=&;#![]~-._aZ0\t"
+_QUOTER_CONFIG_CHARS = " %+/@:?=&;#![]~-._aZ0\t\u00e9"
 _QUOTE_PIECES = st.one_of(
     st.text(),
     st.sampled_from(list(_QUOTER_CONFIG_CHARS)),

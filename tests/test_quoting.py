@@ -537,6 +537,20 @@ def test_space(quoter: type[_Quoter]) -> None:
 
 
 @pytest.mark.parametrize(
+    ("safe", "protected"),
+    [("\u00e9", ""), ("", "\u00e9"), ("/\u65e5", "+")],
+    ids=["safe", "protected", "mixed"],
+)
+def test_quoter_non_ascii_arguments(
+    quoter: type[_Quoter], safe: str, protected: str
+) -> None:
+    with pytest.raises(
+        ValueError, match="Only safe symbols with ORD < 128 are allowed"
+    ):
+        quoter(safe=safe, protected=protected)
+
+
+@pytest.mark.parametrize(
     ("safe", "protected", "qs", "requote", "match"),
     [
         ("%", "", False, True, "'%' when requote"),

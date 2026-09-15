@@ -28,6 +28,8 @@ class _Quoter:
         qs: bool = False,
         requote: bool = True,
     ) -> None:
+        if not safe.isascii() or not protected.isascii():
+            raise ValueError("Only safe symbols with ORD < 128 are allowed")
         # A safe '%' would be left alone while requoting decodes '%XX', and a
         # safe ' ' would be left alone while qs turns it into '+'
         if requote and ("%" in safe or "%" in protected):
