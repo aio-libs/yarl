@@ -13,6 +13,7 @@ _IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
 # Every two hex digit escape body, in any case, to the byte it encodes
 _PCT_BYTES = {a + b: int(a + b, 16) for a in hexdigits for b in hexdigits}
 _ASCII_LIMIT = 0x80
+_ASCII_CHARS = tuple(map(chr, range(_ASCII_LIMIT)))
 _UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
 _UTF8_CONT_MAX = 0xBF
 _UTF8_CONT_PAYLOAD = 0x3F
@@ -174,12 +175,11 @@ class _Unquoter:
         self._invalid = "\ufffd" if replace_invalid else ""
         # '+' means a space in query strings and in urllib.parse.unquote_plus
         self._plus_is_space = qs or plus
-        quoter = _Quoter()
-        qs_quoter = _Quoter(qs=True)
-        # Decoded characters that are written back percent-encoded
-        self._requote = {c: quoter(c) for c in ignore}
-        if qs:
-            self._requote.update({c: qs_quoter(c) for c in QS})
+        # What to write for each decoded ASCII character, its escape when it
+        # is ignored or a query string delimiter
+        self._ascii_output = list(_ASCII_CHARS)
+        for ch in ignore + (QS if qs else ""):
+            self._ascii_output[ord(ch)] = f"%{ord(ch):02X}"
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -196,7 +196,7 @@ class _Unquoter:
             val = val.replace("+", " ")
         if (pos := val.find("%")) == -1:
             return val
-        requote = self._requote
+        ascii_output = self._ascii_output
         invalid = self._invalid
         ret = []
         # An incomplete UTF-8 sequence: the number of bytes seen, where its
@@ -228,8 +228,7 @@ class _Unquoter:
                     ret.append(chr(code_point))
                     pending = 0
             elif byte < _ASCII_LIMIT:
-                unquoted = chr(byte)
-                ret.append(requote.get(unquoted, unquoted))
+                ret.append(ascii_output[byte])
             elif (lead := _UTF8_LEADS.get(byte)) is not None:
                 need, low, high, payload = lead
                 code_point = byte & payload
