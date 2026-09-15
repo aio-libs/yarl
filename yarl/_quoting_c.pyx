@@ -1,9 +1,18 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
+from cpython.object cimport PyObject
+from cpython.pyport cimport PY_SSIZE_T_MAX
+from cpython.tuple cimport PyTuple_GET_ITEM
 from cpython.unicode cimport (
+    Py_UCS1,
+    Py_UCS2,
     PyUnicode_DATA,
     PyUnicode_DecodeASCII,
-    PyUnicode_DecodeUTF8Stateful,
+    PyUnicode_1BYTE_KIND,
+    PyUnicode_2BYTE_KIND,
+    PyUnicode_4BYTE_KIND,
+    PyUnicode_FindChar,
+    PyUnicode_FromKindAndData,
     PyUnicode_GET_LENGTH,
     PyUnicode_KIND,
     PyUnicode_READ,
@@ -46,6 +55,34 @@ cdef enum:
     UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
     UTF8_CONT_BITS = 6
     UTF8_CONT_PAYLOAD = (1 << UTF8_CONT_BITS) - 1
+
+    # Unquoter output buffer on the stack, longer inputs use the heap
+    UCS4_BUF_SIZE = 256
+    PCT_HEX_LEN = 2  # the XX in %XX
+    PCT_ESCAPE_LEN = 3  # %XX
+
+    # UTF-8 decoding, as strict as CPython's decoder
+    UTF8_MAX_BYTES = 4
+    UTF8_CONT_MIN = UTF8_CONT_MARKER  # continuation bytes are 10xxxxxx
+    UTF8_CONT_MAX = UTF8_CONT_MARKER | UTF8_CONT_PAYLOAD
+    UTF8_LEAD2_MIN = 0xC2  # 0xC0 and 0xC1 only start overlong encodings
+    UTF8_LEAD2_MAX = 0xDF
+    UTF8_LEAD2_PAYLOAD = 0x1F
+    UTF8_LEAD3_MIN = UTF8_LEAD3_MARKER
+    UTF8_LEAD3_MAX = 0xEF
+    UTF8_LEAD3_PAYLOAD = 0x0F
+    UTF8_LEAD4_MIN = UTF8_LEAD4_MARKER
+    UTF8_LEAD4_MAX = 0xF4  # higher lead bytes encode past U+10FFFF
+    UTF8_LEAD4_PAYLOAD = 0x07
+    # Lead bytes that narrow the range of the byte right after them
+    UTF8_LEAD_E0 = UTF8_LEAD3_MIN
+    UTF8_E0_CONT_MIN = 0xA0  # E0 80..9F would be overlong
+    UTF8_LEAD_ED = 0xED
+    UTF8_ED_CONT_MAX = 0x9F  # ED A0..BF would be a surrogate
+    UTF8_LEAD_F0 = UTF8_LEAD4_MIN
+    UTF8_F0_CONT_MIN = 0x90  # F0 80..8F would be overlong
+    UTF8_LEAD_F4 = UTF8_LEAD4_MAX
+    UTF8_F4_CONT_MAX = 0x8F  # F4 90..BF would be past U+10FFFF
 
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
@@ -395,22 +432,162 @@ cdef class _Quoter:
         return _write_utf8(writer, ch)
 
 
+cdef inline Py_ssize_t _utf8_sequence_length(uint8_t lead) noexcept:
+    if UTF8_LEAD2_MIN <= lead <= UTF8_LEAD2_MAX:
+        return 2
+    if UTF8_LEAD3_MIN <= lead <= UTF8_LEAD3_MAX:
+        return 3
+    if UTF8_LEAD4_MIN <= lead <= UTF8_LEAD4_MAX:
+        return 4
+    return 0
+
+
+cdef inline bint _utf8_is_continuation(
+    uint8_t lead, Py_ssize_t pos, Py_UCS4 byte
+) noexcept:
+    if pos == 1:
+        if lead == UTF8_LEAD_E0:
+            return UTF8_E0_CONT_MIN <= byte <= UTF8_CONT_MAX
+        if lead == UTF8_LEAD_ED:
+            return UTF8_CONT_MIN <= byte <= UTF8_ED_CONT_MAX
+        if lead == UTF8_LEAD_F0:
+            return UTF8_F0_CONT_MIN <= byte <= UTF8_CONT_MAX
+        if lead == UTF8_LEAD_F4:
+            return UTF8_CONT_MIN <= byte <= UTF8_F4_CONT_MAX
+    return UTF8_CONT_MIN <= byte <= UTF8_CONT_MAX
+
+
+cdef inline Py_UCS4 _utf8_decode(const uint8_t *buf, Py_ssize_t length) noexcept:
+    if length == 2:
+        return (
+            (buf[0] & UTF8_LEAD2_PAYLOAD) << UTF8_CONT_BITS
+            | (buf[1] & UTF8_CONT_PAYLOAD)
+        )
+    if length == 3:
+        return (
+            (buf[0] & UTF8_LEAD3_PAYLOAD) << 2 * UTF8_CONT_BITS
+            | (buf[1] & UTF8_CONT_PAYLOAD) << UTF8_CONT_BITS
+            | (buf[2] & UTF8_CONT_PAYLOAD)
+        )
+    return (
+        (buf[0] & UTF8_LEAD4_PAYLOAD) << 3 * UTF8_CONT_BITS
+        | (buf[1] & UTF8_CONT_PAYLOAD) << 2 * UTF8_CONT_BITS
+        | (buf[2] & UTF8_CONT_PAYLOAD) << UTF8_CONT_BITS
+        | (buf[3] & UTF8_CONT_PAYLOAD)
+    )
+
+
+# Output buffer for _Unquoter, holding code points instead of bytes. Unquoting
+# never makes a string longer (escapes are decoded, requoted to escapes of the
+# same length or copied as is), so the buffer is sized to the input once and
+# writes need no capacity checks.
+cdef struct UCS4Writer:
+    Py_UCS4 *buf
+    bint heap_allocated_buf
+    Py_ssize_t pos
+
+
+cdef inline int _init_ucs4_writer(
+    UCS4Writer* writer, Py_UCS4* stack_buf, Py_ssize_t length
+) except -1:
+    writer.pos = 0
+    writer.heap_allocated_buf = False
+    if length <= UCS4_BUF_SIZE:
+        writer.buf = stack_buf
+        return 0
+    if <size_t>length > <size_t>PY_SSIZE_T_MAX // sizeof(Py_UCS4):
+        writer.buf = NULL
+        PyErr_NoMemory()
+        return -1
+    writer.buf = <Py_UCS4*>PyMem_Malloc(length * sizeof(Py_UCS4))
+    if writer.buf == NULL:
+        PyErr_NoMemory()
+        return -1
+    writer.heap_allocated_buf = True
+    return 0
+
+
+cdef inline void _release_ucs4_writer(UCS4Writer* writer) noexcept:
+    if writer.heap_allocated_buf:
+        PyMem_Free(writer.buf)
+
+
+cdef inline void _ucs4_write_char(UCS4Writer* writer, Py_UCS4 ch) noexcept:
+    writer.buf[writer.pos] = ch
+    writer.pos += 1
+
+
+ctypedef fused _narrow_ucs:
+    Py_UCS1
+    Py_UCS2
+
+
+cdef inline void _widen_to_ucs4(
+    Py_UCS4 *out, const _narrow_ucs *src, Py_ssize_t length
+) noexcept:
+    # No public API copies part of a str into a UCS4 buffer; CPython widens
+    # with the same plain loop internally.
+    cdef Py_ssize_t i
+    for i in range(length):
+        out[i] = src[i]
+
+
+cdef inline void _ucs4_write_slice(
+    UCS4Writer* writer,
+    int kind,
+    const void *data,
+    Py_ssize_t start,
+    Py_ssize_t end,
+) noexcept:
+    cdef Py_ssize_t length = end - start
+    cdef Py_UCS4 *out
+    if length <= 0:
+        return
+    out = writer.buf + writer.pos
+    if kind == PyUnicode_1BYTE_KIND:
+        _widen_to_ucs4(out, <const Py_UCS1*>data + start, length)
+    elif kind == PyUnicode_2BYTE_KIND:
+        _widen_to_ucs4(out, <const Py_UCS2*>data + start, length)
+    else:
+        memcpy(out, <const Py_UCS4*>data + start, length * sizeof(Py_UCS4))
+    writer.pos += length
+
+
+cdef inline void _ucs4_write_str(UCS4Writer* writer, str s) noexcept:
+    _ucs4_write_slice(
+        writer, PyUnicode_KIND(s), PyUnicode_DATA(s), 0, PyUnicode_GET_LENGTH(s)
+    )
+
+
+cdef inline Py_ssize_t _find_percent(
+    str val, Py_ssize_t start, Py_ssize_t end
+) except -1:
+    """Return the index of the next '%' in val[start:end], or end."""
+    cdef Py_ssize_t found = PyUnicode_FindChar(val, '%', start, end, 1)
+    return end if found == -1 else found
+
+
 cdef class _Unquoter:
     cdef str _ignore
-    cdef bint _has_ignore
-    cdef bint _qs
+    cdef bint _has_non_ascii_ignore
     # '+' means a space in query strings and in urllib.parse.unquote_plus
     cdef bint _plus_is_space
+    # What to write for each decoded ASCII character, None to write it as is.
+    cdef tuple _requote
     cdef _Quoter _quoter
-    cdef _Quoter _qs_quoter
 
     def __init__(self, *, ignore="", qs=False, plus=False):
+        cdef _Quoter qs_quoter = _Quoter(qs=True)
         self._ignore = ignore
-        self._has_ignore = bool(self._ignore)
-        self._qs = qs
+        self._has_non_ascii_ignore = not ignore.isascii()
         self._plus_is_space = qs or plus
         self._quoter = _Quoter()
-        self._qs_quoter = _Quoter(qs=True)
+        self._requote = tuple(
+            qs_quoter(c) if qs and c in QS
+            else self._quoter(c) if c in ignore
+            else None
+            for c in map(chr, range(ASCII_LIMIT))
+        )
 
     def __call__(self, val):
         if val is None:
@@ -427,79 +604,115 @@ cdef class _Unquoter:
         if length == 0:
             return val
 
-        cdef list ret = []
-        cdef char buffer[4]
+        # A literal '+' never takes part in an escape sequence, so turning
+        # every '+' into a space up front gives the same result as doing it
+        # in the loop below.
+        if self._plus_is_space and PyUnicode_FindChar(val, '+', 0, length, 1) != -1:
+            val = val.replace('+', ' ')
+        # Skip straight to the first '%'; most strings have none and are
+        # returned as is.
+        cdef Py_ssize_t idx = _find_percent(val, 0, length)
+        if idx == length:
+            return val
+
+        cdef Py_UCS4 stack_buf[UCS4_BUF_SIZE]
+        cdef UCS4Writer writer
+        _init_ucs4_writer(&writer, stack_buf, length)
+        try:
+            return self._unquote_from(&writer, val, length, idx)
+        finally:
+            _release_ucs4_writer(&writer)
+
+    cdef str _unquote_from(
+        self, UCS4Writer* writer, str val, Py_ssize_t length, Py_ssize_t idx
+    ):
+        cdef uint8_t buffer[UTF8_MAX_BYTES]
         cdef Py_ssize_t buflen = 0
-        cdef Py_ssize_t consumed
-        cdef str unquoted
-        cdef Py_UCS4 ch = 0
-        cdef long chl = 0
-        cdef Py_ssize_t idx = 0
-        cdef Py_ssize_t start_pct
+        cdef Py_ssize_t need = 0
+        cdef Py_UCS4 ch
+        cdef long chl
+        cdef Py_ssize_t run_end
+        cdef bint changed = 0
         cdef int kind = PyUnicode_KIND(val)
         cdef const void *data = PyUnicode_DATA(val)
-        cdef bint changed = 0
+        _ucs4_write_slice(writer, kind, data, 0, idx)
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
-            if ch == '%' and idx <= length - 2:
-                changed = 1
+            if ch == '%' and idx <= length - PCT_HEX_LEN:
                 chl = _restore_ch(
                     PyUnicode_READ(kind, data, idx),
                     PyUnicode_READ(kind, data, idx + 1)
                 )
                 if chl != -1:
+                    changed = 1
                     ch = <Py_UCS4>chl
-                    idx += 2
-                    assert buflen < 4
-                    buffer[buflen] = ch
-                    buflen += 1
-                    try:
-                        unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
-                                                                NULL, &consumed)
-                    except UnicodeDecodeError:
-                        start_pct = idx - buflen * 3
-                        buffer[0] = ch
-                        buflen = 1
-                        ret.append(val[start_pct : idx - 3])
-                        try:
-                            unquoted = PyUnicode_DecodeUTF8Stateful(buffer, buflen,
-                                                                    NULL, &consumed)
-                        except UnicodeDecodeError:
-                            buflen = 0
-                            ret.append(val[idx - 3 : idx])
+                    idx += PCT_HEX_LEN
+                    if buflen:
+                        if _utf8_is_continuation(buffer[0], buflen, ch):
+                            buffer[buflen] = <uint8_t>ch
+                            buflen += 1
+                            if buflen == need:
+                                self._write_unquoted(
+                                    writer, _utf8_decode(buffer, buflen)
+                                )
+                                buflen = 0
                             continue
-                    if not unquoted:
-                        assert consumed == 0
+                        # Not a valid sequence, keep the pending escapes as is
+                        # and start over from this byte.
+                        _ucs4_write_slice(
+                            writer,
+                            kind,
+                            data,
+                            idx - PCT_ESCAPE_LEN - buflen * PCT_ESCAPE_LEN,
+                            idx - PCT_ESCAPE_LEN,
+                        )
+                        buflen = 0
+                    if ch < ASCII_LIMIT:
+                        self._write_unquoted(writer, ch)
                         continue
-                    assert consumed == buflen
-                    buflen = 0
-                    if self._qs and unquoted in '+=&;':
-                        ret.append(self._qs_quoter(unquoted))
-                    elif self._has_ignore and unquoted in self._ignore:
-                        ret.append(self._quoter(unquoted))
+                    need = _utf8_sequence_length(<uint8_t>ch)
+                    if need:
+                        buffer[0] = <uint8_t>ch
+                        buflen = 1
                     else:
-                        ret.append(unquoted)
+                        _ucs4_write_slice(
+                            writer, kind, data, idx - PCT_ESCAPE_LEN, idx
+                        )
                     continue
-                else:
-                    ch = '%'
 
             if buflen:
-                start_pct = idx - 1 - buflen * 3
-                ret.append(val[start_pct : idx - 1])
+                _ucs4_write_slice(
+                    writer, kind, data, idx - 1 - buflen * PCT_ESCAPE_LEN, idx - 1
+                )
                 buflen = 0
 
-            if ch == '+' and self._plus_is_space:
-                changed = 1
-                ret.append(' ')
-                continue
-
-            ret.append(ch)
+            # Copy everything up to the next '%' in one go.
+            run_end = _find_percent(val, idx, length)
+            _ucs4_write_slice(writer, kind, data, idx - 1, run_end)
+            idx = run_end
 
         if not changed:
             return val
 
         if buflen:
-            ret.append(val[length - buflen * 3 : length])
+            _ucs4_write_slice(
+                writer, kind, data, length - buflen * PCT_ESCAPE_LEN, length
+            )
 
-        return ''.join(ret)
+        return PyUnicode_FromKindAndData(
+            PyUnicode_4BYTE_KIND, writer.buf, writer.pos
+        )
+
+    cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
+        cdef PyObject *requote
+        if ch < ASCII_LIMIT:
+            requote = PyTuple_GET_ITEM(self._requote, ch)
+            if requote != <PyObject*>None:
+                _ucs4_write_str(writer, <str>requote)
+                return 0
+        elif self._has_non_ascii_ignore and ch in self._ignore:
+            _ucs4_write_str(writer, self._quoter(chr(ch)))
+            return 0
+        _ucs4_write_char(writer, ch)
+        return 0

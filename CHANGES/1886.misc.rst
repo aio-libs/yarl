@@ -1,0 +1,2 @@
+Improved performance of the C unquoter, especially for long strings and
+strings with many percent-encoded characters -- by :user:`bdraco`.
