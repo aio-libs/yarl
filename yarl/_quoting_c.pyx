@@ -1,6 +1,7 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
 from cpython.object cimport PyObject
+from cpython.pyport cimport PY_SSIZE_T_MAX
 from cpython.tuple cimport PyTuple_GET_ITEM
 from cpython.unicode cimport (
     Py_UCS1,
@@ -487,6 +488,9 @@ cdef inline int _ucs4_reserve(UCS4Writer* writer, Py_ssize_t extra) except -1:
         return 0
     if size < writer.size * 2:
         size = writer.size * 2
+    if <size_t>size > <size_t>PY_SSIZE_T_MAX // sizeof(Py_UCS4):
+        PyErr_NoMemory()
+        return -1
     if writer.heap_allocated_buf:
         buf = <Py_UCS4*>PyMem_Realloc(writer.buf, size * sizeof(Py_UCS4))
     else:
@@ -578,7 +582,7 @@ cdef class _Unquoter:
         self._plus_is_space = qs or plus
         self._quoter = _Quoter()
         self._requote = tuple(
-            qs_quoter(c) if qs and c in '+=&;'
+            qs_quoter(c) if qs and c in QS
             else self._quoter(c) if c in ignore
             else None
             for c in map(chr, range(ASCII_LIMIT))
@@ -615,7 +619,8 @@ cdef class _Unquoter:
         _init_ucs4_writer(&writer, stack_buf)
         try:
             if length > UCS4_BUF_SIZE:
-                # The output is rarely longer than the input
+                # The output is never longer than the input: escapes are
+                # decoded, requoted to the same escapes or copied as is
                 _ucs4_reserve(&writer, length)
             return self._unquote_from(&writer, val, length, idx)
         finally:
@@ -626,8 +631,9 @@ cdef class _Unquoter:
     ):
         cdef uint8_t buffer[UTF8_MAX_BYTES]
         cdef Py_ssize_t buflen = 0
-        cdef Py_UCS4 ch = 0
-        cdef long chl = 0
+        cdef Py_ssize_t need = 0
+        cdef Py_UCS4 ch
+        cdef long chl
         cdef Py_ssize_t run_end
         cdef bint changed = 0
         cdef int kind = PyUnicode_KIND(val)
@@ -649,7 +655,7 @@ cdef class _Unquoter:
                         if _utf8_is_continuation(buffer[0], buflen, ch):
                             buffer[buflen] = <uint8_t>ch
                             buflen += 1
-                            if buflen == _utf8_sequence_length(buffer[0]):
+                            if buflen == need:
                                 self._write_unquoted(
                                     writer, _utf8_decode(buffer, buflen)
                                 )
@@ -667,7 +673,9 @@ cdef class _Unquoter:
                         buflen = 0
                     if ch < ASCII_LIMIT:
                         self._write_unquoted(writer, ch)
-                    elif _utf8_sequence_length(<uint8_t>ch):
+                        continue
+                    need = _utf8_sequence_length(<uint8_t>ch)
+                    if need:
                         buffer[0] = <uint8_t>ch
                         buflen = 1
                     else:
