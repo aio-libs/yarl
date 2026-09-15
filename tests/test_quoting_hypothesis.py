@@ -45,10 +45,10 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
     _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
-@given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
-def test_fuzz__PyUnquoter(ignore: str, unsafe: str, qs: bool) -> None:  # type: ignore[misc]
+@given(ignore=st.text(), qs=st.booleans())
+def test_fuzz__PyUnquoter(ignore: str, qs: bool) -> None:  # type: ignore[misc]
     """Verify that _PyUnquoter can be instantiated with any valid arguments."""
-    _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
+    _PyUnquoter(ignore=ignore, qs=qs)
 
 
 @example(text_input="0")
@@ -107,8 +107,8 @@ def test_quote_unquote_parameter_path_safe(  # type: ignore[misc]
     text_input: str,
 ) -> None:
     quote = quoter()
-    unquote = unquoter(ignore="/%", unsafe="+")
-    assume("+" not in text_input and "/" not in text_input)
+    unquote = unquoter(ignore="/%")
+    assume("/" not in text_input)
     text_quoted = quote(text_input)
     note(f"text_quoted={text_quoted!r}")
     text_output = unquote(text_quoted)
@@ -118,8 +118,7 @@ def test_quote_unquote_parameter_path_safe(  # type: ignore[misc]
 # The unquoter configurations used by yarl itself, see yarl/_quoters.py
 UNQUOTER_KWARGS = [
     {},
-    {"unsafe": "+"},
-    {"ignore": "/%", "unsafe": "+"},
+    {"ignore": "/%"},
     {"qs": True},
     {"plus": True},
 ]

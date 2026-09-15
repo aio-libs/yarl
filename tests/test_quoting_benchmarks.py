@@ -14,7 +14,7 @@ QUOTER = _Quoter()
 UNQUOTER = _Unquoter()
 UNQUOTER_PLUS = _Unquoter(plus=True)
 QS_UNQUOTER = _Unquoter(qs=True)
-PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%", unsafe="+")
+PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")
 QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
 PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
 
