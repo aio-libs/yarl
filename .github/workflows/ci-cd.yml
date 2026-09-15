@@ -249,7 +249,7 @@ jobs:
         - runner-vm-os: ubuntu-latest
           tag: >-
            ${{
-           github.ref_type != 'tag'
+           (github.event_name != 'push' || github.ref_type != 'tag')
            && 'musllinux' || 'none'
            }}
         # On PRs and non-tag pushes, skip the native windows-on-arm runner —
@@ -258,7 +258,7 @@ jobs:
         # and are on the critical path. Tag releases still build them.
         - runner-vm-os: >-
            ${{
-           github.ref_type != 'tag'
+           (github.event_name != 'push' || github.ref_type != 'tag')
            && 'windows-11-arm' || 'none'
            }}
           tag: ''
@@ -286,7 +286,7 @@ jobs:
       # build arches the `test` job never installs, so they still test here.
       environment-variables: |-
         CIBW_ARCHS_MACOS=${{
-          github.ref_type == 'tag'
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'x86_64 arm64 universal2'
           || 'arm64'
         }}
@@ -298,7 +298,7 @@ jobs:
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
         with-cython-tracing=${{
-          github.ref_type == 'tag'
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'false'
           || 'true'
         }}
@@ -306,7 +306,7 @@ jobs:
 
         CIBW_SKIP<<EOF
         ${{
-          github.ref_type != 'tag'
+          (github.event_name != 'push' || github.ref_type != 'tag')
           && '*_i686
           *-macosx_universal2
           *-musllinux_*
@@ -318,7 +318,7 @@ jobs:
 
         CIBW_TEST_SKIP<<EOF
         ${{
-          github.ref_type != 'tag'
+          (github.event_name != 'push' || github.ref_type != 'tag')
           && '*'
           || ''
         }}
@@ -441,7 +441,7 @@ jobs:
     - name: Produce the C-files for the Coverage.py Cython plugin
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
-        && github.ref_type != 'tag'
+        && (github.event_name != 'push' || github.ref_type != 'tag')
       env:
         PYTHONPATH: packaging/
       run: |
@@ -453,7 +453,7 @@ jobs:
     - name: Disable the Cython.Coverage Produce plugin
       if: >-  # Only works if the dists were built with line tracing
         matrix.no-extensions
-        || github.ref_type == 'tag'
+        || (github.event_name == 'push' && github.ref_type == 'tag')
       run: |
         set -eEuo pipefail
         sed -i.bak 's/^\s\{2\}Cython\.Coverage$//g' .coveragerc
@@ -510,7 +510,7 @@ jobs:
   benchmark-src:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
       ⚡ Benchmark${{ '' }}
-    if: github.ref_type != 'tag'
+    if: github.event_name != 'push' || github.ref_type != 'tag'
     needs:
     - build  # transitive, ensures dists are built
     - pre-setup  # transitive, for accessing settings
@@ -527,7 +527,7 @@ jobs:
   benchmark-prebuilt:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
       ⚡ Benchmark${{ '' }}
-    if: github.ref_type == 'tag'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     needs:
     - build  # transitive, ensures dists are built
     - build-wheels-for-tested-arches
@@ -583,7 +583,7 @@ jobs:
     timeout-minutes: 1
     needs: test-summary
     # Run only on pushing a tag
-    if: github.ref_type == 'tag'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     steps:
     - name: Dummy
       run: |
@@ -658,7 +658,7 @@ jobs:
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
         with-cython-tracing=${{
-          github.ref_type == 'tag'
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'false'
           || 'true'
         }}
