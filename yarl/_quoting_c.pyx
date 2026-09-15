@@ -554,32 +554,32 @@ cdef inline int _ucs4_write_str(UCS4Writer* writer, str s) except -1:
     )
 
 
+cdef inline Py_ssize_t _find_percent(
+    str val, Py_ssize_t start, Py_ssize_t end
+) except -1:
+    """Return the index of the next '%' in val[start:end], or end."""
+    cdef Py_ssize_t found = PyUnicode_FindChar(val, '%', start, end, 1)
+    return end if found == -1 else found
+
+
 cdef class _Unquoter:
     cdef str _ignore
     cdef bint _has_non_ascii_ignore
-    cdef bint _plus_is_space  # to match urllib.parse.unquote_plus
-    # '%' followed by the unsafe characters, except '+' which is never
-    # percent-encoded when it appears literally.
-    cdef bytes _special
-    cdef const unsigned char *_special_char
-    cdef Py_ssize_t _special_len
+    # '+' means a space in query strings and in urllib.parse.unquote_plus
+    cdef bint _plus_is_space
     # What to write for each decoded ASCII character, None to write it as is.
     cdef tuple _requote
     cdef _Quoter _quoter
 
-    def __init__(self, *, ignore="", unsafe="", qs=False, plus=False):
+    def __init__(self, *, ignore="", qs=False, plus=False):
         cdef _Quoter qs_quoter = _Quoter(qs=True)
         self._ignore = ignore
         self._has_non_ascii_ignore = not ignore.isascii()
-        self._plus_is_space = (qs or plus) and '+' not in unsafe
-        # unsafe may only be ascii characters
-        self._special = ('%' + unsafe.replace('+', '')).encode('ascii')
-        self._special_char = self._special
-        self._special_len = len(self._special)
+        self._plus_is_space = qs or plus
         self._quoter = _Quoter()
         self._requote = tuple(
             qs_quoter(c) if qs and c in '+=&;'
-            else self._quoter(c) if c in unsafe or c in ignore
+            else self._quoter(c) if c in ignore
             else None
             for c in map(chr, range(ASCII_LIMIT))
         )
@@ -604,9 +604,9 @@ cdef class _Unquoter:
         # in the loop below.
         if self._plus_is_space and PyUnicode_FindChar(val, '+', 0, length, 1) != -1:
             val = val.replace('+', ' ')
-        # Skip straight to the first character that may need rewriting;
-        # most strings have none and are returned as is.
-        cdef Py_ssize_t idx = self._find_special(val, 0, length)
+        # Skip straight to the first '%'; most strings have none and are
+        # returned as is.
+        cdef Py_ssize_t idx = _find_percent(val, 0, length)
         if idx == length:
             return val
 
@@ -682,15 +682,8 @@ cdef class _Unquoter:
                 )
                 buflen = 0
 
-            if self._is_literal_unsafe(ch):
-                changed = 1
-                _ucs4_write_char(writer, '%')
-                _ucs4_write_str(writer, hex(ord(ch)).upper()[2:])
-                continue
-
-            # Copy everything up to the next character that may need
-            # rewriting in one go.
-            run_end = self._find_special(val, idx, length)
+            # Copy everything up to the next '%' in one go.
+            run_end = _find_percent(val, idx, length)
             _ucs4_write_slice(writer, kind, data, idx - 1, run_end)
             idx = run_end
 
@@ -715,26 +708,3 @@ cdef class _Unquoter:
         elif self._has_non_ascii_ignore and ch in self._ignore:
             return _ucs4_write_str(writer, self._quoter(chr(ch)))
         return _ucs4_write_char(writer, ch)
-
-    cdef inline Py_ssize_t _find_special(
-        self, str val, Py_ssize_t start, Py_ssize_t end
-    ) except -1:
-        """Return the index of the next '%' or unsafe character, or end."""
-        cdef Py_ssize_t found
-        cdef Py_ssize_t i
-        # Each search looks for a single character, so a hit cannot return
-        # right away; the search for another character may still find an
-        # earlier match. Narrowing end limits those searches to before the hit.
-        # For the unquoters in _quoters.py this is only the search for '%'.
-        for i in range(self._special_len):
-            found = PyUnicode_FindChar(val, self._special_char[i], start, end, 1)
-            if found != -1:
-                end = found
-        return end
-
-    cdef inline bint _is_literal_unsafe(self, Py_UCS4 ch) noexcept:
-        cdef Py_ssize_t i
-        for i in range(1, self._special_len):
-            if ch == self._special_char[i]:
-                return True
-        return False
