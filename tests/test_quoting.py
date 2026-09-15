@@ -550,6 +550,42 @@ def test_quoter_non_ascii_arguments(
         quoter(safe=safe, protected=protected)
 
 
+@pytest.mark.parametrize(
+    ("safe", "protected", "qs", "requote", "match"),
+    [
+        ("%", "", False, True, "'%' when requote"),
+        ("", "%", False, True, "'%' when requote"),
+        ("@%", "/", True, True, "'%' when requote"),
+        (" ", "", True, False, "' ' when qs"),
+        ("", " ", True, False, "' ' when qs"),
+        ("?/ ", "=", True, True, "' ' when qs"),
+    ],
+)
+def test_quoter_conflicting_safe(
+    quoter: type[_Quoter],
+    safe: str,
+    protected: str,
+    qs: bool,
+    requote: bool,
+    match: str,
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        quoter(safe=safe, protected=protected, qs=qs, requote=requote)
+
+
+@pytest.mark.parametrize(
+    ("safe", "requote", "value", "expected"),
+    [
+        ("%", False, "%41 %", "%41%20%"),
+        (" ", True, "a b%41", "a bA"),
+    ],
+)
+def test_quoter_percent_or_space_safe(
+    quoter: type[_Quoter], safe: str, requote: bool, value: str, expected: str
+) -> None:
+    assert quoter(safe=safe, requote=requote)(value) == expected
+
+
 def test_quoter_path_with_plus(quoter: type[_Quoter]) -> None:
     s = "/test/x+y%2Bz/:+%2B/"
     assert "/test/x+y%2Bz/:+%2B/" == quoter(safe="@:", protected="/+")(s)
