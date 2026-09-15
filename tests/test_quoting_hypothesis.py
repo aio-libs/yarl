@@ -6,6 +6,7 @@ there via ``-m "not hypothesis"``). ``importorskip`` skips this module when
 ``hypothesis`` is not installed.
 """
 
+import re
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote, quote_plus, unquote_plus
 
@@ -39,9 +40,14 @@ else:
     unquoter_ids = ["PyUnquoter"]
 
 
-@given(safe=st.text(), protected=st.text(), qs=st.booleans(), requote=st.booleans())
+_ASCII_TEXT = st.text(alphabet=st.characters(max_codepoint=127))
+
+
+@given(safe=_ASCII_TEXT, protected=_ASCII_TEXT, qs=st.booleans(), requote=st.booleans())
 def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
+    assume(not (requote and ("%" in safe or "%" in protected)))
+    assume(not (qs and (" " in safe or " " in protected)))
     _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
@@ -172,6 +178,102 @@ def test_c_and_py_unquoter_match(  # type: ignore[misc]
 ) -> None:
     val = "".join(pieces)
     assert _CUnquoter(**kwargs)(val) == _PyUnquoter(**kwargs)(val)
+
+
+# Characters that change how the unquoter behaves when they are in ignore,
+# plus ones that do nothing special, so any configuration is covered and not
+# just the ones in yarl/_quoters.py.
+_CONFIG_CHARS = [
+    " ",
+    "+",
+    "%",
+    "/",
+    "@",
+    "=",
+    "&",
+    ";",
+    "?",
+    "#",
+    "!",
+    ":",
+    "\t",
+    "a",
+    "Z",
+    "0",
+]
+_ANY_CONFIG_PIECES = st.one_of(
+    _UNQUOTE_PIECES,
+    st.sampled_from(_CONFIG_CHARS),
+    st.sampled_from(
+        [
+            "%20",
+            "%40",
+            "%3F",
+            "%23",
+            "%21",
+            "%3A",
+            "%3B",
+            "%09",
+            "%61",
+            "%C3%A9",
+            "%E6%97%A5",
+        ]
+    ),
+)
+
+
+@pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
+@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False)
+@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True)
+@given(
+    pieces=st.lists(_ANY_CONFIG_PIECES),
+    ignore=st.text(alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日"]), max_size=4),
+    qs=st.booleans(),
+    plus=st.booleans(),
+)
+def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
+    pieces: list[str], ignore: str, qs: bool, plus: bool
+) -> None:
+    val = "".join(pieces)
+    c_unquoter = _CUnquoter(ignore=ignore, qs=qs, plus=plus)
+    py_unquoter = _PyUnquoter(ignore=ignore, qs=qs, plus=plus)
+    assert c_unquoter(val) == py_unquoter(val)
+
+
+_QUOTER_CONFIG_CHARS = " %+/@:?=&;#![]~-._aZ0\t\u00e9"
+_QUOTE_PIECES = st.one_of(
+    st.text(),
+    st.sampled_from(list(_QUOTER_CONFIG_CHARS)),
+    _QUOTED,
+    st.sampled_from(
+        ["%41", "%4a", "%2f", "%2F", "%25", "%20", "%2B", "%zz", "%", "%e2%82"]
+    ),
+)
+
+
+@pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
+@example(pieces=["%41", " %"], safe="%", protected="", qs=False, requote=True)
+@example(pieces=["%41", " %"], safe="%", protected="", qs=False, requote=False)
+@given(
+    pieces=st.lists(_QUOTE_PIECES),
+    safe=st.text(alphabet=_QUOTER_CONFIG_CHARS, max_size=4),
+    protected=st.text(alphabet=_QUOTER_CONFIG_CHARS, max_size=4),
+    qs=st.booleans(),
+    requote=st.booleans(),
+)
+def test_c_and_py_quoter_match_any_config(  # type: ignore[misc]
+    pieces: list[str], safe: str, protected: str, qs: bool, requote: bool
+) -> None:
+    val = "".join(pieces)
+    try:
+        py_quoter = _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    except ValueError as exc:
+        # Both implementations reject the same configurations
+        with pytest.raises(ValueError, match=re.escape(str(exc))):
+            _CQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+        return
+    c_quoter = _CQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    assert c_quoter(val) == py_quoter(val)
 
 
 # Pieces never form an incomplete or invalid UTF-8 escape (text pieces
