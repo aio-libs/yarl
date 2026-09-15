@@ -1,5 +1,5 @@
 import re
-from string import ascii_letters, ascii_lowercase, digits
+from string import ascii_letters, ascii_lowercase, digits, hexdigits
 from typing import overload
 
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
@@ -13,21 +13,36 @@ ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
 
 _IS_HEX = re.compile(b"[A-Z0-9][A-Z0-9]")
-_HEXDIGITS = "0123456789abcdefABCDEF"
 # Every two hex digit escape body, in any case, to the byte it encodes
-_PCT_BYTES = {a + b: int(a + b, 16) for a in _HEXDIGITS for b in _HEXDIGITS}
+_PCT_BYTES = {a + b: int(a + b, 16) for a in hexdigits for b in hexdigits}
+_ASCII_LIMIT = 0x80
+_UTF8_CONT_MIN = 0x80  # continuation bytes are 10xxxxxx
+_UTF8_CONT_MAX = 0xBF
+_UTF8_CONT_PAYLOAD = 0x3F
+_UTF8_CONT_BITS = 6
+_UTF8_LEAD2_PAYLOAD = 0x1F
+_UTF8_LEAD3_PAYLOAD = 0x0F
+_UTF8_LEAD4_PAYLOAD = 0x07
 # Strict UTF-8 as accepted by CPython's decoder, see table 3-7 of the Unicode
-# standard: lead byte to the sequence length and the range of the second byte.
+# standard: lead byte to the sequence length, the range of the second byte and
+# the payload bits of the lead byte.
 _UTF8_LEADS = {
-    **{lead: (2, 0x80, 0xBF) for lead in range(0xC2, 0xE0)},
-    0xE0: (3, 0xA0, 0xBF),
-    **{lead: (3, 0x80, 0xBF) for lead in range(0xE1, 0xF0)},
-    0xED: (3, 0x80, 0x9F),
-    0xF0: (4, 0x90, 0xBF),
-    0xF1: (4, 0x80, 0xBF),
-    0xF2: (4, 0x80, 0xBF),
-    0xF3: (4, 0x80, 0xBF),
-    0xF4: (4, 0x80, 0x8F),
+    **{
+        lead: (2, _UTF8_CONT_MIN, _UTF8_CONT_MAX, _UTF8_LEAD2_PAYLOAD)
+        for lead in range(0xC2, 0xE0)  # 0xC0 and 0xC1 only start overlong forms
+    },
+    0xE0: (3, 0xA0, _UTF8_CONT_MAX, _UTF8_LEAD3_PAYLOAD),  # E0 80..9F is overlong
+    **{
+        lead: (3, _UTF8_CONT_MIN, _UTF8_CONT_MAX, _UTF8_LEAD3_PAYLOAD)
+        for lead in (*range(0xE1, 0xED), 0xEE, 0xEF)
+    },
+    0xED: (3, _UTF8_CONT_MIN, 0x9F, _UTF8_LEAD3_PAYLOAD),  # ED A0..BF is a surrogate
+    0xF0: (4, 0x90, _UTF8_CONT_MAX, _UTF8_LEAD4_PAYLOAD),  # F0 80..8F is overlong
+    **{
+        lead: (4, _UTF8_CONT_MIN, _UTF8_CONT_MAX, _UTF8_LEAD4_PAYLOAD)
+        for lead in range(0xF1, 0xF4)
+    },
+    0xF4: (4, _UTF8_CONT_MIN, 0x8F, _UTF8_LEAD4_PAYLOAD),  # F4 90..BF is past U+10FFFF
 }
 
 
@@ -143,9 +158,9 @@ class _Unquoter:
         quoter = _Quoter()
         qs_quoter = _Quoter(qs=True)
         # Decoded characters that are written back percent-encoded
-        self._requote = {c: qs_quoter(c) for c in "+=&;"} if qs else {}
-        for c in ignore:
-            self._requote.setdefault(c, quoter(c))
+        self._requote = {c: quoter(c) for c in ignore}
+        if qs:
+            self._requote.update({c: qs_quoter(c) for c in "+=&;"})
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -164,56 +179,49 @@ class _Unquoter:
             return val
         requote = self._requote
         ret = []
-        # Bytes of an incomplete UTF-8 sequence, their escapes are still in
-        # val right before idx
-        pending = bytearray()
-        need = low = high = 0
+        # An incomplete UTF-8 sequence: the number of bytes seen, where its
+        # escapes start in val and the code point decoded so far
+        pending = pending_start = code_point = need = low = high = 0
         # idx is the end of the part of val already handled; plain runs
         # between '%' characters are appended as a single slice.
         idx = 0
         while pos != -1:
-            if pending and pos > idx:
-                ret.append(val[idx - len(pending) * 3 : idx])
-                pending.clear()
+            byte = _PCT_BYTES.get(val[pos + 1 : pos + 3])
+            if pending and (pos > idx or byte is None or not low <= byte <= high):
+                # Not a valid sequence, keep the pending escapes as is
+                ret.append(val[pending_start:idx])
+                pending = 0
             if pos > idx:
                 ret.append(val[idx:pos])
-            idx = pos + 1
-            if (byte := _PCT_BYTES.get(val[idx : idx + 2])) is not None:
-                idx += 2
-                if pending:
-                    if low <= byte <= high:
-                        pending.append(byte)
-                        low, high = 0x80, 0xBF
-                        if len(pending) == need:
-                            unquoted = pending.decode()
-                            ret.append(requote.get(unquoted, unquoted))
-                            pending.clear()
-                        byte = None
-                    else:
-                        # Not a valid sequence, flush the pending escapes and
-                        # start over from this byte
-                        ret.append(val[idx - 3 - len(pending) * 3 : idx - 3])
-                        pending.clear()
-                if byte is None:
-                    pass
-                elif byte < 0x80:
-                    unquoted = chr(byte)
+            if byte is None:
+                # A '%' that does not start an escape is kept as is, as part
+                # of the next plain run
+                idx = pos
+                pos = val.find("%", pos + 1)
+                continue
+            idx = pos + 3
+            if pending:
+                code_point = code_point << _UTF8_CONT_BITS | byte & _UTF8_CONT_PAYLOAD
+                pending += 1
+                low, high = _UTF8_CONT_MIN, _UTF8_CONT_MAX
+                if pending == need:
+                    unquoted = chr(code_point)
                     ret.append(requote.get(unquoted, unquoted))
-                elif byte in _UTF8_LEADS:
-                    need, low, high = _UTF8_LEADS[byte]
-                    pending.append(byte)
-                else:
-                    ret.append(val[idx - 3 : idx])
+                    pending = 0
+            elif byte < _ASCII_LIMIT:
+                unquoted = chr(byte)
+                ret.append(requote.get(unquoted, unquoted))
+            elif (lead := _UTF8_LEADS.get(byte)) is not None:
+                need, low, high, payload = lead
+                code_point = byte & payload
+                pending = 1
+                pending_start = pos
             else:
-                # A '%' that does not start an escape is kept as is
-                if pending:
-                    ret.append(val[idx - 1 - len(pending) * 3 : idx - 1])
-                    pending.clear()
-                ret.append("%")
+                ret.append(val[pos:idx])
             pos = val.find("%", idx)
 
         if pending:
-            ret.append(val[idx - len(pending) * 3 : idx])
+            ret.append(val[pending_start:idx])
         ret.append(val[idx:])
 
         ret2 = "".join(ret)
