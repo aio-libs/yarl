@@ -1,3 +1,4 @@
+import re
 from typing import Any
 from urllib.parse import unquote_plus
 
@@ -388,8 +389,31 @@ def test_unquote_ignore(unquoter: type[_Unquoter], value: str) -> None:
     assert unquoter(ignore="@")(value) == value
 
 
-def test_unquote_qs_keeps_escaped_delimiters(unquoter: type[_Unquoter]) -> None:
-    assert unquoter(qs=True)("a%2Bb=?%3D%2B%26") == "a%2Bb=?%3D%2B%26"
+# qs already keeps these escaped, so ignoring them too is allowed
+@pytest.mark.parametrize("ignore", ["", "+&=;"])
+def test_unquote_qs_keeps_escaped_delimiters(
+    unquoter: type[_Unquoter], ignore: str
+) -> None:
+    assert unquoter(ignore=ignore, qs=True)("a%2Bb=?%3D%2B%26") == "a%2Bb=?%3D%2B%26"
+
+
+# Requoting leaves these characters as is, so ignoring them would do nothing
+@pytest.mark.parametrize(
+    ("ignore", "qs", "rejected"),
+    [
+        ("a", True, "a"),
+        ("/!", False, "!"),
+        ("\u00e9'", True, "'"),
+        ("%+", False, "+"),
+    ],
+)
+def test_unquote_ignore_decoded_anyway(
+    unquoter: type[_Unquoter], ignore: str, qs: bool, rejected: str
+) -> None:
+    with pytest.raises(
+        ValueError, match=re.escape(f"ignore cannot contain {rejected!r}")
+    ):
+        unquoter(ignore=ignore, qs=qs)
 
 
 def test_unquote_unsafe_not_supported(unquoter: type[_Unquoter]) -> None:

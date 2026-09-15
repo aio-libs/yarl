@@ -1,0 +1,3 @@
+Made the internal unquoting classes, C and pure Python, reject ``ignore``
+characters that are decoded anyway, such as letters or ``+`` when not parsing
+a query string, instead of silently accepting them -- by :user:`bdraco`.

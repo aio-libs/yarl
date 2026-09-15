@@ -52,10 +52,22 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
     _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
+@example(ignore="/", qs=False)
+@example(ignore="/a", qs=False)
 @given(ignore=st.text(), qs=st.booleans())
-def test_fuzz__PyUnquoter(ignore: str, qs: bool) -> None:  # type: ignore[misc]
-    """Verify that _PyUnquoter can be instantiated with any valid arguments."""
-    _PyUnquoter(ignore=ignore, qs=qs)
+def test_fuzz_unquoter_ignore(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], ignore: str, qs: bool
+) -> None:
+    """Verify that the unquoter rejects exactly the ignore characters that
+    requoting leaves as is."""
+    quoter = _PyQuoter(qs=qs)
+    decoded_anyway = [ch for ch in ignore if quoter(ch) == ch]
+    if decoded_anyway:
+        with pytest.raises(ValueError, match=re.escape(repr(decoded_anyway[0]))):
+            unquoter(ignore=ignore, qs=qs)
+    else:
+        unquoter(ignore=ignore, qs=qs)
 
 
 @example(text_input="0")
@@ -222,25 +234,46 @@ _ANY_CONFIG_PIECES = st.one_of(
         ]
     ),
 )
+# Letters, digits and "!" are always rejected in ignore, so leave them out;
+# "+&=;" are still rejected without qs
 _ANY_CONFIG_IGNORE = st.text(
-    alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日", "\U0001f600"]), max_size=4
+    alphabet=st.sampled_from(
+        [*(c for c in _CONFIG_CHARS if c not in "!aZ0"), "é", "日", "\U0001f600"]
+    ),
+    max_size=4,
+)
+# qs together with an ignore it accepts, for tests that need a working unquoter
+_ACCEPTED_QS_AND_IGNORE = st.tuples(st.booleans(), _ANY_CONFIG_IGNORE).map(
+    lambda qs_and_ignore: (
+        qs_and_ignore[0],
+        qs_and_ignore[1]
+        if qs_and_ignore[0]
+        else qs_and_ignore[1].translate({ord(c): None for c in "+&=;"}),
+    )
 )
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
-@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False, replace_invalid=False)
-@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True, replace_invalid=True)
+@example(
+    pieces=["a+b%20c"], qs_and_ignore=(True, " "), plus=False, replace_invalid=False
+)
+@example(
+    pieces=["a+b%20c"], qs_and_ignore=(False, " "), plus=True, replace_invalid=True
+)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
-    ignore=_ANY_CONFIG_IGNORE,
-    qs=st.booleans(),
+    qs_and_ignore=_ACCEPTED_QS_AND_IGNORE,
     plus=st.booleans(),
     replace_invalid=st.booleans(),
 )
 def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
-    pieces: list[str], ignore: str, qs: bool, plus: bool, replace_invalid: bool
+    pieces: list[str],
+    qs_and_ignore: tuple[bool, str],
+    plus: bool,
+    replace_invalid: bool,
 ) -> None:
     val = "".join(pieces)
+    qs, ignore = qs_and_ignore
     c_unquoter = _CUnquoter(
         ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
     )
@@ -253,22 +286,21 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
-    ignore=_ANY_CONFIG_IGNORE,
-    qs=st.booleans(),
+    qs_and_ignore=_ACCEPTED_QS_AND_IGNORE,
     plus=st.booleans(),
     replace_invalid=st.booleans(),
 )
 def test_unquoter_output_is_never_longer(  # type: ignore[misc]
     unquoter: type[_PyUnquoter],
     pieces: list[str],
-    ignore: str,
-    qs: bool,
+    qs_and_ignore: tuple[bool, str],
     plus: bool,
     replace_invalid: bool,
 ) -> None:
     # Unquoting never makes a string longer; implementations may rely on this
     # to size an output buffer to the input
     val = "".join(pieces)
+    qs, ignore = qs_and_ignore
     unquote = unquoter(ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid)
     assert len(unquote(val)) <= len(val)
 

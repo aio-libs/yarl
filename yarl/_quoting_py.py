@@ -4,6 +4,7 @@ from typing import overload
 
 BASCII_LOWERCASE = ascii_lowercase.encode("ascii")
 SUB_DELIMS_WITHOUT_QS = "!$'()*,"
+QS = "+&=;"
 UNRESERVED = ascii_letters + digits + "-._~"
 ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 
@@ -83,7 +84,7 @@ class _Quoter:
         safe = self._safe
         safe += ALLOWED
         if not self._qs:
-            safe += "+&=;"
+            safe += QS
         safe += self._protected
         bsafe = safe.encode("ascii")
         idx = 0
@@ -160,6 +161,12 @@ class _Unquoter:
         plus: bool = False,
         replace_invalid: bool = False,
     ) -> None:
+        # Requoting leaves these characters as is, so they would be decoded
+        # even when they are in ignore
+        decoded_anyway = ALLOWED if qs else ALLOWED + QS
+        for ch in ignore:
+            if ch in decoded_anyway:
+                raise ValueError(f"ignore cannot contain {ch!r}, it is decoded anyway")
         # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
         # instead of keeping them as is
         self._invalid = "\ufffd" if replace_invalid else ""
@@ -170,7 +177,7 @@ class _Unquoter:
         # Decoded characters that are written back percent-encoded
         self._requote = {c: quoter(c) for c in ignore}
         if qs:
-            self._requote.update({c: qs_quoter(c) for c in "+=&;"})
+            self._requote.update({c: qs_quoter(c) for c in QS})
 
     @overload
     def __call__(self, val: str) -> str: ...
