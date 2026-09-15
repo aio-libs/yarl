@@ -368,6 +368,8 @@ def test_query_to_pairs_matches_parse_qsl_options(  # type: ignore[misc]
     pieces: list[str], encoding: str, max_fields: int | None
 ) -> None:
     query_string = "".join(pieces)
+    # parse_qsl on Python 3.10 counts one field in an empty query string
+    assume(query_string)
     try:
         expected = parse_qsl(
             query_string,

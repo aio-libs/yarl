@@ -92,7 +92,6 @@ def test_real_world_form_body() -> None:
 @pytest.mark.parametrize(
     ("query_string", "max_fields"),
     [
-        ("", 0),
         ("a=1", 1),
         ("a=1&b=2", 2),
         ("x&x&x", 3),
@@ -122,6 +121,11 @@ def test_max_fields_exceeded(query_string: str, max_fields: int) -> None:
         parse_qsl(query_string, keep_blank_values=True, max_num_fields=max_fields)
     with pytest.raises(ValueError, match="Max number of fields exceeded"):
         query_to_pairs(query_string, max_fields=max_fields)
+
+
+def test_max_fields_empty_query_string() -> None:
+    # parse_qsl on Python 3.10 raises here, later versions have no fields to count
+    assert query_to_pairs("", max_fields=0) == []
 
 
 def test_max_fields_none_is_unlimited() -> None:
