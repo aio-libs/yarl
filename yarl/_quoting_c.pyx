@@ -24,22 +24,43 @@ cdef str QS = '+&=;'
 
 DEF BUF_SIZE = 8 * 1024  # 8KiB
 
+DEF ASCII_LIMIT = 0x80  # code points below this are ASCII
+# Bitmaps with one bit per ASCII character
+DEF BYTE_BITS_SHIFT = 3  # log2 of the 8 bits in a byte
+DEF BYTE_BIT_MASK = 7
+DEF ASCII_TABLE_SIZE = ASCII_LIMIT >> BYTE_BITS_SHIFT
+DEF HEX_DIGIT_BITS = 4
+DEF HEX_DIGIT_MASK = 0x0F
+DEF HEX_LETTER_VALUE = 10  # value of the hex digit A
+
+# UTF-8, see table 3-7 of the Unicode standard
+DEF UTF8_2BYTE_LIMIT = 0x800  # code points below these limits use 2, 3 bytes
+DEF UTF8_3BYTE_LIMIT = 0x10000
+DEF MAX_CODE_POINT = 0x10FFFF
+DEF SURROGATE_MIN = 0xD800
+DEF SURROGATE_MAX = 0xDFFF
+DEF UTF8_CONT_MARKER = 0x80  # 10xxxxxx
+DEF UTF8_LEAD2_MARKER = 0xC0  # 110xxxxx
+DEF UTF8_LEAD3_MARKER = 0xE0  # 1110xxxx
+DEF UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
+DEF UTF8_CONT_PAYLOAD = 0x3F
+DEF UTF8_CONT_BITS = 6
+
+
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
-    if v < 10:
-        return <Py_UCS4>(v+0x30)  # ord('0') == 0x30
-    else:
-        return <Py_UCS4>(v+0x41-10)  # ord('A') == 0x41
+    if v < HEX_LETTER_VALUE:
+        return <Py_UCS4>(v + ord('0'))
+    return <Py_UCS4>(v - HEX_LETTER_VALUE + ord('A'))
 
 
 cdef inline int _from_hex(Py_UCS4 v) noexcept:
     if '0' <= v <= '9':
-        return <int>(v) - 0x30  # ord('0') == 0x30
-    elif 'A' <= v <= 'F':
-        return <int>(v) - 0x41 + 10  # ord('A') == 0x41
-    elif 'a' <= v <= 'f':
-        return <int>(v) - 0x61 + 10  # ord('a') == 0x61
-    else:
-        return -1
+        return <int>v - ord('0')
+    if 'A' <= v <= 'F':
+        return <int>v - ord('A') + HEX_LETTER_VALUE
+    if 'a' <= v <= 'f':
+        return <int>v - ord('a') + HEX_LETTER_VALUE
+    return -1
 
 
 cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
@@ -47,7 +68,7 @@ cdef inline int _is_lower_hex(Py_UCS4 v) noexcept:
 
 
 cdef inline bint _is_surrogate(Py_UCS4 ch) noexcept:
-    return 0xD800 <= ch <= 0xDFFF
+    return SURROGATE_MIN <= ch <= SURROGATE_MAX
 
 
 cdef inline Py_ssize_t _skip_surrogates(
@@ -60,32 +81,32 @@ cdef inline Py_ssize_t _skip_surrogates(
     return idx
 
 
-cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2):
+cdef inline long _restore_ch(Py_UCS4 d1, Py_UCS4 d2) noexcept:
     cdef int digit1 = _from_hex(d1)
     if digit1 < 0:
         return -1
     cdef int digit2 = _from_hex(d2)
     if digit2 < 0:
         return -1
-    return digit1 << 4 | digit2
+    return digit1 << HEX_DIGIT_BITS | digit2
 
 
-cdef uint8_t ALLOWED_TABLE[16]
-cdef uint8_t ALLOWED_NOTQS_TABLE[16]
+cdef uint8_t ALLOWED_TABLE[ASCII_TABLE_SIZE]
+cdef uint8_t ALLOWED_NOTQS_TABLE[ASCII_TABLE_SIZE]
 
 
 cdef inline bint bit_at(uint8_t array[], uint64_t ch) noexcept:
-    return array[ch >> 3] & (1 << (ch & 7))
+    return array[ch >> BYTE_BITS_SHIFT] & (1 << (ch & BYTE_BIT_MASK))
 
 
 cdef inline void set_bit(uint8_t array[], uint64_t ch) noexcept:
-    array[ch >> 3] |= (1 << (ch & 7))
+    array[ch >> BYTE_BITS_SHIFT] |= (1 << (ch & BYTE_BIT_MASK))
 
 
 memset(ALLOWED_TABLE, 0, sizeof(ALLOWED_TABLE))
 memset(ALLOWED_NOTQS_TABLE, 0, sizeof(ALLOWED_NOTQS_TABLE))
 
-for i in range(128):
+for i in range(ASCII_LIMIT):
     if chr(i) in ALLOWED:
         set_bit(ALLOWED_TABLE, i)
         set_bit(ALLOWED_NOTQS_TABLE, i)
@@ -145,47 +166,69 @@ cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
 cdef inline int _write_pct(Writer* writer, uint8_t ch, bint changed):
     if _write_char(writer, '%', changed) < 0:
         return -1
-    if _write_char(writer, _to_hex(<uint8_t>ch >> 4), changed) < 0:
+    if _write_char(writer, _to_hex(<uint8_t>ch >> HEX_DIGIT_BITS), changed) < 0:
         return -1
-    return _write_char(writer, _to_hex(<uint8_t>ch & 0x0f), changed)
+    return _write_char(writer, _to_hex(<uint8_t>ch & HEX_DIGIT_MASK), changed)
 
 
 cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
     cdef uint64_t utf = <uint64_t> symbol
 
-    if utf < 0x80:
+    if utf < ASCII_LIMIT:
         return _write_pct(writer, <uint8_t>utf, True)
-    elif utf < 0x800:
-        if _write_pct(writer, <uint8_t>(0xc0 | (utf >> 6)), True) < 0:
+    if utf < UTF8_2BYTE_LIMIT:
+        if _write_pct(
+            writer, <uint8_t>(UTF8_LEAD2_MARKER | (utf >> UTF8_CONT_BITS)), True
+        ) < 0:
             return -1
-        return _write_pct(writer,  <uint8_t>(0x80 | (utf & 0x3f)), True)
-    elif _is_surrogate(symbol):
+        return _write_pct(
+            writer, <uint8_t>(UTF8_CONT_MARKER | (utf & UTF8_CONT_PAYLOAD)), True
+        )
+    if _is_surrogate(symbol):
         # lone surrogate; invalid in UTF-8 so it is dropped, matching the
         # pure-Python quoter's errors="ignore" encode. Mark the writer as
         # changed so _do_quote returns the surrogate-free buffer rather than
         # the untouched input string.
         writer.changed = True
         return 0
-    elif utf < 0x10000:
-        if _write_pct(writer, <uint8_t>(0xe0 | (utf >> 12)), True) < 0:
+    if utf < UTF8_3BYTE_LIMIT:
+        if _write_pct(
+            writer, <uint8_t>(UTF8_LEAD3_MARKER | (utf >> 2 * UTF8_CONT_BITS)), True
+        ) < 0:
             return -1
-        if _write_pct(writer, <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
-                      True) < 0:
+        if _write_pct(
+            writer,
+            <uint8_t>(UTF8_CONT_MARKER | ((utf >> UTF8_CONT_BITS) & UTF8_CONT_PAYLOAD)),
+            True,
+        ) < 0:
             return -1
-        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
-    elif utf > 0x10FFFF:
+        return _write_pct(
+            writer, <uint8_t>(UTF8_CONT_MARKER | (utf & UTF8_CONT_PAYLOAD)), True
+        )
+    if utf > MAX_CODE_POINT:
         # symbol is too large
         return 0
-    else:
-        if _write_pct(writer,  <uint8_t>(0xf0 | (utf >> 18)), True) < 0:
-            return -1
-        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 12) & 0x3f)),
-                      True) < 0:
-            return -1
-        if _write_pct(writer,  <uint8_t>(0x80 | ((utf >> 6) & 0x3f)),
-                      True) < 0:
-            return -1
-        return _write_pct(writer, <uint8_t>(0x80 | (utf & 0x3f)), True)
+    if _write_pct(
+        writer, <uint8_t>(UTF8_LEAD4_MARKER | (utf >> 3 * UTF8_CONT_BITS)), True
+    ) < 0:
+        return -1
+    if _write_pct(
+        writer,
+        <uint8_t>(
+            UTF8_CONT_MARKER | ((utf >> 2 * UTF8_CONT_BITS) & UTF8_CONT_PAYLOAD)
+        ),
+        True,
+    ) < 0:
+        return -1
+    if _write_pct(
+        writer,
+        <uint8_t>(UTF8_CONT_MARKER | ((utf >> UTF8_CONT_BITS) & UTF8_CONT_PAYLOAD)),
+        True,
+    ) < 0:
+        return -1
+    return _write_pct(
+        writer, <uint8_t>(UTF8_CONT_MARKER | (utf & UTF8_CONT_PAYLOAD)), True
+    )
 
 
 # --------------------- end writer --------------------------
@@ -195,8 +238,8 @@ cdef class _Quoter:
     cdef bint _qs
     cdef bint _requote
 
-    cdef uint8_t _safe_table[16]
-    cdef uint8_t _protected_table[16]
+    cdef uint8_t _safe_table[ASCII_TABLE_SIZE]
+    cdef uint8_t _protected_table[ASCII_TABLE_SIZE]
 
     def __init__(
             self, *, str safe='', str protected='', bint qs=False, bint requote=True,
@@ -215,13 +258,13 @@ cdef class _Quoter:
                    ALLOWED_TABLE,
                    sizeof(self._safe_table))
         for ch in safe:
-            if ord(ch) > 127:
+            if ord(ch) >= ASCII_LIMIT:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
             set_bit(self._safe_table, ch)
 
         memset(self._protected_table, 0, sizeof(self._protected_table))
         for ch in protected:
-            if ord(ch) > 127:
+            if ord(ch) >= ASCII_LIMIT:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
             set_bit(self._safe_table, ch)
             set_bit(self._protected_table, ch)
@@ -242,11 +285,10 @@ cdef class _Quoter:
         if val is None:
             return None
         if type(val) is not str:
-            if isinstance(val, str):
-                # derived from str
-                val = str(val)
-            else:
+            if not isinstance(val, str):
                 raise TypeError("Argument should be str")
+            # derived from str
+            val = str(val)
         return self._do_quote_or_skip(<str>val)
 
     cdef str _do_quote_or_skip(self, str val):
@@ -264,7 +306,7 @@ cdef class _Quoter:
         while idx:
             idx -= 1
             ch = PyUnicode_READ(kind, data, idx)
-            if ch >= 128 or not bit_at(self._safe_table, ch):
+            if ch >= ASCII_LIMIT or not bit_at(self._safe_table, ch):
                 must_quote = 1
                 break
 
@@ -315,7 +357,7 @@ cdef class _Quoter:
                     ch = <Py_UCS4>chl
                     surrogate_skipped = pos1 != idx or pos2 != pos1 + 1
                     idx = pos2 + 1
-                    if ch < 128:
+                    if ch < ASCII_LIMIT:
                         if bit_at(self._protected_table, ch):
                             if _write_pct(writer, ch, True) < 0:
                                 raise
@@ -339,15 +381,14 @@ cdef class _Quoter:
 
         if not writer.changed:
             return val
-        else:
-            return PyUnicode_DecodeASCII(writer.buf, writer.pos, "strict")
+        return PyUnicode_DecodeASCII(writer.buf, writer.pos, "strict")
 
     cdef inline int _write(self, Writer *writer, Py_UCS4 ch):
         if self._qs:
             if ch == ' ':
                 return _write_char(writer, '+', True)
 
-        if ch < 128 and bit_at(self._safe_table, ch):
+        if ch < ASCII_LIMIT and bit_at(self._safe_table, ch):
             return _write_char(writer, ch, False)
 
         return _write_utf8(writer, ch)
@@ -374,11 +415,10 @@ cdef class _Unquoter:
         if val is None:
             return None
         if type(val) is not str:
-            if isinstance(val, str):
-                # derived from str
-                val = str(val)
-            else:
+            if not isinstance(val, str):
                 raise TypeError("Argument should be str")
+            # derived from str
+            val = str(val)
         return self._do_unquote(<str>val)
 
     cdef str _do_unquote(self, str val):
