@@ -55,16 +55,17 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 @example(ignore="/", qs=False)
 @example(ignore="/a", qs=False)
+@example(ignore="/\u00e9", qs=True)
 @given(ignore=st.text(), qs=st.booleans())
 def test_fuzz_unquoter_ignore(  # type: ignore[misc]
     unquoter: type[_PyUnquoter], ignore: str, qs: bool
 ) -> None:
-    """Verify that the unquoter rejects exactly the ignore characters that
-    requoting leaves as is."""
+    """Verify that the unquoter rejects exactly the ignore characters that are
+    not ASCII or that requoting leaves as is."""
     quoter = _PyQuoter(qs=qs)
-    decoded_anyway = [ch for ch in ignore if quoter(ch) == ch]
-    if decoded_anyway:
-        with pytest.raises(ValueError, match=re.escape(repr(decoded_anyway[0]))):
+    rejected = [ch for ch in ignore if not ch.isascii() or quoter(ch) == ch]
+    if rejected:
+        with pytest.raises(ValueError, match=re.escape(repr(rejected[0]))):
             unquoter(ignore=ignore, qs=qs)
     else:
         unquoter(ignore=ignore, qs=qs)
@@ -237,9 +238,7 @@ _ANY_CONFIG_PIECES = st.one_of(
 # Letters, digits and "!" are always rejected in ignore, so leave them out;
 # "+&=;" are still rejected without qs
 _ANY_CONFIG_IGNORE = st.text(
-    alphabet=st.sampled_from(
-        [*(c for c in _CONFIG_CHARS if c not in "!aZ0"), "é", "日", "\U0001f600"]
-    ),
+    alphabet=st.sampled_from([c for c in _CONFIG_CHARS if c not in "!aZ0"]),
     max_size=4,
 )
 # qs together with an ignore it accepts, for tests that need a working unquoter

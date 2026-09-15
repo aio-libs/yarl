@@ -397,21 +397,24 @@ def test_unquote_qs_keeps_escaped_delimiters(
     assert unquoter(ignore=ignore, qs=True)("a%2Bb=?%3D%2B%26") == "a%2Bb=?%3D%2B%26"
 
 
-# Requoting leaves these characters as is, so ignoring them would do nothing
+# Only ASCII characters that requoting escapes can be ignored
 @pytest.mark.parametrize(
-    ("ignore", "qs", "rejected"),
+    ("ignore", "qs", "rejected", "reason"),
     [
-        ("a", True, "a"),
-        ("/!", False, "!"),
-        ("\u00e9'", True, "'"),
-        ("%+", False, "+"),
+        ("a", True, "a", "it is decoded anyway"),
+        ("/!", False, "!", "it is decoded anyway"),
+        ("/'", True, "'", "it is decoded anyway"),
+        ("%+", False, "+", "it is decoded anyway"),
+        ("\u00e9", False, "\u00e9", "it is not ASCII"),
+        ("/\U0001f600", True, "\U0001f600", "it is not ASCII"),
+        ("\u65e5a", False, "\u65e5", "it is not ASCII"),
     ],
 )
-def test_unquote_ignore_decoded_anyway(
-    unquoter: type[_Unquoter], ignore: str, qs: bool, rejected: str
+def test_unquote_ignore_rejected(
+    unquoter: type[_Unquoter], ignore: str, qs: bool, rejected: str, reason: str
 ) -> None:
     with pytest.raises(
-        ValueError, match=re.escape(f"ignore cannot contain {rejected!r}")
+        ValueError, match=re.escape(f"ignore cannot contain {rejected!r}, {reason}")
     ):
         unquoter(ignore=ignore, qs=qs)
 
@@ -704,11 +707,6 @@ def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
     [
         pytest.param({"qs": True}, "%26%3D%2B%3B" * 100, id="qs_requoted_escapes"),
         pytest.param({"ignore": "/%"}, "%2F%25" * 200, id="ignored_escapes"),
-        pytest.param(
-            {"ignore": "\u00e9\u65e5\U0001f600"},
-            "%C3%A9%E6%97%A5%F0%9F%98%80" * 100,
-            id="non_ascii_ignored_escapes",
-        ),
         pytest.param({}, "%e2%82%ff%zz%4" * 100 + "%", id="invalid_escapes"),
         pytest.param({"plus": True}, "+" * 300, id="plus"),
     ],
@@ -773,12 +771,6 @@ def test_unquote_output_as_long_as_input(  # type: ignore[misc]
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             "\u65e5" * 100 + "%2F%25+" + "\u65e5" * 100,
             id="path_safe_non_ascii_runs",
-        ),
-        pytest.param(
-            {"ignore": "\u00e9"},
-            "a%C3%A9b%C3%A8",
-            "a%C3%A9b\u00e8",
-            id="non_ascii_ignore",
         ),
     ],
 )
