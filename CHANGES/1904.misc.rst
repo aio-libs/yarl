@@ -1,0 +1,3 @@
+Simplified the pure Python unquoter so it writes the escapes for ignored
+characters itself instead of calling the quoter, which also made decoding
+escaped ASCII characters faster -- by :user:`bdraco`.
