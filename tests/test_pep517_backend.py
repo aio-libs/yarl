@@ -15,13 +15,13 @@ RELEASE_FLAGS = ("-Ofast", "-g0", "-DNDEBUG")
 TRACING_FLAGS = ("-Og", "--coverage", "-DCYTHON_TRACE=1", "-DCYTHON_TRACE_NOGIL=1")
 
 
-def _interpreter_flags() -> list[str]:
+def _interpreter_flags() -> list[str]:  # pragma: win32 no cover
     """Return the compiler flags CPython was configured with."""
     cflags: str = sysconfig.get_config_var("CFLAGS") or ""
     return shlex.split(cflags)
 
 
-def _configured_compile_command() -> list[str]:
+def _configured_compile_command() -> list[str]:  # pragma: win32 no cover
     """Return the compile command setuptools derives from the environment."""
     compiler = new_compiler()
     customize_compiler(compiler)
@@ -70,7 +70,7 @@ def test_extra_flags_go_through_cppflags(
     assert os.environ["CPPFLAGS"] == "-DUSER=1"
 
 
-@pytest.mark.skipif(
+@pytest.mark.skipif(  # pragma: win32 no cover
     sys.platform == "win32", reason="MSVC does not read CFLAGS or CPPFLAGS"
 )
 def test_interpreter_flags_survive_the_build_env(
