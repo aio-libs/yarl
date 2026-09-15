@@ -1,0 +1,2 @@
+Replaced magic numbers in the C quoting helpers with named constants
+-- by :user:`bdraco`.
