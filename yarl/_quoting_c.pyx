@@ -1,8 +1,6 @@
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
-from cpython.object cimport PyObject
 from cpython.pyport cimport PY_SSIZE_T_MAX
-from cpython.tuple cimport PyTuple_GET_ITEM
 from cpython.unicode cimport (
     Py_UCS1,
     Py_UCS2,
@@ -476,8 +474,8 @@ cdef inline Py_UCS4 _utf8_decode(const uint8_t *buf, Py_ssize_t length) noexcept
 
 
 # Output buffer for _Unquoter, holding code points instead of bytes. Unquoting
-# never makes a string longer (escapes are decoded, requoted to escapes of the
-# same length or copied as is), so the buffer is sized to the input once and
+# never makes a string longer (escapes are decoded, written back as escapes of
+# the same length or copied as is), so the buffer is sized to the input once and
 # writes need no capacity checks.
 cdef struct UCS4Writer:
     Py_UCS4 *buf
@@ -551,10 +549,10 @@ cdef inline void _ucs4_write_slice(
     writer.pos += length
 
 
-cdef inline void _ucs4_write_str(UCS4Writer* writer, str s) noexcept:
-    _ucs4_write_slice(
-        writer, PyUnicode_KIND(s), PyUnicode_DATA(s), 0, PyUnicode_GET_LENGTH(s)
-    )
+cdef inline void _ucs4_write_pct(UCS4Writer* writer, uint8_t byte) noexcept:
+    _ucs4_write_char(writer, '%')
+    _ucs4_write_char(writer, _to_hex(byte >> HEX_DIGIT_BITS))
+    _ucs4_write_char(writer, _to_hex(byte & HEX_DIGIT_MASK))
 
 
 cdef inline Py_ssize_t _find_percent(
@@ -573,9 +571,8 @@ cdef class _Unquoter:
     # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
     # instead of keeping them as is
     cdef bint _replace_invalid
-    # What to write for each decoded ASCII character, None to write it as is.
-    cdef tuple _requote
-    cdef _Quoter _quoter
+    # Decoded ASCII characters that are written back as their escape
+    cdef uint8_t _keep_escaped[ASCII_TABLE_SIZE]
 
     def __init__(
         self,
@@ -585,27 +582,26 @@ cdef class _Unquoter:
         bint plus=False,
         bint replace_invalid=False,
     ):
-        cdef _Quoter qs_quoter = _Quoter(qs=True)
         cdef Py_UCS4 ch
-        # Requoting leaves these characters as is, so they would be decoded
-        # even when they are in ignore
+        # These characters are never escaped by quoting, so they are always
+        # decoded and cannot be ignored
         cdef uint8_t *decoded_anyway = ALLOWED_NOTQS_TABLE
+        memset(self._keep_escaped, 0, sizeof(self._keep_escaped))
         if qs:
             decoded_anyway = ALLOWED_TABLE
+            for ch in QS:
+                set_bit(self._keep_escaped, ch)
         for ch in ignore:
-            if ch < ASCII_LIMIT and bit_at(decoded_anyway, ch):
-                raise ValueError(f"ignore cannot contain {ch!r}, it is decoded anyway")
+            if ch < ASCII_LIMIT:
+                if bit_at(decoded_anyway, ch):
+                    raise ValueError(
+                        f"ignore cannot contain {ch!r}, it is decoded anyway"
+                    )
+                set_bit(self._keep_escaped, ch)
         self._ignore = ignore
         self._replace_invalid = replace_invalid
         self._has_non_ascii_ignore = not ignore.isascii()
         self._plus_is_space = qs or plus
-        self._quoter = _Quoter()
-        self._requote = tuple(
-            qs_quoter(c) if qs and c in QS
-            else self._quoter(c) if c in ignore
-            else None
-            for c in map(chr, range(ASCII_LIMIT))
-        )
 
     def __call__(self, val):
         if val is None:
@@ -671,9 +667,7 @@ cdef class _Unquoter:
                             buffer[buflen] = <uint8_t>ch
                             buflen += 1
                             if buflen == need:
-                                self._write_unquoted(
-                                    writer, _utf8_decode(buffer, buflen)
-                                )
+                                self._write_non_ascii(writer, buffer, buflen)
                                 buflen = 0
                             continue
                         # Not a valid sequence, write the pending escapes as invalid
@@ -687,7 +681,10 @@ cdef class _Unquoter:
                         )
                         buflen = 0
                     if ch < ASCII_LIMIT:
-                        self._write_unquoted(writer, ch)
+                        if bit_at(self._keep_escaped, ch):
+                            _ucs4_write_pct(writer, <uint8_t>ch)
+                        else:
+                            _ucs4_write_char(writer, ch)
                         continue
                     need = _utf8_sequence_length(<uint8_t>ch)
                     if need:
@@ -736,15 +733,14 @@ cdef class _Unquoter:
         else:
             _ucs4_write_slice(writer, kind, data, start, end)
 
-    cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
-        cdef PyObject *requote
-        if ch < ASCII_LIMIT:
-            requote = PyTuple_GET_ITEM(self._requote, ch)
-            if requote != <PyObject*>None:
-                _ucs4_write_str(writer, <str>requote)
-                return 0
-        elif self._has_non_ascii_ignore and ch in self._ignore:
-            _ucs4_write_str(writer, self._quoter(chr(ch)))
-            return 0
-        _ucs4_write_char(writer, ch)
-        return 0
+    cdef inline void _write_non_ascii(
+        self, UCS4Writer* writer, const uint8_t *utf8, Py_ssize_t utf8_len
+    ) noexcept:
+        """Write the character encoded as utf8[:utf8_len], or its escapes."""
+        cdef Py_UCS4 ch = _utf8_decode(utf8, utf8_len)
+        cdef Py_ssize_t i
+        if not (self._has_non_ascii_ignore and ch in self._ignore):
+            _ucs4_write_char(writer, ch)
+            return
+        for i in range(utf8_len):
+            _ucs4_write_pct(writer, utf8[i])

@@ -1,0 +1,3 @@
+Simplified the C unquoter so it writes the escapes for ignored characters
+itself instead of calling the quoter, which also made it slightly faster
+-- by :user:`bdraco`.
