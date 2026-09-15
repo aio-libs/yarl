@@ -1,4 +1,6 @@
 -r test-cibuildwheel.txt
+# Dependencies of the in-tree PEP 517 build backend under test:
+expandvars
 # hypothesis is only needed for the property-based tests in
 # tests/test_quoting_hypothesis.py, which the wheel-build test run skips
 # (via -m "not hypothesis" plus an importorskip). Keeping it out of
@@ -12,3 +14,5 @@ hypothesis>=6.168.0
 # After implementing PEP 780 '"free-threading" not in sys_abi_features' could
 # be used instead of extraction of test-cibuildwheel.txt file.
 pydantic>=2.13.5; sys_platform == 'linux'
+setuptools
+tomli; python_version < "3.11"
