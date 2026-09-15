@@ -1,8 +1,12 @@
 -r cython.txt
 covdefaults
+# Dependencies of the in-tree PEP 517 build backend under test:
+expandvars
 idna==3.19
 multidict==6.8.0
 propcache==0.4.1
 pytest==9.1.1
 pytest-cov>=7.1.0
 pytest-xdist
+setuptools
+tomli; python_version < "3.11"

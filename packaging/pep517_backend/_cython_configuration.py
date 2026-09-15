@@ -198,9 +198,12 @@ def patched_env(
     expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}  # type: ignore[no-untyped-call]
     os.environ.update(expanded_env)
 
-    os.environ['CFLAGS'] = ' '.join((
+    # The extra compiler flags go through ``CPPFLAGS`` rather than ``CFLAGS``:
+    # setuptools' distutils appends ``CPPFLAGS`` to the interpreter's own
+    # compiler flags, while a ``CFLAGS`` environment variable replaces them.
+    os.environ['CPPFLAGS'] = ' '.join((
         # First, low priority hardcoded value from the `pyproject.toml` config:
-        expanded_env.get('CFLAGS', ''),
+        expanded_env.get('CPPFLAGS', ''),
         # Next, add dynamically computed compiler flags:
         *(
             # Debug mode:
@@ -236,7 +239,7 @@ def patched_env(
             )
         ),
         # Finally, append the user-set env var, ensuring its top priority:
-        orig_env.get('CFLAGS', ''),
+        orig_env.get('CPPFLAGS', ''),
         # Last thing, strip spaces caused by empty leading/trailing flags:
     )).strip()
 

@@ -167,3 +167,6 @@ UV_CONSTRAINT = "requirements/cython.txt"
 
 [tool.cibuildwheel.config-settings]
 pure-python = "false"
+
+[tool.codespell]
+ignore-words-list = "ccompiler"
