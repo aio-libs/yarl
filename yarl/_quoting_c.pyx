@@ -22,29 +22,30 @@ cdef str UNRESERVED = ascii_letters + digits + '-._~'
 cdef str ALLOWED = UNRESERVED + SUB_DELIMS_WITHOUT_QS
 cdef str QS = '+&=;'
 
-DEF BUF_SIZE = 8 * 1024  # 8KiB
+cdef enum:
+    BUF_SIZE = 8 * 1024  # 8KiB
 
-DEF ASCII_LIMIT = 0x80  # code points below this are ASCII
-# Bitmaps with one bit per ASCII character
-DEF BYTE_BITS_SHIFT = 3  # log2 of the 8 bits in a byte
-DEF BYTE_BIT_MASK = 7
-DEF ASCII_TABLE_SIZE = ASCII_LIMIT >> BYTE_BITS_SHIFT
-DEF HEX_DIGIT_BITS = 4
-DEF HEX_DIGIT_MASK = 0x0F
-DEF HEX_LETTER_VALUE = 10  # value of the hex digit A
+    ASCII_LIMIT = 0x80  # code points below this are ASCII
+    # Bitmaps with one bit per ASCII character
+    BYTE_BITS_SHIFT = 3  # log2 of the 8 bits in a byte
+    BYTE_BIT_MASK = (1 << BYTE_BITS_SHIFT) - 1
+    ASCII_TABLE_SIZE = ASCII_LIMIT >> BYTE_BITS_SHIFT
+    HEX_DIGIT_BITS = 4
+    HEX_DIGIT_MASK = (1 << HEX_DIGIT_BITS) - 1
+    HEX_LETTER_VALUE = 10  # value of the hex digit A
 
-# UTF-8, see table 3-7 of the Unicode standard
-DEF UTF8_2BYTE_LIMIT = 0x800  # code points below these limits use 2, 3 bytes
-DEF UTF8_3BYTE_LIMIT = 0x10000
-DEF MAX_CODE_POINT = 0x10FFFF
-DEF SURROGATE_MIN = 0xD800
-DEF SURROGATE_MAX = 0xDFFF
-DEF UTF8_CONT_MARKER = 0x80  # 10xxxxxx
-DEF UTF8_LEAD2_MARKER = 0xC0  # 110xxxxx
-DEF UTF8_LEAD3_MARKER = 0xE0  # 1110xxxx
-DEF UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
-DEF UTF8_CONT_PAYLOAD = 0x3F
-DEF UTF8_CONT_BITS = 6
+    # UTF-8, see table 3-7 of the Unicode standard
+    UTF8_2BYTE_LIMIT = 0x800  # code points below these limits use 2, 3 bytes
+    UTF8_3BYTE_LIMIT = 0x10000
+    MAX_CODE_POINT = 0x10FFFF
+    SURROGATE_MIN = 0xD800
+    SURROGATE_MAX = 0xDFFF
+    UTF8_CONT_MARKER = 0x80  # 10xxxxxx
+    UTF8_LEAD2_MARKER = 0xC0  # 110xxxxx
+    UTF8_LEAD3_MARKER = 0xE0  # 1110xxxx
+    UTF8_LEAD4_MARKER = 0xF0  # 11110xxx
+    UTF8_CONT_BITS = 6
+    UTF8_CONT_PAYLOAD = (1 << UTF8_CONT_BITS) - 1
 
 
 cdef inline Py_UCS4 _to_hex(uint8_t v) noexcept:
