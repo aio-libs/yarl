@@ -130,8 +130,11 @@ def test_max_fields_none_is_unlimited() -> None:
     assert len(query_to_pairs("x&" * 100_000)) == 100_000
 
 
-def test_url_query_skips_empty_fields() -> None:
-    assert list(URL("http://example.com/?a=1&&b&").query.items()) == [
-        ("a", "1"),
-        ("b", ""),
-    ]
+def test_url_query_matches_parse_qsl() -> None:
+    """Empty fields and invalid escapes are handled like parse_qsl."""
+    query_string = "a=1&&b&c=%FF&d=%E2%82&"
+    expected = parse_qsl(query_string, keep_blank_values=True)
+    assert expected == [("a", "1"), ("b", ""), ("c", "\ufffd"), ("d", "\ufffd")]
+    assert list(URL(f"http://example.com/?{query_string}").query.items()) == expected
+    url = URL("http://example.com/").update_query(query_string)
+    assert list(url.query.items()) == expected

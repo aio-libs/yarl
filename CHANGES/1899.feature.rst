@@ -1,7 +1,3 @@
 Added :func:`~yarl.query_to_pairs`, a faster replacement for
 :func:`urllib.parse.parse_qsl` with ``keep_blank_values=True`` that also
-takes ``max_fields`` and ``encoding`` arguments. :attr:`URL.query
-<yarl.URL.query>` and :meth:`URL.update_query() <yarl.URL.update_query>`
-now match :func:`urllib.parse.parse_qsl` again by skipping empty fields and
-replacing invalid percent-encoded UTF-8 with ``U+FFFD``
--- by :user:`bdraco`.
+takes ``max_fields`` and ``encoding`` arguments -- by :user:`bdraco`.

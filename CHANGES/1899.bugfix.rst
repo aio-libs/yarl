@@ -1,0 +1,4 @@
+Fixed :attr:`URL.query <yarl.URL.query>` and
+:meth:`URL.update_query() <yarl.URL.update_query>` returning empty fields
+and keeping invalid percent-encoded UTF-8 as is, a regression in 1.19.0;
+they match :func:`urllib.parse.parse_qsl` again -- by :user:`bdraco`.
