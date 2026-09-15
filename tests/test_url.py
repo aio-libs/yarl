@@ -231,6 +231,24 @@ def test_host_port_subcomponent(input: str, result: str) -> None:
     assert url.host_port_subcomponent == result
 
 
+def test_host_port_subcomponent_empty_host_no_index_error() -> None:
+    # Regression: an empty host should not raise IndexError from
+    # trailing-dot stripping (`raw[-1] == "."` on an empty string).
+    url = URL("//user@")
+    assert url.raw_host == ""
+    assert url.host_port_subcomponent == ""
+
+
+def test_host_port_subcomponent_empty_host_with_port() -> None:
+    url = URL("//user@:8080")
+    assert url.host_port_subcomponent == ":8080"
+
+
+def test_host_subcomponent_empty_host_no_index_error() -> None:
+    url = URL("//user@")
+    assert url.host_subcomponent == ""
+
+
 def test_host_subcomponent_return_idna_encoded_host() -> None:
     url = URL("http://оун-упа.укр")
     assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"
