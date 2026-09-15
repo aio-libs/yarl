@@ -1,0 +1,3 @@
+Fixed :meth:`~yarl.URL.with_path` silently adding a leading slash
+to bare-relative URLs without an authority component
+-- by :user:`TheRodzz`.
