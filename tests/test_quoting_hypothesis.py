@@ -198,7 +198,21 @@ _CONFIG_CHARS = [
 _ANY_CONFIG_PIECES = st.one_of(
     _UNQUOTE_PIECES,
     st.sampled_from(_CONFIG_CHARS),
-    st.sampled_from(["%20", "%40", "%3F", "%23", "%21", "%3A", "%09", "%61", "%C3%A9"]),
+    st.sampled_from(
+        [
+            "%20",
+            "%40",
+            "%3F",
+            "%23",
+            "%21",
+            "%3A",
+            "%3B",
+            "%09",
+            "%61",
+            "%C3%A9",
+            "%E6%97%A5",
+        ]
+    ),
 )
 
 
