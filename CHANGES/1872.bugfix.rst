@@ -1,0 +1,2 @@
+Required Pydantic 2 or newer to collect the Pydantic integration tests in :file:`tests/test_pydantic.py`
+-- by :user:`dlowzzxx`.
