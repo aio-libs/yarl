@@ -461,19 +461,34 @@ cdef inline Py_UCS4 _utf8_decode(const uint8_t *buf, Py_ssize_t length) noexcept
     )
 
 
-# Output buffer for _Unquoter, holding code points instead of bytes.
+# Output buffer for _Unquoter, holding code points instead of bytes. Unquoting
+# never makes a string longer (escapes are decoded, requoted to escapes of the
+# same length or copied as is), so the buffer is sized to the input once and
+# writes need no capacity checks.
 cdef struct UCS4Writer:
     Py_UCS4 *buf
     bint heap_allocated_buf
-    Py_ssize_t size
     Py_ssize_t pos
 
 
-cdef inline void _init_ucs4_writer(UCS4Writer* writer, Py_UCS4* buf) noexcept:
-    writer.buf = buf
-    writer.heap_allocated_buf = False
-    writer.size = UCS4_BUF_SIZE
+cdef inline int _init_ucs4_writer(
+    UCS4Writer* writer, Py_UCS4* stack_buf, Py_ssize_t length
+) except -1:
     writer.pos = 0
+    writer.heap_allocated_buf = False
+    if length <= UCS4_BUF_SIZE:
+        writer.buf = stack_buf
+        return 0
+    if <size_t>length > <size_t>PY_SSIZE_T_MAX // sizeof(Py_UCS4):
+        writer.buf = NULL
+        PyErr_NoMemory()
+        return -1
+    writer.buf = <Py_UCS4*>PyMem_Malloc(length * sizeof(Py_UCS4))
+    if writer.buf == NULL:
+        PyErr_NoMemory()
+        return -1
+    writer.heap_allocated_buf = True
+    return 0
 
 
 cdef inline void _release_ucs4_writer(UCS4Writer* writer) noexcept:
@@ -481,37 +496,9 @@ cdef inline void _release_ucs4_writer(UCS4Writer* writer) noexcept:
         PyMem_Free(writer.buf)
 
 
-cdef inline int _ucs4_reserve(UCS4Writer* writer, Py_ssize_t extra) except -1:
-    cdef Py_ssize_t size = writer.pos + extra
-    cdef Py_UCS4 *buf
-    if size <= writer.size:
-        return 0
-    if size < writer.size * 2:
-        size = writer.size * 2
-    if <size_t>size > <size_t>PY_SSIZE_T_MAX // sizeof(Py_UCS4):
-        PyErr_NoMemory()
-        return -1
-    if writer.heap_allocated_buf:
-        buf = <Py_UCS4*>PyMem_Realloc(writer.buf, size * sizeof(Py_UCS4))
-    else:
-        buf = <Py_UCS4*>PyMem_Malloc(size * sizeof(Py_UCS4))
-        if buf != NULL:
-            memcpy(buf, writer.buf, writer.pos * sizeof(Py_UCS4))
-    if buf == NULL:
-        PyErr_NoMemory()
-        return -1
-    writer.buf = buf
-    writer.heap_allocated_buf = True
-    writer.size = size
-    return 0
-
-
-cdef inline int _ucs4_write_char(UCS4Writer* writer, Py_UCS4 ch) except -1:
-    if writer.pos == writer.size:
-        _ucs4_reserve(writer, 1)
+cdef inline void _ucs4_write_char(UCS4Writer* writer, Py_UCS4 ch) noexcept:
     writer.buf[writer.pos] = ch
     writer.pos += 1
-    return 0
 
 
 ctypedef fused _narrow_ucs:
@@ -529,18 +516,17 @@ cdef inline void _widen_to_ucs4(
         out[i] = src[i]
 
 
-cdef inline int _ucs4_write_slice(
+cdef inline void _ucs4_write_slice(
     UCS4Writer* writer,
     int kind,
     const void *data,
     Py_ssize_t start,
     Py_ssize_t end,
-) except -1:
+) noexcept:
     cdef Py_ssize_t length = end - start
     cdef Py_UCS4 *out
     if length <= 0:
-        return 0
-    _ucs4_reserve(writer, length)
+        return
     out = writer.buf + writer.pos
     if kind == PyUnicode_1BYTE_KIND:
         _widen_to_ucs4(out, <const Py_UCS1*>data + start, length)
@@ -549,11 +535,10 @@ cdef inline int _ucs4_write_slice(
     else:
         memcpy(out, <const Py_UCS4*>data + start, length * sizeof(Py_UCS4))
     writer.pos += length
-    return 0
 
 
-cdef inline int _ucs4_write_str(UCS4Writer* writer, str s) except -1:
-    return _ucs4_write_slice(
+cdef inline void _ucs4_write_str(UCS4Writer* writer, str s) noexcept:
+    _ucs4_write_slice(
         writer, PyUnicode_KIND(s), PyUnicode_DATA(s), 0, PyUnicode_GET_LENGTH(s)
     )
 
@@ -616,12 +601,8 @@ cdef class _Unquoter:
 
         cdef Py_UCS4 stack_buf[UCS4_BUF_SIZE]
         cdef UCS4Writer writer
-        _init_ucs4_writer(&writer, stack_buf)
+        _init_ucs4_writer(&writer, stack_buf, length)
         try:
-            if length > UCS4_BUF_SIZE:
-                # The output is never longer than the input: escapes are
-                # decoded, requoted to the same escapes or copied as is
-                _ucs4_reserve(&writer, length)
             return self._unquote_from(&writer, val, length, idx)
         finally:
             _release_ucs4_writer(&writer)
@@ -712,7 +693,10 @@ cdef class _Unquoter:
         if ch < ASCII_LIMIT:
             requote = PyTuple_GET_ITEM(self._requote, ch)
             if requote != <PyObject*>None:
-                return _ucs4_write_str(writer, <str>requote)
+                _ucs4_write_str(writer, <str>requote)
+                return 0
         elif self._has_non_ascii_ignore and ch in self._ignore:
-            return _ucs4_write_str(writer, self._quoter(chr(ch)))
-        return _ucs4_write_char(writer, ch)
+            _ucs4_write_str(writer, self._quoter(chr(ch)))
+            return 0
+        _ucs4_write_char(writer, ch)
+        return 0
