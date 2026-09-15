@@ -1,0 +1,3 @@
+Made the internal unquoting classes, C and pure Python, reject non-ASCII
+``ignore`` characters, as the quoting classes already do for ``safe``
+-- by :user:`bdraco`.

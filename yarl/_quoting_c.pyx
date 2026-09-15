@@ -566,8 +566,6 @@ cdef inline Py_ssize_t _find_percent(
 
 
 cdef class _Unquoter:
-    cdef str _ignore
-    cdef bint _has_non_ascii_ignore
     # '+' means a space in query strings and in urllib.parse.unquote_plus
     cdef bint _plus_is_space
     # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
@@ -575,7 +573,6 @@ cdef class _Unquoter:
     cdef bint _replace_invalid
     # What to write for each decoded ASCII character, None to write it as is.
     cdef tuple _requote
-    cdef _Quoter _quoter
 
     def __init__(
         self,
@@ -585,6 +582,7 @@ cdef class _Unquoter:
         bint plus=False,
         bint replace_invalid=False,
     ):
+        cdef _Quoter quoter = _Quoter()
         cdef _Quoter qs_quoter = _Quoter(qs=True)
         cdef Py_UCS4 ch
         # Requoting leaves these characters as is, so they would be decoded
@@ -593,16 +591,15 @@ cdef class _Unquoter:
         if qs:
             decoded_anyway = ALLOWED_TABLE
         for ch in ignore:
-            if ch < ASCII_LIMIT and bit_at(decoded_anyway, ch):
+            if ch >= ASCII_LIMIT:
+                raise ValueError(f"ignore cannot contain {ch!r}, it is not ASCII")
+            if bit_at(decoded_anyway, ch):
                 raise ValueError(f"ignore cannot contain {ch!r}, it is decoded anyway")
-        self._ignore = ignore
         self._replace_invalid = replace_invalid
-        self._has_non_ascii_ignore = not ignore.isascii()
         self._plus_is_space = qs or plus
-        self._quoter = _Quoter()
         self._requote = tuple(
             qs_quoter(c) if qs and c in QS
-            else self._quoter(c) if c in ignore
+            else quoter(c) if c in ignore
             else None
             for c in map(chr, range(ASCII_LIMIT))
         )
@@ -671,9 +668,7 @@ cdef class _Unquoter:
                             buffer[buflen] = <uint8_t>ch
                             buflen += 1
                             if buflen == need:
-                                self._write_unquoted(
-                                    writer, _utf8_decode(buffer, buflen)
-                                )
+                                _ucs4_write_char(writer, _utf8_decode(buffer, buflen))
                                 buflen = 0
                             continue
                         # Not a valid sequence, write the pending escapes as invalid
@@ -736,15 +731,10 @@ cdef class _Unquoter:
         else:
             _ucs4_write_slice(writer, kind, data, start, end)
 
-    cdef inline int _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) except -1:
-        cdef PyObject *requote
-        if ch < ASCII_LIMIT:
-            requote = PyTuple_GET_ITEM(self._requote, ch)
-            if requote != <PyObject*>None:
-                _ucs4_write_str(writer, <str>requote)
-                return 0
-        elif self._has_non_ascii_ignore and ch in self._ignore:
-            _ucs4_write_str(writer, self._quoter(chr(ch)))
-            return 0
-        _ucs4_write_char(writer, ch)
-        return 0
+    cdef inline void _write_unquoted(self, UCS4Writer* writer, Py_UCS4 ch) noexcept:
+        """Write the decoded ASCII character, or its escape if it is requoted."""
+        cdef PyObject *requote = PyTuple_GET_ITEM(self._requote, ch)
+        if requote == <PyObject*>None:
+            _ucs4_write_char(writer, ch)
+            return
+        _ucs4_write_str(writer, <str>requote)

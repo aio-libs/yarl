@@ -165,6 +165,8 @@ class _Unquoter:
         # even when they are in ignore
         decoded_anyway = ALLOWED if qs else ALLOWED + QS
         for ch in ignore:
+            if not ch.isascii():
+                raise ValueError(f"ignore cannot contain {ch!r}, it is not ASCII")
             if ch in decoded_anyway:
                 raise ValueError(f"ignore cannot contain {ch!r}, it is decoded anyway")
         # Write U+FFFD for escapes that are not valid UTF-8, like urllib does,
@@ -223,8 +225,7 @@ class _Unquoter:
                 pending += 1
                 low, high = _UTF8_CONT_MIN, _UTF8_CONT_MAX
                 if pending == need:
-                    unquoted = chr(code_point)
-                    ret.append(requote.get(unquoted, unquoted))
+                    ret.append(chr(code_point))
                     pending = 0
             elif byte < _ASCII_LIMIT:
                 unquoted = chr(byte)
