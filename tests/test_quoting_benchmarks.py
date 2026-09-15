@@ -15,8 +15,7 @@ QUOTER = _Quoter()
 UNQUOTER = _Unquoter()
 UNQUOTER_PLUS = _Unquoter(plus=True)
 QS_UNQUOTER = _Unquoter(qs=True)
-PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%", unsafe="+")
-MULTI_UNSAFE_UNQUOTER = _Unquoter(unsafe="/@")
+PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")
 QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
 PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
 
@@ -31,7 +30,6 @@ LONG_UTF8_TEXT_PCT = "%E6%97%A5%E6%9C%AC+text+%C3%A9t%C3%A9+" * 256
 LONG_PLUS = "a+b" * 4096
 LONG_PATH_WITH_PCT = "/path%20to/%E2%82%AC" * 256
 LONG_PATH_WITH_ENCODED_DELIMS = "/a%2Fb/100%25+off%2Bsale%20%E2%82%AC" * 256
-LONG_MULTI_UNSAFE = "user/name@" * 1024
 FORM_TEXT_PCT = "Please+leave+the+package%2C+thanks%21+%E6%B3%A8%E6%96%87+" * 16
 
 
@@ -168,13 +166,6 @@ def test_path_safe_unquoter_encoded_delims(benchmark: "BenchmarkFixture") -> Non
             PATH_SAFE_UNQUOTER(LONG_PATH_WITH_ENCODED_DELIMS)
 
 
-def test_multi_unsafe_unquoter_long(benchmark: "BenchmarkFixture") -> None:
-    @benchmark
-    def _run() -> None:
-        for _ in range(10):
-            MULTI_UNSAFE_UNQUOTER(LONG_MULTI_UNSAFE)
-
-
 # The pure Python unquoter is used on PyPy and when the C extension is not
 # available; call it directly so it is measured even with the extension built.
 PY_UNQUOTER_CASES = {
@@ -187,11 +178,10 @@ PY_UNQUOTER_CASES = {
     "plus_long_plus": (_PyUnquoter(plus=True), LONG_PLUS, 1),
     "qs_long_pct": (_PyUnquoter(qs=True), LONG_QUERY_WITH_PCT, 10),
     "path_safe_encoded_delims": (
-        _PyUnquoter(ignore="/%", unsafe="+"),
+        _PyUnquoter(ignore="/%"),
         LONG_PATH_WITH_ENCODED_DELIMS,
         1,
     ),
-    "multi_unsafe_long": (_PyUnquoter(unsafe="/@"), LONG_MULTI_UNSAFE, 1),
 }
 
 
