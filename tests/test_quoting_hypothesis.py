@@ -52,19 +52,22 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
     _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
+@pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
 @example(ignore="/", qs=False)
 @example(ignore="/a", qs=False)
 @given(ignore=st.text(), qs=st.booleans())
-def test_fuzz__PyUnquoter(ignore: str, qs: bool) -> None:  # type: ignore[misc]
-    """Verify that _PyUnquoter rejects exactly the ignore characters that
+def test_fuzz_unquoter_ignore(  # type: ignore[misc]
+    unquoter: type[_PyUnquoter], ignore: str, qs: bool
+) -> None:
+    """Verify that the unquoter rejects exactly the ignore characters that
     requoting leaves as is."""
     quoter = _PyQuoter(qs=qs)
     decoded_anyway = [ch for ch in ignore if quoter(ch) == ch]
     if decoded_anyway:
         with pytest.raises(ValueError, match=re.escape(repr(decoded_anyway[0]))):
-            _PyUnquoter(ignore=ignore, qs=qs)
+            unquoter(ignore=ignore, qs=qs)
     else:
-        _PyUnquoter(ignore=ignore, qs=qs)
+        unquoter(ignore=ignore, qs=qs)
 
 
 @example(text_input="0")
@@ -240,14 +243,12 @@ _ANY_CONFIG_IGNORE = st.text(
     max_size=4,
 )
 # qs together with an ignore it accepts, for tests that need a working unquoter
-_ACCEPTED_QS_AND_IGNORE = st.booleans().flatmap(
-    lambda qs: st.tuples(
-        st.just(qs),
-        _ANY_CONFIG_IGNORE.map(
-            lambda ignore: (
-                ignore if qs else ignore.translate({ord(c): None for c in "+&=;"})
-            )
-        ),
+_ACCEPTED_QS_AND_IGNORE = st.tuples(st.booleans(), _ANY_CONFIG_IGNORE).map(
+    lambda qs_and_ignore: (
+        qs_and_ignore[0],
+        qs_and_ignore[1]
+        if qs_and_ignore[0]
+        else qs_and_ignore[1].translate({ord(c): None for c in "+&=;"}),
     )
 )
 
