@@ -18,12 +18,12 @@ from yarl._quoting_py import _Quoter as _PyQuoter
 from yarl._quoting_py import _Unquoter as _PyUnquoter
 
 if TYPE_CHECKING:
-    from hypothesis import assume, example, given, note
+    from hypothesis import assume, example, given, note, reject
     from hypothesis import strategies as st
 else:
     pytest.importorskip("hypothesis")
 
-    from hypothesis import assume, example, given, note
+    from hypothesis import assume, example, given, note, reject
     from hypothesis import strategies as st
 
 if not NO_EXTENSIONS:
@@ -52,10 +52,19 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
     _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
+@example(ignore="/", qs=False)
+@example(ignore="/a", qs=False)
 @given(ignore=st.text(), qs=st.booleans())
 def test_fuzz__PyUnquoter(ignore: str, qs: bool) -> None:  # type: ignore[misc]
-    """Verify that _PyUnquoter can be instantiated with any valid arguments."""
-    _PyUnquoter(ignore=ignore, qs=qs)
+    """Verify that _PyUnquoter rejects exactly the ignore characters that
+    requoting leaves as is."""
+    quoter = _PyQuoter(qs=qs)
+    decoded_anyway = [ch for ch in ignore if quoter(ch) == ch]
+    if decoded_anyway:
+        with pytest.raises(ValueError, match=re.escape(repr(decoded_anyway[0]))):
+            _PyUnquoter(ignore=ignore, qs=qs)
+    else:
+        _PyUnquoter(ignore=ignore, qs=qs)
 
 
 @example(text_input="0")
@@ -222,8 +231,13 @@ _ANY_CONFIG_PIECES = st.one_of(
         ]
     ),
 )
+# Letters, digits and "!" are always rejected in ignore, so leave them out;
+# "+&=;" are still rejected without qs
 _ANY_CONFIG_IGNORE = st.text(
-    alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日", "\U0001f600"]), max_size=4
+    alphabet=st.sampled_from(
+        [*(c for c in _CONFIG_CHARS if c not in "!aZ0"), "é", "日", "\U0001f600"]
+    ),
+    max_size=4,
 )
 
 
@@ -241,10 +255,16 @@ def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
     pieces: list[str], ignore: str, qs: bool, plus: bool, replace_invalid: bool
 ) -> None:
     val = "".join(pieces)
+    try:
+        py_unquoter = _PyUnquoter(
+            ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
+        )
+    except ValueError as exc:
+        # Both implementations reject the same configurations
+        with pytest.raises(ValueError, match=re.escape(str(exc))):
+            _CUnquoter(ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid)
+        return
     c_unquoter = _CUnquoter(
-        ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
-    )
-    py_unquoter = _PyUnquoter(
         ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
     )
     assert c_unquoter(val) == py_unquoter(val)
@@ -269,7 +289,13 @@ def test_unquoter_output_is_never_longer(  # type: ignore[misc]
     # Unquoting never makes a string longer; implementations may rely on this
     # to size an output buffer to the input
     val = "".join(pieces)
-    unquote = unquoter(ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid)
+    try:
+        unquote = unquoter(
+            ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
+        )
+    except ValueError:
+        # Rejected configurations are checked by the C and Python match test
+        reject()
     assert len(unquote(val)) <= len(val)
 
 

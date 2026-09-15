@@ -582,6 +582,15 @@ cdef class _Unquoter:
 
     def __init__(self, *, ignore="", qs=False, plus=False, replace_invalid=False):
         cdef _Quoter qs_quoter = _Quoter(qs=True)
+        cdef Py_UCS4 ch
+        # Requoting leaves these characters as is, so they would be decoded
+        # even when they are in ignore
+        cdef uint8_t *decoded_anyway = ALLOWED_NOTQS_TABLE
+        if qs:
+            decoded_anyway = ALLOWED_TABLE
+        for ch in ignore:
+            if ch < ASCII_LIMIT and bit_at(decoded_anyway, ch):
+                raise ValueError(f"ignore cannot contain {ch!r}, it is decoded anyway")
         self._ignore = ignore
         self._replace_invalid = replace_invalid
         self._has_non_ascii_ignore = not ignore.isascii()
