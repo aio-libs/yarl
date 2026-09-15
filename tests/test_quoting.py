@@ -411,6 +411,47 @@ def test_unquote_non_utf8(unquoter: type[_Unquoter], input: str, expected: str) 
     assert unquoter()(input) == expected
 
 
+# Strict UTF-8 as accepted by CPython's decoder, see table 3-7 of the Unicode
+# standard: sequences it rejects keep their escapes, the boundaries it accepts
+# are decoded.
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("a%C0%AFb", "a%C0%AFb", id="overlong_2_byte"),
+        pytest.param("%C1%BF", "%C1%BF", id="overlong_c1_lead"),
+        pytest.param("a%E0%80%AFb", "a%E0%80%AFb", id="overlong_3_byte"),
+        pytest.param("a%F0%80%80%AFb", "a%F0%80%80%AFb", id="overlong_4_byte"),
+        pytest.param("a%ED%A0%80b", "a%ED%A0%80b", id="surrogate"),
+        pytest.param("%ED%9F%BF", "\ud7ff", id="last_before_surrogates"),
+        pytest.param("a%F4%90%80%80b", "a%F4%90%80%80b", id="above_max_code_point"),
+        pytest.param("%F4%8F%BF%BF", "\U0010ffff", id="max_code_point"),
+        pytest.param("%C2%80", "\x80", id="smallest_2_byte"),
+        pytest.param("%DF%BF", "\u07ff", id="largest_2_byte"),
+        pytest.param("%E1%80%80", "\u1000", id="plain_3_byte_lead_smallest"),
+        pytest.param("%EC%BF%BF", "\ucfff", id="plain_3_byte_lead_largest"),
+        pytest.param("%ED%80%80", "\ud000", id="smallest_with_surrogate_lead"),
+        pytest.param("%EE%80%80", "\ue000", id="first_after_surrogates"),
+        pytest.param("%F1%80%80%80", "\U00040000", id="plain_4_byte_lead_smallest"),
+        pytest.param("%F3%BF%BF%BF", "\U000fffff", id="plain_4_byte_lead_largest"),
+        pytest.param("%E0%A0%80", "\u0800", id="smallest_3_byte"),
+        pytest.param("%EF%BF%BF", "\uffff", id="largest_3_byte"),
+        pytest.param("%F0%90%80%80", "\U00010000", id="smallest_4_byte"),
+        pytest.param("%F5%80%80%80", "%F5%80%80%80", id="invalid_lead_f5"),
+        pytest.param("a%80b%BFc", "a%80b%BFc", id="lone_continuation"),
+        pytest.param("%E2%82ab%41", "%E2%82abA", id="interrupted_by_run"),
+        pytest.param(
+            "%E2%82ab%AC", "%E2%82ab%AC", id="interrupted_by_run_before_continuation"
+        ),
+        pytest.param("%E2%82%41", "%E2%82A", id="interrupted_by_ascii_escape"),
+        pytest.param("%E2%82%C3%A9", "%E2%82\u00e9", id="interrupted_by_lead_byte"),
+    ],
+)
+def test_unquote_utf8_edges(
+    unquoter: type[_Unquoter], value: str, expected: str
+) -> None:
+    assert unquoter()(value) == expected
+
+
 def test_unquote_ignore_non_utf8(unquoter: type[_Unquoter]) -> None:
     assert unquoter(ignore="\n")("%e2%82%0a") == "%e2%82%0A"
 
@@ -603,6 +644,28 @@ def test_unquote_long_plain_returns_same_object(unquoter: type[_Unquoter]) -> No
 
 def test_unquote_long_with_plus_only(unquoter: type[_Unquoter]) -> None:
     assert unquoter(plus=True)("a+b" * 4096) == "a b" * 4096
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "value"),
+    [
+        pytest.param({"qs": True}, "%26%3D%2B%3B" * 100, id="qs_requoted_escapes"),
+        pytest.param({"ignore": "/%"}, "%2F%25" * 200, id="ignored_escapes"),
+        pytest.param(
+            {"ignore": "\u00e9\u65e5\U0001f600"},
+            "%C3%A9%E6%97%A5%F0%9F%98%80" * 100,
+            id="non_ascii_ignored_escapes",
+        ),
+        pytest.param({}, "%e2%82%ff%zz%4" * 100 + "%", id="invalid_escapes"),
+        pytest.param({"plus": True}, "+" * 300, id="plus"),
+    ],
+)
+def test_unquote_output_as_long_as_input(  # type: ignore[misc]
+    unquoter: type[_Unquoter], kwargs: dict[str, Any], value: str
+) -> None:
+    # The longest possible output is exactly as long as the input;
+    # implementations may rely on this to size an output buffer to the input
+    assert len(unquoter(**kwargs)(value)) == len(value)
 
 
 @pytest.mark.parametrize(

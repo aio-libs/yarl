@@ -1,0 +1,2 @@
+Added tests that check the C and pure Python unquoting implementations
+never return a string longer than their input -- by :user:`bdraco`.
