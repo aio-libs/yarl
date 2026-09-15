@@ -2282,6 +2282,17 @@ def test_join() -> None:
     assert str(url2) == "http://www.cwi.nl/~guido/FAQ.html"
 
 
+@pytest.mark.parametrize(
+    ("base", "expected"),
+    [
+        ("http://x/a%2Fb/c", "http://x/a%2Fb/d"),
+        ("http://x/a%20b/c", "http://x/a%20b/d"),
+    ],
+)
+def test_join_preserves_percent_encoding_in_base_path(base: str, expected: str) -> None:
+    assert str(URL(base).join(URL("d"))) == expected
+
+
 def test_join_absolute() -> None:
     base = URL("http://www.cwi.nl/%7Eguido/Python.html")
     url = URL("//www.python.org/%7Eguido")
