@@ -45,10 +45,10 @@ def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> N
     _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
 
 
-@given(ignore=st.text(), unsafe=st.text(), qs=st.booleans())
-def test_fuzz__PyUnquoter(ignore: str, unsafe: str, qs: bool) -> None:  # type: ignore[misc]
+@given(ignore=st.text(), qs=st.booleans())
+def test_fuzz__PyUnquoter(ignore: str, qs: bool) -> None:  # type: ignore[misc]
     """Verify that _PyUnquoter can be instantiated with any valid arguments."""
-    _PyUnquoter(ignore=ignore, unsafe=unsafe, qs=qs)
+    _PyUnquoter(ignore=ignore, qs=qs)
 
 
 @example(text_input="0")
@@ -107,8 +107,8 @@ def test_quote_unquote_parameter_path_safe(  # type: ignore[misc]
     text_input: str,
 ) -> None:
     quote = quoter()
-    unquote = unquoter(ignore="/%", unsafe="+")
-    assume("+" not in text_input and "/" not in text_input)
+    unquote = unquoter(ignore="/%")
+    assume("/" not in text_input)
     text_quoted = quote(text_input)
     note(f"text_quoted={text_quoted!r}")
     text_output = unquote(text_quoted)
@@ -118,8 +118,7 @@ def test_quote_unquote_parameter_path_safe(  # type: ignore[misc]
 # The unquoter configurations used by yarl itself, see yarl/_quoters.py
 UNQUOTER_KWARGS = [
     {},
-    {"unsafe": "+"},
-    {"ignore": "/%", "unsafe": "+"},
+    {"ignore": "/%"},
     {"qs": True},
     {"plus": True},
 ]
@@ -175,9 +174,9 @@ def test_c_and_py_unquoter_match(  # type: ignore[misc]
     assert _CUnquoter(**kwargs)(val) == _PyUnquoter(**kwargs)(val)
 
 
-# Characters that change how the unquoter behaves when they are in unsafe or
-# ignore, plus ones that do nothing special, so any configuration is covered
-# and not just the ones in yarl/_quoters.py.
+# Characters that change how the unquoter behaves when they are in ignore,
+# plus ones that do nothing special, so any configuration is covered and not
+# just the ones in yarl/_quoters.py.
 _CONFIG_CHARS = [
     " ",
     "+",
@@ -200,26 +199,24 @@ _ANY_CONFIG_PIECES = st.one_of(
     _UNQUOTE_PIECES,
     st.sampled_from(_CONFIG_CHARS),
     st.sampled_from(["%20", "%40", "%3F", "%23", "%21", "%3A", "%09", "%61", "%C3%A9"]),
-    st.integers(min_value=0, max_value=1000).map(lambda n: "@" * n),
 )
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
-@example(pieces=["+"], unsafe=" ", ignore="", qs=False, plus=True)
-@example(pieces=["a+b c"], unsafe=" ", ignore="", qs=True, plus=False)
+@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False)
+@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
-    unsafe=st.text(alphabet=st.sampled_from(_CONFIG_CHARS), max_size=4),
     ignore=st.text(alphabet=st.sampled_from([*_CONFIG_CHARS, "é", "日"]), max_size=4),
     qs=st.booleans(),
     plus=st.booleans(),
 )
 def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
-    pieces: list[str], unsafe: str, ignore: str, qs: bool, plus: bool
+    pieces: list[str], ignore: str, qs: bool, plus: bool
 ) -> None:
     val = "".join(pieces)
-    c_unquoter = _CUnquoter(unsafe=unsafe, ignore=ignore, qs=qs, plus=plus)
-    py_unquoter = _PyUnquoter(unsafe=unsafe, ignore=ignore, qs=qs, plus=plus)
+    c_unquoter = _CUnquoter(ignore=ignore, qs=qs, plus=plus)
+    py_unquoter = _PyUnquoter(ignore=ignore, qs=qs, plus=plus)
     assert c_unquoter(val) == py_unquoter(val)
 
 

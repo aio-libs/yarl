@@ -1,0 +1,3 @@
+Removed the unused ``unsafe`` option from the internal unquoting classes;
+the unquoting done by :class:`~yarl.URL` never depended on it
+-- by :user:`bdraco`.
