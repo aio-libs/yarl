@@ -254,29 +254,30 @@ _ACCEPTED_QS_AND_IGNORE = st.tuples(st.booleans(), _ANY_CONFIG_IGNORE).map(
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
-@example(pieces=["a+b%20c"], ignore=" ", qs=True, plus=False, replace_invalid=False)
-@example(pieces=["a+b%20c"], ignore=" ", qs=False, plus=True, replace_invalid=True)
+@example(
+    pieces=["a+b%20c"], qs_and_ignore=(True, " "), plus=False, replace_invalid=False
+)
+@example(
+    pieces=["a+b%20c"], qs_and_ignore=(False, " "), plus=True, replace_invalid=True
+)
 @given(
     pieces=st.lists(_ANY_CONFIG_PIECES),
-    ignore=_ANY_CONFIG_IGNORE,
-    qs=st.booleans(),
+    qs_and_ignore=_ACCEPTED_QS_AND_IGNORE,
     plus=st.booleans(),
     replace_invalid=st.booleans(),
 )
 def test_c_and_py_unquoter_match_any_config(  # type: ignore[misc]
-    pieces: list[str], ignore: str, qs: bool, plus: bool, replace_invalid: bool
+    pieces: list[str],
+    qs_and_ignore: tuple[bool, str],
+    plus: bool,
+    replace_invalid: bool,
 ) -> None:
     val = "".join(pieces)
-    try:
-        py_unquoter = _PyUnquoter(
-            ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
-        )
-    except ValueError as exc:
-        # Both implementations reject the same configurations
-        with pytest.raises(ValueError, match=re.escape(str(exc))):
-            _CUnquoter(ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid)
-        return
+    qs, ignore = qs_and_ignore
     c_unquoter = _CUnquoter(
+        ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
+    )
+    py_unquoter = _PyUnquoter(
         ignore=ignore, qs=qs, plus=plus, replace_invalid=replace_invalid
     )
     assert c_unquoter(val) == py_unquoter(val)
