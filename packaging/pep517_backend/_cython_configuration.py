@@ -238,8 +238,12 @@ def patched_env(
                 f'-ffile-prefix-map={temporary_build_directory!s}={original_source_directory!s}',
             )
         ),
-        # Finally, append the user-set env var, ensuring its top priority:
+        # Finally, append the user-set env vars, ensuring their top priority.
+        # distutils places ``CFLAGS`` before ``CPPFLAGS`` on the command
+        # line, so the user's ``CFLAGS`` is repeated here to keep outranking
+        # the flags above, as it did when they all lived in ``CFLAGS``:
         orig_env.get('CPPFLAGS', ''),
+        orig_env.get('CFLAGS', ''),
         # Last thing, strip spaces caused by empty leading/trailing flags:
     )).strip()
 

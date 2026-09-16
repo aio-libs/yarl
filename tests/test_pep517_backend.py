@@ -65,8 +65,8 @@ def test_extra_flags_go_through_cppflags(
     for flag in unexpected:
         assert flag not in cppflags
     assert f"-ffile-prefix-map={build_dir}={source_dir}" in cppflags
-    # The user's own value keeps the top priority by coming last.
-    assert cppflags[-1] == "-DUSER=1"
+    # The user's own values keep the top priority by coming last.
+    assert cppflags[-2:] == ["-DUSER=1", "-fuser-cflag"]
     assert os.environ["CPPFLAGS"] == "-DUSER=1"
 
 
@@ -100,3 +100,21 @@ def test_interpreter_flags_survive_the_build_env(
     for flag in RELEASE_FLAGS:
         assert flag in command
     assert f"-ffile-prefix-map={build_dir}={source_dir}" in command
+
+
+@pytest.mark.skipif(  # pragma: win32 no cover
+    sys.platform == "win32", reason="MSVC does not read CFLAGS or CPPFLAGS"
+)
+def test_user_cflags_outrank_the_backend_flags(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A CFLAGS set by the packager still wins over the release flags."""
+    monkeypatch.setenv("CFLAGS", "-O2")
+    monkeypatch.delenv("CPPFLAGS", raising=False)
+
+    with patched_env({}, cython_line_tracing_requested=False):
+        command = _configured_compile_command()
+
+    optimization_flags = [flag for flag in command if flag.startswith("-O")]
+    assert "-Ofast" in optimization_flags
+    assert optimization_flags[-1] == "-O2"
