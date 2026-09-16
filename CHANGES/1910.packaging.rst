@@ -1,0 +1,7 @@
+Started passing the build backend's extra compiler flags through
+``CPPFLAGS`` instead of ``CFLAGS``. The ``distutils`` bundled with
+``setuptools`` appends ``CPPFLAGS`` to the interpreter's own compiler
+flags but replaces them with a ``CFLAGS`` environment variable, so the
+wheels are now built with the interpreter's flags as well as the
+project's own optimization and line tracing settings
+-- by :user:`bdraco`.
