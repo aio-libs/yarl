@@ -140,15 +140,35 @@ def test_url_build_ipv6_zone_id_non_ascii_not_ascii_encodable() -> None:
         bytes(u)
 
 
-def test_url_build_ipv6_zone_id_empty_authority_not_validated() -> None:
-    """``authority=`` bypasses the empty-zone rejection of ``host=``.
+def test_url_build_ipv6_zone_id_empty_authority() -> None:
+    """``authority=`` rejects an empty zone just like ``host=``.
 
-    The authority path uses ``validate_host=False``; documents the
-    asymmetry with ``test_url_build_ipv6_zone_id_empty`` (#998).
+    Matches ``test_url_build_ipv6_zone_id_empty`` (#998).
     """
-    u = URL.build(scheme="http", authority="[fe80::1%25]")
-    assert str(u) == "http://[fe80::1%25]"
-    assert u.host == "fe80::1%"
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL.build(scheme="http", authority="[fe80::1%25]")
+
+
+@pytest.mark.parametrize(
+    ("authority", "char"),
+    [
+        ("ex/ample.com", "/"),
+        ("ex?ample.com", "?"),
+        ("ex#ample.com", "#"),
+        ("ex ample.com", " "),
+        ("example.com\r\nx-injected: 1", "\r"),
+        ("user@ex/ample.com", "/"),
+    ],
+    ids=("slash", "question", "hash", "space", "crlf", "userinfo-slash"),
+)
+def test_url_build_authority_rejects_delimiters(authority: str, char: str) -> None:
+    """A delimiter in the authority host must not reach the netloc.
+
+    Left unvalidated it survives into ``str(url)``, which then reparses
+    to a different host than :attr:`URL.host` reports.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL.build(scheme="http", authority=authority)
 
 
 def test_build_with_scheme() -> None:
