@@ -30,6 +30,15 @@ def _configured_compile_command() -> list[str]:  # pragma: win32 no cover
     return command
 
 
+def _configured_link_command() -> list[str]:  # pragma: win32 no cover
+    """Return the link command setuptools derives from the environment."""
+    compiler = new_compiler()
+    customize_compiler(compiler)
+    # ``customize_compiler`` sets this attribute dynamically.
+    command: list[str] = compiler.linker_so  # type: ignore[attr-defined]
+    return command
+
+
 @pytest.mark.parametrize(
     ("tracing", "expected", "unexpected"),
     [(False, RELEASE_FLAGS, TRACING_FLAGS), (True, TRACING_FLAGS, RELEASE_FLAGS)],
@@ -73,33 +82,59 @@ def test_extra_flags_go_through_cppflags(
 @pytest.mark.skipif(  # pragma: win32 no cover
     sys.platform == "win32", reason="MSVC does not read CFLAGS or CPPFLAGS"
 )
+@pytest.mark.parametrize(
+    ("tracing", "expected", "optimization", "link_flag"),
+    [
+        (False, RELEASE_FLAGS, "-Ofast", "-s"),
+        (True, TRACING_FLAGS, "-Og", "--coverage"),
+    ],
+)
 def test_interpreter_flags_survive_the_build_env(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    tracing: bool,
+    expected: tuple[str, ...],
+    optimization: str,
+    link_flag: str,
 ) -> None:
     """The compiler still gets the interpreter's flags plus the extra ones.
 
     This drives setuptools' real compiler customization, so it fails if the
-    backend ever goes back to setting CFLAGS.
+    backend ever goes back to setting CFLAGS. The backend's flags must also
+    come after the interpreter's, since the last -O and the last -D or -U
+    for a macro are the ones that count.
     """
     # A developer shell exporting these would replace the flags up front.
     monkeypatch.delenv("CFLAGS", raising=False)
     monkeypatch.delenv("CPPFLAGS", raising=False)
+    monkeypatch.delenv("LDFLAGS", raising=False)
     source_dir = tmp_path / "src"
     build_dir = tmp_path / "build"
 
     with patched_env(
         {},
-        cython_line_tracing_requested=False,
+        cython_line_tracing_requested=tracing,
         original_source_directory=source_dir,
         temporary_build_directory=build_dir,
     ):
         command = _configured_compile_command()
+        link_command = _configured_link_command()
 
     for flag in _interpreter_flags():
         assert flag in command
-    for flag in RELEASE_FLAGS:
+    for flag in expected:
         assert flag in command
     assert f"-ffile-prefix-map={build_dir}={source_dir}" in command
+    optimization_flags = [flag for flag in command if flag.startswith("-O")]
+    assert optimization_flags[-1] == optimization
+    # The interpreter usually defines NDEBUG; the backend's -UNDEBUG for
+    # tracing builds, or its own -DNDEBUG otherwise, has to come after it.
+    last_define = max(
+        (index for index, flag in enumerate(command) if flag == "-DNDEBUG"),
+        default=-1,
+    )
+    assert command.index("-UNDEBUG" if tracing else "-DNDEBUG") >= last_define
+    assert link_flag in link_command
 
 
 @pytest.mark.skipif(  # pragma: win32 no cover

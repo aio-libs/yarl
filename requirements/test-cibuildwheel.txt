@@ -1,6 +1,8 @@
 -r cython.txt
 covdefaults
-# Dependencies of the in-tree PEP 517 build backend under test:
+# expandvars, setuptools and tomli are dependencies of the in-tree PEP 517
+# build backend under test; the tests use setuptools' private distutils, so
+# it is pinned like the rest.
 expandvars==1.1.2
 idna==3.19
 multidict==6.8.0
