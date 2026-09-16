@@ -2792,6 +2792,22 @@ def test_url_host_with_default_ignorable_rejected(ignorable: str) -> None:
         URL(f"http://e{ignorable}vil.com/")
 
 
+@pytest.mark.parametrize(
+    "delimiter",
+    ["［", "］", "＼"],
+    ids=["fullwidth-left-bracket", "fullwidth-right-bracket", "fullwidth-backslash"],
+)
+def test_url_host_idna_normalizes_to_delimiter_rejected(delimiter: str) -> None:
+    """Reject a parsed host that IDNA-normalizes to a URL delimiter.
+
+    ``_check_netloc`` only screens ``/?#@:%``, so ``[``, ``]`` and ``\\``
+    reach ``_idna_encode`` unchecked. Left unrejected, ``URL("http://exa［mple/")``
+    renders as ``http://exa[mple/``, which yarl itself rejects on re-parse.
+    """
+    with pytest.raises(ValueError, match="after IDNA normalization"):
+        URL(f"http://exa{delimiter}mple/p")
+
+
 def _idna_collapses(code_point: int) -> bool:
     """True if IDNA encoding silently deletes ``code_point`` from a host."""
     try:
