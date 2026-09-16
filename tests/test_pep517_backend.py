@@ -30,7 +30,7 @@ def _configured_compile_command() -> list[str]:  # pragma: win32 no cover
     return command
 
 
-def _last_index(command: list[str], flag: str) -> int:
+def _last_index(command: list[str], flag: str) -> int:  # pragma: win32 no cover
     """Return the position of the last occurrence of ``flag``, or -1."""
     return max(
         (index for index, current in enumerate(command) if current == flag),
@@ -91,10 +91,10 @@ def test_extra_flags_go_through_cppflags(
     sys.platform == "win32", reason="MSVC does not read CFLAGS or CPPFLAGS"
 )
 @pytest.mark.parametrize(
-    ("tracing", "expected", "optimization", "macro_flag", "link_flag"),
+    ("tracing", "expected", "optimization", "losing_flag", "winning_flag", "link_flag"),
     [
-        (False, RELEASE_FLAGS, "-Ofast", "-DNDEBUG", "-s"),
-        (True, TRACING_FLAGS, "-Og", "-UNDEBUG", "--coverage"),
+        (False, RELEASE_FLAGS, "-Ofast", "-UNDEBUG", "-DNDEBUG", "-s"),
+        (True, TRACING_FLAGS, "-Og", "-DNDEBUG", "-UNDEBUG", "--coverage"),
     ],
 )
 def test_interpreter_flags_survive_the_build_env(
@@ -103,7 +103,8 @@ def test_interpreter_flags_survive_the_build_env(
     tracing: bool,
     expected: tuple[str, ...],
     optimization: str,
-    macro_flag: str,
+    losing_flag: str,
+    winning_flag: str,
     link_flag: str,
 ) -> None:
     """The compiler still gets the interpreter's flags plus the extra ones.
@@ -137,9 +138,10 @@ def test_interpreter_flags_survive_the_build_env(
     optimization_flags = [flag for flag in command if flag.startswith("-O")]
     assert optimization_flags[-1] == optimization
     # The interpreter usually defines NDEBUG; the backend's -UNDEBUG for
-    # tracing builds has to come after it, and the last word on the macro
-    # must be the backend's either way.
-    assert _last_index(command, macro_flag) >= _last_index(command, "-DNDEBUG")
+    # tracing builds has to come after it, and a release build must not end
+    # up with an -UNDEBUG after its -DNDEBUG.
+    assert winning_flag in command
+    assert _last_index(command, losing_flag) < _last_index(command, winning_flag)
     assert link_flag in link_command
 
 
