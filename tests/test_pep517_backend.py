@@ -62,6 +62,8 @@ def test_extra_flags_go_through_cppflags(
 
     A CFLAGS environment variable replaces the interpreter's own compiler
     flags in setuptools' distutils, while CPPFLAGS is appended to them.
+    The value from the pyproject config comes first and the user's own
+    values come last.
     """
     monkeypatch.setenv("CFLAGS", "-fuser-cflag")
     monkeypatch.setenv("CPPFLAGS", "-DUSER=1")
@@ -69,7 +71,7 @@ def test_extra_flags_go_through_cppflags(
     build_dir = tmp_path / "build"
 
     with patched_env(
-        {},
+        {"CPPFLAGS": "-DFROM_CONFIG=1"},
         cython_line_tracing_requested=tracing,
         original_source_directory=source_dir,
         temporary_build_directory=build_dir,
@@ -77,6 +79,7 @@ def test_extra_flags_go_through_cppflags(
         cppflags = os.environ["CPPFLAGS"].split(" ")
         assert os.environ["CFLAGS"] == "-fuser-cflag"
 
+    assert cppflags[0] == "-DFROM_CONFIG=1"
     for flag in expected:
         assert flag in cppflags
     for flag in unexpected:
