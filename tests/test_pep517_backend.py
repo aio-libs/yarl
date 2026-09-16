@@ -30,6 +30,14 @@ def _configured_compile_command() -> list[str]:  # pragma: win32 no cover
     return command
 
 
+def _last_index(command: list[str], flag: str) -> int:
+    """Return the position of the last occurrence of ``flag``, or -1."""
+    return max(
+        (index for index, current in enumerate(command) if current == flag),
+        default=-1,
+    )
+
+
 def _configured_link_command() -> list[str]:  # pragma: win32 no cover
     """Return the link command setuptools derives from the environment."""
     compiler = new_compiler()
@@ -83,10 +91,10 @@ def test_extra_flags_go_through_cppflags(
     sys.platform == "win32", reason="MSVC does not read CFLAGS or CPPFLAGS"
 )
 @pytest.mark.parametrize(
-    ("tracing", "expected", "optimization", "link_flag"),
+    ("tracing", "expected", "optimization", "macro_flag", "link_flag"),
     [
-        (False, RELEASE_FLAGS, "-Ofast", "-s"),
-        (True, TRACING_FLAGS, "-Og", "--coverage"),
+        (False, RELEASE_FLAGS, "-Ofast", "-DNDEBUG", "-s"),
+        (True, TRACING_FLAGS, "-Og", "-UNDEBUG", "--coverage"),
     ],
 )
 def test_interpreter_flags_survive_the_build_env(
@@ -95,6 +103,7 @@ def test_interpreter_flags_survive_the_build_env(
     tracing: bool,
     expected: tuple[str, ...],
     optimization: str,
+    macro_flag: str,
     link_flag: str,
 ) -> None:
     """The compiler still gets the interpreter's flags plus the extra ones.
@@ -128,12 +137,9 @@ def test_interpreter_flags_survive_the_build_env(
     optimization_flags = [flag for flag in command if flag.startswith("-O")]
     assert optimization_flags[-1] == optimization
     # The interpreter usually defines NDEBUG; the backend's -UNDEBUG for
-    # tracing builds, or its own -DNDEBUG otherwise, has to come after it.
-    last_define = max(
-        (index for index, flag in enumerate(command) if flag == "-DNDEBUG"),
-        default=-1,
-    )
-    assert command.index("-UNDEBUG" if tracing else "-DNDEBUG") >= last_define
+    # tracing builds has to come after it, and the last word on the macro
+    # must be the backend's either way.
+    assert _last_index(command, macro_flag) >= _last_index(command, "-DNDEBUG")
     assert link_flag in link_command
 
 
