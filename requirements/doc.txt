@@ -8,4 +8,5 @@
 docutils<0.22
 myst-parser >= 5.1.0
 sphinx==9.1.0
+sphinx-issues >= 5.0.0  # Sphinx roles providing support for linking GitHub
 sphinxcontrib-towncrier
