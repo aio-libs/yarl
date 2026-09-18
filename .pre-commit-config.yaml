@@ -153,7 +153,6 @@ repos:
     name: MyPy, for Python 3.11
     additional_dependencies:
     - Cython
-    - expandvars
     - idna
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`

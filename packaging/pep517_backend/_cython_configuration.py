@@ -5,10 +5,9 @@ from __future__ import annotations
 import os
 import typing as _t  # noqa: WPS111
 from contextlib import contextmanager
+from os.path import expandvars
 from pathlib import Path
 from sys import version_info as _python_version_tuple
-
-from expandvars import expandvars
 
 from ._compat import load_toml_from_string
 from ._transformers import (
@@ -195,7 +194,10 @@ def patched_env(
     :yields: None
     """
     orig_env = os.environ.copy()
-    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}  # type: ignore[no-untyped-call]
+    # Unset self-references such as ${LDFLAGS} must expand to empty strings.
+    for env_var in env:
+        os.environ.setdefault(env_var, '')
+    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}
     os.environ.update(expanded_env)
 
     # The extra compiler flags go through ``CPPFLAGS`` rather than ``CFLAGS``:
