@@ -5,7 +5,7 @@ covdefaults
 # it is pinned like the rest.
 expandvars==1.1.2
 idna==3.20
-multidict==6.8.0
+multidict==6.9.0
 propcache==0.5.4
 pytest==9.1.1
 pytest-cov>=7.1.0
