@@ -1,0 +1,4 @@
+Add :py:meth:`~yarl.URL.joinpath_safe` which appends each argument as a
+single path segment, percent-encoding ``/`` characters and the standalone
+relative-path indicators ``.`` and ``..`` so untrusted input cannot
+introduce path traversal.
