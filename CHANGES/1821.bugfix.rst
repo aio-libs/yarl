@@ -1,0 +1,2 @@
+Fixed :attr:`yarl.URL.host_port_subcomponent` for URLs with user information
+and an empty host -- by :user:`ltsyk`.
