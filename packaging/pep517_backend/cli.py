@@ -46,7 +46,10 @@ def run_main_program(argv: _c.Sequence[str]) -> int | str:
             ),
         ),
     )
-    translate_cython_cli_args = _make_cythonize_cli_args_from_config(config)
+    translate_cython_cli_args = _make_cythonize_cli_args_from_config(
+        config,
+        cython_line_tracing_requested=True,
+    )
 
     cython_options, cython_sources = _split_cython_cli_args(  # type: ignore[no-untyped-call]
         translate_cython_cli_args,
