@@ -156,6 +156,23 @@ def test_build_with_scheme() -> None:
     assert str(u) == "blob:path"
 
 
+@pytest.mark.parametrize(
+    "scheme",
+    (
+        "http://evil.example",
+        "//evil.example",
+        "http:",
+        "ht tp",
+        "1http",
+    ),
+    ids=("authority", "slashes", "trailing-colon", "space", "leading-digit"),
+)
+def test_build_with_scheme_outside_rfc3986_grammar(scheme: str) -> None:
+    """A scheme carrying a delimiter would re-point the rendered URL."""
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL.build(scheme=scheme, host="good.example", path="/p")
+
+
 def test_build_with_host() -> None:
     u = URL.build(host="127.0.0.1")
     assert str(u) == "//127.0.0.1"
