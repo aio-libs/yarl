@@ -472,6 +472,32 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
     assert url.port == 8080
 
 
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://[::1]@",
+        "//[]@",
+        "//a[b]c@",
+    ),
+    ids=(
+        "ipv6-addr-ending-at",
+        "empty-brackets-ending-at",
+        "mixed-brackets-ending-at",
+    ),
+)
+def test_bracketed_authority_ending_at_rejected(url: str) -> None:
+    """Reject malformed bracketed authority ending in @ (GH #1822)."""
+    with pytest.raises(ValueError):
+        URL(url)
+
+
+def test_host_port_subcomponent_empty_host() -> None:
+    """host_port_subcomponent handles empty raw_host (GH #1821)."""
+    url = URL("//user@")
+    assert url.raw_host == ""
+    assert url.host_port_subcomponent == ""
+
+
 def test_ipv4_zone() -> None:
     # I'm unsure if it is correct.
     url = URL("http://1.2.3.4%тест%42:123")
