@@ -184,11 +184,31 @@ def test_build_with_scheme_and_host() -> None:
         pytest.param(
             "", TypeError, r"^The port is required to be int, got .*\.$", id="port-str"
         ),
+        pytest.param(
+            True,
+            TypeError,
+            r"^The port is required to be int, got .*\.$",
+            id="port-bool-true",
+        ),
+        pytest.param(
+            False,
+            TypeError,
+            r"^The port is required to be int, got .*\.$",
+            id="port-bool-false",
+        ),
     ],
 )
 def test_build_with_port(port: int, exc: type[Exception], match: str) -> None:
     with pytest.raises(exc, match=match):
         URL.build(port=port)
+
+
+def test_build_with_host_rejects_bool_port() -> None:
+    """URL.build must reject bool ports (isinstance(True, int) is True)."""
+    with pytest.raises(TypeError, match=r"port is required to be int"):
+        URL.build(scheme="http", host="example.com", port=True)
+    with pytest.raises(TypeError, match=r"port is required to be int"):
+        URL.build(scheme="http", host="example.com", port=False)
 
 
 def test_build_with_user() -> None:
