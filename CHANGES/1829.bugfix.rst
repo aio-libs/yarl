@@ -1,0 +1,7 @@
+Validated the host parsed by the ``URL(str)`` constructor the same way the
+builder APIs do: control characters (e.g. NUL), control characters in an IPv6
+zone identifier, and IDNA-normalized URL delimiters (e.g. the fullwidth ``［``,
+which normalizes to ``[``) are now rejected with a ``ValueError`` instead of
+surviving into a ``str(url)`` that yarl itself cannot re-parse. The documented
+permissive acceptance of an empty IPv6 zone identifier is unchanged -- by
+:user:`aryansk`.
