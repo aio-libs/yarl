@@ -141,11 +141,19 @@ def split_netloc(
         hostinfo = netloc
     else:
         userinfo, _, hostinfo = netloc.rpartition("@")
+        # userinfo may not contain the IP-literal delimiters; a '[' or ']' there
+        # is never valid and would otherwise be percent-encoded into a
+        # username while the host subcomponent ends up empty.
+        if "[" in userinfo or "]" in userinfo:
+            raise ValueError("Invalid IPv6 URL")
         username, have_password, password = userinfo.partition(":")
         if not have_password:
             password = None
 
-    if "[" in hostinfo:
+    # '[' and ']' are only valid in the host subcomponent, as the delimiters of
+    # an IP-literal. Checking both characters also rejects an unbalanced ']',
+    # which would otherwise be taken as part of the host.
+    if "[" in hostinfo or "]" in hostinfo:
         if hostinfo[0] != "[" or hostinfo.count("[") > 1 or hostinfo.count("]") > 1:
             raise ValueError("Invalid IPv6 URL")
         _, _, bracketed = hostinfo.partition("[")
