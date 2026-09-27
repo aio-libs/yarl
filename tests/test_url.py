@@ -458,7 +458,7 @@ def test_ipfuture_brackets_not_allowed() -> None:
     ),
 )
 def test_malformed_bracketed_host_rejected(url: str) -> None:
-    """Reject URLs with multiple brackets to prevent host confusion (SSRF)."""
+    """Reject malformed brackets, including empty hosts after userinfo."""
     with pytest.raises(ValueError, match="Invalid IPv6 URL"):
         URL(url)
 
