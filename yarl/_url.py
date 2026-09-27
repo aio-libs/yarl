@@ -901,6 +901,10 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
+        # Encoded authority forms such as ``//user@:8080`` have an
+        # empty host but still expose the explicit port.  Keep the empty
+        # host intact here so the host:port subcomponent can be rendered
+        # as ``:8080`` instead of crashing while checking trailing dots.
         if raw and raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
