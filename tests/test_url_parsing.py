@@ -1,3 +1,4 @@
+from typing import Literal
 from urllib.parse import SplitResult
 
 import pytest
@@ -208,6 +209,13 @@ class TestPort:
     def test_no_host(self, url: str) -> None:
         with pytest.raises(ValueError, match="host is required"):
             URL(url)
+
+    def test_no_host_rfc(self) -> None:
+        u = URL("//:77", mode="rfc")
+        assert u.scheme == ""
+        assert u.host == ""
+        assert u.port == 77
+        assert u.path == "/"
 
     def test_double_port(self) -> None:
         with pytest.raises(ValueError):
@@ -464,6 +472,29 @@ def test_userinfo_without_host_rejected(url: str) -> None:
         URL(url)
 
 
+@pytest.mark.parametrize("authority", ["user@", ":77", "u:p@:1"])
+def test_build_authority_without_host_rejected(authority: str) -> None:
+    # URL.build() must not produce a string that URL() rejects.
+    with pytest.raises(ValueError, match="host is required with userinfo"):
+        URL.build(scheme="sc", authority=authority)
+
+
+@pytest.mark.parametrize("url", ["//user@", "sc://user@/", "sc://user:pw@:1/"])
+def test_userinfo_without_host_rfc(url: str) -> None:
+    # RFC 3986 allows an empty reg-name host next to userinfo or a port.
+    parsed = URL(url, mode="rfc")
+    assert parsed.host == ""
+    assert URL(str(parsed), mode="rfc") == parsed
+    built = URL.build(scheme="sc", authority=parsed.raw_authority, mode="rfc")
+    assert built.raw_authority == parsed.raw_authority
+
+
+@pytest.mark.parametrize("mode", ["rfc", "whatwg"])
+def test_build_http_authority_without_host(mode: Literal["rfc", "whatwg"]) -> None:
+    with pytest.raises(ValueError, match="host is required for absolute urls"):
+        URL.build(scheme="http", authority="user@", mode=mode)
+
+
 class TestStripEmptyParts:
     def test_all_empty_http(self) -> None:
         with pytest.raises(ValueError):
@@ -473,6 +504,16 @@ class TestStripEmptyParts:
         # Userinfo and a port need a host, as in the WHATWG URL Standard.
         with pytest.raises(ValueError, match="host is required"):
             URL("//@:?#")
+
+    def test_all_empty_rfc(self) -> None:
+        u = URL("//@:?#", mode="rfc")
+        assert u.scheme == ""
+        assert u.user is None
+        assert u.password is None
+        assert u.host == ""
+        assert u.path == ""
+        assert u.query_string == ""
+        assert u.fragment == ""
 
     def test_path_only(self) -> None:
         u = URL("///path")

@@ -231,6 +231,13 @@ def test_host_port_subcomponent(input: str, result: str) -> None:
     assert url.host_port_subcomponent == result
 
 
+@pytest.mark.parametrize(
+    ("input", "result"), [("//user@", ""), ("//user@:8080", ":8080")]
+)
+def test_host_port_subcomponent_empty_host_rfc(input: str, result: str) -> None:
+    assert URL(input, mode="rfc").host_port_subcomponent == result
+
+
 def test_host_subcomponent_return_idna_encoded_host() -> None:
     url = URL("http://оун-упа.укр")
     assert url.host_subcomponent == "xn----8sb1bdhvc.xn--j1amh"

@@ -254,6 +254,20 @@ def _encode_relative_scheme_colon(path: str) -> str:
     return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
 
 
+def _check_missing_host(scheme: str, mode: Mode) -> None:
+    """Reject an authority that has userinfo or a port but no host.
+
+    Schemes that need a host always reject it. RFC 3986 allows an empty
+    host otherwise, WHATWG rejects it for every scheme.
+    """
+    if scheme in SCHEME_REQUIRES_HOST:
+        raise ValueError(
+            f"Invalid URL: host is required for absolute urls with the {scheme} scheme"
+        )
+    if mode is Mode.WHATWG:
+        raise ValueError("Invalid URL: host is required with userinfo or a port")
+
+
 def _encode_url(url_str: str, mode: Mode) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
@@ -269,16 +283,9 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
             username = password = port = None
             host = netloc
         if host is None:
-            if scheme in SCHEME_REQUIRES_HOST:
-                msg = (
-                    "Invalid URL: host is required for "
-                    f"absolute urls with the {scheme} scheme"
-                )
-            else:
-                # The authority is not empty, so it has userinfo or a port
-                # but no host; WHATWG rejects that for every scheme.
-                msg = "Invalid URL: host is required with userinfo or a port"
-            raise ValueError(msg)
+            # The authority is not empty, so it has userinfo or a port.
+            _check_missing_host(scheme, mode)
+            host = ""
         # The parser historically encoded without validation, which let
         # control characters (NUL/C0) and IDNA-normalized delimiters into
         # the host, producing a ``str(url)`` that yarl cannot re-parse
@@ -625,6 +632,8 @@ class URL:
         _host: str | None = None
         if authority:
             user, password, _host, port = split_netloc(authority)
+            if not _host:
+                _check_missing_host(scheme, mode)
             _host = _encode_host(_host, validate_host=False) if _host else ""
         elif host:
             _host = _encode_host(host, validate_host=True)
@@ -1019,6 +1028,11 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
+        # RFC 3986 mode accepts authority forms such as ``//user@:8080``,
+        # which have an empty host but still expose the explicit port.  Keep
+        # the empty host intact here so the host:port subcomponent can be
+        # rendered as ``:8080`` instead of crashing while checking trailing
+        # dots.
         if raw and raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
