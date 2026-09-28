@@ -243,6 +243,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'example.com'
       >>> URL('http://[::1]').host_port_subcomponent
       '[::1]'
+      >>> URL('//user@:8080').host_port_subcomponent
+      ':8080'
 
    .. note::
 
