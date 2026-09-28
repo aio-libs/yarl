@@ -35,20 +35,20 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 
 | Outcome | Cases |
 |---|---|
-| All three agree | 412 |
-| yarl differs, RFC 3986 and WHATWG agree | 39 |
-| WHATWG differs, yarl follows RFC 3986 | 179 |
-| RFC 3986 differs, yarl follows WHATWG | 113 |
-| All three differ | 153 |
+| All three agree | 413 |
+| yarl differs, RFC 3986 and WHATWG agree | 38 |
+| WHATWG differs, yarl follows RFC 3986 | 171 |
+| RFC 3986 differs, yarl follows WHATWG | 123 |
+| All three differ | 151 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl vs RFC 3986 | 305 |
-| yarl vs WHATWG | 371 |
+| yarl vs RFC 3986 | 312 |
+| yarl vs WHATWG | 360 |
 | WHATWG vs RFC 3986 | 445 |
 
-## yarl differs, RFC 3986 and WHATWG agree (39)
+## yarl differs, RFC 3986 and WHATWG agree (38)
 
 Every case where yarl is the odd one out. A change must not add rows here; see AGENTS.md.
 
@@ -70,7 +70,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | `/i` | `sc:///pa/pa` | `sc:/i` | `sc:///i` | `sc:///i` |
 | `?i` | `sc:///pa/pa` | `sc:/pa/pa?i` | `sc:///pa/pa?i` | `sc:///pa/pa?i` |
 | `#i` | `sc:///pa/pa` | `sc:/pa/pa#i` | `sc:///pa/pa#i` | `sc:///pa/pa#i` |
-| `sc://te@s:t@/` | *none* | `sc://te%40s:t@/` | *failure* | *failure* |
 | `///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
 | `file:///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
 | `sc://?` | *none* | `sc:` | `sc://?` | `sc://?` |
@@ -94,7 +93,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | `turn:///test` | *none* | `turn:/test` | `turn:///test` | `turn:///test` |
 | `stun:///test` | *none* | `stun:/test` | `stun:///test` | `stun:///test` |
 
-## WHATWG differs, yarl follows RFC 3986 (179)
+## WHATWG differs, yarl follows RFC 3986 (171)
 
 | Category | Cases |
 |---|---|
@@ -102,7 +101,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | numeric host that is not a dotted quad | 36 |
 | other | 32 |
 | file scheme | 16 |
-| empty host | 8 |
 | characters outside the RFC 3986 grammar | 6 |
 | backslash | 6 |
 | non-special scheme | 2 |
@@ -266,14 +264,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | `file://C\|/` | *none* | *failure* | *failure* | `file:///C:/` |
 | file scheme | `file://localhost//a//../..//foo` | *none* | `file://localhost///foo` | `file://localhost///foo` | `file://///foo` |
 | file scheme | `file://localhost////foo` | *none* | `file://localhost////foo` | `file://localhost////foo` | `file://////foo` |
-| empty host | `sc://:12/` | *none* | `sc://:12/` | `sc://:12/` | *failure* |
-| empty host | `data://:443` | *none* | `data://:443` | `data://:443` | *failure* |
-| empty host | `javascript://:443` | *none* | `javascript://:443` | `javascript://:443` | *failure* |
-| empty host | `mailto://:443` | *none* | `mailto://:443` | `mailto://:443` | *failure* |
-| empty host | `intent://:443` | *none* | `intent://:443` | `intent://:443` | *failure* |
-| empty host | `urn://:443` | *none* | `urn://:443` | `urn://:443` | *failure* |
-| empty host | `turn://:443` | *none* | `turn://:443` | `turn://:443` | *failure* |
-| empty host | `stun://:443` | *none* | `stun://:443` | `stun://:443` | *failure* |
 | characters outside the RFC 3986 grammar | `http://&a:foo(b]c@d:2/` | `http://example.org/foo/bar` | *failure* | *failure* | `http://&a:foo(b%5Dc@d:2/` |
 | characters outside the RFC 3986 grammar | `` http://!"$&'()*+,-.;=_`{}~/ `` | *none* | *failure* | *failure* | `` http://!"$&'()*+,-.;=_`{}~/ `` |
 | characters outside the RFC 3986 grammar | `'https://user:pass[\x7f@foo/bar'` | `http://example.org` | *failure* | *failure* | `https://user:pass%5B%7F@foo/bar` |
@@ -289,14 +279,14 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test:@test/x` | `non-special://test@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://:@test/x` | `non-special://test/x` |
 
-## RFC 3986 differs, yarl follows WHATWG (113)
+## RFC 3986 differs, yarl follows WHATWG (123)
 
 | Category | Cases |
 |---|---|
 | characters outside the RFC 3986 grammar | 54 |
+| empty host | 18 |
 | file scheme | 15 |
 | tab or newline inside the input | 11 |
-| empty host | 8 |
 | other | 7 |
 | special scheme without an authority | 6 |
 | non-ASCII or percent-encoded host | 5 |
@@ -360,6 +350,24 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | characters outside the RFC 3986 grammar | `https://example.com/"quoted"` | *none* | `https://example.com/%22quoted%22` | *failure* | `https://example.com/%22quoted%22` |
 | characters outside the RFC 3986 grammar | `data:text/plain,test#<foo> <bar>` | *none* | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` | *failure* | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` |
 | characters outside the RFC 3986 grammar | `about:blank#<foo> <bar>` | *none* | `about:blank#%3Cfoo%3E%20%3Cbar%3E` | *failure* | `about:blank#%3Cfoo%3E%20%3Cbar%3E` |
+| empty host | `http://user:pass@/` | *none* | *failure* | `http://user:pass@/` | *failure* |
+| empty host | `http://user@/www.example.com` | *none* | *failure* | `http://user@/www.example.com` | *failure* |
+| empty host | `http://@/www.example.com` | *none* | *failure* | `http://@/www.example.com` | *failure* |
+| empty host | `http://a:b@/www.example.com` | *none* | *failure* | `http://a:b@/www.example.com` | *failure* |
+| empty host | `sc://@/` | *none* | *failure* | `sc://@/` | *failure* |
+| empty host | `sc://:/` | *none* | *failure* | `sc://:/` | *failure* |
+| empty host | `sc://:12/` | *none* | *failure* | `sc://:12/` | *failure* |
+| empty host | `data://:443` | *none* | *failure* | `data://:443` | *failure* |
+| empty host | `javascript://:443` | *none* | *failure* | `javascript://:443` | *failure* |
+| empty host | `mailto://:443` | *none* | *failure* | `mailto://:443` | *failure* |
+| empty host | `intent://:443` | *none* | *failure* | `intent://:443` | *failure* |
+| empty host | `urn://:443` | *none* | *failure* | `urn://:443` | *failure* |
+| empty host | `turn://:443` | *none* | *failure* | `turn://:443` | *failure* |
+| empty host | `stun://:443` | *none* | *failure* | `stun://:443` | *failure* |
+| empty host | `///example.org/../path` | `http://example.org/` | `http://example.org/path` | `http:///path` | `http://example.org/path` |
+| empty host | `///example.org/../../` | `http://example.org/` | `http://example.org/` | `http:///` | `http://example.org/` |
+| empty host | `///example.org/../path/../../` | `http://example.org/` | `http://example.org/` | `http:///` | `http://example.org/` |
+| empty host | `///example.org/../path/../../path` | `http://example.org/` | `http://example.org/path` | `http:///path` | `http://example.org/path` |
 | file scheme | `file:/example.com/` | `http://example.org/foo/bar` | `file:///example.com/` | `file:/example.com/` | `file:///example.com/` |
 | file scheme | `file:test` | `file:///tmp/mock/path` | `file:///tmp/mock/test` | `file:test` | `file:///tmp/mock/test` |
 | file scheme | `file:/example.com/` | *none* | `file:///example.com/` | `file:/example.com/` | `file:///example.com/` |
@@ -386,14 +394,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | tab or newline inside the input | `'http://ho\nst/'` | *none* | `http://host/` | *failure* | `http://host/` |
 | tab or newline inside the input | `'http://ho\rst/'` | *none* | `http://host/` | *failure* | `http://host/` |
 | tab or newline inside the input | `'h\tt\nt\rp://h\to\ns\rt:9\t0\n0\r0/p\ta\nt\rh?q\tu\ne\rry#f\tr\na\rg'` | *none* | `http://host:9000/path?query#frag` | *failure* | `http://host:9000/path?query#frag` |
-| empty host | `http://user:pass@/` | *none* | *failure* | `http://user:pass@/` | *failure* |
-| empty host | `http://user@/www.example.com` | *none* | *failure* | `http://user@/www.example.com` | *failure* |
-| empty host | `http://@/www.example.com` | *none* | *failure* | `http://@/www.example.com` | *failure* |
-| empty host | `http://a:b@/www.example.com` | *none* | *failure* | `http://a:b@/www.example.com` | *failure* |
-| empty host | `///example.org/../path` | `http://example.org/` | `http://example.org/path` | `http:///path` | `http://example.org/path` |
-| empty host | `///example.org/../../` | `http://example.org/` | `http://example.org/` | `http:///` | `http://example.org/` |
-| empty host | `///example.org/../path/../../` | `http://example.org/` | `http://example.org/` | `http:///` | `http://example.org/` |
-| empty host | `///example.org/../path/../../path` | `http://example.org/` | `http://example.org/path` | `http:///path` | `http://example.org/path` |
 | other | `http://f:999999/c` | `http://example.org/foo/bar` | *failure* | `http://f:999999/c` | *failure* |
 | other | `http://@www.example.com` | *none* | `http://www.example.com` | `http://@www.example.com` | `http://www.example.com/` |
 | other | `http://@pple.com` | *none* | `http://pple.com` | `http://@pple.com` | `http://pple.com/` |
@@ -420,7 +420,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | `non-special://f:999999/c` | *failure* |
 | leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/bar` |
 
-## All three differ (153)
+## All three differ (151)
 
 | Category | Cases |
 |---|---|
@@ -428,7 +428,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | special scheme without an authority | 37 |
 | characters outside the RFC 3986 grammar | 24 |
 | file scheme | 15 |
-| empty host | 11 |
+| empty host | 9 |
 | tab or newline inside the input | 7 |
 | non-ASCII or percent-encoded host | 7 |
 | leading or trailing C0 control or space | 6 |
@@ -558,8 +558,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | *failure* | `file:///w\|m` |
 | empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | *failure* | `file:///w\|\|m` |
 | empty host | `file:///w\|/m` | *none* | `file:///w%7C/m` | *failure* | `file:///w:/m` |
-| empty host | `sc://@/` | *none* | `sc:/` | `sc://@/` | *failure* |
-| empty host | `sc://:/` | *none* | `sc:/` | `sc://:/` | *failure* |
 | empty host | `file://` | `file://ape/` | `file://ape/` | `file://` | `file:///` |
 | empty host | `http://?` | *none* | `http://` | `http://?` | *failure* |
 | empty host | `http://#` | *none* | `http://` | `http://#` | *failure* |

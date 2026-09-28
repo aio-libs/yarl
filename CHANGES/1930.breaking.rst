@@ -1,0 +1,9 @@
+Rejected URLs whose authority has userinfo or a port but no host, such as
+``sc://user@/``, ``sc://a@b:c@/`` or ``//:8080``, for every scheme in the
+default WHATWG mode, as the WHATWG URL Standard does; RFC 3986 mode keeps
+accepting them unless the scheme needs a host, and reports the missing
+host as ``None`` like built and pre-encoded URLs do.
+:meth:`URL.build() <yarl.URL.build>` now applies the same rule to its
+``authority`` argument, so it no longer produces a URL that ``URL()``
+rejects
+-- by :user:`asvetlov`.

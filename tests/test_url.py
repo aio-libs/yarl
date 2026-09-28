@@ -224,12 +224,16 @@ def test_host_subcomponent(host: str) -> None:
         ("http://example.com:80", "example.com"),
         ("http://example.com:8080", "example.com:8080"),
         ("http://[::1]:8080", "[::1]:8080"),
-        ("//user@", ""),
     ],
 )
 def test_host_port_subcomponent(input: str, result: str) -> None:
     url = URL(input)
     assert url.host_port_subcomponent == result
+
+
+@pytest.mark.parametrize("input", ["//user@", "//user@:8080"])
+def test_host_port_subcomponent_empty_host_rfc(input: str) -> None:
+    assert URL(input, mode="rfc").host_port_subcomponent is None
 
 
 def test_host_subcomponent_return_idna_encoded_host() -> None:

@@ -96,6 +96,10 @@ neither a valid IP address nor a valid *reg-name* (:rfc:`3986#section-3.2.2`),
 for example one containing a space, a control character or a character that
 turns into a URL delimiter after IDNA normalization. An empty IPv6 zone
 identifier (``http://[fe80::1%25]/``) is still accepted when parsing.
+An authority with userinfo or a port but no host, such as
+``sc://user@/`` or ``//:8080``, is rejected for every scheme in the default
+WHATWG mode, as in the WHATWG URL Standard; RFC 3986 mode accepts it, with
+``host`` set to ``None``, unless the scheme needs a host, such as ``http``.
 
 .. doctest::
 
@@ -342,8 +346,6 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'example.com'
       >>> URL('http://[::1]').host_port_subcomponent
       '[::1]'
-      >>> URL('//user@:8080').host_port_subcomponent
-      ':8080'
 
    .. note::
 

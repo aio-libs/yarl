@@ -254,6 +254,20 @@ def _encode_relative_scheme_colon(path: str) -> str:
     return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
 
 
+def _check_missing_host(scheme: str, mode: Mode) -> None:
+    """Reject an authority that has userinfo or a port but no host.
+
+    Schemes that need a host always reject it. RFC 3986 allows an empty
+    host otherwise, WHATWG rejects it for every scheme.
+    """
+    if scheme in SCHEME_REQUIRES_HOST:
+        raise ValueError(
+            f"Invalid URL: host is required for absolute urls with the {scheme} scheme"
+        )
+    if mode is Mode.WHATWG:
+        raise ValueError("Invalid URL: host is required with userinfo or a port")
+
+
 def _encode_url(url_str: str, mode: Mode) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
@@ -269,22 +283,19 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
             username = password = port = None
             host = netloc
         if host is None:
-            if scheme in SCHEME_REQUIRES_HOST:
-                msg = (
-                    "Invalid URL: host is required for "
-                    f"absolute urls with the {scheme} scheme"
-                )
-                raise ValueError(msg)
-            else:
-                host = ""
+            # The authority is not empty, so it has userinfo or a port.
+            _check_missing_host(scheme, mode)
+            host = ""
         # The parser historically encoded without validation, which let
         # control characters (NUL/C0) and IDNA-normalized delimiters into
         # the host, producing a ``str(url)`` that yarl cannot re-parse
         # (#1829). Validate like the builder APIs do, but keep accepting an
         # empty IPv6 zone identifier, which parsing has always allowed (#998).
         host = _encode_host(host, validate_host=True, reject_empty_zone=False)
-        # Remove brackets as host encoder adds back brackets for IPv6 addresses
-        cache["raw_host"] = host[1:-1] if "[" in host else host
+        # Remove brackets as host encoder adds back brackets for IPv6 addresses.
+        # An empty host (RFC mode, e.g. "sc://user@:8080") is None, as for
+        # built and pre-encoded URLs.
+        cache["raw_host"] = (host[1:-1] if "[" in host else host) or None
         cache["explicit_port"] = port
         if password is None and username is None:
             # Fast path for URLs without user, password
@@ -623,6 +634,8 @@ class URL:
         _host: str | None = None
         if authority:
             user, password, _host, port = split_netloc(authority)
+            if not _host:
+                _check_missing_host(scheme, mode)
             _host = _encode_host(_host, validate_host=False) if _host else ""
         elif host:
             _host = _encode_host(host, validate_host=True)
@@ -826,7 +839,8 @@ class URL:
         if not (scheme := self._scheme):
             raise ValueError("URL should have scheme")
         if "@" in netloc:
-            encoded_host = self.host_subcomponent
+            # The host is None for an authority without one ("user@:8080").
+            encoded_host = self.host_subcomponent or ""
             netloc = make_netloc(None, None, encoded_host, self.explicit_port)
         elif not self._path and not self._query and not self._fragment:
             return self
@@ -881,7 +895,10 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return make_netloc(self.user, self.password, self.host, self.port)
+        if (host := self.host) is None and self._netloc:
+            # An authority without a host, e.g. "user@:8080" in RFC mode.
+            host = ""
+        return make_netloc(self.user, self.password, host, self.port)
 
     @cached_property
     def raw_user(self) -> str | None:
@@ -1017,10 +1034,6 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        # Encoded authority forms such as ``//user@:8080`` have an
-        # empty host but still expose the explicit port.  Keep the empty
-        # host intact here so the host:port subcomponent can be rendered
-        # as ``:8080`` instead of crashing while checking trailing dots.
         if raw and raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
@@ -1719,6 +1732,8 @@ class URL:
         fragment = human_quote(self.fragment, "")
         if TYPE_CHECKING:
             assert fragment is not None
+        if host is None and self._netloc:
+            host = ""  # an authority without a host, e.g. "user@:8080"
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
