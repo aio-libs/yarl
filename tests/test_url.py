@@ -2322,6 +2322,33 @@ def test_join_scheme_outside_uses_relative(
     assert str(URL(base).join(URL(reference))) == expected
 
 
+@pytest.mark.parametrize(
+    ("url", "raw_path", "path"),
+    [
+        ("http://example.com/a%3Ab", "/a%3Ab", "/a:b"),
+        ("http://example.com/a%3ab%40c", "/a%3Ab%40c", "/a:b@c"),
+        ("http://example.com/k%3Dv%3Bp", "/k%3Dv%3Bp", "/k=v;p"),
+        ("http://example.com/%28x%29", "/%28x%29", "/(x)"),
+    ],
+)
+def test_path_reserved_percent_encoding_kept(
+    url: str, raw_path: str, path: str
+) -> None:
+    parsed = URL(url)
+    assert parsed.raw_path == raw_path
+    assert parsed.path == path
+    assert parsed != URL(f"http://example.com{path}")
+
+
+def test_path_unreserved_percent_encoding_decoded() -> None:
+    assert URL("http://example.com/%7Ex%2Dy") == URL("http://example.com/~x-y")
+
+
+def test_join_keeps_reserved_percent_encoding_in_base() -> None:
+    base = URL("http://example.com/a%3Ab/c%2Fd/e")
+    assert str(base.join(URL("f"))) == "http://example.com/a%3Ab/c%2Fd/f"
+
+
 def test_join_non_url() -> None:
     base = URL("http://example.com")
     with pytest.raises(TypeError):

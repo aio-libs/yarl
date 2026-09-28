@@ -189,10 +189,7 @@ def test_mailto(url: str, path: str, query: dict[str, str]) -> None:
     "url",
     [
         "mailto:%22%5C%5C%5C%22it's%5C%20ugly%5C%5C%5C%22%22@example.org",
-        pytest.param(
-            "mailto:%22not%40me%22@example.org",
-            marks=diverges("%40 is decoded in the path"),
-        ),
+        "mailto:%22not%40me%22@example.org",
     ],
 )
 def test_mailto_encoded_local_part(url: str) -> None:

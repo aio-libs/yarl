@@ -255,7 +255,7 @@ RESERVED = ":/?#[]@!$&'()*+,;="
 # Reserved characters that yarl decodes in each component.
 RESERVED_DECODED = {
     "user": "!$&'()*+,;=",
-    "path": ":@!$&'()*,;=",
+    "path": "",
     "query": ":/?@!$'()*,",
     "fragment": ":/?@!$&'()*+,;=",
 }
@@ -382,14 +382,12 @@ def test_join_same_scheme_backward_compatible() -> None:
             "x",
             "http://a/b/c/%2F/x",
             id="merge-keeps-encoded-slash",
-            marks=diverges("merge uses decoded base segments"),
         ),
         pytest.param(
             "http://a/b%2Fc/d",
             "e",
             "http://a/b%2Fc/e",
             id="merge-keeps-encoded-slash-in-segment",
-            marks=diverges("merge uses decoded base segments"),
         ),
     ],
 )
@@ -456,11 +454,7 @@ def test_equivalent(first: str, second: str) -> None:
     [
         ("http://example.com/a%2Fb", "http://example.com/a/b"),
         ("http://example.com/?a%26b", "http://example.com/?a&b"),
-        pytest.param(
-            "http://example.com/a%3Bb",
-            "http://example.com/a;b",
-            marks=diverges("%3B is decoded in the path"),
-        ),
+        ("http://example.com/a%3Bb", "http://example.com/a;b"),
     ],
 )
 def test_not_equivalent(first: str, second: str) -> None:

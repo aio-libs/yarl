@@ -1543,14 +1543,9 @@ class URL:
             elif orig_path[-1] == "/":
                 path = f"{orig_path}{join_path}"
             else:
-                # …
-                # and relativizing ".."
-                # parts[0] is / for absolute urls,
-                # this join will add a double slash there
-                path = "/".join([*self.parts[:-1], ""]) + join_path
-                # which has to be removed
-                if orig_path[0] == "/":
-                    path = path[1:]
+                # Merge on the encoded base path, dropping its last segment,
+                # so percent-encoded delimiters in the base are kept as is.
+                path = orig_path[: orig_path.rfind("/") + 1] + join_path
             path = normalize_path(path) if "." in path else path
         else:
             path = orig_path
