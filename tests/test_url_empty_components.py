@@ -54,12 +54,21 @@ def test_empty_differs_from_absent(first: str, second: str) -> None:
     assert len({URL(first), URL(second)}) == 2
 
 
-def test_ordering() -> None:
-    absent, empty = URL("http://example.com/p"), URL("http://example.com/p?")
-    assert absent < empty
-    assert absent <= empty
-    assert empty > absent
-    assert empty >= absent
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("http://example.com/p", "http://example.com/p?"),
+        ("http://example.com/p", "http://example.com/p#"),
+        ("sc:/p", "sc:///p"),
+    ],
+)
+def test_ordering(first: str, second: str) -> None:
+    # Each operator is checked on its own pair, so no assert follows from
+    # another one.
+    assert URL(first) < URL(second)
+    assert URL(second) > URL(first)
+    assert URL(first) <= URL(first)
+    assert URL(second) >= URL(second)
 
 
 def test_special_scheme_empty_authority_ignored() -> None:
@@ -282,6 +291,31 @@ def test_build_special_scheme_by_mode() -> None:
     assert str(URL.build(scheme="file", path="/p", mode="rfc")) == "file:/p"
 
 
-def test_special_scheme_empty_authority_ignored_rfc() -> None:
-    # RFC 8089 section 2 makes the two forms equivalent in RFC mode too.
-    assert URL("file:/p", mode="rfc") == URL("file:///p", mode="rfc")
+# URLs are equal exactly when they print the same: RFC mode prints the
+# empty authority of a special scheme, WHATWG mode always prints "//".
+@pytest.mark.parametrize(
+    ("first", "second", "equal"),
+    [
+        (URL("file:/p"), URL("file:///p"), True),
+        (URL("http:/x"), URL("http:///x"), True),
+        (URL("file:/p", mode="rfc"), URL("file:///p", mode="rfc"), False),
+        (URL("http:/x", mode="rfc"), URL("http:///x", mode="rfc"), False),
+        (URL("file:/p"), URL("file:///p", mode="rfc"), True),
+        (URL("http:/x"), URL("http:/x", mode="rfc"), False),
+        (URL("http://h/p?"), URL("http://h/p?", mode="rfc"), True),
+    ],
+)
+def test_equality_follows_str(first: URL, second: URL, equal: bool) -> None:
+    assert (str(first) == str(second)) is equal
+    assert (first == second) is equal
+    assert (hash(first) == hash(second)) is equal
+    assert len({first: 1, second: 2}) == (1 if equal else 2)
+
+
+@pytest.mark.parametrize("path", ["//a", "//a/b", "/.//a"])
+def test_encoded_path_starting_with_double_slash(path: str) -> None:
+    url = URL.build(path=path, encoded=True)
+    for encoded in (True, False):
+        again = URL(str(url), encoded=encoded)
+        assert str(again) == str(url)
+    assert URL(str(URL.build(path="//a", encoded=True)), encoded=True).raw_path == "//a"
