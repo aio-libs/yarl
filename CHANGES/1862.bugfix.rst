@@ -1,0 +1,2 @@
+Fixed :attr:`~yarl.URL.host_port_subcomponent` to omit IPv6 zone identifiers
+from values used in HTTP Host headers -- by :user:`cananoo`.

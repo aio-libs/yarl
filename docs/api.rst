@@ -244,13 +244,15 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://[::1]').host_port_subcomponent
       '[::1]'
 
-   .. note::
+   An :rfc:`6874` IPv6 zone identifier is omitted because zone identifiers
+   have local significance only (:rfc:`6874#section-4`) and must not be sent
+   in an outgoing HTTP Host header. Use :attr:`URL.host_subcomponent` when
+   the zone identifier needs to be preserved in a URI.
 
-      An :rfc:`6874` IPv6 zone identifier is included verbatim. Zone
-      identifiers have local significance only
-      (:rfc:`6874#section-4`), so callers that use this value to build
-      outgoing protocol elements such as the HTTP Host header need to
-      strip it first.
+   .. doctest::
+
+      >>> URL('http://[fe80::1%25eth0]/').host_port_subcomponent
+      '[fe80::1]'
 
    .. versionadded:: 1.17
 
