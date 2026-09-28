@@ -224,6 +224,7 @@ def test_host_subcomponent(host: str) -> None:
         ("http://example.com:80", "example.com"),
         ("http://example.com:8080", "example.com:8080"),
         ("http://[::1]:8080", "[::1]:8080"),
+        ("//user@", ""),
     ],
 )
 def test_host_port_subcomponent(input: str, result: str) -> None:
@@ -2792,6 +2793,22 @@ def test_url_host_with_default_ignorable_rejected(ignorable: str) -> None:
         URL(f"http://e{ignorable}vil.com/")
 
 
+@pytest.mark.parametrize(
+    "delimiter",
+    ["［", "］", "＼"],
+    ids=["fullwidth-left-bracket", "fullwidth-right-bracket", "fullwidth-backslash"],
+)
+def test_url_host_idna_normalizes_to_delimiter_rejected(delimiter: str) -> None:
+    """Reject a parsed host that IDNA-normalizes to a URL delimiter.
+
+    ``_check_netloc`` only screens ``/?#@:%``, so ``[``, ``]`` and ``\\``
+    reach ``_idna_encode`` unchecked. Left unrejected, ``URL("http://exa［mple/")``
+    renders as ``http://exa[mple/``, which yarl itself rejects on re-parse.
+    """
+    with pytest.raises(ValueError, match="after IDNA normalization"):
+        URL(f"http://exa{delimiter}mple/p")
+
+
 def _idna_collapses(code_point: int) -> bool:
     """True if IDNA encoding silently deletes ``code_point`` from a host."""
     try:
@@ -2829,3 +2846,53 @@ def test_default_ignorable_covers_idna_stripped() -> None:
         hex(cp) for cp in stripped if not _DEFAULT_IGNORABLE_RE.search(chr(cp))
     )
     assert not uncovered, f"IDNA strips these but the regex misses them: {uncovered}"
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "a\x00b",  # NUL
+        "a\x01b",  # C0 control
+        "a\x1fb",  # unit separator
+        "a\x7fb",  # DEL
+    ],
+    ids=("nul", "c0", "unit-separator", "del"),
+)
+def test_url_parse_rejects_control_characters_in_host(host: str) -> None:
+    """The string parser must reject control characters in a reg-name host.
+
+    Before #1829 the parser encoded with ``validate_host=False``, so a NUL
+    or other C0 control survived into ``.host`` and ``str(url)`` even though
+    ``URL.build(host=...)`` rejected the same value.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(f"http://{host}/")
+
+
+def test_url_parse_rejects_control_characters_in_ipv6_zone() -> None:
+    """Control characters in an IPv6 zone identifier are rejected on parse.
+
+    ``URL.build(host="fe80::1%\x00")`` already rejected them; the parser
+    previously accepted ``[fe80::1%25\x00evil]`` (#1829).
+    """
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL("http://[fe80::1%25\x00evil]/")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "//\uff3b",  # fullwidth [ -> [
+        "//\uff3d",  # fullwidth ] -> ]
+        "//\uff3c",  # fullwidth \\ -> \\
+    ],
+    ids=("fullwidth-lbracket", "fullwidth-rbracket", "fullwidth-reverse-solidus"),
+)
+def test_url_parse_rejects_idna_normalized_host_delimiters(url: str) -> None:
+    """NFKC/IDNA must not map a host to a URL delimiter.
+
+    Before #1829 the parser accepted e.g. ``//\uff3b`` and serialized it as
+    ``//[``, which yarl itself could not re-parse.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(url)

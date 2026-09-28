@@ -174,16 +174,8 @@ INVALID = [
     pytest.param("http://::1/", id="3.2.2-ipv6-without-brackets"),
     pytest.param("http://example.com:8a/", id="3.2.3-port-not-digits"),
     pytest.param("http://example.com:-1/", id="3.2.3-port-negative"),
-    pytest.param(
-        "https://[0::0::0]/",
-        id="3.2.2-two-double-colons",
-        marks=diverges("malformed IP-literal accepted without brackets"),
-    ),
-    pytest.param(
-        "http://[:]/",
-        id="3.2.2-lone-colon",
-        marks=diverges("malformed IP-literal accepted without brackets"),
-    ),
+    pytest.param("https://[0::0::0]/", id="3.2.2-two-double-colons"),
+    pytest.param("http://[:]/", id="3.2.2-lone-colon"),
     pytest.param(
         "1abc://example.com/",
         id="3.1-scheme-starts-with-digit",
@@ -194,16 +186,8 @@ INVALID = [
         id="4.2-colon-in-first-segment",
         marks=diverges("relative path with ':' in the first segment is accepted"),
     ),
-    pytest.param(
-        "http://exa mple.com/",
-        id="3.2.2-space-in-host",
-        marks=diverges("space in reg-name is accepted"),
-    ),
-    pytest.param(
-        "http://exa<mple.com/",
-        id="3.2.2-lt-in-host",
-        marks=diverges("'<' in reg-name is accepted"),
-    ),
+    pytest.param("http://exa mple.com/", id="3.2.2-space-in-host"),
+    pytest.param("http://exa<mple.com/", id="3.2.2-lt-in-host"),
     pytest.param("http://example.com:+80/", id="3.2.3-port-plus-sign"),
     pytest.param("http://example.com: 80/", id="3.2.3-port-space"),
 ]
