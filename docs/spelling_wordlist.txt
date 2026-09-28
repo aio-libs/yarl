@@ -9,6 +9,7 @@ GPG
 IPv
 PRs
 PYX
+Pydantic
 Towncrier
 Twitter
 UTF
