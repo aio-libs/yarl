@@ -34,6 +34,7 @@ from ._parse import (
     split_netloc,
     split_url,
     unsplit_result,
+    unsplit_result_empty,
 )
 from ._path import normalize_path, normalize_path_segments
 from ._query import (
@@ -714,11 +715,11 @@ class URL:
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
     def __str__(self) -> str:
-        if (
-            not self._path
-            and self._netloc
-            and (self._query or self._fragment or self._empty)
-        ):
+        if self._empty or not self._netloc:
+            # Rare: empty components, or no authority, which a special
+            # scheme in WHATWG mode still prints as "//".
+            return self._str_with_empty()
+        if not self._path and (self._query or self._fragment):
             path = "/"
         else:
             path = self._path
@@ -731,8 +732,28 @@ class URL:
             netloc = make_netloc(self.raw_user, self.raw_password, host, None)
         else:
             netloc = self._netloc
-        return unsplit_result(
-            self._scheme, netloc, path, self._query, self._fragment, self._str_empty
+        return unsplit_result(self._scheme, netloc, path, self._query, self._fragment)
+
+    def _str_with_empty(self) -> str:
+        """Render a URL with empty components or without an authority."""
+        if not self._path and self._netloc:
+            path = "/"
+        else:
+            path = self._path
+        if (port := self.explicit_port) is not None and port == DEFAULT_PORTS.get(
+            self._scheme
+        ):
+            host = self.host_subcomponent
+            netloc = make_netloc(self.raw_user, self.raw_password, host, None)
+        else:
+            netloc = self._netloc
+        empty = self._str_empty if not netloc else self._empty
+        if not empty:
+            return unsplit_result(
+                self._scheme, netloc, path, self._query, self._fragment
+            )
+        return unsplit_result_empty(
+            self._scheme, netloc, path, self._query, self._fragment, empty
         )
 
     def __repr__(self) -> str:
@@ -761,16 +782,22 @@ class URL:
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
             path = "/" if not self._path and self._netloc else self._path
-            ret = self._cache["hash"] = hash(
-                (
-                    self._scheme,
-                    self._netloc,
-                    path,
-                    self._query,
-                    self._fragment,
-                    self._cmp_empty,
+            if self._empty and (cmp_empty := self._cmp_empty):
+                ret = hash(
+                    (
+                        self._scheme,
+                        self._netloc,
+                        path,
+                        self._query,
+                        self._fragment,
+                        cmp_empty,
+                    )
                 )
-            )
+            else:
+                ret = hash(
+                    (self._scheme, self._netloc, path, self._query, self._fragment)
+                )
+            self._cache["hash"] = ret
         return ret
 
     def __le__(self, other: object) -> bool:
@@ -1220,17 +1247,20 @@ class URL:
     @cached_property
     def path_qs(self) -> str:
         """Decoded path of URL with query."""
-        if (q := self.query_string) or self._empty & EMPTY_QUERY:
+        if q := self.query_string:
             return f"{self.path}?{q}"
+        if (empty := self._empty) and empty & EMPTY_QUERY:
+            return f"{self.path}?"
         return self.path
 
     @cached_property
     def raw_path_qs(self) -> str:
         """Encoded path of URL with query."""
-        path = self._path if self._path or not self._netloc else "/"
-        if (q := self._query) or self._empty & EMPTY_QUERY:
-            return f"{path}?{q}"
-        return path
+        if q := self._query:
+            return f"{self._path}?{q}" if self._path or not self._netloc else f"/?{q}"
+        if (empty := self._empty) and empty & EMPTY_QUERY:
+            return f"{self._path}?" if self._path or not self._netloc else "/?"
+        return self._path if self._path or not self._netloc else "/"
 
     @cached_property
     def raw_fragment(self) -> str:
@@ -1556,10 +1586,12 @@ class URL:
             path = f"/{path}"
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
-        empty = self._empty & _kept_empty(keep_query, keep_fragment)
-        return from_parts(
-            self._scheme, netloc, path, query, fragment, self._mode, empty
-        )
+        if empty := self._empty:
+            empty &= _kept_empty(keep_query, keep_fragment)
+            return from_parts(
+                self._scheme, netloc, path, query, fragment, self._mode, empty
+            )
+        return from_parts(self._scheme, netloc, path, query, fragment, self._mode)
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
@@ -1589,7 +1621,7 @@ class URL:
             query,
             self._fragment,
             self._mode,
-            self._empty & ~EMPTY_QUERY,
+            self._empty and self._empty & ~EMPTY_QUERY,
         )
 
     @overload
@@ -1623,7 +1655,7 @@ class URL:
             query,
             self._fragment,
             self._mode,
-            self._empty & ~EMPTY_QUERY,
+            self._empty and self._empty & ~EMPTY_QUERY,
         )
 
     @overload
@@ -1690,8 +1722,16 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
+        if not (empty := self._empty):
+            return from_parts_uncached(
+                self._scheme,
+                self._netloc,
+                self._path,
+                query,
+                self._fragment,
+                self._mode,
+            )
         # An empty query stays when nothing is added, "None" removes it.
-        empty = self._empty
         if query or in_query is None:
             empty &= ~EMPTY_QUERY
         return from_parts_uncached(
@@ -1732,8 +1772,19 @@ class URL:
             raise TypeError("Invalid fragment type")
         else:
             raw_fragment = FRAGMENT_QUOTER(fragment)
-        empty = self._empty & ~EMPTY_FRAGMENT
-        if self._fragment == raw_fragment and self._empty == empty:
+        if empty := self._empty:
+            if self._fragment == raw_fragment and not empty & EMPTY_FRAGMENT:
+                return self
+            return from_parts(
+                self._scheme,
+                self._netloc,
+                self._path,
+                self._query,
+                raw_fragment,
+                self._mode,
+                empty & ~EMPTY_FRAGMENT,
+            )
+        if self._fragment == raw_fragment:
             return self
         return from_parts(
             self._scheme,
@@ -1742,7 +1793,6 @@ class URL:
             self._query,
             raw_fragment,
             self._mode,
-            empty,
         )
 
     def with_name(
@@ -1782,9 +1832,19 @@ class URL:
 
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
-        empty = self._empty & _kept_empty(keep_query, keep_fragment)
+        if empty := self._empty:
+            empty &= _kept_empty(keep_query, keep_fragment)
+            return from_parts(
+                self._scheme,
+                netloc,
+                "/".join(parts),
+                query,
+                fragment,
+                self._mode,
+                empty,
+            )
         return from_parts(
-            self._scheme, netloc, "/".join(parts), query, fragment, self._mode, empty
+            self._scheme, netloc, "/".join(parts), query, fragment, self._mode
         )
 
     def with_suffix(
@@ -1827,9 +1887,19 @@ class URL:
 
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
-        empty = self._empty & _kept_empty(keep_query, keep_fragment)
+        if empty := self._empty:
+            empty &= _kept_empty(keep_query, keep_fragment)
+            return from_parts(
+                self._scheme,
+                netloc,
+                "/".join(parts),
+                query,
+                fragment,
+                self._mode,
+                empty,
+            )
         return from_parts(
-            self._scheme, netloc, "/".join(parts), query, fragment, self._mode, empty
+            self._scheme, netloc, "/".join(parts), query, fragment, self._mode
         )
 
     def join(self, url: "URL") -> "URL":
@@ -1855,6 +1925,42 @@ class URL:
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
+        if url._empty or self._empty:
+            return self._join_with_empty(url, scheme)
+
+        if join_netloc := url._netloc:
+            return from_parts(
+                scheme, join_netloc, url._path, url._query, url._fragment, self._mode
+            )
+
+        orig_path = self._path
+        if join_path := url._path:
+            if join_path[0] == "/":
+                path = join_path
+            elif not orig_path:
+                path = f"/{join_path}" if self._netloc else join_path
+            elif orig_path[-1] == "/":
+                path = f"{orig_path}{join_path}"
+            else:
+                # Merge on the encoded base path, dropping its last segment,
+                # so percent-encoded delimiters in the base are kept as is.
+                path = orig_path[: orig_path.rfind("/") + 1] + join_path
+            path = normalize_path(path) if "." in path else path
+        else:
+            path = orig_path
+
+        return from_parts(
+            scheme,
+            self._netloc,
+            path,
+            url._query if join_path or url._query else self._query,
+            url._fragment,
+            self._mode,
+        )
+
+    def _join_with_empty(self, url: "URL", scheme: str) -> "URL":
+        """join() for URLs with empty components; the same algorithm as
+        join() takes for other URLs, plus the empty component rules."""
         join_empty = url._empty
         # An empty authority in the reference wins only where a URL may have
         # an empty host; for http and friends "///a" keeps the base host.
@@ -1931,9 +2037,11 @@ class URL:
         if host is None and self._netloc:
             host = ""  # an authority without a host, e.g. "user@:8080"
         netloc = make_netloc(user, password, host, self.explicit_port)
-        return unsplit_result(
-            self._scheme, netloc, path, query_string, fragment, self._str_empty
-        )
+        if empty := self._str_empty:
+            return unsplit_result_empty(
+                self._scheme, netloc, path, query_string, fragment, empty
+            )
+        return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
     if HAS_PYDANTIC:
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types

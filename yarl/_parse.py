@@ -192,9 +192,30 @@ def split_netloc(
 
 
 def unsplit_result(
-    scheme: str, netloc: str, url: str, query: str, fragment: str, empty: int = 0
+    scheme: str, netloc: str, url: str, query: str, fragment: str
 ) -> str:
-    """Unsplit a URL without any normalization.
+    """Unsplit a URL without any normalization."""
+    if netloc:
+        if url and url[:1] != "/":
+            url = f"{scheme}://{netloc}/{url}" if scheme else f"{scheme}:{url}"
+        else:
+            url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
+    else:
+        if url[:2] == "//":
+            # Without an authority a path cannot start with "//", which
+            # would read as one; "/." keeps it a path, as WHATWG does.
+            url = f"/.{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
+    if query:
+        url = f"{url}?{query}"
+    return f"{url}#{fragment}" if fragment else url
+
+
+def unsplit_result_empty(
+    scheme: str, netloc: str, url: str, query: str, fragment: str, empty: int
+) -> str:
+    """Unsplit a URL that has present but empty components.
 
     *empty* is a mask of EMPTY_AUTHORITY, EMPTY_QUERY and EMPTY_FRAGMENT
     telling which empty components are present.
@@ -206,8 +227,6 @@ def unsplit_result(
             url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
     else:
         if url[:2] == "//":
-            # Without an authority a path cannot start with "//", which
-            # would read as one; "/." keeps it a path, as WHATWG does.
             url = f"/.{url}"
         if scheme:
             url = f"{scheme}:{url}"

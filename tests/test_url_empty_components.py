@@ -79,6 +79,24 @@ def test_path_starting_with_double_slash() -> None:
     assert str(URL("sc:////path")) == "sc:////path"
 
 
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("http://example.com?", "http://example.com/?"),
+        ("http://example.com:80/p?", "http://example.com/p?"),
+        ("sc:/p?", "sc:/p?"),
+        ("non-spec:/.//p#", "non-spec:/.//p#"),
+    ],
+)
+def test_str_with_empty_components(url: str, expected: str) -> None:
+    assert str(URL(url)) == expected
+
+
+def test_with_fragment_none_keeps_other_empty_components() -> None:
+    url = URL("http://example.com/p?")
+    assert url.with_fragment(None) is url
+
+
 def test_bool() -> None:
     assert URL("?")
     assert URL("#")
