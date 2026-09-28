@@ -204,14 +204,10 @@ class TestPort:
         assert u.query_string == ""
         assert u.fragment == ""
 
-    def test_no_host(self) -> None:
-        u = URL("//:77")
-        assert u.scheme == ""
-        assert u.host == ""
-        assert u.port == 77
-        assert u.path == "/"
-        assert u.query_string == ""
-        assert u.fragment == ""
+    @pytest.mark.parametrize("url", ["//:77", "sc://:77/", "sc://:/"])
+    def test_no_host(self, url: str) -> None:
+        with pytest.raises(ValueError, match="host is required"):
+            URL(url)
 
     def test_double_port(self) -> None:
         with pytest.raises(ValueError):
@@ -460,20 +456,23 @@ class TestFragment:
         assert u.fragment == "a://b:c@d.e/f?g#h"
 
 
+@pytest.mark.parametrize(
+    "url", ["//user@", "sc://user@/", "sc://a@b:c@/", "sc://user:pw@:1/", "sc://@/"]
+)
+def test_userinfo_without_host_rejected(url: str) -> None:
+    with pytest.raises(ValueError, match="host is required with userinfo"):
+        URL(url)
+
+
 class TestStripEmptyParts:
     def test_all_empty_http(self) -> None:
         with pytest.raises(ValueError):
             URL("http://@:?#")
 
     def test_all_empty(self) -> None:
-        u = URL("//@:?#")
-        assert u.scheme == ""
-        assert u.user is None
-        assert u.password is None
-        assert u.host == ""
-        assert u.path == ""
-        assert u.query_string == ""
-        assert u.fragment == ""
+        # Userinfo and a port need a host, as in the WHATWG URL Standard.
+        with pytest.raises(ValueError, match="host is required"):
+            URL("//@:?#")
 
     def test_path_only(self) -> None:
         u = URL("///path")

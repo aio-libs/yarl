@@ -77,5 +77,6 @@ uncompiled
 unencoded
 unobvious
 unquoter
+userinfo
 v1
 yarl

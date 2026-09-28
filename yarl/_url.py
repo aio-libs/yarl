@@ -274,9 +274,11 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
                     "Invalid URL: host is required for "
                     f"absolute urls with the {scheme} scheme"
                 )
-                raise ValueError(msg)
             else:
-                host = ""
+                # The authority is not empty, so it has userinfo or a port
+                # but no host; WHATWG rejects that for every scheme.
+                msg = "Invalid URL: host is required with userinfo or a port"
+            raise ValueError(msg)
         # The parser historically encoded without validation, which let
         # control characters (NUL/C0) and IDNA-normalized delimiters into
         # the host, producing a ``str(url)`` that yarl cannot re-parse
@@ -1017,10 +1019,6 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        # Encoded authority forms such as ``//user@:8080`` have an
-        # empty host but still expose the explicit port.  Keep the empty
-        # host intact here so the host:port subcomponent can be rendered
-        # as ``:8080`` instead of crashing while checking trailing dots.
         if raw and raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.

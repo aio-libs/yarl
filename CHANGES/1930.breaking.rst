@@ -1,0 +1,5 @@
+Rejected URLs whose authority has userinfo or a port but no host, such as
+``sc://user@/``, ``sc://a@b:c@/`` or ``//:8080``, for every scheme; they
+used to parse with an empty host unless the scheme required one. The
+WHATWG URL Standard rejects them as well
+-- by :user:`asvetlov`.
