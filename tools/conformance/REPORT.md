@@ -35,8 +35,8 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 
 | Outcome | Cases |
 |---|---|
-| All three agree | 406 |
-| yarl differs, RFC 3986 and WHATWG agree | 45 |
+| All three agree | 412 |
+| yarl differs, RFC 3986 and WHATWG agree | 39 |
 | WHATWG differs, yarl follows RFC 3986 | 179 |
 | RFC 3986 differs, yarl follows WHATWG | 113 |
 | All three differ | 153 |
@@ -44,11 +44,11 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 
 | Pair | Disagreements |
 |---|---|
-| yarl vs RFC 3986 | 311 |
-| yarl vs WHATWG | 377 |
+| yarl vs RFC 3986 | 305 |
+| yarl vs WHATWG | 371 |
 | WHATWG vs RFC 3986 | 445 |
 
-## yarl differs, RFC 3986 and WHATWG agree (45)
+## yarl differs, RFC 3986 and WHATWG agree (39)
 
 Every case where yarl is the odd one out. A change must not add rows here; see AGENTS.md.
 
@@ -59,10 +59,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | `foo://` | `http://example.org/foo/bar` | `foo:` | `foo://` | `foo://` |
 | `gopher:/example.com/` | `http://example.org/foo/bar` | `gopher:///example.com/` | `gopher:/example.com/` | `gopher:/example.com/` |
 | `gopher:example.com/` | `http://example.org/foo/bar` | `gopher:///example.com/` | `gopher:example.com/` | `gopher:example.com/` |
-| `http://example.com/(%28:%3A%29)` | *none* | `http://example.com/((::))` | `http://example.com/(%28:%3A%29)` | `http://example.com/(%28:%3A%29)` |
-| `http://example.com/%3A%3a%3C%3c` | *none* | `http://example.com/::%3C%3C` | `http://example.com/%3A%3a%3C%3c` | `http://example.com/%3A%3a%3C%3c` |
-| `http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd` | *none* | `http://example.com/%7Ffp3%3Eju=duvgw=d` | `http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd` | `http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd` |
-| `http://example.com/@asdf%40` | *none* | `http://example.com/@asdf@` | `http://example.com/@asdf%40` | `http://example.com/@asdf%40` |
 | `http://www.google.com/foo?bar=baz#` | *none* | `http://www.google.com/foo?bar=baz` | `http://www.google.com/foo?bar=baz#` | `http://www.google.com/foo?bar=baz#` |
 | `gopher:/example.com/` | *none* | `gopher:///example.com/` | `gopher:/example.com/` | `gopher:/example.com/` |
 | `gopher:example.com/` | *none* | `gopher:///example.com/` | `gopher:example.com/` | `gopher:example.com/` |
@@ -75,7 +71,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | `?i` | `sc:///pa/pa` | `sc:/pa/pa?i` | `sc:///pa/pa?i` | `sc:///pa/pa?i` |
 | `#i` | `sc:///pa/pa` | `sc:/pa/pa#i` | `sc:///pa/pa#i` | `sc:///pa/pa#i` |
 | `sc://te@s:t@/` | *none* | `sc://te%40s:t@/` | *failure* | *failure* |
-| `file:///C%3A/` | *none* | `file:///C:/` | `file:///C%3A/` | `file:///C%3A/` |
 | `///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
 | `file:///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
 | `sc://?` | *none* | `sc:` | `sc://?` | `sc://?` |
@@ -88,7 +83,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | `..//path` | `non-spec:/p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
 | `a/..//path` | `non-spec:/p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
 | `path` | `non-spec:/..//p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
-| `blob:http%3a//example.org/` | *none* | `blob:http://example.org/` | `blob:http%3a//example.org/` | `blob:http%3a//example.org/` |
 | `http://example.org/test?#` | *none* | `http://example.org/test` | `http://example.org/test?#` | `http://example.org/test?#` |
 | `test-a-colon-slash-slash.html` | `a://` | `a:test-a-colon-slash-slash.html` | `a:///test-a-colon-slash-slash.html` | `a:///test-a-colon-slash-slash.html` |
 | `http://💩.123/` | *none* | `http://xn--ls8h.123/` | *failure* | *failure* |
