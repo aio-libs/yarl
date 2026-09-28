@@ -1,0 +1,7 @@
+Rejected hosts of the ``http``, ``https``, ``ws``, ``wss``, ``ftp`` and
+``file`` schemes that end in a number after a name label, such as
+``foo.123`` or ``example.0x1f``, in the default WHATWG mode, following the
+WHATWG URL Standard, which parses such a host as an IPv4 address and
+fails. Hosts made only of numbers, like ``1.2.3`` or ``0x7f.1``, other
+schemes and RFC 3986 mode are not affected
+-- by :user:`asvetlov`.
