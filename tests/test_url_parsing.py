@@ -503,6 +503,22 @@ def test_parsed_and_built_empty_host_agree(authority: str) -> None:
     assert str(parsed.origin()) == str(built.origin())
 
 
+@pytest.mark.parametrize(
+    ("authority", "origin"),
+    [("user@:8080", "sc://:8080"), ("user:pw@:1", "sc://:1"), (":8080", "sc://:8080")],
+)
+def test_empty_host_keeps_authority(authority: str, origin: str) -> None:
+    # A missing host must not drop the userinfo or the port around it.
+    for url in (
+        URL(f"sc://{authority}/path", mode="rfc"),
+        URL.build(scheme="sc", authority=authority, path="/path", mode="rfc"),
+    ):
+        assert url.authority == url.raw_authority == authority
+        assert url.human_repr() == f"sc://{authority}/path"
+        assert str(url.origin()) == origin
+    assert URL("/path").authority == ""
+
+
 @pytest.mark.parametrize("mode", ["rfc", "whatwg"])
 def test_build_http_authority_without_host(mode: Literal["rfc", "whatwg"]) -> None:
     with pytest.raises(ValueError, match="host is required for absolute urls"):

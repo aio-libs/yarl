@@ -839,7 +839,8 @@ class URL:
         if not (scheme := self._scheme):
             raise ValueError("URL should have scheme")
         if "@" in netloc:
-            encoded_host = self.host_subcomponent
+            # The host is None for an authority without one ("user@:8080").
+            encoded_host = self.host_subcomponent or ""
             netloc = make_netloc(None, None, encoded_host, self.explicit_port)
         elif not self._path and not self._query and not self._fragment:
             return self
@@ -894,7 +895,10 @@ class URL:
         Empty string for relative URLs.
 
         """
-        return make_netloc(self.user, self.password, self.host, self.port)
+        if (host := self.host) is None and self._netloc:
+            # An authority without a host, e.g. "user@:8080" in RFC mode.
+            host = ""
+        return make_netloc(self.user, self.password, host, self.port)
 
     @cached_property
     def raw_user(self) -> str | None:
@@ -1728,6 +1732,8 @@ class URL:
         fragment = human_quote(self.fragment, "")
         if TYPE_CHECKING:
             assert fragment is not None
+        if host is None and self._netloc:
+            host = ""  # an authority without a host, e.g. "user@:8080"
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
