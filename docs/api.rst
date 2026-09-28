@@ -150,6 +150,10 @@ schemes, a host that ends in a number cannot have a name label before it
 (``foo.123`` is rejected) in the default WHATWG mode, as in the WHATWG URL
 Standard; RFC 3986 mode accepts it as a reg-name. Hosts made only
 of numbers, such as ``1.2.3``, are kept as written.
+RFC 3986 mode also rejects an authority with more than one ``@``, since
+userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
+one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
+as one with an emoji, which WHATWG mode accepts as UTS #46 does.
 
 .. doctest::
 
