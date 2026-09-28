@@ -9,6 +9,7 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
+    Literal,
     NoReturn,
     TypedDict,
     TypeVar,
@@ -141,9 +142,15 @@ _ZONE_ID_UNSAFE_RE = re.compile(r"[\x00-\x1f\x7f]")
 _T = TypeVar("_T")
 
 if sys.version_info >= (3, 11):
+    from enum import StrEnum
     from typing import Self
 else:
     Self = Any
+
+    class StrEnum(str, Enum):
+        """Backport of :class:`enum.StrEnum` for Python 3.10."""
+
+        __str__ = str.__str__
 
 
 class UndefinedType(Enum):
@@ -153,6 +160,29 @@ class UndefinedType(Enum):
 
 
 UNDEFINED = UndefinedType._singleton
+
+
+class Compatibility(StrEnum):
+    """URL standard a :class:`URL` follows."""
+
+    RFC = "rfc"
+    WHATWG = "whatwg"
+
+
+Compatibility.__module__ = "yarl"
+_WHATWG = Compatibility.WHATWG
+# Members hash and compare as their values, so this maps both the members and
+# the plain strings; much faster than calling ``Compatibility(value)``.
+_COMPAT_BY_VALUE: dict[str, Compatibility] = {c.value: c for c in Compatibility}
+
+CompatibilityType = Compatibility | Literal["rfc", "whatwg"]
+
+
+def _to_compat(value: CompatibilityType) -> Compatibility:
+    """Normalize a compatibility argument, rejecting unknown values."""
+    if (compat := _COMPAT_BY_VALUE.get(value)) is None:
+        raise ValueError(f"{value!r} is not a valid Compatibility")
+    return compat
 
 
 class CacheInfo(TypedDict):
@@ -220,8 +250,7 @@ def _encode_relative_scheme_colon(path: str) -> str:
     return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
 
 
-@lru_cache
-def encode_url(url_str: str) -> "URL":
+def _encode_url(url_str: str, compat: Compatibility) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: str | None
@@ -288,17 +317,44 @@ def encode_url(url_str: str) -> "URL":
     self._query = query
     self._fragment = fragment
     self._cache = cache
+    self._compat = compat
     return self
 
 
-@lru_cache
-def pre_encoded_url(url_str: str) -> "URL":
+def _pre_encoded_url(url_str: str, compat: Compatibility) -> "URL":
     """Parse pre-encoded URL."""
     self = object.__new__(URL)
     val = split_url(url_str)
     self._scheme, self._netloc, self._path, self._query, self._fragment = val
     self._cache = {}
+    self._compat = compat
     return self
+
+
+# One cache per compatibility mode keeps the single ``str`` argument, which
+# ``lru_cache`` uses as the key directly instead of building a tuple.
+@lru_cache
+def encode_url(url_str: str) -> "URL":
+    """Parse unencoded URL in WHATWG mode."""
+    return _encode_url(url_str, Compatibility.WHATWG)
+
+
+@lru_cache
+def encode_url_rfc(url_str: str) -> "URL":
+    """Parse unencoded URL in RFC 3986 mode."""
+    return _encode_url(url_str, Compatibility.RFC)
+
+
+@lru_cache
+def pre_encoded_url(url_str: str) -> "URL":
+    """Parse pre-encoded URL in WHATWG mode."""
+    return _pre_encoded_url(url_str, Compatibility.WHATWG)
+
+
+@lru_cache
+def pre_encoded_url_rfc(url_str: str) -> "URL":
+    """Parse pre-encoded URL in RFC 3986 mode."""
+    return _pre_encoded_url(url_str, Compatibility.RFC)
 
 
 @lru_cache
@@ -312,6 +368,7 @@ def build_pre_encoded_url(
     path: str,
     query_string: str,
     fragment: str,
+    compat: Compatibility,
 ) -> "URL":
     """Build a pre-encoded URL from parts."""
     self = object.__new__(URL)
@@ -333,11 +390,17 @@ def build_pre_encoded_url(
     self._query = query_string
     self._fragment = fragment
     self._cache = {}
+    self._compat = compat
     return self
 
 
 def from_parts_uncached(
-    scheme: str, netloc: str, path: str, query: str, fragment: str
+    scheme: str,
+    netloc: str,
+    path: str,
+    query: str,
+    fragment: str,
+    compat: Compatibility,
 ) -> "URL":
     """Create a new URL from parts."""
     self = object.__new__(URL)
@@ -349,6 +412,7 @@ def from_parts_uncached(
     self._query = query
     self._fragment = fragment
     self._cache = {}
+    self._compat = compat
     return self
 
 
@@ -426,7 +490,15 @@ class URL:
     #               / path-noscheme
     #               / path-empty
     # absolute-URI  = scheme ":" hier-part [ "?" query ]
-    __slots__ = ("_cache", "_scheme", "_netloc", "_path", "_query", "_fragment")
+    __slots__ = (
+        "_cache",
+        "_scheme",
+        "_netloc",
+        "_path",
+        "_query",
+        "_fragment",
+        "_compat",
+    )
 
     _cache: _InternalURLCache
     _scheme: str
@@ -434,6 +506,7 @@ class URL:
     _path: str
     _query: str
     _fragment: str
+    _compat: Compatibility
 
     def __new__(
         cls,
@@ -441,19 +514,26 @@ class URL:
         *,
         encoded: bool = False,
         strict: bool | None = None,
+        compat: CompatibilityType = Compatibility.WHATWG,
     ) -> "URL":
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
+        if compat is not _WHATWG:
+            compat = _to_compat(compat)
         if type(val) is str:
-            return pre_encoded_url(val) if encoded else encode_url(val)
+            if compat is _WHATWG:
+                return pre_encoded_url(val) if encoded else encode_url(val)
+            return pre_encoded_url_rfc(val) if encoded else encode_url_rfc(val)
         if type(val) is cls:
-            return val
+            if val._compat is compat:
+                return val
+            return from_parts(*val._val, compat)
         if type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
-            return from_parts(*val)
+            return from_parts(*val, compat)
         if isinstance(val, str):
-            return pre_encoded_url(str(val)) if encoded else encode_url(str(val))
+            return URL(str(val), encoded=encoded, compat=compat)
         if val is UNDEFINED:
             # Special case for UNDEFINED since it might be unpickling and we do
             # not want to cache as the `__set_state__` call would mutate the URL
@@ -461,6 +541,7 @@ class URL:
             self = object.__new__(URL)
             self._scheme = self._netloc = self._path = self._query = self._fragment = ""
             self._cache = {}
+            self._compat = compat
             return self
         raise TypeError("Constructor parameter should be str")
 
@@ -479,8 +560,11 @@ class URL:
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
+        compat: CompatibilityType = Compatibility.WHATWG,
     ) -> "URL":
         """Creates and returns a new URL"""
+        if compat is not _WHATWG:
+            compat = _to_compat(compat)
 
         if authority and (user or password or host or port):
             raise ValueError(
@@ -519,6 +603,7 @@ class URL:
                 path,
                 query_string,
                 fragment,
+                compat,
             )
 
         self = object.__new__(URL)
@@ -559,6 +644,7 @@ class URL:
         self._query = query_string
         self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
         self._cache = {}
+        self._compat = compat
         return self
 
     def __init_subclass__(cls) -> NoReturn:
@@ -581,7 +667,9 @@ class URL:
         return unsplit_result(self._scheme, netloc, path, self._query, self._fragment)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}('{str(self)}')"
+        if self._compat is Compatibility.WHATWG:
+            return f"{self.__class__.__name__}('{str(self)}')"
+        return f"{self.__class__.__name__}('{str(self)}', compat='{self._compat}')"
 
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
@@ -639,27 +727,34 @@ class URL:
     def __bool__(self) -> bool:
         return bool(self._netloc or self._path or self._query or self._fragment)
 
-    def __getstate__(self) -> tuple[SplitURLType]:
+    def __getstate__(self) -> tuple[SplitURLType, str]:
         # Return a plain tuple rather than a ``SplitResult``. Constructing a
         # ``SplitResult`` via ``tuple.__new__`` skips its ``__init__`` and on
         # Python 3.15+ leaves ``_keep_empty`` unset, which breaks pickling: the
         # new ``SplitResult.__getstate__`` indexes a state that ends up as
         # ``None`` (gh-1632). ``__setstate__`` already unpacks both shapes, so
         # pickles produced by older yarl releases (which embed a real
-        # ``SplitResult``) still load correctly.
-        return (self._val,)
+        # ``SplitResult``) still load correctly. The compatibility mode goes
+        # second; older releases ignore trailing items of the state.
+        return (self._val, self._compat.value)
 
     def __setstate__(
-        self, state: tuple[SplitURLType] | tuple[None, _InternalURLCache]
+        self,
+        # ``(val,)`` from older releases, ``(val, compat)``, or the legacy
+        # default style ``(None, {"_val": val})``.
+        state: tuple[Any, ...],
     ) -> None:
+        compat = Compatibility.WHATWG
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
             val = state[1]["_val"]
         else:
-            unused: list[object]
-            val, *unused = state
+            val, *rest = state
+            if rest:
+                compat = Compatibility(rest[0])
         self._scheme, self._netloc, self._path, self._query, self._fragment = val
         self._cache = {}
+        self._compat = compat
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
@@ -723,7 +818,7 @@ class URL:
             netloc = make_netloc(None, None, encoded_host, self.explicit_port)
         elif not self._path and not self._query and not self._fragment:
             return self
-        return from_parts(scheme, netloc, "", "", "")
+        return from_parts(scheme, netloc, "", "", "", self._compat)
 
     def relative(self) -> "URL":
         """Return a relative part of the URL.
@@ -733,7 +828,7 @@ class URL:
         """
         if not self._netloc:
             raise ValueError("URL should be absolute")
-        return from_parts("", "", self._path, self._query, self._fragment)
+        return from_parts("", "", self._path, self._query, self._fragment, self._compat)
 
     @cached_property
     def absolute(self) -> bool:
@@ -818,6 +913,11 @@ class URL:
         if (raw_password := self.raw_password) is None:
             return None
         return UNQUOTER(raw_password)
+
+    @property
+    def compat(self) -> Compatibility:
+        """Standard the URL follows: RFC 3986 or the WHATWG URL Standard."""
+        return self._compat
 
     @cached_property
     def raw_host(self) -> str | None:
@@ -1069,10 +1169,14 @@ class URL:
         path = self._path
         if not path or path == "/":
             if self._fragment or self._query:
-                return from_parts(self._scheme, self._netloc, path, "", "")
+                return from_parts(
+                    self._scheme, self._netloc, path, "", "", self._compat
+                )
             return self
         parts = path.split("/")
-        return from_parts(self._scheme, self._netloc, "/".join(parts[:-1]), "", "")
+        return from_parts(
+            self._scheme, self._netloc, "/".join(parts[:-1]), "", "", self._compat
+        )
 
     @cached_property
     def raw_name(self) -> str:
@@ -1149,13 +1253,15 @@ class URL:
 
         parsed.reverse()
         if not netloc or not needs_normalize:
-            return from_parts(self._scheme, netloc, "/".join(parsed), "", "")
+            return from_parts(
+                self._scheme, netloc, "/".join(parsed), "", "", self._compat
+            )
 
         path = "/".join(normalize_path_segments(parsed))
         # If normalizing the path segments removed the leading slash, add it back.
         if path and path[0] != "/":
             path = f"/{path}"
-        return from_parts(self._scheme, netloc, path, "", "")
+        return from_parts(self._scheme, netloc, path, "", "", self._compat)
 
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
@@ -1170,7 +1276,9 @@ class URL:
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
-        return from_parts(lower_scheme, netloc, self._path, self._query, self._fragment)
+        return from_parts(
+            lower_scheme, netloc, self._path, self._query, self._fragment, self._compat
+        )
 
     def with_user(self, user: str | None) -> "URL":
         """Return a new URL with user replaced.
@@ -1192,7 +1300,9 @@ class URL:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(user, password, encoded_host, self.explicit_port)
-        return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
+        return from_parts(
+            self._scheme, netloc, self._path, self._query, self._fragment, self._compat
+        )
 
     def with_password(self, password: str | None) -> "URL":
         """Return a new URL with password replaced.
@@ -1214,7 +1324,9 @@ class URL:
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, password, encoded_host, port)
-        return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
+        return from_parts(
+            self._scheme, netloc, self._path, self._query, self._fragment, self._compat
+        )
 
     def with_host(self, host: str) -> "URL":
         """Return a new URL with host replaced.
@@ -1235,7 +1347,9 @@ class URL:
         encoded_host = _encode_host(host, validate_host=True) if host else ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
+        return from_parts(
+            self._scheme, netloc, self._path, self._query, self._fragment, self._compat
+        )
 
     def with_port(self, port: int | None) -> "URL":
         """Return a new URL with port replaced.
@@ -1253,7 +1367,9 @@ class URL:
             raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
+        return from_parts(
+            self._scheme, netloc, self._path, self._query, self._fragment, self._compat
+        )
 
     def with_path(
         self,
@@ -1273,7 +1389,7 @@ class URL:
             path = f"/{path}"
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
-        return from_parts(self._scheme, netloc, path, query, fragment)
+        return from_parts(self._scheme, netloc, path, query, fragment, self._compat)
 
     @overload
     def with_query(self, query: Query) -> "URL": ...
@@ -1297,7 +1413,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         query = get_str_query(*args, **kwargs) or ""
         return from_parts_uncached(
-            self._scheme, self._netloc, self._path, query, self._fragment
+            self._scheme, self._netloc, self._path, query, self._fragment, self._compat
         )
 
     @overload
@@ -1325,7 +1441,7 @@ class URL:
         else:
             query = new_query
         return from_parts_uncached(
-            self._scheme, self._netloc, self._path, query, self._fragment
+            self._scheme, self._netloc, self._path, query, self._fragment, self._compat
         )
 
     @overload
@@ -1393,7 +1509,7 @@ class URL:
                 "sequence of (key, value) pairs is allowed"
             )
         return from_parts_uncached(
-            self._scheme, self._netloc, self._path, query, self._fragment
+            self._scheme, self._netloc, self._path, query, self._fragment, self._compat
         )
 
     def without_query_params(self, *query_params: str) -> "URL":
@@ -1427,7 +1543,12 @@ class URL:
         if self._fragment == raw_fragment:
             return self
         return from_parts(
-            self._scheme, self._netloc, self._path, self._query, raw_fragment
+            self._scheme,
+            self._netloc,
+            self._path,
+            self._query,
+            raw_fragment,
+            self._compat,
         )
 
     def with_name(
@@ -1466,7 +1587,9 @@ class URL:
 
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
-        return from_parts(self._scheme, netloc, "/".join(parts), query, fragment)
+        return from_parts(
+            self._scheme, netloc, "/".join(parts), query, fragment, self._compat
+        )
 
     def with_suffix(
         self,
@@ -1507,7 +1630,9 @@ class URL:
 
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
-        return from_parts(self._scheme, netloc, "/".join(parts), query, fragment)
+        return from_parts(
+            self._scheme, netloc, "/".join(parts), query, fragment, self._compat
+        )
 
     def join(self, url: "URL") -> "URL":
         """Join URLs
@@ -1529,10 +1654,13 @@ class URL:
         # except that "http:g" is still resolved against an http base, the
         # backward-compatible behavior RFC 3986 section 5.4.2 permits.
         if scheme != self._scheme or (url._scheme and scheme not in USES_RELATIVE):
-            return url
+            # The result follows the base URL's compatibility mode.
+            return url if url._compat is self._compat else URL(url, compat=self._compat)
 
         if join_netloc := url._netloc:
-            return from_parts(scheme, join_netloc, url._path, url._query, url._fragment)
+            return from_parts(
+                scheme, join_netloc, url._path, url._query, url._fragment, self._compat
+            )
 
         orig_path = self._path
         if join_path := url._path:
@@ -1556,6 +1684,7 @@ class URL:
             path,
             url._query if join_path or url._query else self._query,
             url._fragment,
+            self._compat,
         )
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":
