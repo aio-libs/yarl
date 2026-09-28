@@ -50,23 +50,36 @@ class _Quoter:
         *,
         safe: str = "",
         protected: str = "",
+        unsafe: str = "",
         qs: bool = False,
         requote: bool = True,
     ) -> None:
-        if not safe.isascii() or not protected.isascii():
-            raise ValueError("Only safe symbols with ORD < 128 are allowed")
+        for ch in safe + protected + unsafe:
+            if ord(ch) > 127:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+
+        self._safe = safe
+        self._protected = protected
+        self._unsafe = unsafe
+        self._qs = qs
+        self._requote = requote
+
+        safe_chars = set(ALLOWED)
+        if not qs:
+            safe_chars.update(QS)
+        safe_chars.update(safe)
+        safe_chars.update(protected)
+        safe_chars.difference_update(unsafe)
         # A safe '%' would be left alone while requoting decodes '%XX', and a
         # safe ' ' would be left alone while qs turns it into '+'
-        if requote and ("%" in safe or "%" in protected):
+        if requote and "%" in safe_chars:
             raise ValueError(
                 "safe and protected cannot contain '%' when requote is enabled"
             )
-        if qs and (" " in safe or " " in protected):
+        if qs and " " in safe_chars:
             raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
-        self._safe = safe
-        self._protected = protected
-        self._qs = qs
-        self._requote = requote
+        self._safe_chars = safe_chars
+        self._bsafe = bytes(sorted(ord(ch) for ch in safe_chars))
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -82,12 +95,8 @@ class _Quoter:
         bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
-        safe = self._safe
-        safe += ALLOWED
-        if not self._qs:
-            safe += QS
-        safe += self._protected
-        bsafe = safe.encode("ascii")
+        safe_chars = self._safe_chars
+        bsafe = self._bsafe
         idx = 0
         while idx < len(bval):
             ch = bval[idx]
@@ -114,7 +123,7 @@ class _Quoter:
 
                     if unquoted in self._protected:
                         ret.extend(pct)
-                    elif unquoted in safe:
+                    elif unquoted in safe_chars:
                         ret.append(ord(unquoted))
                     else:
                         ret.extend(pct)
