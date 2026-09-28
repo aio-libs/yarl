@@ -367,6 +367,12 @@ pushing, confirm it is current:
 python tools/conformance/compare.py --check
 ```
 
+The `Conformance report is current` CI job runs the same check
+against the built wheel and fails the PR when the committed report
+does not match. That includes dependency bumps: the IDNA section
+depends on the pinned `idna` version, so a PR bumping `idna` must
+regenerate the report too.
+
 Never edit `REPORT.md` by hand. The WHATWG test data is pinned
 to one web-platform-tests commit and verified by checksum;
 bumping `WPT_COMMIT` and the checksums in `compare.py` is its own
