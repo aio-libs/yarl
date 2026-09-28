@@ -1,0 +1,5 @@
+Added RFC conformance tests covering RFC 3986, RFC 5952, RFC 3987,
+RFC 3492, IDNA2008, and the scheme RFCs for ``http``, ``ws``,
+``file`` and ``mailto``; known deviations from the RFCs are recorded
+as strict expected failures
+-- by :user:`asvetlov`.
