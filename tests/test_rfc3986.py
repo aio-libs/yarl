@@ -363,14 +363,12 @@ def test_join_same_scheme_backward_compatible() -> None:
             "?y",
             "http://a/b?y",
             id="query-drops-base-fragment",
-            marks=diverges("base fragment kept"),
         ),
         pytest.param(
             "http://a/b?q#f",
             "",
             "http://a/b?q",
             id="empty-drops-base-fragment",
-            marks=diverges("base fragment kept"),
         ),
         pytest.param(
             "file://host/",

@@ -1061,6 +1061,14 @@ The path is encoded if needed.
       >>> base.join(URL('page.html'))
       URL('http://example.com/path/page.html')
 
+   The fragment of the result always comes from ``url``, as required by
+   :rfc:`3986#section-5.2.2`; the fragment of the base URL is never kept:
+
+   .. doctest::
+
+      >>> URL('http://example.com/path?arg#frag').join(URL('?other'))
+      URL('http://example.com/path?other')
+
    .. note::
 
       If ``url`` is an absolute URL (that is, starting with ``//`` or
