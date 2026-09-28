@@ -1,0 +1,13 @@
+Kept an empty authority, query or fragment apart from a missing one, as
+:rfc:`3986#section-5.3` and the WHATWG URL Standard do: ``str()`` of
+``URL("http://h/p?")``, ``URL("http://h/p#")`` and ``URL("data:///x")``
+now keeps the ``?``, ``#`` and ``//``, such URLs no longer compare equal
+to the ones without them, and :meth:`URL.join() <yarl.URL.join>` takes an
+empty query, fragment or authority from the reference. ``//`` is no longer
+added for every scheme in ``urllib.parse.uses_netloc``: the default WHATWG
+mode adds it only for its special schemes (``http``, ``https``, ``ws``,
+``wss``, ``ftp`` and ``file``), and RFC 3986 mode only when the URL has an
+authority, so ``gopher:/x`` stays ``gopher:/x``. A path starting with
+``//`` in a URL without an authority is written as ``/.//``, and pickles
+carry an extra field that older releases ignore
+-- by :user:`asvetlov`.

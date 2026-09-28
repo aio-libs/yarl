@@ -35,65 +35,29 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 
 | Outcome | Cases |
 |---|---|
-| All three agree | 413 |
-| yarl differs, RFC 3986 and WHATWG agree | 38 |
-| WHATWG differs, yarl follows RFC 3986 | 171 |
-| RFC 3986 differs, yarl follows WHATWG | 123 |
-| All three differ | 151 |
+| All three agree | 449 |
+| yarl differs, RFC 3986 and WHATWG agree | 2 |
+| WHATWG differs, yarl follows RFC 3986 | 175 |
+| RFC 3986 differs, yarl follows WHATWG | 128 |
+| All three differ | 142 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl vs RFC 3986 | 312 |
-| yarl vs WHATWG | 360 |
+| yarl vs RFC 3986 | 272 |
+| yarl vs WHATWG | 319 |
 | WHATWG vs RFC 3986 | 445 |
 
-## yarl differs, RFC 3986 and WHATWG agree (38)
+## yarl differs, RFC 3986 and WHATWG agree (2)
 
 Every case where yarl is the odd one out. A change must not add rows here; see AGENTS.md.
 
 | Input | Base | yarl | RFC 3986 | WHATWG |
 |---|---|---|---|---|
-| `#` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar#` | `http://example.org/foo/bar#` |
-| `?` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar?` | `http://example.org/foo/bar?` |
-| `foo://` | `http://example.org/foo/bar` | `foo:` | `foo://` | `foo://` |
-| `gopher:/example.com/` | `http://example.org/foo/bar` | `gopher:///example.com/` | `gopher:/example.com/` | `gopher:/example.com/` |
-| `gopher:example.com/` | `http://example.org/foo/bar` | `gopher:///example.com/` | `gopher:example.com/` | `gopher:example.com/` |
-| `http://www.google.com/foo?bar=baz#` | *none* | `http://www.google.com/foo?bar=baz` | `http://www.google.com/foo?bar=baz#` | `http://www.google.com/foo?bar=baz#` |
-| `gopher:/example.com/` | *none* | `gopher:///example.com/` | `gopher:/example.com/` | `gopher:/example.com/` |
-| `gopher:example.com/` | *none* | `gopher:///example.com/` | `gopher:example.com/` | `gopher:example.com/` |
 | `http://[::%31]` | `http://other.com/` | `http://[::%31]` | *failure* | *failure* |
-| `#` | `test:test` | `test:test` | `test:test#` | `test:test#` |
-| `#` | `test:test?test` | `test:test?test` | `test:test?test#` | `test:test?test#` |
-| `i` | `sc:///pa/pa` | `sc:/pa/i` | `sc:///pa/i` | `sc:///pa/i` |
-| `../i` | `sc:///pa/pa` | `sc:/i` | `sc:///i` | `sc:///i` |
-| `/i` | `sc:///pa/pa` | `sc:/i` | `sc:///i` | `sc:///i` |
-| `?i` | `sc:///pa/pa` | `sc:/pa/pa?i` | `sc:///pa/pa?i` | `sc:///pa/pa?i` |
-| `#i` | `sc:///pa/pa` | `sc:/pa/pa#i` | `sc:///pa/pa#i` | `sc:///pa/pa#i` |
-| `///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
-| `file:///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
-| `sc://?` | *none* | `sc:` | `sc://?` | `sc://?` |
-| `sc://#` | *none* | `sc:` | `sc://#` | `sc://#` |
-| `///` | `sc://x/` | `sc://x/` | `sc:///` | `sc:///` |
-| `////` | `sc://x/` | `sc://x//` | `sc:////` | `sc:////` |
-| `////x/` | `sc://x/` | `sc://x//x/` | `sc:////x/` | `sc:////x/` |
-| `/.//path` | `non-spec:/p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
-| `/..//path` | `non-spec:/p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
-| `..//path` | `non-spec:/p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
-| `a/..//path` | `non-spec:/p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
-| `path` | `non-spec:/..//p` | `non-spec:////path` | `non-spec://path` | `non-spec:/.//path` |
-| `http://example.org/test?#` | *none* | `http://example.org/test` | `http://example.org/test?#` | `http://example.org/test?#` |
-| `test-a-colon-slash-slash.html` | `a://` | `a:test-a-colon-slash-slash.html` | `a:///test-a-colon-slash-slash.html` | `a:///test-a-colon-slash-slash.html` |
 | `http://💩.123/` | *none* | `http://xn--ls8h.123/` | *failure* | *failure* |
-| `data:///test` | *none* | `data:/test` | `data:///test` | `data:///test` |
-| `javascript:///test` | *none* | `javascript:/test` | `javascript:///test` | `javascript:///test` |
-| `mailto:///test` | *none* | `mailto:/test` | `mailto:///test` | `mailto:///test` |
-| `intent:///test` | *none* | `intent:/test` | `intent:///test` | `intent:///test` |
-| `urn:///test` | *none* | `urn:/test` | `urn:///test` | `urn:///test` |
-| `turn:///test` | *none* | `turn:/test` | `turn:///test` | `turn:///test` |
-| `stun:///test` | *none* | `stun:/test` | `stun:///test` | `stun:///test` |
 
-## WHATWG differs, yarl follows RFC 3986 (171)
+## WHATWG differs, yarl follows RFC 3986 (175)
 
 | Category | Cases |
 |---|---|
@@ -103,6 +67,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | 16 |
 | characters outside the RFC 3986 grammar | 6 |
 | backslash | 6 |
+| empty host | 4 |
 | non-special scheme | 2 |
 
 | Category | Input | Base | yarl | RFC 3986 | WHATWG |
@@ -276,14 +241,18 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | backslash | `file://\/localhost//cat` | *none* | *failure* | *failure* | `file:////localhost//cat` |
 | backslash | `` foo:// !"$%&'()*+,-.;<=>@[\]^_`{\|}~@host/ `` | *none* | *failure* | *failure* | `foo://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` |
 | backslash | `` foo://joe: !"$%&'()*+,-.:;<=>@[\]^_`{\|}~@host/ `` | *none* | *failure* | *failure* | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` |
+| empty host | `//` | `file:///tmp/mock/path` | `file://` | `file://` | `file:///` |
+| empty host | `file://` | `file://ape/` | `file://` | `file://` | `file:///` |
+| empty host | `http://?` | *none* | `http://?` | `http://?` | *failure* |
+| empty host | `http://#` | *none* | `http://#` | `http://#` | *failure* |
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test:@test/x` | `non-special://test@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://:@test/x` | `non-special://test/x` |
 
-## RFC 3986 differs, yarl follows WHATWG (123)
+## RFC 3986 differs, yarl follows WHATWG (128)
 
 | Category | Cases |
 |---|---|
-| characters outside the RFC 3986 grammar | 54 |
+| characters outside the RFC 3986 grammar | 59 |
 | empty host | 18 |
 | file scheme | 15 |
 | tab or newline inside the input | 11 |
@@ -300,6 +269,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | characters outside the RFC 3986 grammar | `:` | `http://example.org/foo/bar` | `http://example.org/foo/:` | *failure* | `http://example.org/foo/:` |
 | characters outside the RFC 3986 grammar | `:a` | `http://example.org/foo/bar` | `http://example.org/foo/:a` | *failure* | `http://example.org/foo/:a` |
 | characters outside the RFC 3986 grammar | `:/` | `http://example.org/foo/bar` | `http://example.org/foo/:/` | *failure* | `http://example.org/foo/:/` |
+| characters outside the RFC 3986 grammar | `:#` | `http://example.org/foo/bar` | `http://example.org/foo/:#` | *failure* | `http://example.org/foo/:#` |
 | characters outside the RFC 3986 grammar | `:23` | `http://example.org/foo/bar` | `http://example.org/foo/:23` | *failure* | `http://example.org/foo/:23` |
 | characters outside the RFC 3986 grammar | `::` | `http://example.org/foo/bar` | `http://example.org/foo/::` | *failure* | `http://example.org/foo/::` |
 | characters outside the RFC 3986 grammar | `::23` | `http://example.org/foo/bar` | `http://example.org/foo/::23` | *failure* | `http://example.org/foo/::23` |
@@ -339,14 +309,18 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | characters outside the RFC 3986 grammar | `'non-special:cannot-be-a-base-url-\x00\x01\x1f\x1e~\x7f\x80'` | *none* | `non-special:cannot-be-a-base-url-%00%01%1F%1E~%7F%C2%80` | *failure* | `non-special:cannot-be-a-base-url-%00%01%1F%1E~%7F%C2%80` |
 | characters outside the RFC 3986 grammar | `'https://x/\x00y'` | *none* | `https://x/%00y` | *failure* | `https://x/%00y` |
 | characters outside the RFC 3986 grammar | `'https://x/?\x00y'` | *none* | `https://x/?%00y` | *failure* | `https://x/?%00y` |
+| characters outside the RFC 3986 grammar | `'https://x/?#\x00y'` | *none* | `https://x/?#%00y` | *failure* | `https://x/?#%00y` |
 | characters outside the RFC 3986 grammar | `'https://x/\uffffy'` | *none* | `https://x/%EF%BF%BFy` | *failure* | `https://x/%EF%BF%BFy` |
 | characters outside the RFC 3986 grammar | `'https://x/?\uffffy'` | *none* | `https://x/?%EF%BF%BFy` | *failure* | `https://x/?%EF%BF%BFy` |
+| characters outside the RFC 3986 grammar | `'https://x/?#\uffffy'` | *none* | `https://x/?#%EF%BF%BFy` | *failure* | `https://x/?#%EF%BF%BFy` |
 | characters outside the RFC 3986 grammar | `'non-special:\x00y'` | *none* | `non-special:%00y` | *failure* | `non-special:%00y` |
 | characters outside the RFC 3986 grammar | `'non-special:x/\x00y'` | *none* | `non-special:x/%00y` | *failure* | `non-special:x/%00y` |
 | characters outside the RFC 3986 grammar | `'non-special:x/?\x00y'` | *none* | `non-special:x/?%00y` | *failure* | `non-special:x/?%00y` |
+| characters outside the RFC 3986 grammar | `'non-special:x/?#\x00y'` | *none* | `non-special:x/?#%00y` | *failure* | `non-special:x/?#%00y` |
 | characters outside the RFC 3986 grammar | `'non-special:\uffffy'` | *none* | `non-special:%EF%BF%BFy` | *failure* | `non-special:%EF%BF%BFy` |
 | characters outside the RFC 3986 grammar | `'non-special:x/\uffffy'` | *none* | `non-special:x/%EF%BF%BFy` | *failure* | `non-special:x/%EF%BF%BFy` |
 | characters outside the RFC 3986 grammar | `'non-special:x/?\uffffy'` | *none* | `non-special:x/?%EF%BF%BFy` | *failure* | `non-special:x/?%EF%BF%BFy` |
+| characters outside the RFC 3986 grammar | `'non-special:x/?#\uffffy'` | *none* | `non-special:x/?#%EF%BF%BFy` | *failure* | `non-special:x/?#%EF%BF%BFy` |
 | characters outside the RFC 3986 grammar | `https://example.com/"quoted"` | *none* | `https://example.com/%22quoted%22` | *failure* | `https://example.com/%22quoted%22` |
 | characters outside the RFC 3986 grammar | `data:text/plain,test#<foo> <bar>` | *none* | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` | *failure* | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` |
 | characters outside the RFC 3986 grammar | `about:blank#<foo> <bar>` | *none* | `about:blank#%3Cfoo%3E%20%3Cbar%3E` | *failure* | `about:blank#%3Cfoo%3E%20%3Cbar%3E` |
@@ -382,7 +356,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | `file:C:/` | `file://host/` | `file://host/C:/` | `file:C:/` | `file://host/C:/` |
 | file scheme | `file:/C:/` | `file://host/` | `file://host/C:/` | `file:/C:/` | `file://host/C:/` |
 | file scheme | `file:.//p` | *none* | `file:///.//p` | `file:/p` | `file:////p` |
-| file scheme | `file:/.//p` | *none* | `file:///.//p` | `file://p` | `file:////p` |
+| file scheme | `file:/.//p` | *none* | `file:////p` | `file://p` | `file:////p` |
 | tab or newline inside the input | `'http://example\t.\norg'` | `http://example.org/foo/bar` | `http://example.org` | *failure* | `http://example.org/` |
 | tab or newline inside the input | `'http://f:\n/c'` | `http://example.org/foo/bar` | `http://f/c` | *failure* | `http://f/c` |
 | tab or newline inside the input | `'http://example.com/foo\t\x91%91'` | *none* | `http://example.com/foo%C2%91%91` | *failure* | `http://example.com/foo%C2%91%91` |
@@ -420,18 +394,18 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | `non-special://f:999999/c` | *failure* |
 | leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/bar` |
 
-## All three differ (151)
+## All three differ (142)
 
 | Category | Cases |
 |---|---|
 | backslash | 42 |
 | special scheme without an authority | 37 |
-| characters outside the RFC 3986 grammar | 24 |
+| characters outside the RFC 3986 grammar | 19 |
 | file scheme | 15 |
-| empty host | 9 |
 | tab or newline inside the input | 7 |
 | non-ASCII or percent-encoded host | 7 |
 | leading or trailing C0 control or space | 6 |
+| empty host | 5 |
 | other | 4 |
 
 | Category | Input | Base | yarl | RFC 3986 | WHATWG |
@@ -516,7 +490,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | special scheme without an authority | `http:/@:www.example.com` | *none* | `http:///@:www.example.com` | `http:/@:www.example.com` | *failure* |
 | special scheme without an authority | `http:` | `https://example.org/foo/bar` | `http://` | `http:` | *failure* |
 | characters outside the RFC 3986 grammar | `lolscheme:x x#x x` | *none* | `lolscheme:x%20x#x%20x` | *failure* | `lolscheme:x x#x%20x` |
-| characters outside the RFC 3986 grammar | `:#` | `http://example.org/foo/bar` | `http://example.org/foo/:` | *failure* | `http://example.org/foo/:#` |
 | characters outside the RFC 3986 grammar | `http://foo/path;a??e#f#g` | `http://example.org/foo/bar` | `http://foo/path;a??e#f%23g` | *failure* | `http://foo/path;a??e#f#g` |
 | characters outside the RFC 3986 grammar | `[61:24:74]:98` | `http://example.org/foo/bar` | `http://example.org/foo/%5B61:24:74%5D:98` | *failure* | `http://example.org/foo/[61:24:74]:98` |
 | characters outside the RFC 3986 grammar | `http://example.com/foo/%2e%2` | *none* | `http://example.com/foo/.%252` | *failure* | `http://example.com/foo/%2e%2` |
@@ -535,17 +508,13 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | characters outside the RFC 3986 grammar | `http://example.org/test?a#%GH` | *none* | `http://example.org/test?a#%25GH` | *failure* | `http://example.org/test?a#%GH` |
 | characters outside the RFC 3986 grammar | `10.0.0.7:8080/foo.html` | `file:///some/dir/bar.html` | `10.0.0.7:8080/foo.html` | *failure* | `file:///some/dir/10.0.0.7:8080/foo.html` |
 | characters outside the RFC 3986 grammar | `"https://www.example.com/path{\x7fpath.html?query'\x7f=query#fragment<\x7ffragment"` | *none* | `https://www.example.com/path%7B%7Fpath.html?query'%7F=query#fragment%3C%7Ffragment` | *failure* | `https://www.example.com/path%7B%7Fpath.html?query%27%7F=query#fragment%3C%7Ffragment` |
-| characters outside the RFC 3986 grammar | `'https://x/?#\x00y'` | *none* | `https://x/#%00y` | *failure* | `https://x/?#%00y` |
-| characters outside the RFC 3986 grammar | `'https://x/?#\uffffy'` | *none* | `https://x/#%EF%BF%BFy` | *failure* | `https://x/?#%EF%BF%BFy` |
-| characters outside the RFC 3986 grammar | `'non-special:x/?#\x00y'` | *none* | `non-special:x/#%00y` | *failure* | `non-special:x/?#%00y` |
-| characters outside the RFC 3986 grammar | `'non-special:x/?#\uffffy'` | *none* | `non-special:x/#%EF%BF%BFy` | *failure* | `non-special:x/?#%EF%BF%BFy` |
 | file scheme | `C\|/foo/bar` | `file:///tmp/mock/path` | `file:///tmp/mock/C%7C/foo/bar` | *failure* | `file:///C:/foo/bar` |
 | file scheme | `file:C\|/m/` | *none* | `file:///C%7C/m/` | *failure* | `file:///C:/m/` |
 | file scheme | `file:C\|\|/m/` | *none* | `file:///C%7C%7C/m/` | *failure* | `file:///C\|\|/m/` |
 | file scheme | `C\|` | `file://host/dir/file` | `file://host/dir/C%7C` | *failure* | `file://host/C:` |
 | file scheme | `C\|` | `file://host/D:/dir1/dir2/file` | `file://host/D:/dir1/dir2/C%7C` | *failure* | `file://host/C:` |
-| file scheme | `C\|#` | `file://host/dir/file` | `file://host/dir/C%7C` | *failure* | `file://host/C:#` |
-| file scheme | `C\|?` | `file://host/dir/file` | `file://host/dir/C%7C` | *failure* | `file://host/C:?` |
+| file scheme | `C\|#` | `file://host/dir/file` | `file://host/dir/C%7C#` | *failure* | `file://host/C:#` |
+| file scheme | `C\|?` | `file://host/dir/file` | `file://host/dir/C%7C?` | *failure* | `file://host/C:?` |
 | file scheme | `C\|/` | `file://host/dir/file` | `file://host/dir/C%7C/` | *failure* | `file://host/C:/` |
 | file scheme | `C\|a` | `file://host/dir/file` | `file://host/dir/C%7Ca` | *failure* | `file://host/dir/C\|a` |
 | file scheme | `/c\|/foo/bar` | `file:///c:/baz/qux` | `file:///c%7C/foo/bar` | *failure* | `file:///c:/foo/bar` |
@@ -554,15 +523,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | `file:` | *none* | `file://` | `file:` | `file:///` |
 | file scheme | `file:?q=v` | *none* | `file://?q=v` | `file:?q=v` | `file:///?q=v` |
 | file scheme | `file:#frag` | *none* | `file://#frag` | `file:#frag` | `file:///#frag` |
-| empty host | `//` | `file:///tmp/mock/path` | `file:///tmp/mock/path` | `file://` | `file:///` |
-| empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | *failure* | `file:///w\|m` |
-| empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | *failure* | `file:///w\|\|m` |
-| empty host | `file:///w\|/m` | *none* | `file:///w%7C/m` | *failure* | `file:///w:/m` |
-| empty host | `file://` | `file://ape/` | `file://ape/` | `file://` | `file:///` |
-| empty host | `http://?` | *none* | `http://` | `http://?` | *failure* |
-| empty host | `http://#` | *none* | `http://` | `http://#` | *failure* |
-| empty host | `///test` | `http://example.org/` | `http://example.org/test` | `http:///test` | `http://test/` |
-| empty host | `///example.org/path` | `http://example.org/` | `http://example.org/example.org/path` | `http:///example.org/path` | `http://example.org/path` |
 | tab or newline inside the input | `'a:\t foo.com'` | `http://example.org/foo/bar` | `a:%20foo.com` | *failure* | `a: foo.com` |
 | tab or newline inside the input | `'non-special:opaque \t\t  \t#hi'` | *none* | `non-special:opaque%20%20%20#hi` | *failure* | `non-special:opaque  %20#hi` |
 | tab or newline inside the input | `'non-special:opaque \t\t  #hi'` | *none* | `non-special:opaque%20%20%20#hi` | *failure* | `non-special:opaque  %20#hi` |
@@ -583,6 +543,11 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | *failure* | `file:///c:////foo/bar.html` |
 | leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/%1F%20%20` | *failure* | `http://example.com/` |
 | leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque%20%20` | *failure* | `non-special:opaque` |
+| empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | *failure* | `file:///w\|m` |
+| empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | *failure* | `file:///w\|\|m` |
+| empty host | `file:///w\|/m` | *none* | `file:///w%7C/m` | *failure* | `file:///w:/m` |
+| empty host | `///test` | `http://example.org/` | `http://example.org/test` | `http:///test` | `http://test/` |
+| empty host | `///example.org/path` | `http://example.org/` | `http://example.org/example.org/path` | `http:///example.org/path` | `http://example.org/path` |
 | other | `../i` | `sc:sd/sd` | `sc:i` | `sc:/i` | *failure* |
 | other | `x` | `sc://ñ` | `sc://xn--ida/x` | *failure* | `sc://%C3%B1/x` |
 | other | `#x` | `sc://ñ` | `sc://xn--ida/#x` | *failure* | `sc://%C3%B1#x` |

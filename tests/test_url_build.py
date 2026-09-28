@@ -534,3 +534,14 @@ def test_build_uppercase_host() -> None:
         encoded=False,
     )
     assert u.host == "upper.case"
+
+
+@pytest.mark.parametrize(
+    ("port", "expected"),
+    [(8080, "http://example.com:8080/p"), (80, "http://example.com/p")],
+)
+def test_build_already_encoded_port(port: int, expected: str) -> None:
+    url = URL.build(
+        scheme="http", host="example.com", port=port, path="/p", encoded=True
+    )
+    assert str(url) == expected

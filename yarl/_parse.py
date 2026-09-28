@@ -4,7 +4,7 @@ import codecs
 import re
 import unicodedata
 from functools import lru_cache
-from urllib.parse import parse_qsl, scheme_chars, uses_netloc
+from urllib.parse import parse_qsl, scheme_chars
 
 from ._quoters import QUOTER, UNQUOTER_PLUS
 
@@ -17,13 +17,22 @@ WHATWG_C0_CONTROL_OR_SPACE = (
 
 # Unsafe bytes to be removed per WHATWG spec
 UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
-USES_AUTHORITY = frozenset(uses_netloc)
+# The WHATWG "special" schemes: their URLs always have an authority, so in
+# WHATWG mode "//" is written out even when the authority is missing.
+SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp", "file"})
+
+# Bits of the "empty" mask: the component is present but empty, as in
+# "sc://", "http://h/?" or "http://h/#". An absent and an empty component
+# are different per RFC 3986 section 5.3, but both are stored as "".
+EMPTY_AUTHORITY = 1
+EMPTY_QUERY = 2
+EMPTY_FRAGMENT = 4
 
 SplitURLType = tuple[str, str, str, str, str]
 
 
-def split_url(url: str) -> SplitURLType:
-    """Split URL into parts."""
+def split_url(url: str) -> tuple[str, str, str, str, str, int]:
+    """Split URL into parts and the mask of present but empty parts."""
     # Adapted from urllib.parse.urlsplit
     # Only lstrip url as some applications rely on preserving trailing space.
     # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
@@ -33,6 +42,7 @@ def split_url(url: str) -> SplitURLType:
             url = url.replace(b, "")
 
     scheme = netloc = query = fragment = ""
+    empty = 0
     i = url.find(":")
     if i > 0 and url[0] in scheme_chars:
         for c in url[1:i]:
@@ -43,6 +53,7 @@ def split_url(url: str) -> SplitURLType:
     has_hash = "#" in url
     has_question_mark = "?" in url
     if url[:2] == "//":
+        empty = EMPTY_AUTHORITY
         delim = len(url)  # position of end of domain part of url, default is end
         if has_hash and has_question_mark:
             delim_chars = "/?#"
@@ -99,11 +110,19 @@ def split_url(url: str) -> SplitURLType:
                 raise ValueError("The IPv6 content between brackets is not valid")
     if has_hash:
         url, _, fragment = url.partition("#")
-    if has_question_mark:
+        empty |= EMPTY_FRAGMENT
+    if has_question_mark and "?" in url:
         url, _, query = url.partition("?")
-    if netloc and not netloc.isascii():
-        _check_netloc(netloc)
-    return scheme, netloc, url, query, fragment
+        empty |= EMPTY_QUERY
+    if netloc:
+        if not netloc.isascii():
+            _check_netloc(netloc)
+        empty &= ~EMPTY_AUTHORITY
+    if query:
+        empty &= ~EMPTY_QUERY
+    if fragment:
+        empty &= ~EMPTY_FRAGMENT
+    return scheme, netloc, url, query, fragment, empty
 
 
 def _check_netloc(netloc: str) -> None:
@@ -176,16 +195,44 @@ def unsplit_result(
     scheme: str, netloc: str, url: str, query: str, fragment: str
 ) -> str:
     """Unsplit a URL without any normalization."""
-    if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
+    if netloc:
         if url and url[:1] != "/":
             url = f"{scheme}://{netloc}/{url}" if scheme else f"{scheme}:{url}"
         else:
             url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
-    elif scheme:
-        url = f"{scheme}:{url}"
+    else:
+        if url[:2] == "//":
+            # Without an authority a path cannot start with "//", which
+            # would read as one; "/." keeps it a path, as WHATWG does.
+            url = f"/.{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
     if query:
         url = f"{url}?{query}"
     return f"{url}#{fragment}" if fragment else url
+
+
+def unsplit_result_empty(
+    scheme: str, netloc: str, url: str, query: str, fragment: str, empty: int
+) -> str:
+    """Unsplit a URL that has present but empty components.
+
+    *empty* is a mask of EMPTY_AUTHORITY, EMPTY_QUERY and EMPTY_FRAGMENT
+    telling which empty components are present.
+    """
+    if netloc or empty & EMPTY_AUTHORITY:
+        if url and url[:1] != "/":
+            url = f"{scheme}://{netloc}/{url}" if scheme else f"{scheme}:{url}"
+        else:
+            url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
+    else:
+        if url[:2] == "//":
+            url = f"/.{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
+    if query or empty & EMPTY_QUERY:
+        url = f"{url}?{query}"
+    return f"{url}#{fragment}" if fragment or empty & EMPTY_FRAGMENT else url
 
 
 @lru_cache  # match the same size as urlsplit
