@@ -5,10 +5,9 @@ from __future__ import annotations
 import os
 import typing as _t  # noqa: WPS111
 from contextlib import contextmanager
+from os.path import expandvars
 from pathlib import Path
 from sys import version_info as _python_version_tuple
-
-from expandvars import expandvars
 
 from ._compat import load_toml_from_string
 from ._transformers import (
@@ -195,12 +194,18 @@ def patched_env(
     :yields: None
     """
     orig_env = os.environ.copy()
-    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}  # type: ignore[no-untyped-call]
+    # Unset self-references such as ${LDFLAGS} must expand to empty strings.
+    for env_var in env:
+        os.environ.setdefault(env_var, '')
+    expanded_env = {name: expandvars(var_val) for name, var_val in env.items()}
     os.environ.update(expanded_env)
 
-    os.environ['CFLAGS'] = ' '.join((
+    # The extra compiler flags go through ``CPPFLAGS`` rather than ``CFLAGS``:
+    # setuptools' distutils appends ``CPPFLAGS`` to the interpreter's own
+    # compiler flags, while a ``CFLAGS`` environment variable replaces them.
+    os.environ['CPPFLAGS'] = ' '.join((
         # First, low priority hardcoded value from the `pyproject.toml` config:
-        expanded_env.get('CFLAGS', ''),
+        expanded_env.get('CPPFLAGS', ''),
         # Next, add dynamically computed compiler flags:
         *(
             # Debug mode:
@@ -235,7 +240,11 @@ def patched_env(
                 f'-ffile-prefix-map={temporary_build_directory!s}={original_source_directory!s}',
             )
         ),
-        # Finally, append the user-set env var, ensuring its top priority:
+        # Finally, append the user-set env vars, ensuring their top priority.
+        # distutils places ``CFLAGS`` before ``CPPFLAGS`` on the command
+        # line, so the user's ``CFLAGS`` is repeated here to keep outranking
+        # the flags above, as it did when they all lived in ``CFLAGS``:
+        orig_env.get('CPPFLAGS', ''),
         orig_env.get('CFLAGS', ''),
         # Last thing, strip spaces caused by empty leading/trailing flags:
     )).strip()
