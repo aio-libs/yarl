@@ -207,6 +207,7 @@ class CacheInfo(TypedDict):
 
 class _InternalURLCache(TypedDict, total=False):
     _val: SplitURLType
+    _join_path: str
     _origin: "URL"
     absolute: bool
     hash: int
@@ -297,11 +298,51 @@ def _check_rfc_authority(authority: str) -> None:
         raise ValueError(f"Invalid URL: userinfo cannot contain '@' in {authority!r}")
 
 
+def _special_authority_url(
+    scheme: str, path: str, query: str, fragment: str, empty: int, encoded: bool
+) -> "URL":
+    """Parse "http:host/p" in WHATWG mode, where the authority has no "//".
+
+    The WHATWG URL Standard skips any slashes after the scheme of a special
+    URL and reads an authority, so "http:/example.com/" is
+    "http://example.com/". Against a base with the same scheme it is the
+    relative reference "/example.com/" instead; the path is kept for join().
+    """
+    url_str = f"{scheme}://{path.lstrip('/')}"
+    if query or empty & EMPTY_QUERY:
+        url_str = f"{url_str}?{query}"
+    if fragment or empty & EMPTY_FRAGMENT:
+        url_str = f"{url_str}#{fragment}"
+    if encoded:
+        url = _pre_encoded_url(url_str, _WHATWG)
+    else:
+        url = _encode_url(url_str, _WHATWG)
+        path = PATH_REQUOTER(path)
+    url._cache["_join_path"] = path
+    return url
+
+
+def _is_special_authority_path(scheme: str, path: str, mode: Mode) -> bool:
+    """Tell if an authority-less path is an authority in WHATWG mode.
+
+    Only a path with text after the leading slashes is, so "http:" and
+    "http:/" stay references to their base, as the WHATWG parser reads them
+    against a base with the same scheme; alone it rejects them.
+    """
+    return mode is _WHATWG and scheme in SCHEME_REQUIRES_HOST and path.lstrip("/") != ""
+
+
 def _encode_url(url_str: str, mode: Mode) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     host: str | None
     scheme, netloc, path, query, fragment, empty = split_url(url_str)
+    if (
+        not netloc
+        and not empty & EMPTY_AUTHORITY
+        and _is_special_authority_path(scheme, path, mode)
+    ):
+        return _special_authority_url(scheme, path, query, fragment, empty, False)
     if not netloc:  # netloc
         host = ""
     else:
@@ -381,8 +422,15 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
 
 def _pre_encoded_url(url_str: str, mode: Mode) -> "URL":
     """Parse pre-encoded URL."""
-    self = object.__new__(URL)
     val = split_url(url_str)
+    scheme, netloc, path, query, fragment, empty = val
+    if (
+        not netloc
+        and not empty & EMPTY_AUTHORITY
+        and _is_special_authority_path(scheme, path, mode)
+    ):
+        return _special_authority_url(scheme, path, query, fragment, empty, True)
+    self = object.__new__(URL)
     (
         self._scheme,
         self._netloc,
@@ -895,7 +943,9 @@ class URL:
             self._netloc or self._path or self._query or self._fragment or self._empty
         )
 
-    def __getstate__(self) -> tuple[SplitURLType, str, int]:
+    def __getstate__(
+        self,
+    ) -> tuple[SplitURLType, str, int] | tuple[SplitURLType, str, int, str]:
         # Return a plain tuple rather than a ``SplitResult``. Constructing a
         # ``SplitResult`` via ``tuple.__new__`` skips its ``__init__`` and on
         # Python 3.15+ leaves ``_keep_empty`` unset, which breaks pickling: the
@@ -904,18 +954,23 @@ class URL:
         # pickles produced by older yarl releases (which embed a real
         # ``SplitResult``) still load correctly. The compatibility mode goes
         # second and the mask of empty components third; older releases
-        # ignore trailing items of the state.
+        # ignore trailing items of the state. The path that join() uses for
+        # "http:g" (see _special_authority_url()) goes last, when there is one.
+        if (join_path := self._cache.get("_join_path")) is not None:
+            return (self._val, self._mode.value, self._empty, join_path)
         return (self._val, self._mode.value, self._empty)
 
     def __setstate__(
         self,
         # ``(val,)`` or ``(val, mode)`` from older releases,
-        # ``(val, mode, empty)``, or the legacy default style
+        # ``(val, mode, empty)``, ``(val, mode, empty, join_path)``, or the
+        # legacy default style
         # ``(None, {"_val": val})``.
         state: tuple[Any, ...],
     ) -> None:
         mode = Mode.WHATWG
         empty = 0
+        cache: _InternalURLCache = {}
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
             val = state[1]["_val"]
@@ -925,9 +980,11 @@ class URL:
                 mode = Mode(rest[0])
                 if rest[1:]:
                     empty = rest[1]
+                    if rest[2:]:
+                        cache["_join_path"] = rest[2]
         self._scheme, self._netloc, self._path, self._query, self._fragment = val
         self._empty = empty
-        self._cache = {}
+        self._cache = cache
         self._mode = mode
 
     def _cache_netloc(self) -> None:
@@ -1998,6 +2055,13 @@ class URL:
         if scheme != self._scheme or (url._scheme and scheme not in USES_RELATIVE):
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
+
+        if url._netloc and (join_path := url._cache.get("_join_path")) is not None:
+            # "http:g" was parsed in WHATWG mode as "http://g/", but against
+            # an http base it is the relative reference "g".
+            url = from_parts(
+                scheme, "", join_path, url._query, url._fragment, url._mode, url._empty
+            )
 
         if url._empty or self._empty:
             return self._join_with_empty(url, scheme)

@@ -66,7 +66,7 @@ def test_http_empty_path() -> None:
         ),
         pytest.param(
             "http:/example.com/",
-            marks=diverges("an empty authority is inserted"),
+            marks=diverges("WHATWG mode reads the path as the authority"),
         ),
     ],
 )

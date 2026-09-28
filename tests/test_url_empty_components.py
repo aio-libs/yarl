@@ -293,7 +293,7 @@ def test_mode_change_keeps_empty_components() -> None:
 @pytest.mark.parametrize(
     ("url", "whatwg", "rfc"),
     [
-        ("http:/x", "http:///x", "http:/x"),
+        ("http:/", "http:///", "http:/"),
         ("file:/p", "file:///p", "file:/p"),
         ("file:///p", "file:///p", "file:///p"),
         ("gopher:/x", "gopher:/x", "gopher:/x"),
@@ -316,7 +316,7 @@ def test_build_special_scheme_by_mode() -> None:
     ("first", "second", "equal"),
     [
         (URL("file:/p"), URL("file:///p"), True),
-        (URL("http:/x"), URL("http:///x"), True),
+        (URL("http:/"), URL("http:///"), True),
         (URL("file:/p", mode="rfc"), URL("file:///p", mode="rfc"), False),
         (URL("http:/x", mode="rfc"), URL("http:///x", mode="rfc"), False),
         (URL("file:/p"), URL("file:///p", mode="rfc"), True),
