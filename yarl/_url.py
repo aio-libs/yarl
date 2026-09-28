@@ -292,8 +292,10 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
         # (#1829). Validate like the builder APIs do, but keep accepting an
         # empty IPv6 zone identifier, which parsing has always allowed (#998).
         host = _encode_host(host, validate_host=True, reject_empty_zone=False)
-        # Remove brackets as host encoder adds back brackets for IPv6 addresses
-        cache["raw_host"] = host[1:-1] if "[" in host else host
+        # Remove brackets as host encoder adds back brackets for IPv6 addresses.
+        # An empty host (RFC mode, e.g. "sc://user@:8080") is None, as for
+        # built and pre-encoded URLs.
+        cache["raw_host"] = (host[1:-1] if "[" in host else host) or None
         cache["explicit_port"] = port
         if password is None and username is None:
             # Fast path for URLs without user, password
@@ -1028,11 +1030,6 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        # RFC 3986 mode accepts authority forms such as ``//user@:8080``,
-        # which have an empty host but still expose the explicit port.  Keep
-        # the empty host intact here so the host:port subcomponent can be
-        # rendered as ``:8080`` instead of crashing while checking trailing
-        # dots.
         if raw and raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.

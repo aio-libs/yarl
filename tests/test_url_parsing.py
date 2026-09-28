@@ -213,7 +213,7 @@ class TestPort:
     def test_no_host_rfc(self) -> None:
         u = URL("//:77", mode="rfc")
         assert u.scheme == ""
-        assert u.host == ""
+        assert u.host is None
         assert u.port == 77
         assert u.path == "/"
 
@@ -483,10 +483,24 @@ def test_build_authority_without_host_rejected(authority: str) -> None:
 def test_userinfo_without_host_rfc(url: str) -> None:
     # RFC 3986 allows an empty reg-name host next to userinfo or a port.
     parsed = URL(url, mode="rfc")
-    assert parsed.host == ""
+    assert parsed.host is None
     assert URL(str(parsed), mode="rfc") == parsed
     built = URL.build(scheme="sc", authority=parsed.raw_authority, mode="rfc")
     assert built.raw_authority == parsed.raw_authority
+
+
+@pytest.mark.parametrize("authority", ["user@:8080", "user@", ":8080"])
+def test_parsed_and_built_empty_host_agree(authority: str) -> None:
+    # An empty host is None however the URL was made; aiohttp relies on
+    # raw_host being None to reject such authorities.
+    parsed = URL(f"sc://{authority}/path", mode="rfc")
+    built = URL.build(scheme="sc", authority=authority, path="/path", mode="rfc")
+    encoded = URL(f"sc://{authority}/path", encoded=True)
+    assert parsed.raw_host is built.raw_host is encoded.raw_host is None
+    assert parsed.port == built.port == encoded.port
+    assert parsed.host_port_subcomponent is built.host_port_subcomponent is None
+    assert parsed.origin() == built.origin()
+    assert str(parsed.origin()) == str(built.origin())
 
 
 @pytest.mark.parametrize("mode", ["rfc", "whatwg"])
@@ -510,7 +524,7 @@ class TestStripEmptyParts:
         assert u.scheme == ""
         assert u.user is None
         assert u.password is None
-        assert u.host == ""
+        assert u.host is None
         assert u.path == ""
         assert u.query_string == ""
         assert u.fragment == ""
