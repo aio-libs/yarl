@@ -1069,6 +1069,15 @@ The path is encoded if needed.
       >>> URL('http://example.com/path?arg#frag').join(URL('?other'))
       URL('http://example.com/path?other')
 
+   Resolution follows :rfc:`3986#section-5.2` and does not depend on the
+   scheme, so bases such as ``mailto:``, ``urn:`` or a custom scheme work
+   too:
+
+   .. doctest::
+
+      >>> URL('urn:example:animal').join(URL('#ferret'))
+      URL('urn:example:animal#ferret')
+
    .. note::
 
       If ``url`` is an absolute URL (that is, starting with ``//`` or

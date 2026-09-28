@@ -23,7 +23,6 @@ from multidict import MultiDict, MultiDictProxy, istr
 from propcache.api import under_cached_property as cached_property
 
 from ._parse import (
-    USES_AUTHORITY,
     SplitURLType,
     make_netloc,
     query_to_pairs,
@@ -1526,11 +1525,13 @@ class URL:
             raise TypeError("url should be URL")
 
         scheme = url._scheme or self._scheme
-        if scheme != self._scheme or scheme not in USES_RELATIVE:
+        # A reference with a scheme is used as is (RFC 3986 section 5.2.2),
+        # except that "http:g" is still resolved against an http base, the
+        # backward-compatible behavior RFC 3986 section 5.4.2 permits.
+        if scheme != self._scheme or (url._scheme and scheme not in USES_RELATIVE):
             return url
 
-        # scheme is in uses_authority as uses_authority is a superset of uses_relative
-        if (join_netloc := url._netloc) and scheme in USES_AUTHORITY:
+        if join_netloc := url._netloc:
             return from_parts(scheme, join_netloc, url._path, url._query, url._fragment)
 
         orig_path = self._path
@@ -1538,7 +1539,7 @@ class URL:
             if join_path[0] == "/":
                 path = join_path
             elif not orig_path:
-                path = f"/{join_path}"
+                path = f"/{join_path}" if self._netloc else join_path
             elif orig_path[-1] == "/":
                 path = f"{orig_path}{join_path}"
             else:
