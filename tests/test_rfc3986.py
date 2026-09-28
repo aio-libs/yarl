@@ -402,30 +402,10 @@ def test_join_target_components(base: str, reference: str, expected: str) -> Non
     ("base", "reference", "expected"),
     [
         ("ws://a/b/c", "d", "ws://a/b/d"),
-        pytest.param(
-            "foo://a/b/c",
-            "../d",
-            "foo://a/d",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
-        pytest.param(
-            "foo:/a/b",
-            "c",
-            "foo:/a/c",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
-        pytest.param(
-            "foo:a/b",
-            "c",
-            "foo:a/c",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
-        pytest.param(
-            "urn:example:a",
-            "#f",
-            "urn:example:a#f",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
+        ("foo://a/b/c", "../d", "foo://a/d"),
+        ("foo:/a/b", "c", "foo:/a/c"),
+        ("foo:a/b", "c", "foo:a/c"),
+        ("urn:example:a", "#f", "urn:example:a#f"),
     ],
 )
 def test_join_scheme_independent(base: str, reference: str, expected: str) -> None:

@@ -2303,6 +2303,25 @@ def test_join_drops_base_fragment(reference: str, expected: str) -> None:
     assert str(base.join(URL(reference))) == expected
 
 
+@pytest.mark.parametrize(
+    ("base", "reference", "expected"),
+    [
+        ("mailto:user@example.com", "#frag", "mailto:user@example.com#frag"),
+        ("urn:isbn:0451450523", "?q", "urn:isbn:0451450523?q"),
+        ("foo://host/a/b", "c", "foo://host/a/c"),
+        ("foo://host/a/b", "//other/c", "foo://other/c"),
+        ("foo:a/b", "../c", "foo:c"),
+        ("foo:", "c", "foo:c"),
+        ("foo://host/a", "foo:b", "foo:b"),
+        ("foo://host/a", "bar:b", "bar:b"),
+    ],
+)
+def test_join_scheme_outside_uses_relative(
+    base: str, reference: str, expected: str
+) -> None:
+    assert str(URL(base).join(URL(reference))) == expected
+
+
 def test_join_non_url() -> None:
     base = URL("http://example.com")
     with pytest.raises(TypeError):
