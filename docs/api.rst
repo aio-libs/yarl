@@ -76,6 +76,24 @@ Use :meth:`~URL.human_repr` for getting human readable representation:
    >>> url.human_repr()
    'http://εμπορικόσήμα.eu/шлях/這裡'
 
+The *host* is validated the same way as by :meth:`URL.build` and
+:meth:`URL.with_host`: a :exc:`ValueError` is raised for a host that is
+neither a valid IP address nor a valid *reg-name* (:rfc:`3986#section-3.2.2`),
+for example one containing a space, a control character or a character that
+turns into a URL delimiter after IDNA normalization.
+
+.. doctest::
+
+   >>> URL('http://exa mple.com/')
+   Traceback (most recent call last):
+     ...
+   ValueError: Host 'exa mple.com' cannot contain ' ' (at position 3)
+
+.. versionchanged:: 1.25.2
+
+   The host of a parsed URL is validated; previously invalid hosts were
+   accepted and produced a URL that could not be parsed back.
+
 
 .. note::
 

@@ -11,3 +11,4 @@ URL construction is now roughly 20% slower on the
 character / zone-id checks on every parse. The same path runs for
 ``URL.build(host=...)`` already, so this just aligns the two entry
 points; the cost is intentional and matches the security benefit.
+-- by :user:`MohammedAnasNathani`.
