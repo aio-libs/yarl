@@ -1559,7 +1559,7 @@ class URL:
             self._netloc,
             path,
             url._query if join_path or url._query else self._query,
-            url._fragment if join_path or url._fragment else self._fragment,
+            url._fragment,
         )
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":

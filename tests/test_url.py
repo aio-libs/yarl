@@ -2290,6 +2290,19 @@ def test_join_absolute() -> None:
     assert str(url2) == "http://www.python.org/~guido"
 
 
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        ("", "http://example.com/path?arg"),
+        ("?other", "http://example.com/path?other"),
+        ("#new", "http://example.com/path?arg#new"),
+    ],
+)
+def test_join_drops_base_fragment(reference: str, expected: str) -> None:
+    base = URL("http://example.com/path?arg#frag")
+    assert str(base.join(URL(reference))) == expected
+
+
 def test_join_non_url() -> None:
     base = URL("http://example.com")
     with pytest.raises(TypeError):

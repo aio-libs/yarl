@@ -35,20 +35,20 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 
 | Outcome | Cases |
 |---|---|
-| All three agree | 382 |
-| yarl differs, RFC 3986 and WHATWG agree | 69 |
+| All three agree | 384 |
+| yarl differs, RFC 3986 and WHATWG agree | 67 |
 | WHATWG differs, yarl follows RFC 3986 | 176 |
-| RFC 3986 differs, yarl follows WHATWG | 121 |
-| All three differ | 148 |
+| RFC 3986 differs, yarl follows WHATWG | 123 |
+| All three differ | 146 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl vs RFC 3986 | 338 |
-| yarl vs WHATWG | 393 |
+| yarl vs RFC 3986 | 336 |
+| yarl vs WHATWG | 389 |
 | WHATWG vs RFC 3986 | 445 |
 
-## yarl differs, RFC 3986 and WHATWG agree (69)
+## yarl differs, RFC 3986 and WHATWG agree (67)
 
 Every case where yarl is the odd one out. A change must not add rows here; see AGENTS.md.
 
@@ -92,8 +92,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | `#i` | `sc:///pa/pa` | *failure* | `sc:///pa/pa#i` | `sc:///pa/pa#i` |
 | `sc://te@s:t@/` | *none* | `sc://te%40s:t@/` | *failure* | *failure* |
 | `file:///C%3A/` | *none* | `file:///C:/` | `file:///C%3A/` | `file:///C%3A/` |
-| `` | `file:///test?test#test` | `file:///test?test#test` | `file:///test?test` | `file:///test?test` |
-| `?x` | `file:///test?test#test` | `file:///test?x#test` | `file:///test?x` | `file:///test?x` |
 | `..` | `abc://x/y/z/C:/` | *failure* | `abc://x/y/z/` | `abc://x/y/z/` |
 | `///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
 | `file:///C:/` | `file://host/` | `file://host/C:/` | `file:///C:/` | `file:///C:/` |
@@ -316,13 +314,13 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test:@test/x` | `non-special://test@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://:@test/x` | `non-special://test/x` |
 
-## RFC 3986 differs, yarl follows WHATWG (121)
+## RFC 3986 differs, yarl follows WHATWG (123)
 
 | Category | Cases |
 |---|---|
 | characters outside the RFC 3986 grammar | 54 |
 | other | 17 |
-| file scheme | 13 |
+| file scheme | 15 |
 | tab or newline inside the input | 11 |
 | empty host | 8 |
 | special scheme without an authority | 6 |
@@ -412,6 +410,8 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | `file:a` | `http://www.example.com/test` | `file:///a` | `file:a` | `file:///a` |
 | file scheme | `file:.` | *none* | `file:///.` | `file:` | `file:///` |
 | file scheme | `file:.` | `http://www.example.com/test` | `file:///.` | `file:` | `file:///` |
+| file scheme | `file:` | `file:///test?test#test` | `file:///test?test` | `file:` | `file:///test?test` |
+| file scheme | `file:?x` | `file:///test?test#test` | `file:///test?x` | `file:?x` | `file:///test?x` |
 | file scheme | `file:#x` | `file:///test?test#test` | `file:///test?test#x` | `file:#x` | `file:///test?test#x` |
 | file scheme | `file:C:/` | `file://host/` | `file://host/C:/` | `file:C:/` | `file://host/C:/` |
 | file scheme | `file:/C:/` | `file://host/` | `file://host/C:/` | `file:/C:/` | `file://host/C:/` |
@@ -455,14 +455,14 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | `non-special://f:999999/c` | *failure* |
 | leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/bar` |
 
-## All three differ (148)
+## All three differ (146)
 
 | Category | Cases |
 |---|---|
 | backslash | 39 |
 | special scheme without an authority | 37 |
 | characters outside the RFC 3986 grammar | 24 |
-| file scheme | 17 |
+| file scheme | 15 |
 | empty host | 11 |
 | tab or newline inside the input | 7 |
 | non-ASCII or percent-encoded host | 7 |
@@ -573,8 +573,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | `C\|/foo/bar` | `file:///tmp/mock/path` | `file:///tmp/mock/C%7C/foo/bar` | *failure* | `file:///C:/foo/bar` |
 | file scheme | `file:C\|/m/` | *none* | `file:///C%7C/m/` | *failure* | `file:///C:/m/` |
 | file scheme | `file:C\|\|/m/` | *none* | `file:///C%7C%7C/m/` | *failure* | `file:///C\|\|/m/` |
-| file scheme | `file:` | `file:///test?test#test` | `file:///test?test#test` | `file:` | `file:///test?test` |
-| file scheme | `file:?x` | `file:///test?test#test` | `file:///test?x#test` | `file:?x` | `file:///test?x` |
 | file scheme | `C\|` | `file://host/dir/file` | `file://host/dir/C%7C` | *failure* | `file://host/C:` |
 | file scheme | `C\|` | `file://host/D:/dir1/dir2/file` | `file://host/D:/dir1/dir2/C%7C` | *failure* | `file://host/C:` |
 | file scheme | `C\|#` | `file://host/dir/file` | `file://host/dir/C%7C` | *failure* | `file://host/C:#` |
