@@ -37,14 +37,14 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 |---|---|
 | All three agree | 450 |
 | yarl differs, RFC 3986 and WHATWG agree | 1 |
-| WHATWG differs, yarl follows RFC 3986 | 162 |
+| WHATWG differs, yarl follows RFC 3986 | 163 |
 | RFC 3986 differs, yarl follows WHATWG | 140 |
-| All three differ | 143 |
+| All three differ | 142 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl vs RFC 3986 | 284 |
+| yarl vs RFC 3986 | 283 |
 | yarl vs WHATWG | 306 |
 | WHATWG vs RFC 3986 | 445 |
 
@@ -56,12 +56,12 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 |---|---|---|---|---|
 | `http://[::%31]` | `http://other.com/` | `http://[::%31]` | *failure* | *failure* |
 
-## WHATWG differs, yarl follows RFC 3986 (162)
+## WHATWG differs, yarl follows RFC 3986 (163)
 
 | Category | Cases |
 |---|---|
 | non-ASCII or percent-encoded host | 73 |
-| numeric host that is not a dotted quad | 28 |
+| numeric host that is not a dotted quad | 29 |
 | other | 27 |
 | file scheme | 16 |
 | characters outside the RFC 3986 grammar | 6 |
@@ -145,6 +145,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-ASCII or percent-encoded host | `https://a%C2%ADb/` | *none* | `https://a%c2%adb/` | `https://a%C2%ADb/` | `https://ab/` |
 | non-ASCII or percent-encoded host | `https://%C2%AD/` | *none* | `https://%c2%ad/` | `https://%C2%AD/` | *failure* |
 | numeric host that is not a dotted quad | `http://192.0x00A80001` | *none* | `http://192.0x00a80001` | `http://192.0x00A80001` | `http://192.168.0.1/` |
+| numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://192.168.0.1/` |
 | numeric host that is not a dotted quad | `http://192.168.0.257` | `http://other.com/` | `http://192.168.0.257` | `http://192.168.0.257` | *failure* |
 | numeric host that is not a dotted quad | `http://192.168.257` | `http://other.com/` | `http://192.168.257` | `http://192.168.257` | `http://192.168.1.1/` |
 | numeric host that is not a dotted quad | `http://256` | `http://other.com/` | `http://256` | `http://256` | `http://0.0.1.0/` |
@@ -393,7 +394,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | `non-special://f:999999/c` | *failure* |
 | leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/bar` |
 
-## All three differ (143)
+## All three differ (142)
 
 | Category | Cases |
 |---|---|
@@ -406,7 +407,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | leading or trailing C0 control or space | 6 |
 | empty host | 5 |
 | other | 4 |
-| numeric host that is not a dotted quad | 1 |
 
 | Category | Input | Base | yarl | RFC 3986 | WHATWG |
 |---|---|---|---|---|---|
@@ -552,7 +552,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | other | `x` | `sc://ñ` | `sc://xn--ida/x` | *failure* | `sc://%C3%B1/x` |
 | other | `#x` | `sc://ñ` | `sc://xn--ida/#x` | *failure* | `sc://%C3%B1#x` |
 | other | `?x` | `sc://ñ` | `sc://xn--ida/?x` | *failure* | `sc://%C3%B1?x` |
-| numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | *failure* | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://192.168.0.1/` |
 
 ## IDNA: WHATWG toascii.json
 

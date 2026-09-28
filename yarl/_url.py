@@ -589,6 +589,7 @@ class URL:
         if type(val) is cls:
             if val._mode is mode:
                 return val
+            _check_moved_host(val, val._scheme, mode)
             return from_parts(*val._val, mode, val._empty)
         if type(val) is SplitResult:
             if not encoded:
@@ -676,7 +677,12 @@ class URL:
             user, password, _host, port = split_netloc(authority)
             if not _host:
                 _check_missing_host(scheme, mode)
-            _host = _encode_host(_host, validate_host=False)[0] if _host else ""
+            if _host:
+                _host, numeric = _encode_host(_host, validate_host=False)
+                if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
+                    raise ValueError(_numeric_host_error(_host))
+            else:
+                _host = ""
         elif host:
             _host, numeric = _encode_host(host, validate_host=True)
             if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
@@ -1447,6 +1453,9 @@ class URL:
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
+        if self._scheme not in SPECIAL_SCHEMES and netloc:
+            # A special scheme in WHATWG mode had its host checked already.
+            _check_moved_host(self, lower_scheme, self._mode)
         return from_parts(
             lower_scheme,
             netloc,
@@ -1935,6 +1944,9 @@ class URL:
             return self._join_with_empty(url, scheme)
 
         if join_netloc := url._netloc:
+            if not url._scheme or url._mode is not _WHATWG:
+                # A schemeless or RFC-mode reference had no WHATWG host check.
+                _check_moved_host(url, scheme, self._mode)
             return from_parts(
                 scheme, join_netloc, url._path, url._query, url._fragment, self._mode
             )
@@ -1973,6 +1985,8 @@ class URL:
         if url._netloc or (
             join_empty & EMPTY_AUTHORITY and scheme not in SCHEME_REQUIRES_HOST
         ):
+            if not url._scheme or url._mode is not _WHATWG:
+                _check_moved_host(url, scheme, self._mode)
             return from_parts(
                 scheme,
                 url._netloc,
@@ -2117,6 +2131,19 @@ _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 _NUMERIC_HOST_TAIL = frozenset("0123456789abcdefxABCDEFX.")
 
 
+def _check_moved_host(url: "URL", scheme: str, mode: Mode) -> None:
+    """Apply the numeric host rule to the host of url under scheme and mode.
+
+    with_scheme(), join() and a change of mode can move a host that was
+    parsed under another scheme or mode into a special-scheme WHATWG URL,
+    so the rule is checked again there.
+    """
+    if mode is _WHATWG and scheme in SPECIAL_SCHEMES and (host := url.raw_host):
+        # The flag is cached with the encoding of the host.
+        if _encode_host(host, False)[1]:
+            raise ValueError(_numeric_host_error(host))
+
+
 def _numeric_host_error(host: str) -> str:
     """Explain why a special-scheme host was rejected in WHATWG mode.
 
@@ -2137,8 +2164,12 @@ def _is_ipv4_number(label: str) -> bool:
 
 
 def _is_invalid_numeric_host(host: str) -> bool:
-    """Tell if host ends in a number but has a label that is not one."""
-    if host[-1] not in _NUMERIC_HOST_TAIL:
+    """Tell if host ends in a number but has a label that is not one.
+
+    A percent-encoded host is left alone: yarl does not decode hosts, so the
+    labels WHATWG would classify are not known here.
+    """
+    if host[-1] not in _NUMERIC_HOST_TAIL or "%" in host:
         return False
     labels = host.split(".")
     if labels[-1] == "" and len(labels) > 1:
