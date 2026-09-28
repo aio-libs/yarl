@@ -506,48 +506,46 @@ jobs:
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: true
 
-  # FIXME: temporarily disabled; re-enable together with the
-  # `conformance` entry in `test-summary` below.
-  # conformance:
-  #   name: Conformance report is current
-  #   needs:
-  #   - build  # transitive, ensures dists are built
-  #   - build-wheels-for-tested-arches
-  #   - pre-setup  # transitive, for accessing settings
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
-  #   steps:
-  #   - name: Checkout project
-  #     uses: actions/checkout@v7
-  #   - name: Download distributions
-  #     uses: actions/download-artifact@v8
-  #     with:
-  #       path: dist
-  #       pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
-  #       merge-multiple: true
-  #   - name: Setup Python ${{ env.PYTHON_LATEST }}
-  #     uses: astral-sh/setup-uv@v10.2.0
-  #     with:
-  #       python-version: ${{ env.PYTHON_LATEST }}
-  #       activate-environment: true
-  #   - name: Install dependencies
-  #     run: uv pip install -r requirements/test-cibuildwheel.txt
-  #   - name: Install ${{ env.PROJECT_NAME }} from a pre-built wheel
-  #     run: >-
-  #       uv pip install
-  #       --find-links=./dist
-  #       --no-index
-  #       --no-deps
-  #       --force-reinstall
-  #       --only-binary=:all:
-  #       '${{ env.PROJECT_NAME }}'
-  #   - name: Check that tools/conformance/REPORT.md matches the code
-  #     run: python tools/conformance/compare.py --check
-  #   - name: Show the difference
-  #     if: failure()
-  #     run: |
-  #       python tools/conformance/compare.py
-  #       git diff --exit-code -- tools/conformance/REPORT.md
+  conformance:
+    name: Conformance report is current
+    needs:
+    - build  # transitive, ensures dists are built
+    - build-wheels-for-tested-arches
+    - pre-setup  # transitive, for accessing settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v7
+    - name: Download distributions
+      uses: actions/download-artifact@v8
+      with:
+        path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
+    - name: Setup Python ${{ env.PYTHON_LATEST }}
+      uses: astral-sh/setup-uv@v10.2.0
+      with:
+        python-version: ${{ env.PYTHON_LATEST }}
+        activate-environment: true
+    - name: Install dependencies
+      run: uv pip install -r requirements/test-cibuildwheel.txt
+    - name: Install ${{ env.PROJECT_NAME }} from a pre-built wheel
+      run: >-
+        uv pip install
+        --find-links=./dist
+        --no-index
+        --no-deps
+        --force-reinstall
+        --only-binary=:all:
+        '${{ env.PROJECT_NAME }}'
+    - name: Check that tools/conformance/REPORT.md matches the code
+      run: python tools/conformance/compare.py --check
+    - name: Show the difference
+      if: failure()
+      run: |
+        python tools/conformance/compare.py
+        git diff --exit-code -- tools/conformance/REPORT.md
 
   benchmark-src:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
@@ -610,7 +608,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     needs:
-    # - conformance  # FIXME: re-enable with the job above
+    - conformance
     - lint
     - metadata-validation
     - test
