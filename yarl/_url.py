@@ -29,6 +29,7 @@ from ._parse import (
     EMPTY_QUERY,
     SPECIAL_SCHEMES,
     SplitURLType,
+    has_dot_prefix,
     make_netloc,
     query_to_pairs,
     split_netloc,
@@ -322,7 +323,7 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
             path = normalize_path(path)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
-        if not netloc and path[:4] == "/.//" and not empty & EMPTY_AUTHORITY:
+        if not netloc and has_dot_prefix(path) and not empty & EMPTY_AUTHORITY:
             # Undo the "/." that str() puts in front of a path starting
             # with "//" when there is no authority.
             path = path[2:]
@@ -360,6 +361,14 @@ def _pre_encoded_url(url_str: str, mode: Mode) -> "URL":
         self._fragment,
         self._empty,
     ) = val
+    if (
+        not self._netloc
+        and has_dot_prefix(self._path)
+        and not self._empty & EMPTY_AUTHORITY
+    ):
+        # Undo the "/." that str() puts in front of a path starting with
+        # "//" when there is no authority, as the unencoded parser does.
+        self._path = self._path[2:]
     self._cache = {}
     self._mode = mode
     return self
@@ -786,13 +795,17 @@ class URL:
             and path1 == path2
             and self._query == other._query
             and self._fragment == other._fragment
-            and (self._empty == other._empty or self._cmp_empty == other._cmp_empty)
+            and (
+                self._empty == other._empty
+                if self._netloc
+                else self._cmp_empty == other._cmp_empty
+            )
         )
 
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
             path = "/" if not self._path and self._netloc else self._path
-            if self._empty and (cmp_empty := self._cmp_empty):
+            if (self._empty or not self._netloc) and (cmp_empty := self._cmp_empty):
                 ret = hash(
                     (
                         self._scheme,
@@ -925,11 +938,16 @@ class URL:
     def _cmp_empty(self) -> int:
         """The mask of empty components that matters for comparisons.
 
-        A special scheme such as "file" always has an authority, so
-        "file:/p" and "file:///p" are the same URL (RFC 8089 section 2).
+        It follows what str() writes out: in WHATWG mode a special scheme
+        always prints "//", so "file:/p" and "file:///p" are the same URL
+        there, while RFC mode prints and compares them differently.
         """
-        if self._scheme in SPECIAL_SCHEMES:
-            return self._empty & ~EMPTY_AUTHORITY
+        if (
+            not self._netloc
+            and self._mode is _WHATWG
+            and self._scheme in SPECIAL_SCHEMES
+        ):
+            return self._empty | EMPTY_AUTHORITY
         return self._empty
 
     @property

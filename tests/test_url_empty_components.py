@@ -4,7 +4,9 @@ RFC 3986 section 5.3 and the WHATWG URL Standard both keep "http://h/p?"
 distinct from "http://h/p", and "sc:///p" distinct from "sc:/p".
 """
 
+import operator
 import pickle
+from collections.abc import Callable
 
 import pytest
 
@@ -54,12 +56,38 @@ def test_empty_differs_from_absent(first: str, second: str) -> None:
     assert len({URL(first), URL(second)}) == 2
 
 
-def test_ordering() -> None:
-    absent, empty = URL("http://example.com/p"), URL("http://example.com/p?")
-    assert absent < empty
-    assert absent <= empty
-    assert empty > absent
-    assert empty >= absent
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("http://example.com/p", "http://example.com/p?"),
+        ("http://example.com/p", "http://example.com/p#"),
+        ("sc:/p", "sc:///p"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("op", "expected"),
+    [
+        (operator.lt, (True, False, False)),
+        (operator.le, (True, False, True)),
+        (operator.gt, (False, True, False)),
+        (operator.ge, (False, True, True)),
+    ],
+)
+def test_ordering(
+    first: str,
+    second: str,
+    op: Callable[[URL, URL], bool],
+    expected: tuple[bool, bool, bool],
+) -> None:
+    # A URL without the empty component sorts before the one with it; each
+    # operator runs once per case, on (first, second), (second, first) and
+    # a URL against an equal copy of itself.
+    lower, higher = URL(first), URL(second)
+    assert (
+        op(lower, higher),
+        op(higher, lower),
+        op(higher, URL(second)),
+    ) == expected
 
 
 def test_special_scheme_empty_authority_ignored() -> None:
@@ -282,6 +310,54 @@ def test_build_special_scheme_by_mode() -> None:
     assert str(URL.build(scheme="file", path="/p", mode="rfc")) == "file:/p"
 
 
-def test_special_scheme_empty_authority_ignored_rfc() -> None:
-    # RFC 8089 section 2 makes the two forms equivalent in RFC mode too.
-    assert URL("file:/p", mode="rfc") == URL("file:///p", mode="rfc")
+# URLs are equal exactly when they print the same: RFC mode prints the
+# empty authority of a special scheme, WHATWG mode always prints "//".
+@pytest.mark.parametrize(
+    ("first", "second", "equal"),
+    [
+        (URL("file:/p"), URL("file:///p"), True),
+        (URL("http:/x"), URL("http:///x"), True),
+        (URL("file:/p", mode="rfc"), URL("file:///p", mode="rfc"), False),
+        (URL("http:/x", mode="rfc"), URL("http:///x", mode="rfc"), False),
+        (URL("file:/p"), URL("file:///p", mode="rfc"), True),
+        (URL("http:/x"), URL("http:/x", mode="rfc"), False),
+        (URL("http://h/p?"), URL("http://h/p?", mode="rfc"), True),
+    ],
+)
+def test_equality_follows_str(first: URL, second: URL, equal: bool) -> None:
+    assert (str(first) == str(second)) is equal
+    assert (first == second) is equal
+    if equal:
+        assert hash(first) == hash(second)
+    assert len({first: 1, second: 2}) == (1 if equal else 2)
+
+
+@pytest.mark.parametrize(
+    ("path", "written"),
+    [
+        ("//a", "sc:/.//a"),
+        ("//a/b", "sc:/.//a/b"),
+        ("/.//a", "sc:/././/a"),
+        ("/././/a", "sc:/./././/a"),
+        ("/./a", "sc:/./a"),
+        ("/..//a", "sc:/..//a"),
+    ],
+)
+def test_path_starting_with_double_slash_round_trips(path: str, written: str) -> None:
+    # str() adds "/." in front of a path that would read as an authority,
+    # including a literal "/." before "//", and parsing drops exactly one.
+    url = URL.build(scheme="sc", path=path, encoded=True)
+    assert str(url) == written
+    for encoded in (True, False):
+        again = URL(written, encoded=encoded)
+        assert again.raw_path == path
+        assert again.raw_parts == url.raw_parts
+
+
+def test_long_dot_segment_run_round_trips() -> None:
+    # The "/." run is matched in one pass, not by copying the path per step.
+    path = "/." * 50_000 + "//a"
+    url = URL.build(scheme="sc", path=path, encoded=True)
+    assert str(url) == f"sc:/.{path}"
+    assert URL(str(url), encoded=True).raw_path == path
+    assert URL(str(url)).raw_path == path
