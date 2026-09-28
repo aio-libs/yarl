@@ -1,7 +1,7 @@
-Added the ``compat`` argument to :class:`~yarl.URL` and
+Added the ``mode`` argument to :class:`~yarl.URL` and
 :meth:`URL.build() <yarl.URL.build>`, selecting whether a URL follows
 :rfc:`3986` (``"rfc"``) or the WHATWG URL Standard (``"whatwg"``, the
-default), together with the :class:`~yarl.Compatibility` enum and the
-:attr:`URL.compat <yarl.URL.compat>` property. Derived URLs keep the mode
+default), together with the :class:`~yarl.Mode` enum and the
+:attr:`URL.mode <yarl.URL.mode>` property. Derived URLs keep the mode
 of the URL they are built from; both modes behave the same for now
 -- by :user:`asvetlov`.

@@ -14,7 +14,7 @@ The only public *yarl* class is :class:`URL`:
    >>> from yarl import URL
 
 
-.. class:: URL(arg, *, encoded=False, compat=None)
+.. class:: URL(arg, *, encoded=False, mode="whatwg")
 
 Represents URL as ::
 
@@ -124,39 +124,39 @@ identifier (``http://[fe80::1%25]/``) is still accepted when parsing.
    Any URL manipulations don't guarantee correct encoding, URL parts
    could be re-quoted even if *encoded* parameter was explicitly set.
 
-.. _yarl-api-compat:
+.. _yarl-api-mode:
 
 Compatibility mode
 ------------------
 
-Every URL carries the standard it follows, set by the *compat* argument:
-``"whatwg"`` for the WHATWG URL Standard or ``"rfc"`` for :rfc:`3986`. A
-:class:`Compatibility` member is accepted as well; ``None``, the default,
-means ``"whatwg"``, and any other value raises :exc:`ValueError`.
+Every URL carries the standard it follows, set by the *mode* argument:
+``"whatwg"`` (the default) for the WHATWG URL Standard or ``"rfc"`` for
+:rfc:`3986`. A :class:`Mode` member is accepted as well; any other
+value raises :exc:`ValueError`.
 
 .. doctest::
 
-   >>> url = URL('http://example.com/path', compat='rfc')
+   >>> url = URL('http://example.com/path', mode='rfc')
    >>> url
-   URL('http://example.com/path', compat='rfc')
-   >>> url.compat
-   <Compatibility.RFC: 'rfc'>
+   URL('http://example.com/path', mode='rfc')
+   >>> url.mode
+   <Mode.RFC: 'rfc'>
 
 URLs derived from a URL (by :meth:`URL.with_path`, the ``/`` operator,
 :meth:`URL.join` and the rest of the modification methods) keep its mode. For
 :meth:`URL.join` that is the mode of the base URL, whatever the mode of the
 reference.
 
-The mode is changed by passing the URL to the constructor again. Since the
-default means ``"whatwg"``, ``URL(url)`` without the argument returns a URL in
-WHATWG mode:
+The mode is changed by passing the URL to the constructor again. Since
+*mode* defaults to ``"whatwg"``, ``URL(url)`` without the argument returns a
+URL in WHATWG mode:
 
 .. doctest::
 
-   >>> URL(url, compat='whatwg')
+   >>> URL(url, mode='whatwg')
    URL('http://example.com/path')
-   >>> URL(url).compat
-   <Compatibility.WHATWG: 'whatwg'>
+   >>> URL(url).mode
+   <Mode.WHATWG: 'whatwg'>
 
 The mode is not part of the URL value: URLs that differ only in their mode
 compare equal and have the same hash.
@@ -169,7 +169,7 @@ compare equal and have the same hash.
 
 .. versionadded:: 1.26
 
-.. class:: Compatibility
+.. class:: Mode
 
    A :class:`enum.StrEnum` naming the standard a :class:`URL` follows.
 
@@ -183,9 +183,9 @@ compare equal and have the same hash.
 
    .. versionadded:: 1.26
 
-.. attribute:: URL.compat
+.. attribute:: URL.mode
 
-   The :class:`Compatibility` mode of the URL, ``Compatibility.WHATWG``
+   The :class:`Mode` of the URL, ``Mode.WHATWG``
    unless another mode was requested.
 
    .. versionadded:: 1.26
@@ -683,7 +683,7 @@ section generates a new :class:`URL` instance.
 .. method:: URL.build(*, scheme=..., authority=..., user=..., password=..., \
                       host=..., port=..., path=..., query=..., \
                       query_string=..., fragment=..., encoded=False, \
-                      compat=None)
+                      mode="whatwg")
    :classmethod:
 
    Creates and returns a new URL:
@@ -705,12 +705,12 @@ section generates a new :class:`URL` instance.
    Calling ``build`` method without arguments is equal to calling
    ``__init__`` without arguments.
 
-   *compat* selects the :ref:`compatibility mode <yarl-api-compat>` of the new
+   *mode* selects the :ref:`compatibility mode <yarl-api-mode>` of the new
    URL.
 
    .. versionchanged:: 1.26
 
-      Added the *compat* parameter.
+      Added the *mode* parameter.
 
    .. note::
 
