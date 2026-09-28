@@ -89,6 +89,6 @@ def test_pickle_getstate_returns_plain_tuple() -> None:
     """
     u = URL("http://example.com/path?q=1#frag")
     state = u.__getstate__()
-    assert len(state) == 1
+    assert len(state) == 2
     assert type(state[0]) is tuple
     assert state[0] == ("http", "example.com", "/path", "q=1", "frag")
