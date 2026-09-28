@@ -274,24 +274,27 @@ def _check_missing_host(scheme: str, mode: Mode) -> None:
         raise ValueError("Invalid URL: host is required with userinfo or a port")
 
 
-def _check_rfc_authority(authority: str, mode: Mode) -> None:
+# The two RFC 3986 mode checks below are guarded with ``mode is not _WHATWG``
+# at the call sites, so that the default mode does not pay for a call on the
+# URL.build() and with_host() hot paths (CodSpeed).
+def _check_rfc_authority(authority: str) -> None:
     """Reject "@" in the userinfo in RFC 3986 mode.
 
     RFC 3986 userinfo cannot contain "@", so "sc://a@b@c/" has no valid
     parse; WHATWG splits at the last "@" and percent-encodes the others.
     """
-    if mode is not _WHATWG and authority.count("@") > 1:
+    if authority.count("@") > 1:
         raise ValueError(f"Invalid URL: userinfo cannot contain '@' in {authority!r}")
 
 
-def _check_rfc_host(host: str, mode: Mode) -> None:
+def _check_rfc_host(host: str) -> None:
     """Reject a non-ASCII host that IDNA2008 cannot encode in RFC 3986 mode.
 
     RFC 3987 converts an internationalized host with IDNA, now IDNA2008
     (RFC 5891), which disallows code points such as emoji. WHATWG mode keeps
     the IDNA2003 fallback of _idna_encode(), as UTS #46 accepts them.
     """
-    if mode is not _WHATWG and not host.isascii() and ":" not in host:
+    if not host.isascii() and ":" not in host:
         _check_idna2008(host)
 
 
@@ -305,7 +308,8 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
             # Complex netloc
-            _check_rfc_authority(netloc, mode)
+            if mode is not _WHATWG:
+                _check_rfc_authority(netloc)
             username, password, host, port = split_netloc(netloc)
         else:
             username = password = port = None
@@ -319,7 +323,8 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
         # the host, producing a ``str(url)`` that yarl cannot re-parse
         # (#1829). Validate like the builder APIs do, but keep accepting an
         # empty IPv6 zone identifier, which parsing has always allowed (#998).
-        _check_rfc_host(host, mode)
+        if mode is not _WHATWG:
+            _check_rfc_host(host)
         host, numeric = _encode_host(host, validate_host=True, reject_empty_zone=False)
         if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
             raise ValueError(_numeric_host_error(host))
@@ -706,19 +711,22 @@ class URL:
         self._scheme = scheme
         _host: str | None = None
         if authority:
-            _check_rfc_authority(authority, mode)
+            if mode is not _WHATWG:
+                _check_rfc_authority(authority)
             user, password, _host, port = split_netloc(authority)
             if not _host:
                 _check_missing_host(scheme, mode)
             if _host:
-                _check_rfc_host(_host, mode)
+                if mode is not _WHATWG:
+                    _check_rfc_host(_host)
                 _host, numeric = _encode_host(_host, validate_host=False)
                 if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
                     raise ValueError(_numeric_host_error(_host))
             else:
                 _host = ""
         elif host:
-            _check_rfc_host(host, mode)
+            if mode is not _WHATWG:
+                _check_rfc_host(host)
             _host, numeric = _encode_host(host, validate_host=True)
             if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
                 raise ValueError(_numeric_host_error(_host))
@@ -1586,7 +1594,8 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        _check_rfc_host(host, self._mode)
+        if self._mode is not _WHATWG:
+            _check_rfc_host(host)
         encoded_host, numeric = _encode_host(host, validate_host=True)
         if numeric and self._mode is _WHATWG and self._scheme in SPECIAL_SCHEMES:
             raise ValueError(_numeric_host_error(encoded_host))
