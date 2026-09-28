@@ -104,6 +104,20 @@ and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
    Empty components are kept; previously they were dropped, and ``//`` was
    added for every scheme listed in ``urllib.parse.uses_netloc``.
 
+Leading and trailing C0 control characters and spaces are stripped, and tabs
+and newlines are removed, in both modes, as the WHATWG URL Standard does and
+as :rfc:`3986#appendix-C` recommends for user-typed URIs:
+
+.. doctest::
+
+   >>> URL(' http://example.com/path \n')
+   URL('http://example.com/path')
+
+.. versionchanged:: 1.26
+
+   Trailing C0 control characters and spaces are stripped; previously they
+   were kept and percent-encoded.
+
 Already encoded URL is not changed:
 
 .. doctest::

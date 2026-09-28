@@ -34,9 +34,10 @@ SplitURLType = tuple[str, str, str, str, str]
 def split_url(url: str) -> tuple[str, str, str, str, str, int]:
     """Split URL into parts and the mask of present but empty parts."""
     # Adapted from urllib.parse.urlsplit
-    # Only lstrip url as some applications rely on preserving trailing space.
-    # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
-    url = url.lstrip(WHATWG_C0_CONTROL_OR_SPACE)
+    # Strip leading and trailing C0 control or space in both modes, as the
+    # WHATWG basic URL parser does; RFC 3986 appendix C asks the same of
+    # software that accepts user-typed URIs.
+    url = url.strip(WHATWG_C0_CONTROL_OR_SPACE)
     for b in UNSAFE_URL_BYTES_TO_REMOVE:
         if b in url:
             url = url.replace(b, "")
