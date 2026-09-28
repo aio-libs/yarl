@@ -167,7 +167,7 @@ jobs:
         --config-setting=pure-python=false
         --config-setting=with-cython-tracing=false
     - name: Run benchmarks
-      uses: CodSpeedHQ/action@v5.0.3
+      uses: CodSpeedHQ/action@v5.2.1
       with:
         token: ${{ secrets.codspeed-token }}
         run: python -Im pytest --no-cov -vvvvv --codspeed
