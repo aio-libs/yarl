@@ -204,16 +204,8 @@ INVALID = [
         id="3.2.2-lt-in-host",
         marks=diverges("'<' in reg-name is accepted"),
     ),
-    pytest.param(
-        "http://example.com:+80/",
-        id="3.2.3-port-plus-sign",
-        marks=diverges("port is parsed with int(), '+' is accepted"),
-    ),
-    pytest.param(
-        "http://example.com: 80/",
-        id="3.2.3-port-space",
-        marks=diverges("port is parsed with int(), whitespace is accepted"),
-    ),
+    pytest.param("http://example.com:+80/", id="3.2.3-port-plus-sign"),
+    pytest.param("http://example.com: 80/", id="3.2.3-port-space"),
 ]
 
 
