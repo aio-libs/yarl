@@ -191,6 +191,10 @@ def split_netloc(
     return username or None, password, hostname or None, port
 
 
+# "//" behind any number of "/." segments, see needs_dot_prefix().
+_DOT_PREFIXED_AUTHORITY_RE = re.compile(r"(?:/\.)*//")
+
+
 def needs_dot_prefix(path: str) -> bool:
     """Tell if an authority-less path needs "/." in front when written out.
 
@@ -199,14 +203,12 @@ def needs_dot_prefix(path: str) -> bool:
     "/." segment in such a place, a path that is "//..." behind any number
     of "/." segments gets the prefix too, e.g. "/.//a" is written "/././/a".
     """
-    while path[:3] == "/./":
-        path = path[2:]
-    return path[:2] == "//"
+    return _DOT_PREFIXED_AUTHORITY_RE.match(path) is not None
 
 
 def has_dot_prefix(path: str) -> bool:
     """Tell if an authority-less path starts with the "/." str() adds."""
-    return path[:3] == "/./" and needs_dot_prefix(path[2:])
+    return path[:3] == "/./" and _DOT_PREFIXED_AUTHORITY_RE.match(path, 2) is not None
 
 
 def unsplit_result(

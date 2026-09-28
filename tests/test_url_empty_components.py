@@ -352,3 +352,12 @@ def test_path_starting_with_double_slash_round_trips(path: str, written: str) ->
         again = URL(written, encoded=encoded)
         assert again.raw_path == path
         assert again.raw_parts == url.raw_parts
+
+
+def test_long_dot_segment_run_round_trips() -> None:
+    # The "/." run is matched in one pass, not by copying the path per step.
+    path = "/." * 50_000 + "//a"
+    url = URL.build(scheme="sc", path=path, encoded=True)
+    assert str(url) == f"sc:/.{path}"
+    assert URL(str(url), encoded=True).raw_path == path
+    assert URL(str(url)).raw_path == path
