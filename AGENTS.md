@@ -373,11 +373,16 @@ does not match. That includes dependency bumps: the IDNA section
 depends on the pinned `idna` version, so a PR bumping `idna` must
 regenerate the report too.
 
-Never edit `REPORT.md` by hand. The WHATWG test data is pinned
-to one web-platform-tests commit and verified by checksum;
-bumping `WPT_COMMIT` and the checksums in `compare.py` is its own
-PR, so that rows appearing from new upstream data are not mixed
-up with rows caused by a code change.
+Never edit `REPORT.md` by hand. The WHATWG test data is vendored
+under `tools/conformance/wpt/` (3-clause BSD, see its
+`LICENSE.md`), pinned to one web-platform-tests commit and
+verified by checksum, so the check never needs the network. To
+move the pin, set `WPT_COMMIT` and `WPT_DATE` in `compare.py`,
+run `python tools/conformance/compare.py --fetch`, copy the
+printed checksums into `WPT_FILES`, and regenerate. Do that in
+its own PR, so that rows appearing from new upstream data are
+not mixed up with rows caused by a code change. Never edit the
+vendored JSON files.
 
 ### Where RFC 3986 and WHATWG agree, yarl must agree too
 

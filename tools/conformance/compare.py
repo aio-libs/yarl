@@ -3,12 +3,14 @@
 The WHATWG side comes from the web-platform-tests corpus, pinned to one
 commit and verified by checksum; the RFC 3986 side comes from the strict
 oracle in rfc3986_oracle.py.  The result is written to REPORT.md next to
-this file.
+this file.  The WPT files are vendored under wpt/, so regenerating and
+checking the report never touches the network.
 
 Usage::
 
     python tools/conformance/compare.py           # regenerate REPORT.md
     python tools/conformance/compare.py --check   # fail if REPORT.md is stale
+    python tools/conformance/compare.py --fetch   # download wpt/ at WPT_COMMIT
 """
 
 import argparse
@@ -28,7 +30,7 @@ import rfc3986_oracle as rfc
 from yarl import URL
 
 HERE = Path(__file__).resolve().parent
-CACHE = HERE / ".cache"
+WPT_DIR = HERE / "wpt"
 REPORT = HERE / "REPORT.md"
 
 WPT_COMMIT = "c48d58747e1f211527fb695fd60548a997fae617"
@@ -48,15 +50,20 @@ SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp", "file"})
 C0_OR_SPACE = "".join(map(chr, range(0x21)))
 
 
+def fetch_wpt() -> None:
+    """Download the WPT files at WPT_COMMIT and print their checksums."""
+    for name in WPT_FILES:
+        with urllib.request.urlopen(WPT_URL.format(name), timeout=60) as resp:  # noqa: S310
+            data = resp.read()
+        (WPT_DIR / name).write_bytes(data)
+        print(f"{name}: {hashlib.sha256(data).hexdigest()}")
+
+
 def load_wpt(name: str) -> list[dict[str, str | None]]:
-    path = CACHE / name
-    if not path.exists():
-        CACHE.mkdir(exist_ok=True)
-        with urllib.request.urlopen(WPT_URL.format(name)) as resp:  # noqa: S310
-            path.write_bytes(resp.read())
+    path = WPT_DIR / name
     data = path.read_bytes()
     if hashlib.sha256(data).hexdigest() != WPT_FILES[name]:
-        sys.exit(f"{path} does not match the pinned checksum; delete it and rerun")
+        sys.exit(f"{path} does not match the checksum pinned in WPT_FILES")
     return [case for case in json.loads(data) if isinstance(case, dict)]
 
 
@@ -208,16 +215,24 @@ CASE_HEADER = ["Input", "Base", "yarl", "RFC 3986", "WHATWG"]
 
 
 def grouped(cases: list[Case]) -> list[str]:
+    """Summarize cases by category, then list every case.
+
+    Listing every case keeps moves between sections visible in diffs.
+    """
     groups: dict[str, list[Case]] = {}
     for case in cases:
         groups.setdefault(category(case), []).append(case)
-    return table(
-        ["Category", "Cases", "Example input", "Base", "yarl", "RFC 3986", "WHATWG"],
-        (
-            [name, str(len(items)), *case_row(items[0])]
-            for name, items in sorted(groups.items(), key=lambda kv: -len(kv[1]))
+    ordered = sorted(groups.items(), key=lambda kv: -len(kv[1]))
+    return [
+        *table(
+            ["Category", "Cases"], ([name, str(len(items))] for name, items in ordered)
         ),
-    )
+        "",
+        *table(
+            ["Category", *CASE_HEADER],
+            ([name, *case_row(case)] for name, items in ordered for case in items),
+        ),
+    ]
 
 
 def toascii_section() -> list[str]:
@@ -336,10 +351,17 @@ def render() -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--check", action="store_true", help="fail if REPORT.md is out of date"
     )
+    mode.add_argument(
+        "--fetch", action="store_true", help="download the WPT files at WPT_COMMIT"
+    )
     args = parser.parse_args()
+    if args.fetch:
+        fetch_wpt()
+        return
     text = render()
     if not args.check:
         REPORT.write_text(text, encoding="utf-8")
