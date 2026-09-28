@@ -20,7 +20,10 @@ def test_enum_values() -> None:
 
 def test_default_is_whatwg() -> None:
     assert URL("http://example.com/").compat is WHATWG
+    assert URL("http://example.com/", compat=None).compat is WHATWG
     assert URL.build(scheme="http", host="example.com").compat is WHATWG
+    url = URL.build(scheme="http", host="example.com", compat=None)
+    assert url.compat is WHATWG
 
 
 @pytest.mark.parametrize(

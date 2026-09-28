@@ -14,7 +14,7 @@ The only public *yarl* class is :class:`URL`:
    >>> from yarl import URL
 
 
-.. class:: URL(arg, *, encoded=False, compat=Compatibility.WHATWG)
+.. class:: URL(arg, *, encoded=False, compat=None)
 
 Represents URL as ::
 
@@ -130,9 +130,9 @@ Compatibility mode
 ------------------
 
 Every URL carries the standard it follows, set by the *compat* argument:
-``"whatwg"`` (the default) for the WHATWG URL Standard or ``"rfc"`` for
-:rfc:`3986`. A :class:`Compatibility` member is accepted as well; any other
-value raises :exc:`ValueError`.
+``"whatwg"`` for the WHATWG URL Standard or ``"rfc"`` for :rfc:`3986`. A
+:class:`Compatibility` member is accepted as well; ``None``, the default,
+means ``"whatwg"``, and any other value raises :exc:`ValueError`.
 
 .. doctest::
 
@@ -147,9 +147,9 @@ URLs derived from a URL (by :meth:`URL.with_path`, the ``/`` operator,
 :meth:`URL.join` that is the mode of the base URL, whatever the mode of the
 reference.
 
-The mode is changed by passing the URL to the constructor again. Since
-*compat* defaults to ``"whatwg"``, ``URL(url)`` without the argument returns a
-URL in WHATWG mode:
+The mode is changed by passing the URL to the constructor again. Since the
+default means ``"whatwg"``, ``URL(url)`` without the argument returns a URL in
+WHATWG mode:
 
 .. doctest::
 
@@ -683,7 +683,7 @@ section generates a new :class:`URL` instance.
 .. method:: URL.build(*, scheme=..., authority=..., user=..., password=..., \
                       host=..., port=..., path=..., query=..., \
                       query_string=..., fragment=..., encoded=False, \
-                      compat=Compatibility.WHATWG)
+                      compat=None)
    :classmethod:
 
    Creates and returns a new URL:

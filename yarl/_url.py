@@ -172,8 +172,12 @@ class Compatibility(StrEnum):
 Compatibility.__module__ = "yarl"
 _WHATWG = Compatibility.WHATWG
 # Members hash and compare as their values, so this maps both the members and
-# the plain strings; much faster than calling ``Compatibility(value)``.
-_COMPAT_BY_VALUE: dict[str, Compatibility] = {c.value: c for c in Compatibility}
+# the plain strings; much faster than calling ``Compatibility(value)``. The keys
+# are interned so a lookup with a literal ``"rfc"``/``"whatwg"`` (interned by
+# the compiler) matches on identity without comparing characters.
+_COMPAT_BY_VALUE: dict[str, Compatibility] = {
+    sys.intern(c.value): c for c in Compatibility
+}
 
 CompatibilityType = Compatibility | Literal["rfc", "whatwg"]
 
@@ -514,16 +518,20 @@ class URL:
         *,
         encoded: bool = False,
         strict: bool | None = None,
-        compat: CompatibilityType = Compatibility.WHATWG,
+        # ``None`` stands for ``Compatibility.WHATWG``. It is the default rather
+        # than the enum member because ``compat is None`` compares against a
+        # constant, while ``compat is Compatibility.WHATWG`` (or a module-level
+        # alias) needs a global lookup; on the cached ``URL(str)`` hot path that
+        # lookup alone was measured at about 3% of the whole call (CodSpeed).
+        compat: CompatibilityType | None = None,
     ) -> "URL":
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
-        if compat is not _WHATWG:
-            compat = _to_compat(compat)
         if type(val) is str:
-            if compat is _WHATWG:
+            if compat is None or _to_compat(compat) is _WHATWG:
                 return pre_encoded_url(val) if encoded else encode_url(val)
             return pre_encoded_url_rfc(val) if encoded else encode_url_rfc(val)
+        compat = _WHATWG if compat is None else _to_compat(compat)
         if type(val) is cls:
             if val._compat is compat:
                 return val
@@ -560,11 +568,11 @@ class URL:
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
-        compat: CompatibilityType = Compatibility.WHATWG,
+        # ``None`` stands for ``Compatibility.WHATWG``, as in ``URL()``.
+        compat: CompatibilityType | None = None,
     ) -> "URL":
         """Creates and returns a new URL"""
-        if compat is not _WHATWG:
-            compat = _to_compat(compat)
+        compat = _WHATWG if compat is None else _to_compat(compat)
 
         if authority and (user or password or host or port):
             raise ValueError(
