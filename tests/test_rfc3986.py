@@ -138,17 +138,14 @@ VALID = [
     pytest.param(
         "foo:///a",
         id="3.2-empty-authority",
-        marks=diverges("empty authority dropped for schemes outside uses_netloc"),
     ),
     pytest.param(
         "http://example.com/p?",
         id="6.2.3-empty-query-kept",
-        marks=diverges("empty query delimiter dropped"),
     ),
     pytest.param(
         "http://example.com/p#",
         id="6.2.3-empty-fragment-kept",
-        marks=diverges("empty fragment delimiter dropped"),
     ),
     pytest.param(
         "http://u:p:q@example.com/",
@@ -375,7 +372,6 @@ def test_join_same_scheme_backward_compatible() -> None:
             "file:///C:/",
             "file:///C:/",
             id="empty-authority-defined",
-            marks=diverges("empty reference authority replaced by the base host"),
         ),
         pytest.param(
             "http://a/b/c/%2F/d",

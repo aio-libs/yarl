@@ -73,6 +73,36 @@ same way:
    >>> url.path
    '/~user/a:b'
 
+An empty *authority*, *query* or *fragment* is kept apart from a missing
+one, as :rfc:`3986#section-5.3` requires: ``http://example.com/p?`` and
+``http://example.com/p`` are different URLs, and so are ``sc:///p`` and
+``sc:/p``. The ``raw_``/decoded properties return ``''`` for both an empty
+and a missing component; ``str()`` and comparisons tell them apart.
+In the default WHATWG mode, URLs with one of the *special* schemes of the
+WHATWG URL Standard (``http``, ``https``, ``ws``, ``wss``, ``ftp`` and
+``file``) always have an authority and print ``//``; in RFC 3986 mode
+``//`` is only printed when the URL has one, so ``URL('file:/p',
+mode='rfc')`` stays ``file:/p``. Either way ``file:/p`` and ``file:///p``
+compare equal (:rfc:`8089#section-2`).
+
+.. doctest::
+
+   >>> str(URL('http://example.com/p?'))
+   'http://example.com/p?'
+   >>> URL('http://example.com/p?') == URL('http://example.com/p')
+   False
+   >>> str(URL('data:///test'))
+   'data:///test'
+   >>> str(URL('gopher:/example.com/'))
+   'gopher:/example.com/'
+   >>> str(URL('http:/x')), str(URL('http:/x', mode='rfc'))
+   ('http:///x', 'http:/x')
+
+.. versionchanged:: 1.26
+
+   Empty components are kept; previously they were dropped, and ``//`` was
+   added for every scheme listed in ``urllib.parse.uses_netloc``.
+
 Already encoded URL is not changed:
 
 .. doctest::
