@@ -38,14 +38,14 @@ Outcomes that are equal after RFC 3986 section 6.2 normalization count as agreei
 | All three agree | 450 |
 | yarl differs, RFC 3986 and WHATWG agree | 1 |
 | WHATWG differs, yarl follows RFC 3986 | 163 |
-| RFC 3986 differs, yarl follows WHATWG | 140 |
-| All three differ | 142 |
+| RFC 3986 differs, yarl follows WHATWG | 144 |
+| All three differ | 138 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
 | yarl vs RFC 3986 | 283 |
-| yarl vs WHATWG | 306 |
+| yarl vs WHATWG | 302 |
 | WHATWG vs RFC 3986 | 445 |
 
 ## yarl differs, RFC 3986 and WHATWG agree (1)
@@ -235,7 +235,7 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test:@test/x` | `non-special://test@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://:@test/x` | `non-special://test/x` |
 
-## RFC 3986 differs, yarl follows WHATWG (140)
+## RFC 3986 differs, yarl follows WHATWG (144)
 
 | Category | Cases |
 |---|---|
@@ -246,10 +246,10 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | tab or newline inside the input | 11 |
 | numeric host that is not a dotted quad | 7 |
 | special scheme without an authority | 6 |
+| leading or trailing C0 control or space | 5 |
 | non-ASCII or percent-encoded host | 5 |
 | IP-literal host | 5 |
 | non-special scheme | 1 |
-| leading or trailing C0 control or space | 1 |
 
 | Category | Input | Base | yarl | RFC 3986 | WHATWG |
 |---|---|---|---|---|---|
@@ -381,6 +381,11 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | special scheme without an authority | `http:/` | `http://example.com/` | `http://example.com/` | `http:/` | `http://example.com/` |
 | special scheme without an authority | `http:example.com/` | `http://example.org/foo/bar` | `http://example.org/foo/example.com/` | `http:example.com/` | `http://example.org/foo/example.com/` |
 | special scheme without an authority | `http:` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http:` | `http://example.org/foo/bar` |
+| leading or trailing C0 control or space | `'\t   :foo.com   \n'` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com` | *failure* | `http://example.org/foo/:foo.com` |
+| leading or trailing C0 control or space | ` foo.com  ` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | *failure* | `http://example.org/foo/foo.com` |
+| leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/bar` |
+| leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/` | *failure* | `http://example.com/` |
+| leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque` | *failure* | `non-special:opaque` |
 | non-ASCII or percent-encoded host | `http://é@é` | *none* | `http://%C3%A9@xn--9ca` | *failure* | `http://%C3%A9@xn--9ca/` |
 | non-ASCII or percent-encoded host | `http://www.foo。bar.com` | `http://other.com/` | `http://www.foo.bar.com` | *failure* | `http://www.foo.bar.com/` |
 | non-ASCII or percent-encoded host | `http://Ｇｏ.com` | `http://other.com/` | `http://go.com` | *failure* | `http://go.com/` |
@@ -392,9 +397,8 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | IP-literal host | `non-special://[1:2:0:0:5:0:0:0]/` | *none* | `non-special://[1:2:0:0:5::]/` | `non-special://[1:2:0:0:5:0:0:0]/` | `non-special://[1:2:0:0:5::]/` |
 | IP-literal host | `non-special://[1:2:0:0:0:0:0:3]/` | *none* | `non-special://[1:2::3]/` | `non-special://[1:2:0:0:0:0:0:3]/` | `non-special://[1:2::3]/` |
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | `non-special://f:999999/c` | *failure* |
-| leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/bar` |
 
-## All three differ (142)
+## All three differ (138)
 
 | Category | Cases |
 |---|---|
@@ -404,9 +408,9 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | file scheme | 15 |
 | tab or newline inside the input | 7 |
 | non-ASCII or percent-encoded host | 7 |
-| leading or trailing C0 control or space | 6 |
 | empty host | 5 |
 | other | 4 |
+| leading or trailing C0 control or space | 2 |
 
 | Category | Input | Base | yarl | RFC 3986 | WHATWG |
 |---|---|---|---|---|---|
@@ -537,12 +541,6 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | non-ASCII or percent-encoded host | `sc://ñ?x` | *none* | `sc://xn--ida/?x` | *failure* | `sc://%C3%B1?x` |
 | non-ASCII or percent-encoded host | `sc://ñ#x` | *none* | `sc://xn--ida/#x` | *failure* | `sc://%C3%B1#x` |
 | non-ASCII or percent-encoded host | `file://loC𝐀𝐋𝐇𝐨𝐬𝐭/usr/bin` | *none* | `file://localhost/usr/bin` | *failure* | `file:///usr/bin` |
-| leading or trailing C0 control or space | `'\t   :foo.com   \n'` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com%20%20%20` | *failure* | `http://example.org/foo/:foo.com` |
-| leading or trailing C0 control or space | ` foo.com  ` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com%20%20` | *failure* | `http://example.org/foo/foo.com` |
-| leading or trailing C0 control or space | `http://f:21/ b ? d # e ` | `http://example.org/foo/bar` | `http://f:21/%20b%20?+d+#%20e%20` | *failure* | `http://f:21/%20b%20?%20d%20#%20e` |
-| leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | *failure* | `file:///c:////foo/bar.html` |
-| leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/%1F%20%20` | *failure* | `http://example.com/` |
-| leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque%20%20` | *failure* | `non-special:opaque` |
 | empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | *failure* | `file:///w\|m` |
 | empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | *failure* | `file:///w\|\|m` |
 | empty host | `file:///w\|/m` | *none* | `file:///w%7C/m` | *failure* | `file:///w:/m` |
@@ -552,6 +550,8 @@ Every case where yarl is the odd one out. A change must not add rows here; see A
 | other | `x` | `sc://ñ` | `sc://xn--ida/x` | *failure* | `sc://%C3%B1/x` |
 | other | `#x` | `sc://ñ` | `sc://xn--ida/#x` | *failure* | `sc://%C3%B1#x` |
 | other | `?x` | `sc://ñ` | `sc://xn--ida/?x` | *failure* | `sc://%C3%B1?x` |
+| leading or trailing C0 control or space | `http://f:21/ b ? d # e ` | `http://example.org/foo/bar` | `http://f:21/%20b%20?+d+#%20e` | *failure* | `http://f:21/%20b%20?%20d%20#%20e` |
+| leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | *failure* | `file:///c:////foo/bar.html` |
 
 ## IDNA: WHATWG toascii.json
 

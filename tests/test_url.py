@@ -5,7 +5,7 @@ from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
-from yarl import URL
+from yarl import URL, Mode
 from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
@@ -2796,6 +2796,26 @@ def test_unsafe_url_bytes_are_removed(byte: str) -> None:
 def test_control_chars_are_removed(byte: str) -> None:
     url = URL(f"{byte}http://example.com/")
     assert str(url) == "http://example.com/"
+
+
+@pytest.mark.parametrize("encoded", [False, True])
+@pytest.mark.parametrize("mode", list(Mode))
+@pytest.mark.parametrize("byte", tuple(_WHATWG_C0_CONTROL_OR_SPACE))
+def test_trailing_control_chars_are_removed(
+    byte: str, mode: Mode, encoded: bool
+) -> None:
+    url = URL(f"http://example.com/path{byte}", mode=mode, encoded=encoded)
+    assert str(url) == "http://example.com/path"
+    url = URL(f"{byte}http://example.com/?q{byte}{byte}", mode=mode, encoded=encoded)
+    assert str(url) == "http://example.com/?q"
+
+
+@pytest.mark.parametrize("mode", list(Mode))
+def test_join_strips_surrounding_spaces(mode: Mode) -> None:
+    base = URL("http://example.org/foo/bar", mode=mode)
+    assert str(base.join(URL(" foo.com  ", mode=mode))) == (
+        "http://example.org/foo/foo.com"
+    )
 
 
 @pytest.mark.parametrize(
