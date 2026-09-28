@@ -191,6 +191,24 @@ def split_netloc(
     return username or None, password, hostname or None, port
 
 
+def needs_dot_prefix(path: str) -> bool:
+    """Tell if an authority-less path needs "/." in front when written out.
+
+    A path starting with "//" would read as an authority, so str() writes
+    "/." before it and the parsers drop that "/." again. To keep a literal
+    "/." segment in such a place, a path that is "//..." behind any number
+    of "/." segments gets the prefix too, e.g. "/.//a" is written "/././/a".
+    """
+    while path[:3] == "/./":
+        path = path[2:]
+    return path[:2] == "//"
+
+
+def has_dot_prefix(path: str) -> bool:
+    """Tell if an authority-less path starts with the "/." str() adds."""
+    return path[:3] == "/./" and needs_dot_prefix(path[2:])
+
+
 def unsplit_result(
     scheme: str, netloc: str, url: str, query: str, fragment: str
 ) -> str:
@@ -201,7 +219,7 @@ def unsplit_result(
         else:
             url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
     else:
-        if url[:2] == "//":
+        if url[:2] == "//" or (url[:3] == "/./" and needs_dot_prefix(url)):
             # Without an authority a path cannot start with "//", which
             # would read as one; "/." keeps it a path, as WHATWG does.
             url = f"/.{url}"
@@ -226,7 +244,7 @@ def unsplit_result_empty(
         else:
             url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
     else:
-        if url[:2] == "//":
+        if url[:2] == "//" or (url[:3] == "/./" and needs_dot_prefix(url)):
             url = f"/.{url}"
         if scheme:
             url = f"{scheme}:{url}"

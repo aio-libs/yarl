@@ -29,6 +29,7 @@ from ._parse import (
     EMPTY_QUERY,
     SPECIAL_SCHEMES,
     SplitURLType,
+    has_dot_prefix,
     make_netloc,
     query_to_pairs,
     split_netloc,
@@ -322,7 +323,7 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
             path = normalize_path(path)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
-        if not netloc and path[:4] == "/.//" and not empty & EMPTY_AUTHORITY:
+        if not netloc and has_dot_prefix(path) and not empty & EMPTY_AUTHORITY:
             # Undo the "/." that str() puts in front of a path starting
             # with "//" when there is no authority.
             path = path[2:]
@@ -362,7 +363,7 @@ def _pre_encoded_url(url_str: str, mode: Mode) -> "URL":
     ) = val
     if (
         not self._netloc
-        and self._path[:4] == "/.//"
+        and has_dot_prefix(self._path)
         and not self._empty & EMPTY_AUTHORITY
     ):
         # Undo the "/." that str() puts in front of a path starting with

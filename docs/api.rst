@@ -82,9 +82,9 @@ In the default WHATWG mode, URLs with one of the *special* schemes of the
 WHATWG URL Standard (``http``, ``https``, ``ws``, ``wss``, ``ftp`` and
 ``file``) always have an authority and print ``//``; in RFC 3986 mode
 ``//`` is only printed when the URL has one, so ``URL('file:/p',
-mode='rfc')`` stays ``file:/p``. URLs compare equal when they print the
-same, so ``file:/p`` and ``file:///p`` are equal in WHATWG mode but not in
-RFC 3986 mode.
+mode='rfc')`` stays ``file:/p``. Whether an empty authority, query or
+fragment makes two URLs different follows the same rule, so ``file:/p``
+and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
 
 .. doctest::
 

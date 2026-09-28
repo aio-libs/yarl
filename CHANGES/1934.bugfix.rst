@@ -1,8 +1,10 @@
 Fixed two gaps in keeping an empty authority apart from a missing one:
-URLs now compare equal and hash the same only when they print the same, so
-``URL("http:/x", mode="rfc")`` and ``URL("http:///x", mode="rfc")`` are
-no longer the same dictionary key, while ``file:/p`` and ``file:///p``
-stay equal in the default WHATWG mode; and parsing with ``encoded=True``
-now drops the ``/.`` that ``str()`` puts in front of a path starting with
-``//`` when there is no authority, as parsing without it already did
+URLs with and without an empty component now compare equal and hash the
+same only when they print the same, so ``URL("http:/x", mode="rfc")`` and
+``URL("http:///x", mode="rfc")`` are no longer the same dictionary key,
+while ``file:/p`` and ``file:///p`` stay equal in the default WHATWG mode;
+and a path that would read as an authority round-trips through ``str()``
+with and without ``encoded=True``: the ``/.`` that ``str()`` writes in
+front of it is dropped again when parsing, and a literal ``/.`` segment in
+that place is kept, so ``/.//a`` is written as ``/././/a``
 -- by :user:`asvetlov`.

@@ -4,7 +4,9 @@ RFC 3986 section 5.3 and the WHATWG URL Standard both keep "http://h/p?"
 distinct from "http://h/p", and "sc:///p" distinct from "sc:/p".
 """
 
+import operator
 import pickle
+from collections.abc import Callable
 
 import pytest
 
@@ -62,13 +64,30 @@ def test_empty_differs_from_absent(first: str, second: str) -> None:
         ("sc:/p", "sc:///p"),
     ],
 )
-def test_ordering(first: str, second: str) -> None:
-    # Each operator is checked on its own pair, so no assert follows from
-    # another one.
-    assert URL(first) < URL(second)
-    assert URL(second) > URL(first)
-    assert URL(first) <= URL(first)
-    assert URL(second) >= URL(second)
+@pytest.mark.parametrize(
+    ("op", "expected"),
+    [
+        (operator.lt, (True, False, False)),
+        (operator.le, (True, False, True)),
+        (operator.gt, (False, True, False)),
+        (operator.ge, (False, True, True)),
+    ],
+)
+def test_ordering(
+    first: str,
+    second: str,
+    op: Callable[[URL, URL], bool],
+    expected: tuple[bool, bool, bool],
+) -> None:
+    # A URL without the empty component sorts before the one with it; each
+    # operator runs once per case, on (first, second), (second, first) and
+    # a URL against an equal copy of itself.
+    lower, higher = URL(first), URL(second)
+    assert (
+        op(lower, higher),
+        op(higher, lower),
+        op(higher, URL(second)),
+    ) == expected
 
 
 def test_special_scheme_empty_authority_ignored() -> None:
@@ -308,14 +327,28 @@ def test_build_special_scheme_by_mode() -> None:
 def test_equality_follows_str(first: URL, second: URL, equal: bool) -> None:
     assert (str(first) == str(second)) is equal
     assert (first == second) is equal
-    assert (hash(first) == hash(second)) is equal
+    if equal:
+        assert hash(first) == hash(second)
     assert len({first: 1, second: 2}) == (1 if equal else 2)
 
 
-@pytest.mark.parametrize("path", ["//a", "//a/b", "/.//a"])
-def test_encoded_path_starting_with_double_slash(path: str) -> None:
-    url = URL.build(path=path, encoded=True)
+@pytest.mark.parametrize(
+    ("path", "written"),
+    [
+        ("//a", "sc:/.//a"),
+        ("//a/b", "sc:/.//a/b"),
+        ("/.//a", "sc:/././/a"),
+        ("/././/a", "sc:/./././/a"),
+        ("/./a", "sc:/./a"),
+        ("/..//a", "sc:/..//a"),
+    ],
+)
+def test_path_starting_with_double_slash_round_trips(path: str, written: str) -> None:
+    # str() adds "/." in front of a path that would read as an authority,
+    # including a literal "/." before "//", and parsing drops exactly one.
+    url = URL.build(scheme="sc", path=path, encoded=True)
+    assert str(url) == written
     for encoded in (True, False):
-        again = URL(str(url), encoded=encoded)
-        assert str(again) == str(url)
-    assert URL(str(URL.build(path="//a", encoded=True)), encoded=True).raw_path == "//a"
+        again = URL(written, encoded=encoded)
+        assert again.raw_path == path
+        assert again.raw_parts == url.raw_parts
