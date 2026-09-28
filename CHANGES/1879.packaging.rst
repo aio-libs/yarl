@@ -1,0 +1,2 @@
+Removed the ``expandvars`` build dependency while preserving existing
+compiler and linker flags -- by :user:`f321x`.

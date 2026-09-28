@@ -24,6 +24,9 @@ omit =
   benchmark.py
   url_benchmark.py
   tests/*_benchmarks.py
+  # The in-tree build backend is exercised by tests but is not library
+  # code held to the coverage gate.
+  packaging/*
 
 [run]
 branch = true
