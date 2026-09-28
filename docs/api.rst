@@ -130,6 +130,11 @@ An authority with userinfo or a port but no host, such as
 ``sc://user@/`` or ``//:8080``, is rejected for every scheme in the default
 WHATWG mode, as in the WHATWG URL Standard; RFC 3986 mode accepts it, with
 ``host`` set to ``None``, unless the scheme needs a host, such as ``http``.
+For the ``http``, ``https``, ``ws``, ``wss``, ``ftp`` and ``file``
+schemes, a host that ends in a number cannot have a name label before it
+(``foo.123`` is rejected) in the default WHATWG mode, as in the WHATWG URL
+Standard; RFC 3986 mode accepts it as a reg-name. Hosts made only
+of numbers, such as ``1.2.3``, are kept as written.
 
 .. doctest::
 
