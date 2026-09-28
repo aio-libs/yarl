@@ -33,8 +33,8 @@ def test_accepted_values(mode: Mode, expected: Mode) -> None:
     assert url.mode is expected
 
 
-@pytest.mark.parametrize("mode", ["RFC", "WHATWG", "http", ""])
-def test_invalid_value(mode: str) -> None:
+@pytest.mark.parametrize("mode", ["RFC", "WHATWG", "http", "", 1, [], ["rfc"]])
+def test_invalid_value(mode: object) -> None:
     with pytest.raises(ValueError, match="is not a valid Mode"):
         URL("http://example.com/", mode=mode)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="is not a valid Mode"):

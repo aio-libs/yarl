@@ -180,7 +180,11 @@ ModeType = Mode | Literal["rfc", "whatwg"]
 
 def _to_mode(value: ModeType) -> Mode:
     """Normalize a compatibility argument, rejecting unknown values."""
-    if (mode := _MODE_BY_VALUE.get(value)) is None:
+    try:
+        mode = _MODE_BY_VALUE.get(value)
+    except TypeError:  # unhashable, e.g. a list
+        mode = None
+    if mode is None:
         raise ValueError(f"{value!r} is not a valid Mode")
     return mode
 
