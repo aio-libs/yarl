@@ -245,7 +245,12 @@ def encode_url(url_str: str) -> "URL":
                 raise ValueError(msg)
             else:
                 host = ""
-        host = _encode_host(host, validate_host=False)
+        # The parser historically encoded without validation, which let
+        # control characters (NUL/C0) and IDNA-normalized delimiters into
+        # the host, producing a ``str(url)`` that yarl cannot re-parse
+        # (#1829). Validate like the builder APIs do, but keep accepting an
+        # empty IPv6 zone identifier, which parsing has always allowed (#998).
+        host = _encode_host(host, validate_host=True, reject_empty_zone=False)
         # Remove brackets as host encoder adds back brackets for IPv6 addresses
         cache["raw_host"] = host[1:-1] if "[" in host else host
         cache["explicit_port"] = port
@@ -901,7 +906,11 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        if raw[-1] == ".":
+        # Encoded authority forms such as ``//user@:8080`` have an
+        # empty host but still expose the explicit port.  Keep the empty
+        # host intact here so the host:port subcomponent can be rendered
+        # as ``:8080`` instead of crashing while checking trailing dots.
+        if raw and raw[-1] == ".":
             # Remove all trailing dots from the netloc as while
             # they are valid FQDNs in DNS, TLS validation fails.
             # See https://github.com/aio-libs/aiohttp/issues/3636.
@@ -1642,7 +1651,9 @@ def _idna_encode(host: str) -> str:
 
 
 @lru_cache(_DEFAULT_ENCODE_SIZE)
-def _encode_host(host: str, validate_host: bool) -> str:
+def _encode_host(
+    host: str, validate_host: bool, *, reject_empty_zone: bool = True
+) -> str:
     """Encode host part of URL."""
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
@@ -1675,7 +1686,13 @@ def _encode_host(host: str, validate_host: bool) -> str:
         except ValueError:
             pass
         else:
-            if sep and validate_host and (not zone or _ZONE_ID_UNSAFE_RE.search(zone)):
+            if (
+                sep
+                and validate_host
+                and (
+                    (reject_empty_zone and not zone) or _ZONE_ID_UNSAFE_RE.search(zone)
+                )
+            ):
                 raise ValueError("Invalid characters in zone identifier")
             # These checks should not happen in the
             # LRU to keep the cache size small
@@ -1716,10 +1733,14 @@ def _encode_host(host: str, validate_host: bool) -> str:
     encoded = _idna_encode(host)
     # IDNA uses NFKC equivalence, so normalization can expand a non-ascii
     # character into an ASCII delimiter (e.g. the fullwidth solidus U+FF0F
-    # becomes '/'). The ascii branch above rejects such delimiters directly;
-    # apply the same check to the IDNA output so the builder APIs agree with
-    # the parser's _check_netloc.
-    if validate_host and (invalid := NOT_REG_NAME.search(encoded)):
+    # becomes '/'). split_url's _check_netloc screens '/?#@:%' but not '[',
+    # ']' or '\\', so a host like ``exa［mple`` (fullwidth '[') slips
+    # through the parser and _idna_encode turns it into ``exa[mple``, a netloc
+    # that str(url) then renders but yarl itself rejects on re-parse. Run the
+    # check on every path (like the default-ignorable check above, which also
+    # ignores validate_host) so the parsed host cannot diverge from what the
+    # serialized URL means.
+    if invalid := NOT_REG_NAME.search(encoded):
         raise ValueError(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"after IDNA normalization to {encoded!r}"
