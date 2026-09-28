@@ -62,3 +62,7 @@ doctest: .develop
 
 doc-spelling:
 	make -C docs spelling SPHINXOPTS="-W -E --keep-going -n"
+
+
+conformance: .develop
+	python tools/conformance/compare.py

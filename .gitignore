@@ -108,3 +108,6 @@ pip-wheel-metadata
 
 # Claude Code per-checkout overrides
 CLAUDE.local.md
+
+# Cached web-platform-tests data for tools/conformance/compare.py
+tools/conformance/.cache/

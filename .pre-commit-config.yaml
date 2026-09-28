@@ -124,6 +124,8 @@ repos:
   rev: v2.4.2
   hooks:
   - id: codespell
+    # Generated from web-platform-tests data full of deliberate junk input:
+    exclude: ^tools/conformance/REPORT\.md$
 
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.38.0
