@@ -171,6 +171,11 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Brackets are stripped for IPv6. Host is converted to lowercase,
    address is validated and converted to compressed form.
 
+   For IPv6 addresses that carry an :rfc:`6874` zone identifier, the
+   ``%25`` zone separator is decoded to ``%``, so the value matches the
+   scoped address format understood by :mod:`socket` and
+   :mod:`ipaddress`.
+
    .. doctest::
 
       >>> URL('http://example.com').host
@@ -181,11 +186,15 @@ There are two kinds of properties: *decoded* and *encoded* (with
       True
       >>> URL('http://[::1]').host
       '::1'
+      >>> URL('http://[fe80::1%25eth0]/').host
+      'fe80::1%eth0'
 
 .. attribute:: URL.raw_host
 
    IDNA decoded *host* part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
+
+   An :rfc:`6874` ``%25`` zone identifier separator is kept as-is.
 
    .. doctest::
 
@@ -193,11 +202,15 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'xn--n1agdj.xn--d1acufc'
       >>> URL('http://[::1]').raw_host
       '::1'
+      >>> URL('http://[fe80::1%25eth0]/').raw_host
+      'fe80::1%25eth0'
 
 .. attribute:: URL.host_subcomponent
 
    :rfc:`3986#section-3.2.2` host subcomponent part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
+
+   An :rfc:`6874` IPv6 zone identifier, if any, is included verbatim.
 
    .. doctest::
 
@@ -205,6 +218,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'xn--n1agdj.xn--d1acufc'
       >>> URL('http://[::1]').host_subcomponent
       '[::1]'
+      >>> URL('http://[fe80::1%25eth0]/').host_subcomponent
+      '[fe80::1%25eth0]'
 
    .. versionadded:: 1.13
 
@@ -228,6 +243,14 @@ There are two kinds of properties: *decoded* and *encoded* (with
       'example.com'
       >>> URL('http://[::1]').host_port_subcomponent
       '[::1]'
+
+   .. note::
+
+      An :rfc:`6874` IPv6 zone identifier is included verbatim. Zone
+      identifiers have local significance only
+      (:rfc:`6874#section-4`), so callers that use this value to build
+      outgoing protocol elements such as the HTTP Host header need to
+      strip it first.
 
    .. versionadded:: 1.17
 
@@ -895,7 +918,7 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path/to?arg#frag').with_name('new')
       URL('http://example.com/path/new')
       >>> URL('http://example.com/path/to').with_name("ім'я")
-      URL('http://example.com/path/%D1%96%D0%BC%27%D1%8F')
+      URL('http://example.com/path/%D1%96%D0%BC'%D1%8F')
 
 .. method:: URL.with_suffix(suffix, *, keep_query=False, keep_fragment=False)
 
@@ -1087,6 +1110,50 @@ Default port substitution
       False
       >>> URL('/path/to').is_default_port()
       False
+
+
+Query parsing
+-------------
+
+.. function:: query_to_pairs(query_string, *, max_fields=None, encoding="utf-8")
+
+   Parse a percent-encoded query string, for example the body of an
+   ``application/x-www-form-urlencoded`` request, into a :class:`list` of
+   decoded ``(name, value)`` pairs.
+
+   The result is the same as :func:`urllib.parse.parse_qsl` called with
+   ``keep_blank_values=True``: empty fields are skipped, ``+`` is decoded as a
+   space, percent-encoded bytes that are not valid in *encoding* are replaced
+   with ``U+FFFD`` and malformed escapes such as ``%zz`` are kept as is.
+
+   :param str query_string: the query string to parse.
+
+   :param max_fields: the maximum number of fields to accept, or ``None``
+                      for no limit. Fields are counted the same way as
+                      the *max_num_fields* argument of
+                      :func:`urllib.parse.parse_qsl`. An empty query
+                      string returns an empty list on every Python
+                      version, even when *max_fields* is ``0``;
+                      :func:`urllib.parse.parse_qsl` raises
+                      :exc:`ValueError` for that case on Python 3.10 only.
+
+   :param str encoding: the encoding used to decode percent-encoded
+                        sequences.
+
+   :raises ValueError: if the query string has more than *max_fields*
+                       fields.
+
+   .. doctest::
+
+      >>> from yarl import query_to_pairs
+      >>> query_to_pairs("name=Jane+Doe&tag=a&tag=b%26c&empty=")
+      [('name', 'Jane Doe'), ('tag', 'a'), ('tag', 'b&c'), ('empty', '')]
+      >>> query_to_pairs("a=1&b=2&c=3", max_fields=2)
+      Traceback (most recent call last):
+        ...
+      ValueError: Max number of fields exceeded
+
+   .. versionadded:: 1.25
 
 
 Cache control

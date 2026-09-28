@@ -3,8 +3,7 @@ requires = [
   # NOTE: The following build dependencies are necessary for initial
   # NOTE: provisioning of the in-tree build backend located under
   # NOTE: `packaging/pep517_backend/`.
-  "expandvars",
-  "setuptools >= 82.0.1",  # Minimum required for `version = attr:`
+  "setuptools >= 47",  # Minimum required for `version = attr:`
   "tomli; python_version < '3.11'",
 ]
 backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
@@ -15,8 +14,10 @@ build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
 src = ["yarl/*.pyx"]
 
 [tool.local.cython.env]
-# Env vars provisioned during cythonize call
-#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
+# Env vars provisioned during cythonize call. Prefer CPPFLAGS over CFLAGS:
+# a CFLAGS environment variable replaces the interpreter's own compiler
+# flags in setuptools' distutils, while CPPFLAGS is appended to them.
+#CPPFLAGS = "-DCYTHON_TRACE=1 ${CPPFLAGS}"
 #LDFLAGS = "${LDFLAGS}"
 
 [tool.local.cython.flags]
@@ -67,8 +68,10 @@ freethreading_compatible = "True"
 src = ["yarl/*.pyx"]
 
 [tool.local.cythonize.env]
-# Env vars provisioned during cythonize call
-#CFLAGS = "-DCYTHON_TRACE=1 ${CFLAGS}"
+# Env vars provisioned during cythonize call. Prefer CPPFLAGS over CFLAGS:
+# a CFLAGS environment variable replaces the interpreter's own compiler
+# flags in setuptools' distutils, while CPPFLAGS is appended to them.
+#CPPFLAGS = "-DCYTHON_TRACE=1 ${CPPFLAGS}"
 #LDFLAGS = "${LDFLAGS}"
 
 [tool.local.cythonize.flags]
@@ -153,8 +156,6 @@ select = [
 build-frontend = "build[uv]"
 test-requires = "-r requirements/test-cibuildwheel.txt"
 test-command = 'pytest -v -m "not hypothesis" --no-cov {project}/tests'
-# don't build PyPy wheels, install from source instead
-skip = "pp*"
 
 [tool.cibuildwheel.environment]
 COLOR = "yes"
@@ -169,3 +170,6 @@ UV_CONSTRAINT = "requirements/cython.txt"
 
 [tool.cibuildwheel.config-settings]
 pure-python = "false"
+
+[tool.codespell]
+ignore-words-list = "ccompiler"

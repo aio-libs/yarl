@@ -77,7 +77,7 @@ jobs:
     - name: Retrieve the project source from Git to please Codspeed runner
       # NOTE: Codspeed is incapable of getting repo details from CI environment
       # Ref: https://github.com/CodSpeedHQ/runner/issues/144
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 1  # Codspeed only checks the HEAD
     - name: Retrieve the project source from an sdist inside the GHA artifact
@@ -97,7 +97,7 @@ jobs:
 
     - name: Setup Python 3.13
       id: python-install
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: 3.13
     - name: >-
@@ -167,7 +167,7 @@ jobs:
         --config-setting=pure-python=false
         --config-setting=with-cython-tracing=false
     - name: Run benchmarks
-      uses: CodSpeedHQ/action@v4
+      uses: CodSpeedHQ/action@v5.2.1
       with:
         token: ${{ secrets.codspeed-token }}
         run: python -Im pytest --no-cov -vvvvv --codspeed

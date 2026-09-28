@@ -38,16 +38,6 @@ from distutils.dist import (
     DistributionMetadata as _DistutilsDistributionMetadata,
 )
 
-
-with suppress(ImportError):
-    # NOTE: Only available for wheel builds that bundle C-extensions. Declared
-    # NOTE: by `get_requires_for_build_wheel()` and
-    # NOTE: `get_requires_for_build_editable()`, when `pure-python`
-    # NOTE: is not passed.
-    from Cython.Build.Cythonize import (
-        main as _cythonize_cli_cmd,
-    )
-
 from ._compat import chdir_cm
 from ._cython_configuration import (
     get_local_cythonize_config as _get_local_cython_config,
@@ -326,6 +316,18 @@ def maybe_prebuild_c_extensions(
 
         yield
         return
+
+    # NOTE: Cython is declared as a dynamic build dependency by
+    # NOTE: `get_requires_for_build_wheel()` and
+    # NOTE: `get_requires_for_build_editable()` when `pure-python` is not
+    # NOTE: passed, so it may only be provisioned after this module has
+    # NOTE: already been imported. PEP 517 front-ends that serve all the
+    # NOTE: hooks from a single long-running backend process, like
+    # NOTE: `pyproject-api` under tox, would never see a module-level
+    # NOTE: import retried, hence this deferred one.
+    from Cython.Build.Cythonize import (  # noqa: PLC0415
+        main as _cythonize_cli_cmd,
+    )
 
     print(  # noqa: T201, WPS421
         '**********************',

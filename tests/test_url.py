@@ -1,9 +1,12 @@
+import platform
+import sys
 from enum import Enum
 from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
 from yarl import URL
+from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -477,6 +480,18 @@ def test_ipv4_zone() -> None:
     assert url.raw_host == SplitResult(*url._val).hostname
 
 
+def test_ipv4_zone_percent25() -> None:
+    """The ``%25`` decode in ``URL.host`` also covers IPv4 hosts.
+
+    Zone identifiers on IPv4 addresses are outside any RFC; this pins
+    the digit-branch behavior of the ``%25`` handling (#998).
+    """
+    url = URL("http://1.2.3.4%25eth0:123/")
+    assert url.raw_host == "1.2.3.4%25eth0"
+    assert url.host == "1.2.3.4%eth0"
+    assert url.port == 123
+
+
 def test_ipv6_zone_rfc6874() -> None:
     url = URL("http://[fe80::1%251]/")
     assert url.raw_host == "fe80::1%251"
@@ -521,6 +536,102 @@ def test_ipv6_zone_rfc6874_pct_encoded_inside_zone() -> None:
     assert url.host_subcomponent == "[fe80::1%25foo%252fbar]"
     assert str(url) == "http://[fe80::1%25foo%252fbar]/"
     assert URL(str(url)) == url
+
+
+def test_ipv6_zone_bare_percent_parse() -> None:
+    """A bare ``%`` zone separator is accepted and preserved verbatim.
+
+    This is the pre-RFC 6874 de-facto form; RFC 6874 §3 suggests
+    (non-normatively) accepting it, and curl/wget/urllib3 all do.
+    yarl does not re-encode it to ``%25``.
+    """
+    url = URL("http://[fe80::1%eth0]:8080/")
+    assert url.raw_host == "fe80::1%eth0"
+    assert url.host == "fe80::1%eth0"
+    assert url.host_subcomponent == "[fe80::1%eth0]"
+    assert url.host_port_subcomponent == "[fe80::1%eth0]:8080"
+    assert url.authority == "fe80::1%eth0:8080"
+    assert url.human_repr() == "http://[fe80::1%eth0]:8080/"
+    assert str(url) == "http://[fe80::1%eth0]:8080/"
+    assert URL(str(url)) == url
+
+
+def test_ipv6_zone_bare_percent_hex_ambiguous() -> None:
+    """A bare ``%`` is accepted even when followed by two hex digits.
+
+    RFC 6874 §3 (non-normative) suggests accepting a bare ``%`` only
+    when it is not followed by two valid hexadecimal characters; like
+    the rest of the ecosystem, yarl accepts it unconditionally, so
+    ``%ee1`` is zone ``ee1`` rather than an error (#998).
+    """
+    url = URL("http://[fe80::a%ee1]/")
+    assert url.raw_host == "fe80::a%ee1"
+    assert url.host == "fe80::a%ee1"
+
+
+def test_ipv6_zone_empty_zone_parse() -> None:
+    """The string-parse path accepts empty zone identifiers.
+
+    ``URL.build(host=...)`` rejects them (RFC 9844 §6.3), but parsing
+    uses ``validate_host=False``; this documents the asymmetry (#998).
+    """
+    url = URL("http://[fe80::1%25]/")
+    assert url.raw_host == "fe80::1%25"
+    assert url.host == "fe80::1%"
+    url = URL("http://[fe80::1%]/")
+    assert url.raw_host == "fe80::1%"
+    assert url.host == "fe80::1%"
+
+
+def test_ipv6_zone_rfc6874_multiple_percent25() -> None:
+    """Only the first ``%25`` is the separator; later ones are zone text."""
+    url = URL("http://[fe80::1%25a%25b]/")
+    assert url.raw_host == "fe80::1%25a%25b"
+    assert url.host == "fe80::1%a%b"
+    assert str(url) == "http://[fe80::1%25a%25b]/"
+    assert URL(str(url)) == url
+
+
+def test_ipv6_zone_rfc6874_encoded_url() -> None:
+    """The ``.host`` zone decode applies to pre-encoded URLs as well."""
+    url = URL("http://[fe80::1%25eth0]/", encoded=True)
+    assert url.raw_host == "fe80::1%25eth0"
+    assert url.host == "fe80::1%eth0"
+    assert str(url) == "http://[fe80::1%25eth0]/"
+
+
+def test_ipv6_zone_separator_spellings_not_equal() -> None:
+    """The two zone separator spellings are distinct URLs.
+
+    yarl performs no normalization between ``%25`` and bare ``%``, so
+    URLs denoting the same scoped address compare unequal even though
+    ``.host`` decodes both to the same value (#998).
+    """
+    encoded = URL("http://[fe80::1%25eth0]/")
+    bare = URL("http://[fe80::1%eth0]/")
+    assert encoded != bare
+    assert encoded.host == bare.host
+
+
+def test_ipv6_zone_rfc6874_global_address() -> None:
+    """Zone identifiers are accepted on non-link-local addresses.
+
+    RFC 6874 §4 restricts zone usage to link-local addresses
+    (fe80::/10); yarl, like curl and urllib3, does not enforce
+    this (#998).
+    """
+    url = URL("http://[2001:db8::1%25eth0]/")
+    assert url.raw_host == "2001:db8::1%25eth0"
+    assert url.host == "2001:db8::1%eth0"
+
+
+def test_ipv6_zone_rfc6874_mutation_apis() -> None:
+    """The encoded zone survives URL mutation APIs byte-for-byte."""
+    url = URL("http://[fe80::1%25eth0]:8080/p?q=1")
+    assert str(url.origin()) == "http://[fe80::1%25eth0]:8080"
+    assert str(url.with_port(9000)) == "http://[fe80::1%25eth0]:9000/p?q=1"
+    assert str(url.with_user("u")) == "http://u@[fe80::1%25eth0]:8080/p?q=1"
+    assert str(url.join(URL("/other"))) == "http://[fe80::1%25eth0]:8080/other"
 
 
 def test_port_for_explicit_port() -> None:
@@ -2648,3 +2759,73 @@ def test_url_with_fullwidth_percent_rejected(percent_char: str) -> None:
         ValueError, match="contains invalid characters under NFKC normalization"
     ):
         URL(f"http://evil.com{percent_char}2e.internal/")
+
+
+@pytest.mark.parametrize(
+    "ignorable",
+    [
+        "\u00ad",  # SOFT HYPHEN
+        "\u200b",  # ZERO WIDTH SPACE
+        "\u2060",  # WORD JOINER
+        "\u180e",  # MONGOLIAN VOWEL SEPARATOR
+        "\u1806",  # MONGOLIAN TODO SOFT HYPHEN (nameprep fallback strips it)
+        "\ufeff",  # ZERO WIDTH NO-BREAK SPACE
+        "\U000e0001",  # LANGUAGE TAG
+    ],
+    ids=[
+        "soft-hyphen",
+        "zwsp",
+        "word-joiner",
+        "mvs",
+        "todo-soft-hyphen",
+        "bom",
+        "language-tag",
+    ],
+)
+def test_url_host_with_default_ignorable_rejected(ignorable: str) -> None:
+    """Default-ignorable code points are stripped by IDNA, so reject them.
+
+    Otherwise ``URL("http://e<ZWSP>vil.com").host`` would collapse to
+    ``evil.com``, a different host than the string the caller validated.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(f"http://e{ignorable}vil.com/")
+
+
+def _idna_collapses(code_point: int) -> bool:
+    """True if IDNA encoding silently deletes ``code_point`` from a host."""
+    try:
+        return _idna_encode(f"ab{chr(code_point)}cd.com") == "abcd.com"
+    except UnicodeError:
+        return False
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or platform.machine() != "x86_64",
+    reason=(
+        "Exhaustive IDNA sweep iterates ~140k code points; its result does not "
+        "depend on the architecture, so it only runs on a native Linux x86_64 "
+        "runner. It is too heavy for QEMU-emulated wheel-build arches, where it "
+        "crashes the test workers."
+    ),
+)
+def test_default_ignorable_covers_idna_stripped() -> None:
+    """_DEFAULT_IGNORABLE_RE must match every code point IDNA silently deletes.
+
+    This pins the hand-written character class to the installed ``idna`` and
+    Unicode data: if a future version starts deleting a code point the regex
+    does not cover, host confusion returns and this test fails loudly. The
+    ranges cover every plane that holds such code points (the highest is
+    ``U+E0FFF``); the empty planes in between hold none.
+    """
+    stripped = {
+        cp
+        for lo, hi in ((0x00A0, 0x20000), (0xE0000, 0xE1000))
+        for cp in range(lo, hi)
+        if not 0xD800 <= cp <= 0xDFFF and _idna_collapses(cp)
+    }
+    assert stripped, "expected IDNA to strip at least the known default-ignorables"
+    uncovered = sorted(
+        hex(cp) for cp in stripped if not _DEFAULT_IGNORABLE_RE.search(chr(cp))
+    )
+    assert not uncovered, f"IDNA strips these but the regex misses them: {uncovered}"

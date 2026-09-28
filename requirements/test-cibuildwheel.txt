@@ -1,9 +1,14 @@
 -r cython.txt
 covdefaults
-hypothesis>=6.155.0
-idna==3.17
-multidict==6.7.1
-propcache==0.4.1
-pytest==9.0.3
+# expandvars, setuptools and tomli are dependencies of the in-tree PEP 517
+# build backend under test; the tests use setuptools' private distutils, so
+# it is pinned like the rest.
+expandvars==1.1.2
+idna==3.20
+multidict==6.9.1
+propcache==0.5.4
+pytest==9.1.1
 pytest-cov>=7.1.0
 pytest-xdist
+setuptools==84.0.0
+tomli==2.4.1; python_version < "3.11"

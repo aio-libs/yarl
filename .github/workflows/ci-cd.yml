@@ -86,11 +86,11 @@ jobs:
       upstream-repository-id: ${{ env.UPSTREAM_REPOSITORY_ID }}
     steps:
     - name: Switch to using Python ${{ env.PYTHON_LATEST }} by default
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ env.PYTHON_LATEST }}
     - name: Check out src from Git
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: >-
         Calculate dependency files' combined hash value
         for use in the cache key
@@ -173,6 +173,7 @@ jobs:
         toxenv:
         - pre-commit
         - spellcheck-docs
+        - doctest-docs
         - build-docs
         xfail:
         - false
@@ -248,7 +249,7 @@ jobs:
         - runner-vm-os: ubuntu-latest
           tag: >-
            ${{
-           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           (github.event_name != 'push' || github.ref_type != 'tag')
            && 'musllinux' || 'none'
            }}
         # On PRs and non-tag pushes, skip the native windows-on-arm runner —
@@ -257,7 +258,7 @@ jobs:
         # and are on the critical path. Tag releases still build them.
         - runner-vm-os: >-
            ${{
-           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           (github.event_name != 'push' || github.ref_type != 'tag')
            && 'windows-11-arm' || 'none'
            }}
           tag: ''
@@ -280,9 +281,12 @@ jobs:
       # with identically-named wheels but different bytes, which the Deploy
       # job's `download-artifact ... merge-multiple: true` step then tore
       # together, yielding a wheel PyPI rejected with `Mis-matched data size`.
+      # CIBW_TEST_SKIP: on PR/non-tag, skip the in-build test run; the `test`
+      # job installs and tests these same wheels in parallel. Tag releases
+      # build arches the `test` job never installs, so they still test here.
       environment-variables: |-
         CIBW_ARCHS_MACOS=${{
-          (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'x86_64 arm64 universal2'
           || 'arm64'
         }}
@@ -294,10 +298,7 @@ jobs:
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
         with-cython-tracing=${{
-          (
-            github.event_name == 'push'
-            && contains(github.ref, 'refs/tags/')
-          )
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'false'
           || 'true'
         }}
@@ -305,7 +306,7 @@ jobs:
 
         CIBW_SKIP<<EOF
         ${{
-          (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+          (github.event_name != 'push' || github.ref_type != 'tag')
           && '*_i686
           *-macosx_universal2
           *-musllinux_*
@@ -313,7 +314,14 @@ jobs:
           || (matrix.tag == 'musllinux') && '*-manylinux_*'
         || '*-musllinux_*'
         }}
-        pp*
+        EOF
+
+        CIBW_TEST_SKIP<<EOF
+        ${{
+          (github.event_name != 'push' || github.ref_type != 'tag')
+          && '*'
+          || ''
+        }}
         EOF
 
   metadata-validation:
@@ -349,6 +357,8 @@ jobs:
     strategy:
       matrix:
         pyver:
+        - 3.15t
+        - 3.15
         - 3.14t
         - 3.14
         - 3.13
@@ -378,7 +388,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     steps:
     - name: Checkout project
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -398,7 +408,7 @@ jobs:
       # important: do not use system python
       env:
         UV_PYTHON_PREFERENCE: only-managed
-      uses: astral-sh/setup-uv@v8.1.0
+      uses: astral-sh/setup-uv@v10.2.0
       with:
         python-version: ${{ matrix.pyver }}
         activate-environment: true
@@ -431,25 +441,18 @@ jobs:
     - name: Produce the C-files for the Coverage.py Cython plugin
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
-        && (
-          github.event_name != 'push'
-          || !contains(github.ref, 'refs/tags/')
-        )
+        && (github.event_name != 'push' || github.ref_type != 'tag')
       env:
         PYTHONPATH: packaging/
       run: |
         set -eEuo pipefail
 
-        uv pip install expandvars
         python -m pep517_backend.cli translate-cython
       shell: bash
     - name: Disable the Cython.Coverage Produce plugin
       if: >-  # Only works if the dists were built with line tracing
         matrix.no-extensions
-        || (
-          github.event_name == 'push'
-          && contains(github.ref, 'refs/tags/')
-        )
+        || (github.event_name == 'push' && github.ref_type == 'tag')
       run: |
         set -eEuo pipefail
         sed -i.bak 's/^\s\{2\}Cython\.Coverage$//g' .coveragerc
@@ -491,7 +494,7 @@ jobs:
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
@@ -552,7 +555,7 @@ jobs:
     - name: Notify Codecov that all coverage reports have been uploaded
       if: >-
         !cancelled()
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         fail_ci_if_error: true
         run_command: send-notifications
@@ -579,7 +582,7 @@ jobs:
     timeout-minutes: 1
     needs: test-summary
     # Run only on pushing a tag
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     steps:
     - name: Dummy
       run: |
@@ -644,6 +647,10 @@ jobs:
       # the pypa odd-arch containers do not ship `uv` preinstalled
       # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      # CIBW_TEST_SKIP: riscv64 has no native runner, so every wheel is built
+      # and tested under QEMU; installing the test dependencies and running
+      # the suite takes longer than building, and six Python versions do not
+      # fit in the job timeout. The other emulated arches still run the suite.
       environment-variables: |-
         CIBW_ARCHS_LINUX=${{ matrix.qemu }}
 
@@ -654,10 +661,7 @@ jobs:
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
         with-cython-tracing=${{
-          (
-            github.event_name == 'push'
-            && contains(github.ref, 'refs/tags/')
-          )
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'false'
           || 'true'
         }}
@@ -667,7 +671,11 @@ jobs:
           (matrix.tag == 'musllinux')
           && '*-manylinux_*'
           || '*-musllinux_*'
-        }} pp*
+        }}
+
+        CIBW_TEST_SKIP<<EOF
+        ${{ matrix.qemu == 'riscv64' && '*' || '' }}
+        EOF
 
   deploy:
     name: Deploy
@@ -751,7 +759,7 @@ jobs:
         skip-existing: true
 
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.3.0
+      uses: sigstore/gh-action-sigstore-python@v3.5.0
       with:
         inputs: >-
           ./dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
