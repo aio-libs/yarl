@@ -1,0 +1,11 @@
+Codecov settings have been updated to reflect coverage minimums post
+:pr:`1808` that recovered Cython measurements. The service now also
+provides granular statuses regarding coverage metrics of project
+portions written in Cython and Python separately.
+
+The check reporting whether the tests have indeed run in the CI now
+excludes the benchmark-only modules since they are special-cased to
+run under Codspeed instrumentation that needs not to be tainted by
+other tooling.
+
+-- by :user:`webknjaz`
