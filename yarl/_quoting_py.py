@@ -45,12 +45,8 @@ _UTF8_LEADS = {
 
 
 class _Quoter:
-    __slots__ = (
-        "_protected", 
-        "_qs", 
-        "_requote", 
-        "_safe"
-    )
+    __slots__ = ("_protected", "_qs", "_requote", "_safe")
+
     def __init__(
         self,
         *,
@@ -160,11 +156,8 @@ class _Quoter:
 
 
 class _Unquoter:
-    __slots__ = ( 
-        "_ascii_output", 
-        "_invalid", 
-        "_plus_is_space"
-    )
+    __slots__ = ("_ascii_output", "_invalid", "_plus_is_space")
+
     def __init__(
         self,
         *,
