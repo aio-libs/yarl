@@ -15,6 +15,7 @@ from yarl import URL
         ("http://ñ%41.test/", "http://xn--a-qga.test/"),
         ("file://%41/p", "file://a/p"),
         ("http://%30x7f.1/", "http://127.0.0.1/"),
+        ("http://127.0.0.1%31/", "http://127.0.0.11/"),
     ],
 )
 def test_decoded(url: str, expected: str) -> None:
@@ -45,6 +46,9 @@ def test_decoded(url: str, expected: str) -> None:
         "https://a%C2%ADb/",
         # Not an IPv4 address once decoded.
         "http://foo.%31/",
+        # An IPv4 address followed by "%", which is not a zone identifier.
+        "http://127.0.0.1%00/",
+        "http://127.0.0.1%25eth0/",
     ],
 )
 def test_rejected(url: str) -> None:
@@ -67,6 +71,14 @@ def test_rfc_mode() -> None:
 def test_build_fullwidth_percent() -> None:
     with pytest.raises(ValueError, match="once percent-decoded"):
         URL.build(scheme="http", host="％４１.com")
+
+
+def test_build_ipv4_zone() -> None:
+    with pytest.raises(ValueError, match="once percent-decoded"):
+        URL.build(scheme="http", host="127.0.0.1%00")
+    url = URL.build(scheme="http", host="127.0.0.1%00", mode="rfc")
+    assert url.raw_host == "127.0.0.1%00"
+    assert URL.build(scheme="sc", host="127.0.0.1%00").raw_host == "127.0.0.1%00"
 
 
 def test_build_non_ascii() -> None:

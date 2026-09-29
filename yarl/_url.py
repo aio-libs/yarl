@@ -2444,7 +2444,10 @@ def _encode_host(
             if ip.version == 6:
                 host = f"[{host}{sep}{zone}]" if sep else f"[{host}]"
             elif sep:
+                # WHATWG has no zone identifiers: "%" after an IPv4 address
+                # is percent-encoding in the host.
                 host = f"{host}{sep}{zone}"
+                return host, _whatwg_decoded_host(host), False
             return host, host, False
 
     # IDNA encoding is slow, skip it for ASCII-only strings
