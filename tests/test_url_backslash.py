@@ -1,5 +1,7 @@
 """WHATWG mode reads "\\" as "/" in special URLs; RFC 3986 mode rejects it."""
 
+import pickle
+
 import pytest
 
 from yarl import URL
@@ -40,10 +42,14 @@ def test_non_special(url: str, expected: str) -> None:
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
-        ("\\x", "/x"),
-        ("\\\\x\\hello", "//x/hello"),
-        ("a\\b:c", "a/b:c"),
-        (":\\", ":/"),
+        # The base is not known yet, so "\\" stays a character.
+        ("\\x", "%5Cx"),
+        ("\\/a", "%5C/a"),
+        ("\\\\x\\hello", "%5C%5Cx%5Chello"),
+        ("a\\b:c", "a%5Cb:c"),
+        # A network-path reference has an authority either way.
+        ("//h\\p", "//h/p"),
+        (" //h\\p", "//h/p"),
     ],
 )
 def test_relative(url: str, expected: str) -> None:
@@ -56,12 +62,40 @@ def test_relative(url: str, expected: str) -> None:
         ("\\x", "http://example.org/x"),
         ("\\\\x\\hello", "http://x/hello"),
         (":foo.com\\", "http://example.org/foo/:foo.com/"),
+        ("x\\y?a\\b", "http://example.org/foo/x/y?a%5Cb"),
         ("http:\\\\a\\b:c\\d@foo.com\\", "http://a/b:c/d@foo.com/"),
     ],
 )
 def test_join(reference: str, expected: str) -> None:
     url = URL("http://example.org/foo/bar").join(URL(reference))
     assert str(url) == expected
+
+
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        # A non-special base keeps its host: "\\/a" is not "//a" there.
+        ("\\/a", "foo://foo/%5C/a"),
+        ("\\\\a", "foo://foo/%5C%5Ca"),
+        ("\\a", "foo://foo/%5Ca"),
+    ],
+)
+def test_join_non_special_base(reference: str, expected: str) -> None:
+    url = URL("foo://foo/a").join(URL(reference))
+    assert str(url) == expected
+    assert url.host == "foo"
+
+
+def test_join_rfc_base() -> None:
+    # An RFC 3986 mode base does not read "\\" as "/" either.
+    url = URL("http://example.org/foo/bar", mode="rfc").join(URL("\\\\x"))
+    assert str(url) == "http://example.org/foo/%5C%5Cx"
+
+
+def test_pickle() -> None:
+    url = pickle.loads(pickle.dumps(URL("\\\\x\\hello")))
+    assert str(URL("http://example.org/").join(url)) == "http://x/hello"
+    assert str(URL("foo://foo/").join(url)) == "foo://foo/%5C%5Cx%5Chello"
 
 
 @pytest.mark.parametrize(

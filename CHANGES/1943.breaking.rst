@@ -1,10 +1,13 @@
 Read a backslash (``\``) as a slash before the query in URLs of the
-``http``, ``https``, ``ws``, ``wss``, ``ftp`` and ``file`` schemes and in
-relative URLs in the default WHATWG mode, following the WHATWG URL
-Standard: ``http://example.com\path`` is now ``http://example.com/path``
-instead of an error, and ``URL("http://example.org/a").join(URL("\\x"))``
-is ``http://example.org/x``. Other schemes, the query and the fragment
-keep it percent-encoded, and :meth:`~yarl.URL.human_repr` now writes it
-as ``%5C`` in the path. RFC 3986 mode rejects a URL string with a
-backslash, which RFC 3986 does not allow anywhere
+``http``, ``https``, ``ws``, ``wss``, ``ftp`` and ``file`` schemes in the
+default WHATWG mode, following the WHATWG URL Standard:
+``http://example.com\path`` is now ``http://example.com/path`` instead of
+an error. A relative URL keeps the backslash until :meth:`~yarl.URL.join`
+joins it with a URL of these schemes, so
+``URL("http://example.org/a").join(URL("\\x"))`` is
+``http://example.org/x``, while other bases keep it. Other schemes, the
+query and the fragment keep it percent-encoded, and
+:meth:`~yarl.URL.human_repr` now writes it as ``%5C`` in the path. RFC 3986
+mode rejects a URL string with a backslash, which RFC 3986 does not allow
+anywhere
 -- by :user:`asvetlov`.

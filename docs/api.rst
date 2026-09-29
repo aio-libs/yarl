@@ -142,8 +142,10 @@ as :rfc:`3986#appendix-C` recommends for user-typed URIs:
 
 In WHATWG mode a backslash (``\``) before the query is read as a slash in
 URLs of the ``http``, ``https``, ``ws``, ``wss``, ``ftp`` and ``file``
-schemes and in relative URLs, as the WHATWG URL Standard does for special
-URLs. Other schemes, the query and the fragment keep it, percent-encoded.
+schemes, as the WHATWG URL Standard does for special URLs. A relative URL
+keeps it until :meth:`URL.join` joins it with such a URL, so that ``\/a``
+cannot replace the host of another base. Other schemes, the query and the
+fragment keep it, percent-encoded.
 RFC 3986 has no backslash in its grammar, so RFC 3986 mode rejects a URL
 string that contains one:
 

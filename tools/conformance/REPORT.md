@@ -100,9 +100,9 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | backslash | `non-special:\/opaque` | *none* | `non-special:%5C/opaque` | `non-special:\/opaque` | *failure* | *failure* |
 | backslash | `non-special:/\path` | *none* | `non-special:/%5Cpath` | `non-special:/\path` | *failure* | *failure* |
 | backslash | `non-special://host/a\b` | *none* | `non-special://host/a%5Cb` | `non-special://host/a\b` | *failure* | *failure* |
-| backslash | `\a` | `foo://foo/a` | `foo://foo/a` | `foo://foo/\a` | *failure* | *failure* |
-| backslash | `\/a` | `foo://foo/a` | `foo://a` | `foo://foo/\/a` | *failure* | *failure* |
-| backslash | `\\a` | `foo://foo/a` | `foo://a` | `foo://foo/\\a` | *failure* | *failure* |
+| backslash | `\a` | `foo://foo/a` | `foo://foo/%5Ca` | `foo://foo/\a` | *failure* | *failure* |
+| backslash | `\/a` | `foo://foo/a` | `foo://foo/%5C/a` | `foo://foo/\/a` | *failure* | *failure* |
+| backslash | `\\a` | `foo://foo/a` | `foo://foo/%5C%5Ca` | `foo://foo/\\a` | *failure* | *failure* |
 | file scheme | `file://example:1/` | *none* | `file://example:1/` | *failure* | `file://example:1/` | `file://example:1/` |
 | file scheme | `//C\|/foo/bar` | `file:///tmp/mock/path` | *failure* | `file:///C:/foo/bar` | *failure* | *failure* |
 | file scheme | `file://test` | `file:///tmp/mock/path` | `file://test` | `file://test/` | `file://test` | `file://test` |

@@ -210,6 +210,7 @@ class CacheInfo(TypedDict):
 class _InternalURLCache(TypedDict, total=False):
     _val: SplitURLType
     _join_path: str
+    _special_ref: str
     _origin: "URL"
     absolute: bool
     hash: int
@@ -337,14 +338,18 @@ def _is_special_authority_path(scheme: str, path: str, mode: Mode) -> bool:
     return mode is _WHATWG and scheme in SCHEME_REQUIRES_HOST and path.lstrip("/") != ""
 
 
-def _backslashes(url_str: str, mode: Mode) -> str:
+def _backslashes(url_str: str, mode: Mode) -> tuple[str, bool]:
     """Handle "\\" in a URL string before it is parsed.
 
     RFC 3986 has no "\\" in its grammar, so RFC 3986 mode rejects it. The
     WHATWG URL Standard reads it as "/" in the authority and the path of a
-    special URL, and so does WHATWG mode, also for a relative reference,
-    which is almost always joined with a special base. Other schemes keep
-    it, percent-encoded, as do the query and the fragment.
+    special URL, and so does WHATWG mode; other schemes keep it,
+    percent-encoded, as do the query and the fragment.
+
+    Return the string with "\\" read as "/" and whether it is a relative
+    reference, whose "\\" is read as "/" only when it is joined with a
+    special base: against another base, "\\/a" must not become the
+    network-path reference "//a".
     """
     if mode is not _WHATWG:
         raise ValueError(f"Invalid URL: RFC 3986 does not allow '\\' in {url_str!r}")
@@ -353,24 +358,35 @@ def _backslashes(url_str: str, mode: Mode) -> str:
     for b in UNSAFE_URL_BYTES_TO_REMOVE:
         url = url.replace(b, "")
     i = url.find(":")
-    if (
-        i > 0
-        and all(c in _SCHEME_CHARS for c in url[:i])
-        and url[:i].lower() not in SPECIAL_SCHEMES
-    ):
-        return url_str
+    relative = True
+    if i > 0 and all(c in _SCHEME_CHARS for c in url[:i]):
+        if url[:i].lower() not in SPECIAL_SCHEMES:
+            return url_str, False
+        relative = False
     end = len(url)
     for c in "?#":
         if (pos := url.find(c)) >= 0 and pos < end:
             end = pos
-    return url[:end].replace("\\", "/") + url[end:]
+    return url[:end].replace("\\", "/") + url[end:], relative
 
 
-def _encode_url(url_str: str, mode: Mode) -> "URL":
+def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
-    if "\\" in url_str:
-        url_str = _backslashes(url_str, mode)
+    if backslashes and "\\" in url_str:
+        special_str, relative = _backslashes(url_str, mode)
+        if not relative:
+            url_str = special_str
+        elif not url_str.lstrip(WHATWG_C0_CONTROL_OR_SPACE).startswith("//"):
+            # Keep "\\" as a character; join() reads it as "/" when the base
+            # is special.
+            url = _encode_url(url_str, mode, False)
+            url._cache["_special_ref"] = special_str
+            return url
+        else:
+            # A network-path reference has an authority either way, and one
+            # with "\\" in it would be rejected.
+            url_str = special_str
     host: str | None
     scheme, netloc, path, query, fragment, empty = split_url(url_str)
     if not netloc and _is_special_authority_path(scheme, path, mode):
@@ -982,7 +998,11 @@ class URL:
 
     def __getstate__(
         self,
-    ) -> tuple[SplitURLType, str, int] | tuple[SplitURLType, str, int, str]:
+    ) -> (
+        tuple[SplitURLType, str, int]
+        | tuple[SplitURLType, str, int, str | None]
+        | tuple[SplitURLType, str, int, str | None, str]
+    ):
         # Return a plain tuple rather than a ``SplitResult``. Constructing a
         # ``SplitResult`` via ``tuple.__new__`` skips its ``__init__`` and on
         # Python 3.15+ leaves ``_keep_empty`` unset, which breaks pickling: the
@@ -992,16 +1012,22 @@ class URL:
         # ``SplitResult``) still load correctly. The compatibility mode goes
         # second and the mask of empty components third; older releases
         # ignore trailing items of the state. The path that join() uses for
-        # "http:g" (see _special_authority_url()) goes last, when there is one.
-        if (join_path := self._cache.get("_join_path")) is not None:
+        # "http:g" (see _special_authority_url()) goes next, when there is one,
+        # or None, when the reference with "\\" read as "/" for a special base
+        # (see _backslashes()) follows.
+        join_path = self._cache.get("_join_path")
+        if (special_ref := self._cache.get("_special_ref")) is not None:
+            return (self._val, self._mode.value, self._empty, join_path, special_ref)
+        if join_path is not None:
             return (self._val, self._mode.value, self._empty, join_path)
         return (self._val, self._mode.value, self._empty)
 
     def __setstate__(
         self,
         # ``(val,)`` or ``(val, mode)`` from older releases,
-        # ``(val, mode, empty)``, ``(val, mode, empty, join_path)``, or the
-        # legacy default style
+        # ``(val, mode, empty)``, ``(val, mode, empty, join_path)``,
+        # ``(val, mode, empty, join_path, special_ref)``, or the legacy
+        # default style
         # ``(None, {"_val": val})``.
         state: tuple[Any, ...],
     ) -> None:
@@ -1017,8 +1043,10 @@ class URL:
                 mode = Mode(rest[0])
                 if rest[1:]:
                     empty = rest[1]
-                    if rest[2:]:
+                    if rest[2:] and rest[2] is not None:
                         cache["_join_path"] = rest[2]
+                    if rest[3:]:
+                        cache["_special_ref"] = rest[3]
         self._scheme, self._netloc, self._path, self._query, self._fragment = val
         self._empty = empty
         self._cache = cache
@@ -2110,6 +2138,12 @@ class URL:
         if scheme != self._scheme or (url._scheme and scheme not in USES_RELATIVE):
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
+
+        if (special_ref := url._cache.get("_special_ref")) is not None and (
+            scheme in SPECIAL_SCHEMES and self._mode is _WHATWG
+        ):
+            # A relative reference with "\\" (see _backslashes()).
+            url = encode_url(special_ref)
 
         if url._netloc and (join_path := url._cache.get("_join_path")) is not None:
             # "http:g" was parsed in WHATWG mode as "http://g/", but against
