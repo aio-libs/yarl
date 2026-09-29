@@ -362,14 +362,14 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
         # the host, producing a ``str(url)`` that yarl cannot re-parse
         # (#1829). Validate like the builder APIs do, but keep accepting an
         # empty IPv6 zone identifier, which parsing has always allowed (#998).
-        encoded, numeric, idna2003 = _encode_host(
+        encoded, whatwg_host, idna2003 = _encode_host(
             host, validate_host=True, reject_empty_zone=False
         )
         if idna2003 and mode is not _WHATWG:
             raise ValueError(_idna2003_host_error(host))
         host = encoded
-        if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
-            raise ValueError(_numeric_host_error(host))
+        if whatwg_host is not host and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
+            host = _numeric_host(host, whatwg_host)
         # Remove brackets as host encoder adds back brackets for IPv6 addresses.
         # An empty host (RFC mode, e.g. "sc://user@:8080") is None, as for
         # built and pre-encoded URLs.
@@ -671,8 +671,9 @@ class URL:
         if type(val) is cls:
             if val._mode is mode:
                 return val
-            _check_moved_host(val, val._scheme, mode)
-            return from_parts(*val._val, mode, val._empty)
+            scheme, netloc, path, query, fragment = val._val
+            netloc = _moved_netloc(val, scheme, mode)
+            return from_parts(scheme, netloc, path, query, fragment, mode, val._empty)
         if type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
@@ -762,22 +763,30 @@ class URL:
             if not _host:
                 _check_missing_host(scheme, mode)
             if _host:
-                encoded_host, numeric, idna2003 = _encode_host(
+                encoded_host, whatwg_host, idna2003 = _encode_host(
                     _host, validate_host=False
                 )
                 if idna2003 and mode is not _WHATWG:
                     raise ValueError(_idna2003_host_error(_host))
                 _host = encoded_host
-                if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
-                    raise ValueError(_numeric_host_error(_host))
+                if (
+                    whatwg_host is not _host
+                    and mode is _WHATWG
+                    and scheme in SPECIAL_SCHEMES
+                ):
+                    _host = _numeric_host(_host, whatwg_host)
             else:
                 _host = ""
         elif host:
-            _host, numeric, idna2003 = _encode_host(host, validate_host=True)
+            _host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
             if idna2003 and mode is not _WHATWG:
                 raise ValueError(_idna2003_host_error(host))
-            if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
-                raise ValueError(_numeric_host_error(_host))
+            if (
+                whatwg_host is not _host
+                and mode is _WHATWG
+                and scheme in SPECIAL_SCHEMES
+            ):
+                _host = _numeric_host(_host, whatwg_host)
         else:
             self._netloc = ""
 
@@ -1563,8 +1572,8 @@ class URL:
             )
             raise ValueError(msg)
         if self._scheme not in SPECIAL_SCHEMES and netloc:
-            # A special scheme in WHATWG mode had its host checked already.
-            _check_moved_host(self, lower_scheme, self._mode)
+            # A special scheme in WHATWG mode had its host parsed already.
+            netloc = _moved_netloc(self, lower_scheme, self._mode)
         return from_parts(
             lower_scheme,
             netloc,
@@ -1651,11 +1660,15 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        encoded_host, numeric, idna2003 = _encode_host(host, validate_host=True)
+        encoded_host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
         if idna2003 and self._mode is not _WHATWG:
             raise ValueError(_idna2003_host_error(host))
-        if numeric and self._mode is _WHATWG and self._scheme in SPECIAL_SCHEMES:
-            raise ValueError(_numeric_host_error(encoded_host))
+        if (
+            whatwg_host is not encoded_host
+            and self._mode is _WHATWG
+            and self._scheme in SPECIAL_SCHEMES
+        ):
+            encoded_host = _numeric_host(encoded_host, whatwg_host)
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return from_parts(
@@ -2064,7 +2077,7 @@ class URL:
         if join_netloc := url._netloc:
             if not url._scheme or url._mode is not _WHATWG:
                 # A schemeless or RFC-mode reference had no WHATWG host check.
-                _check_moved_host(url, scheme, self._mode)
+                join_netloc = _moved_netloc(url, scheme, self._mode)
             return from_parts(
                 scheme, join_netloc, url._path, url._query, url._fragment, self._mode
             )
@@ -2103,11 +2116,12 @@ class URL:
         if url._netloc or (
             join_empty & EMPTY_AUTHORITY and scheme not in SCHEME_REQUIRES_HOST
         ):
+            join_netloc = url._netloc
             if not url._scheme or url._mode is not _WHATWG:
-                _check_moved_host(url, scheme, self._mode)
+                join_netloc = _moved_netloc(url, scheme, self._mode)
             return from_parts(
                 scheme,
-                url._netloc,
+                join_netloc,
                 url._path,
                 url._query,
                 url._fragment,
@@ -2254,62 +2268,94 @@ _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 _NUMERIC_HOST_TAIL = frozenset("0123456789abcdefxABCDEFX.")
 
 
-def _check_moved_host(url: "URL", scheme: str, mode: Mode) -> None:
-    """Apply the numeric host rule to the host of url under scheme and mode.
+def _moved_netloc(url: "URL", scheme: str, mode: Mode) -> str:
+    """Return the netloc of url moved under scheme and mode.
 
     with_scheme(), join() and a change of mode can move a host that was
     parsed under another scheme or mode into a special-scheme WHATWG URL,
-    so the rule is checked again there.
+    where a host that ends in a number is parsed as an IPv4 address.
     """
+    netloc = url._netloc
     if mode is _WHATWG and scheme in SPECIAL_SCHEMES and (host := url.raw_host):
-        # The flag is cached with the encoding of the host.
-        if _encode_host(host, False)[1]:
-            raise ValueError(_numeric_host_error(host))
+        # The WHATWG host is cached with the encoding of the host.
+        encoded, whatwg_host, _ = _encode_host(host, False)
+        if whatwg_host is not encoded:
+            host = _numeric_host(encoded, whatwg_host)
+            netloc = make_netloc(
+                url.raw_user, url.raw_password, host, url.explicit_port
+            )
+    return netloc
 
 
-def _numeric_host_error(host: str) -> str:
-    """Explain why a special-scheme host was rejected in WHATWG mode.
+def _numeric_host(host: str, whatwg_host: str | None) -> str:
+    """Return the IPv4 address WHATWG parses a special-scheme host as.
 
     The WHATWG URL Standard parses a host whose last label is a number, like
-    "example.123", as an IPv4 address and fails when a label is not a
-    number. Hosts made only of numbers are left as they are, even the ones
-    WHATWG would reject as out of range; RFC 3986 mode accepts all of them
-    as a reg-name.
+    "0x7f.1" or "example.123", as an IPv4 address and fails when a label is
+    not a number or a number is out of range. RFC 3986 mode accepts all of
+    them as a reg-name.
     """
-    return f"Host {host!r} ends in a number but is not an IPv4 address"
+    if whatwg_host is None:
+        raise ValueError(f"Host {host!r} ends in a number but is not an IPv4 address")
+    return whatwg_host
 
 
-def _is_ipv4_number(label: str) -> bool:
-    """Tell if label is a WHATWG IPv4 number: decimal, 0x hex or 0 octal."""
+def _ipv4_number(label: str) -> int | None:
+    """Parse a WHATWG IPv4 number: decimal, 0x hex or 0 octal."""
     if label[:2] in ("0x", "0X"):
-        return all(c in _HEX_DIGITS for c in label[2:])
-    return label != "" and label.isascii() and label.isdigit()
+        digits = label[2:]
+        if all(c in _HEX_DIGITS for c in digits):
+            return int(digits, 16) if digits else 0
+        return None
+    if label == "" or not label.isascii() or not label.isdigit():
+        return None
+    if label[0] == "0" and len(label) > 1:
+        return int(label, 8) if "8" not in label and "9" not in label else None
+    return int(label)
 
 
-def _is_invalid_numeric_host(host: str) -> bool:
-    """Tell if host ends in a number but has a label that is not one.
+def _whatwg_numeric_host(host: str) -> str | None:
+    """Return host as WHATWG sees it for a special scheme.
 
-    A percent-encoded host is left alone: yarl does not decode hosts, so the
-    labels WHATWG would classify are not known here.
+    A host that does not end in a number is returned as is. One that does
+    is run through the WHATWG IPv4 parser: the result is the dotted-quad
+    serialization, or None when parsing fails. A percent-encoded host is
+    returned as is: yarl does not decode hosts, so the labels WHATWG would
+    classify are not known here.
     """
     if host[-1] not in _NUMERIC_HOST_TAIL or "%" in host:
-        return False
+        return host
     labels = host.split(".")
     if labels[-1] == "" and len(labels) > 1:
         labels.pop()
-    return _is_ipv4_number(labels[-1]) and not all(map(_is_ipv4_number, labels))
+    last = labels[-1]
+    if not (last.isascii() and last.isdigit()) and _ipv4_number(last) is None:
+        return host
+    if len(labels) > 4:
+        return None
+    numbers = [_ipv4_number(label) for label in labels]
+    *head, tail = numbers
+    if tail is None or tail >= 256 ** (5 - len(numbers)):
+        return None
+    address = tail
+    for i, number in enumerate(head):
+        if number is None or number > 255:
+            return None
+        address += number << (8 * (3 - i))
+    return ".".join(str(address >> shift & 255) for shift in (24, 16, 8, 0))
 
 
 @lru_cache(_DEFAULT_ENCODE_SIZE)
 def _encode_host(
     host: str, validate_host: bool, *, reject_empty_zone: bool = True
-) -> tuple[str, bool, bool]:
+) -> tuple[str, str | None, bool]:
     """Encode host part of URL.
 
-    The first flag tells if the host ends in a number after a name label,
-    like "example.123", which WHATWG rejects for special schemes; the second
-    one if IDNA2008 could not encode the host, which RFC 3986 mode rejects.
-    Both are computed here so that the checks are cached with the encoding.
+    Next to the encoded host, return the host WHATWG sees for a special
+    scheme, which is the encoded host itself unless the host ends in a
+    number (see _whatwg_numeric_host), and a flag that tells if IDNA2008
+    could not encode the host, which RFC 3986 mode rejects. Both are
+    computed here so that the checks are cached with the encoding.
     """
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
@@ -2354,8 +2400,10 @@ def _encode_host(
             # LRU to keep the cache size small
             host = ip.compressed
             if ip.version == 6:
-                return (f"[{host}{sep}{zone}]" if sep else f"[{host}]"), False, False
-            return (f"{host}{sep}{zone}" if sep else host), False, False
+                host = f"[{host}{sep}{zone}]" if sep else f"[{host}]"
+            elif sep:
+                host = f"{host}{sep}{zone}"
+            return host, host, False
 
     # IDNA encoding is slow, skip it for ASCII-only strings
     if host.isascii():
@@ -2373,7 +2421,7 @@ def _encode_host(
             raise ValueError(
                 f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
             ) from None
-        return host, bool(host) and _is_invalid_numeric_host(host), False
+        return host, host and _whatwg_numeric_host(host), False
 
     # IDNA/UTS-46 mapping silently deletes default-ignorable code points, which
     # would turn e.g. ``e<ZWSP>vil.com`` into ``evil.com``, a different host
@@ -2401,7 +2449,7 @@ def _encode_host(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"after IDNA normalization to {encoded!r}"
         ) from None
-    return encoded, _is_invalid_numeric_host(encoded), idna2003
+    return encoded, _whatwg_numeric_host(encoded), idna2003
 
 
 @rewrite_module

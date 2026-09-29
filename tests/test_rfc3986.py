@@ -117,10 +117,6 @@ VALID = [
     pytest.param("http://example.com/?a/b?c", id="3.4-query-slash-question"),
     pytest.param("http://example.com/#a/b?c", id="3.5-fragment-slash-question"),
     pytest.param("http://!$&'()*+,;=@example.com/", id="3.2.1-userinfo-sub-delims"),
-    pytest.param("http://256.1.1.1/", id="3.2.2-reg-name-not-ipv4"),
-    pytest.param("http://1.2.3.04/", id="3.2.2-reg-name-leading-zero"),
-    pytest.param("http://0x7f.1/", id="3.2.2-reg-name-hex"),
-    pytest.param("http://127.1/", id="3.2.2-reg-name-short"),
     pytest.param(
         "http://%C3%A9.example/",
         id="3.2.2-reg-name-pct",
@@ -163,6 +159,21 @@ VALID = [
 @pytest.mark.parametrize("url", VALID)
 def test_valid_reference_round_trips(url: str) -> None:
     assert str(URL(url)) == url
+
+
+# Hosts that are a reg-name for RFC 3986 but an IPv4 address for WHATWG,
+# which yarl follows for special schemes in its default mode.
+NUMERIC_REG_NAME = [
+    pytest.param("http://256.1.1.1/", id="3.2.2-reg-name-not-ipv4"),
+    pytest.param("http://1.2.3.04/", id="3.2.2-reg-name-leading-zero"),
+    pytest.param("http://0x7f.1/", id="3.2.2-reg-name-hex"),
+    pytest.param("http://127.1/", id="3.2.2-reg-name-short"),
+]
+
+
+@pytest.mark.parametrize("url", NUMERIC_REG_NAME)
+def test_numeric_reg_name_round_trips(url: str) -> None:
+    assert str(URL(url, mode="rfc")) == url
 
 
 # Strings that do not match URI-reference in Appendix A.
