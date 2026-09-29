@@ -18,27 +18,19 @@ coverage:
     patch:
       default:
         target: 96%
-        flags:
-        - pytest
     project:
       default:
         target: 99.61%
       lib-combined:
-        flags:
-        - pytest
         paths:
         - yarl/
         target: 98.73%
       lib-cython:
-        flags:
-        - pytest
         paths:
         - yarl/*.pyx
         - yarl/**/*.pyx
         target: 94.33%
       lib-python:
-        flags:
-        - pytest
         paths:
         - yarl/*.py
         - yarl/**/*.py
@@ -48,8 +40,6 @@ coverage:
         - packaging/
         target: 75.24%
       tests:
-        flags:
-        - pytest
         paths:
         - tests/
         target: 100%
