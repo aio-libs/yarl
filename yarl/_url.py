@@ -2181,7 +2181,8 @@ class URL:
             )
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
-    if HAS_PYDANTIC:
+    # pydantic is installed on every CI test leg, so the other arm never runs.
+    if HAS_PYDANTIC:  # pragma: no branch
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
