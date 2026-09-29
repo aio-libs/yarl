@@ -134,12 +134,14 @@ def test_build_authority() -> None:
     assert str(url) == "http://1.2.3"
 
 
-@pytest.mark.parametrize(
-    "url", ["http://%30%78%63%30%2e%30%32%35%30.01/", "http://foo.%31/"]
-)
-def test_percent_encoded_host_left_alone(url: str) -> None:
-    # yarl does not decode hosts, so it cannot tell what WHATWG would see.
-    assert str(URL(url)) == url
+def test_percent_encoded_host() -> None:
+    # WHATWG decodes the host before the IPv4 parser sees it.
+    url = URL("http://%30%78%63%30%2e%30%32%35%30.01/")
+    assert url.raw_host == "192.168.0.1"
+    with pytest.raises(ValueError, match="once percent-decoded"):
+        URL("http://foo.%31/")
+    url = URL("http://foo.%31/", mode="rfc")
+    assert url.raw_host == "foo.%31"
 
 
 def test_with_scheme() -> None:

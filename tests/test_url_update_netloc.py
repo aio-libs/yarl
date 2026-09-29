@@ -246,12 +246,22 @@ def test_with_host_default_ignorable(ignorable: str) -> None:
 
 
 def test_with_host_percent_encoded() -> None:
-    url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123")
+    url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123", mode="rfc")
     url2 = url.with_host("%cf%80.org")
     assert url2.raw_host == "%cf%80.org"
     assert url2.host == "%cf%80.org"
     assert url2.raw_authority == "%25cf%2580%CF%80:%25cf%2580%CF%80@%cf%80.org:123"
     assert url2.authority == "%cf%80π:%cf%80π@%cf%80.org:123"
+
+
+def test_with_host_percent_encoded_whatwg() -> None:
+    # The WHATWG host parser percent-decodes the host of a special URL.
+    url = URL("http://example.com:123").with_host("%cf%80.org")
+    assert url.raw_host == "xn--1xa.org"
+    assert url.host == "π.org"
+    with pytest.raises(ValueError, match="once percent-decoded"):
+        URL("http://example.com").with_host("a%2fb")
+    assert URL("sc://example.com").with_host("a%2fb").raw_host == "a%2fb"
 
 
 def test_with_host_for_relative_url() -> None:

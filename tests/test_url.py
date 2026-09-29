@@ -478,8 +478,10 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
 
 
 def test_ipv4_zone() -> None:
-    # I'm unsure if it is correct.
-    url = URL("http://1.2.3.4%тест%42:123")
+    # I'm unsure if it is correct. WHATWG mode decodes the host instead.
+    with pytest.raises(ValueError, match="once percent-decoded"):
+        URL("http://1.2.3.4%тест%42:123")
+    url = URL("http://1.2.3.4%тест%42:123", mode="rfc")
     assert url.raw_host == "1.2.3.4%тест%42"
     assert url.host == url.raw_host
     assert url.raw_host == SplitResult(*url._val).hostname
@@ -489,9 +491,10 @@ def test_ipv4_zone_percent25() -> None:
     """The ``%25`` decode in ``URL.host`` also covers IPv4 hosts.
 
     Zone identifiers on IPv4 addresses are outside any RFC; this pins
-    the digit-branch behavior of the ``%25`` handling (#998).
+    the digit-branch behavior of the ``%25`` handling (#998) in RFC 3986
+    mode; WHATWG mode decodes the host and rejects the "%".
     """
-    url = URL("http://1.2.3.4%25eth0:123/")
+    url = URL("http://1.2.3.4%25eth0:123/", mode="rfc")
     assert url.raw_host == "1.2.3.4%25eth0"
     assert url.host == "1.2.3.4%eth0"
     assert url.port == 123

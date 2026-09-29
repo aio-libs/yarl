@@ -17,7 +17,7 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import SplitResult, scheme_chars, uses_relative
+from urllib.parse import SplitResult, scheme_chars, unquote_to_bytes, uses_relative
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
@@ -369,7 +369,7 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
             raise ValueError(_idna2003_host_error(host))
         host = encoded
         if whatwg_host is not host and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
-            host = _numeric_host(host, whatwg_host)
+            host = _whatwg_special_host(host, whatwg_host)
         # Remove brackets as host encoder adds back brackets for IPv6 addresses.
         # An empty host (RFC mode, e.g. "sc://user@:8080") is None, as for
         # built and pre-encoded URLs.
@@ -774,7 +774,7 @@ class URL:
                     and mode is _WHATWG
                     and scheme in SPECIAL_SCHEMES
                 ):
-                    _host = _numeric_host(_host, whatwg_host)
+                    _host = _whatwg_special_host(_host, whatwg_host)
             else:
                 _host = ""
         elif host:
@@ -786,7 +786,7 @@ class URL:
                 and mode is _WHATWG
                 and scheme in SPECIAL_SCHEMES
             ):
-                _host = _numeric_host(_host, whatwg_host)
+                _host = _whatwg_special_host(_host, whatwg_host)
         else:
             self._netloc = ""
 
@@ -1668,7 +1668,7 @@ class URL:
             and self._mode is _WHATWG
             and self._scheme in SPECIAL_SCHEMES
         ):
-            encoded_host = _numeric_host(encoded_host, whatwg_host)
+            encoded_host = _whatwg_special_host(encoded_host, whatwg_host)
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return from_parts(
@@ -2273,29 +2273,33 @@ def _moved_netloc(url: "URL", scheme: str, mode: Mode) -> str:
 
     with_scheme(), join() and a change of mode can move a host that was
     parsed under another scheme or mode into a special-scheme WHATWG URL,
-    where a host that ends in a number is parsed as an IPv4 address.
+    where the host is percent-decoded and one that ends in a number is
+    parsed as an IPv4 address.
     """
     netloc = url._netloc
     if mode is _WHATWG and scheme in SPECIAL_SCHEMES and (host := url.raw_host):
         # The WHATWG host is cached with the encoding of the host.
         encoded, whatwg_host, _ = _encode_host(host, False)
         if whatwg_host is not encoded:
-            host = _numeric_host(encoded, whatwg_host)
+            host = _whatwg_special_host(encoded, whatwg_host)
             netloc = make_netloc(
                 url.raw_user, url.raw_password, host, url.explicit_port
             )
     return netloc
 
 
-def _numeric_host(host: str, whatwg_host: str | None) -> str:
-    """Return the IPv4 address WHATWG parses a special-scheme host as.
+def _whatwg_special_host(host: str, whatwg_host: str | None) -> str:
+    """Return the host WHATWG parses a special-scheme host as.
 
-    The WHATWG URL Standard parses a host whose last label is a number, like
-    "0x7f.1" or "example.123", as an IPv4 address and fails when a label is
-    not a number or a number is out of range. RFC 3986 mode accepts all of
-    them as a reg-name.
+    The WHATWG URL Standard percent-decodes the host and parses a host whose
+    last label is a number, like "0x7f.1" or "example.123", as an IPv4
+    address. It fails when the decoded host is not a valid domain, a label
+    is not a number or a number is out of range. RFC 3986 mode accepts all
+    of them as a reg-name.
     """
     if whatwg_host is None:
+        if "%" in host:
+            raise ValueError(f"Host {host!r} is not a valid host once percent-decoded")
         raise ValueError(f"Host {host!r} ends in a number but is not an IPv4 address")
     return whatwg_host
 
@@ -2332,11 +2336,10 @@ def _whatwg_numeric_host(host: str) -> str | None:
 
     A host that does not end in a number is returned as is. One that does
     is run through the WHATWG IPv4 parser: the result is the dotted-quad
-    serialization, or None when parsing fails. A percent-encoded host is
-    returned as is: yarl does not decode hosts, so the labels WHATWG would
-    classify are not known here.
+    serialization, or None when parsing fails. The host must not be
+    percent-encoded; see _whatwg_decoded_host.
     """
-    if host[-1] not in _NUMERIC_HOST_TAIL or "%" in host:
+    if host[-1] not in _NUMERIC_HOST_TAIL:
         return host
     labels = host.split(".")
     if labels[-1] == "" and len(labels) > 1:
@@ -2358,6 +2361,31 @@ def _whatwg_numeric_host(host: str) -> str | None:
     return ".".join(str(address >> shift & 255) for shift in (24, 16, 8, 0))
 
 
+def _whatwg_decoded_host(host: str) -> str | None:
+    """Return a percent-encoded host as WHATWG sees it for a special scheme.
+
+    The WHATWG host parser percent-decodes the host, decodes the bytes as
+    UTF-8 with U+FFFD for invalid sequences and runs domain to ASCII, so
+    "%e2%98%83" is "xn--n3h" and "ho%00st" fails. The result goes on to
+    the IPv4 parser like any other host. None means WHATWG fails, or gives
+    a host that yarl rejects anyway, like one with a default-ignorable code
+    point or a character outside the RFC 3986 reg-name.
+    """
+    decoded = unquote_to_bytes(host).decode("utf-8", "replace")
+    if decoded.isascii():
+        decoded = decoded.lower()
+    elif _DEFAULT_IGNORABLE_RE.search(decoded):
+        return None
+    else:
+        try:
+            decoded = _idna_encode(decoded)[0]
+        except UnicodeError:
+            return None
+    if "%" in decoded or NOT_REG_NAME.search(decoded):
+        return None
+    return _whatwg_numeric_host(decoded)
+
+
 @lru_cache(_DEFAULT_ENCODE_SIZE)
 def _encode_host(
     host: str, validate_host: bool, *, reject_empty_zone: bool = True
@@ -2365,8 +2393,9 @@ def _encode_host(
     """Encode host part of URL.
 
     Next to the encoded host, return the host WHATWG sees for a special
-    scheme, which is the encoded host itself unless the host ends in a
-    number (see _whatwg_numeric_host), and a flag that tells if IDNA2008
+    scheme, which is the encoded host itself unless the host is
+    percent-encoded (see _whatwg_decoded_host) or ends in a number (see
+    _whatwg_numeric_host), and a flag that tells if IDNA2008
     could not encode the host, which RFC 3986 mode rejects. Both are
     computed here so that the checks are cached with the encoding.
     """
@@ -2415,7 +2444,10 @@ def _encode_host(
             if ip.version == 6:
                 host = f"[{host}{sep}{zone}]" if sep else f"[{host}]"
             elif sep:
+                # WHATWG has no zone identifiers: "%" after an IPv4 address
+                # is percent-encoding in the host.
                 host = f"{host}{sep}{zone}"
+                return host, _whatwg_decoded_host(host), False
             return host, host, False
 
     # IDNA encoding is slow, skip it for ASCII-only strings
@@ -2434,6 +2466,8 @@ def _encode_host(
             raise ValueError(
                 f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
             ) from None
+        if "%" in host:
+            return host, _whatwg_decoded_host(host), False
         return host, host and _whatwg_numeric_host(host), False
 
     # IDNA/UTS-46 mapping silently deletes default-ignorable code points, which
@@ -2462,6 +2496,11 @@ def _encode_host(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"after IDNA normalization to {encoded!r}"
         ) from None
+    # The host can be percent-encoded next to the non-ASCII code points, or
+    # IDNA can map a code point to "%", like the fullwidth percent sign
+    # U+FF05, which WHATWG then rejects.
+    if "%" in encoded:
+        return encoded, _whatwg_decoded_host(host), idna2003
     return encoded, _whatwg_numeric_host(encoded), idna2003
 
 

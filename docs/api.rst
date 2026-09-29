@@ -174,6 +174,12 @@ numbers (``0x7f.1`` becomes ``127.0.0.1`` and ``256`` becomes
 ``0.0.1.0``), or rejected when a label is not a number (``foo.123``) or a
 number is out of range (``256.0.0.1``). RFC 3986 mode keeps such a host
 as written, as a reg-name.
+For the same schemes, WHATWG mode percent-decodes the host first, as the
+WHATWG URL Standard does, and encodes the result like any other host:
+``ex%41mple.com`` becomes ``example.com`` and ``%e2%98%83`` becomes
+``xn--n3h``. A host that decodes to something that is not a valid host,
+such as ``ho%00st`` or ``a%2Fb``, is rejected. RFC 3986 mode keeps the
+percent-encoded host.
 RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
 one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
@@ -189,6 +195,8 @@ as one with an emoji, which WHATWG mode accepts as UTS #46 does.
    URL('http://127.0.0.1/')
    >>> URL('http://0x7f.1/', mode='rfc')
    URL('http://0x7f.1/', mode='rfc')
+   >>> URL('http://ex%41mple.com/')
+   URL('http://example.com/')
 
 .. versionchanged:: 1.25.2
 
@@ -199,6 +207,7 @@ as one with an emoji, which WHATWG mode accepts as UTS #46 does.
 
    Hosts made only of numbers, such as ``0x7f.1`` or ``256``, are parsed as
    IPv4 addresses in WHATWG mode; previously they were kept as written.
+   Percent-encoded hosts of these schemes are decoded in WHATWG mode.
 
 
 .. note::

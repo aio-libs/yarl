@@ -38,16 +38,16 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986, WHATWG and yarl in both modes agree | 450 |
-| yarl follows each standard in its mode | 99 |
+| yarl follows each standard in its mode | 166 |
 | yarl differs, RFC 3986 and WHATWG agree | 1 |
-| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 | 131 |
+| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 | 64 |
 | RFC mode differs from RFC 3986, WHATWG mode follows WHATWG | 117 |
 | Both modes differ from their standard | 98 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 230 |
+| yarl WHATWG mode vs WHATWG | 163 |
 | yarl RFC mode vs RFC 3986 | 216 |
 | WHATWG vs RFC 3986 | 445 |
 
@@ -59,95 +59,21 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 |---|---|---|---|---|---|
 | `http://[::%31]` | `http://other.com/` | `http://[::%31]` | *failure* | `http://[::%31]` | *failure* |
 
-## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 (131)
+## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 (64)
 
 | Category | Cases |
 |---|---|
-| non-ASCII or percent-encoded host | 73 |
 | file scheme | 19 |
 | other | 17 |
+| non-ASCII or percent-encoded host | 7 |
 | characters outside the RFC 3986 grammar | 6 |
 | backslash | 6 |
 | empty host | 4 |
 | special scheme without an authority | 3 |
 | non-special scheme | 2 |
-| numeric host that is not a dotted quad | 1 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986 |
 |---|---|---|---|---|---|---|
-| non-ASCII or percent-encoded host | `'http://GOO\u200b\u2060\ufeffgoo.com'` | `http://other.com/` | *failure* | `http://googoo.com/` | *failure* | *failure* |
-| non-ASCII or percent-encoded host | `http://%ef%b7%90zyx.com` | `http://other.com/` | `http://%ef%b7%90zyx.com` | *failure* | `http://%ef%b7%90zyx.com` | `http://%ef%b7%90zyx.com` |
-| non-ASCII or percent-encoded host | `https://%EF%BF%BD` | *none* | `https://%ef%bf%bd` | *failure* | `https://%ef%bf%bd` | `https://%EF%BF%BD` |
-| non-ASCII or percent-encoded host | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` | `http://other.com/` | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` | *failure* | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` |
-| non-ASCII or percent-encoded host | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` | `http://other.com/` | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` | *failure* | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` |
-| non-ASCII or percent-encoded host | `http://%25` | `http://other.com/` | `http://%25` | *failure* | `http://%25` | `http://%25` |
-| non-ASCII or percent-encoded host | `http://hello%00` | `http://other.com/` | `http://hello%00` | *failure* | `http://hello%00` | `http://hello%00` |
-| non-ASCII or percent-encoded host | `http://%30%78%63%30%2e%30%32%35%30.01%2e` | `http://other.com/` | `http://%30%78%63%30%2e%30%32%35%30.01%2e` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01%2e` | `http://%30%78%63%30%2e%30%32%35%30.01%2e` |
-| non-ASCII or percent-encoded host | `sc://%/` | *none* | *failure* | `sc://%/` | *failure* | *failure* |
-| non-ASCII or percent-encoded host | `http://ho%00st/` | *none* | `http://ho%00st/` | *failure* | `http://ho%00st/` | `http://ho%00st/` |
-| non-ASCII or percent-encoded host | `http://ho%01st/` | *none* | `http://ho%01st/` | *failure* | `http://ho%01st/` | `http://ho%01st/` |
-| non-ASCII or percent-encoded host | `http://ho%02st/` | *none* | `http://ho%02st/` | *failure* | `http://ho%02st/` | `http://ho%02st/` |
-| non-ASCII or percent-encoded host | `http://ho%03st/` | *none* | `http://ho%03st/` | *failure* | `http://ho%03st/` | `http://ho%03st/` |
-| non-ASCII or percent-encoded host | `http://ho%04st/` | *none* | `http://ho%04st/` | *failure* | `http://ho%04st/` | `http://ho%04st/` |
-| non-ASCII or percent-encoded host | `http://ho%05st/` | *none* | `http://ho%05st/` | *failure* | `http://ho%05st/` | `http://ho%05st/` |
-| non-ASCII or percent-encoded host | `http://ho%06st/` | *none* | `http://ho%06st/` | *failure* | `http://ho%06st/` | `http://ho%06st/` |
-| non-ASCII or percent-encoded host | `http://ho%07st/` | *none* | `http://ho%07st/` | *failure* | `http://ho%07st/` | `http://ho%07st/` |
-| non-ASCII or percent-encoded host | `http://ho%08st/` | *none* | `http://ho%08st/` | *failure* | `http://ho%08st/` | `http://ho%08st/` |
-| non-ASCII or percent-encoded host | `http://ho%09st/` | *none* | `http://ho%09st/` | *failure* | `http://ho%09st/` | `http://ho%09st/` |
-| non-ASCII or percent-encoded host | `http://ho%0Ast/` | *none* | `http://ho%0ast/` | *failure* | `http://ho%0ast/` | `http://ho%0Ast/` |
-| non-ASCII or percent-encoded host | `http://ho%0Bst/` | *none* | `http://ho%0bst/` | *failure* | `http://ho%0bst/` | `http://ho%0Bst/` |
-| non-ASCII or percent-encoded host | `http://ho%0Cst/` | *none* | `http://ho%0cst/` | *failure* | `http://ho%0cst/` | `http://ho%0Cst/` |
-| non-ASCII or percent-encoded host | `http://ho%0Dst/` | *none* | `http://ho%0dst/` | *failure* | `http://ho%0dst/` | `http://ho%0Dst/` |
-| non-ASCII or percent-encoded host | `http://ho%0Est/` | *none* | `http://ho%0est/` | *failure* | `http://ho%0est/` | `http://ho%0Est/` |
-| non-ASCII or percent-encoded host | `http://ho%0Fst/` | *none* | `http://ho%0fst/` | *failure* | `http://ho%0fst/` | `http://ho%0Fst/` |
-| non-ASCII or percent-encoded host | `http://ho%10st/` | *none* | `http://ho%10st/` | *failure* | `http://ho%10st/` | `http://ho%10st/` |
-| non-ASCII or percent-encoded host | `http://ho%11st/` | *none* | `http://ho%11st/` | *failure* | `http://ho%11st/` | `http://ho%11st/` |
-| non-ASCII or percent-encoded host | `http://ho%12st/` | *none* | `http://ho%12st/` | *failure* | `http://ho%12st/` | `http://ho%12st/` |
-| non-ASCII or percent-encoded host | `http://ho%13st/` | *none* | `http://ho%13st/` | *failure* | `http://ho%13st/` | `http://ho%13st/` |
-| non-ASCII or percent-encoded host | `http://ho%14st/` | *none* | `http://ho%14st/` | *failure* | `http://ho%14st/` | `http://ho%14st/` |
-| non-ASCII or percent-encoded host | `http://ho%15st/` | *none* | `http://ho%15st/` | *failure* | `http://ho%15st/` | `http://ho%15st/` |
-| non-ASCII or percent-encoded host | `http://ho%16st/` | *none* | `http://ho%16st/` | *failure* | `http://ho%16st/` | `http://ho%16st/` |
-| non-ASCII or percent-encoded host | `http://ho%17st/` | *none* | `http://ho%17st/` | *failure* | `http://ho%17st/` | `http://ho%17st/` |
-| non-ASCII or percent-encoded host | `http://ho%18st/` | *none* | `http://ho%18st/` | *failure* | `http://ho%18st/` | `http://ho%18st/` |
-| non-ASCII or percent-encoded host | `http://ho%19st/` | *none* | `http://ho%19st/` | *failure* | `http://ho%19st/` | `http://ho%19st/` |
-| non-ASCII or percent-encoded host | `http://ho%1Ast/` | *none* | `http://ho%1ast/` | *failure* | `http://ho%1ast/` | `http://ho%1Ast/` |
-| non-ASCII or percent-encoded host | `http://ho%1Bst/` | *none* | `http://ho%1bst/` | *failure* | `http://ho%1bst/` | `http://ho%1Bst/` |
-| non-ASCII or percent-encoded host | `http://ho%1Cst/` | *none* | `http://ho%1cst/` | *failure* | `http://ho%1cst/` | `http://ho%1Cst/` |
-| non-ASCII or percent-encoded host | `http://ho%1Dst/` | *none* | `http://ho%1dst/` | *failure* | `http://ho%1dst/` | `http://ho%1Dst/` |
-| non-ASCII or percent-encoded host | `http://ho%1Est/` | *none* | `http://ho%1est/` | *failure* | `http://ho%1est/` | `http://ho%1Est/` |
-| non-ASCII or percent-encoded host | `http://ho%1Fst/` | *none* | `http://ho%1fst/` | *failure* | `http://ho%1fst/` | `http://ho%1Fst/` |
-| non-ASCII or percent-encoded host | `http://ho%20st/` | *none* | `http://ho%20st/` | *failure* | `http://ho%20st/` | `http://ho%20st/` |
-| non-ASCII or percent-encoded host | `http://ho%23st/` | *none* | `http://ho%23st/` | *failure* | `http://ho%23st/` | `http://ho%23st/` |
-| non-ASCII or percent-encoded host | `http://ho%25st/` | *none* | `http://ho%25st/` | *failure* | `http://ho%25st/` | `http://ho%25st/` |
-| non-ASCII or percent-encoded host | `http://ho%2Fst/` | *none* | `http://ho%2fst/` | *failure* | `http://ho%2fst/` | `http://ho%2Fst/` |
-| non-ASCII or percent-encoded host | `http://ho%3Ast/` | *none* | `http://ho%3ast/` | *failure* | `http://ho%3ast/` | `http://ho%3Ast/` |
-| non-ASCII or percent-encoded host | `http://ho%3Cst/` | *none* | `http://ho%3cst/` | *failure* | `http://ho%3cst/` | `http://ho%3Cst/` |
-| non-ASCII or percent-encoded host | `http://ho%3Est/` | *none* | `http://ho%3est/` | *failure* | `http://ho%3est/` | `http://ho%3Est/` |
-| non-ASCII or percent-encoded host | `http://ho%3Fst/` | *none* | `http://ho%3fst/` | *failure* | `http://ho%3fst/` | `http://ho%3Fst/` |
-| non-ASCII or percent-encoded host | `http://ho%40st/` | *none* | `http://ho%40st/` | *failure* | `http://ho%40st/` | `http://ho%40st/` |
-| non-ASCII or percent-encoded host | `http://ho%5Bst/` | *none* | `http://ho%5bst/` | *failure* | `http://ho%5bst/` | `http://ho%5Bst/` |
-| non-ASCII or percent-encoded host | `http://ho%5Cst/` | *none* | `http://ho%5cst/` | *failure* | `http://ho%5cst/` | `http://ho%5Cst/` |
-| non-ASCII or percent-encoded host | `http://ho%5Dst/` | *none* | `http://ho%5dst/` | *failure* | `http://ho%5dst/` | `http://ho%5Dst/` |
-| non-ASCII or percent-encoded host | `http://ho%7Cst/` | *none* | `http://ho%7cst/` | *failure* | `http://ho%7cst/` | `http://ho%7Cst/` |
-| non-ASCII or percent-encoded host | `http://ho%7Fst/` | *none* | `http://ho%7fst/` | *failure* | `http://ho%7fst/` | `http://ho%7Fst/` |
-| non-ASCII or percent-encoded host | `` 'sc://\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x7f!"$%&\'()*+,-.;=_`{}~/' `` | *none* | *failure* | `` sc://%01%02%03%04%05%06%07%08%0B%0C%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F!"$%&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
-| non-ASCII or percent-encoded host | `ftp://example.com%80/` | *none* | `ftp://example.com%80/` | *failure* | `ftp://example.com%80/` | `ftp://example.com%80/` |
-| non-ASCII or percent-encoded host | `ftp://example.com%A0/` | *none* | `ftp://example.com%a0/` | *failure* | `ftp://example.com%a0/` | `ftp://example.com%A0/` |
-| non-ASCII or percent-encoded host | `https://example.com%80/` | *none* | `https://example.com%80/` | *failure* | `https://example.com%80/` | `https://example.com%80/` |
-| non-ASCII or percent-encoded host | `https://example.com%A0/` | *none* | `https://example.com%a0/` | *failure* | `https://example.com%a0/` | `https://example.com%A0/` |
-| non-ASCII or percent-encoded host | `ftp://%e2%98%83` | *none* | `ftp://%e2%98%83` | `ftp://xn--n3h/` | `ftp://%e2%98%83` | `ftp://%e2%98%83` |
-| non-ASCII or percent-encoded host | `https://%e2%98%83` | *none* | `https://%e2%98%83` | `https://xn--n3h/` | `https://%e2%98%83` | `https://%e2%98%83` |
-| non-ASCII or percent-encoded host | `file://%43%3A` | *none* | `file://%43%3a` | *failure* | `file://%43%3a` | `file://%43%3A` |
-| non-ASCII or percent-encoded host | `file://%43%7C` | *none* | `file://%43%7c` | *failure* | `file://%43%7c` | `file://%43%7C` |
-| non-ASCII or percent-encoded host | `file://C%7C` | *none* | `file://c%7c` | *failure* | `file://c%7c` | `file://C%7C` |
-| non-ASCII or percent-encoded host | `file://%43%7C/` | *none* | `file://%43%7c/` | *failure* | `file://%43%7c/` | `file://%43%7C/` |
-| non-ASCII or percent-encoded host | `https://%43%7C/` | *none* | `https://%43%7c/` | *failure* | `https://%43%7c/` | `https://%43%7C/` |
-| non-ASCII or percent-encoded host | `'file://a\xadb/p'` | *none* | *failure* | `file://ab/p` | *failure* | *failure* |
-| non-ASCII or percent-encoded host | `file://a%C2%ADb/p` | *none* | `file://a%c2%adb/p` | `file://ab/p` | `file://a%c2%adb/p` | `file://a%C2%ADb/p` |
-| non-ASCII or percent-encoded host | `file://%C2%AD/p` | *none* | `file://%c2%ad/p` | *failure* | `file://%c2%ad/p` | `file://%C2%AD/p` |
-| non-ASCII or percent-encoded host | `` foo://!"$%&'()*+,-.;=_`{}~/ `` | *none* | *failure* | `` foo://!"$%&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
-| non-ASCII or percent-encoded host | `https://a%C2%ADb/` | *none* | `https://a%c2%adb/` | `https://ab/` | `https://a%c2%adb/` | `https://a%C2%ADb/` |
-| non-ASCII or percent-encoded host | `https://%C2%AD/` | *none* | `https://%c2%ad/` | *failure* | `https://%c2%ad/` | `https://%C2%AD/` |
 | file scheme | `file://example:1/` | *none* | `file://example:1/` | *failure* | `file://example:1/` | `file://example:1/` |
 | file scheme | `//C\|/foo/bar` | `file:///tmp/mock/path` | *failure* | `file:///C:/foo/bar` | *failure* | *failure* |
 | file scheme | `file://test` | `file:///tmp/mock/path` | `file://test` | `file://test/` | `file://test` | `file://test` |
@@ -184,6 +110,13 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | other | `//C:/` | `file://host/` | `file://c/` | `file:///C:/` | `file://c/` | `file://C:/` |
 | other | `test-a-colon.html` | `a:` | `a:test-a-colon.html` | *failure* | `a:test-a-colon.html` | `a:test-a-colon.html` |
 | other | `test-a-colon-b.html` | `a:b` | `a:test-a-colon-b.html` | *failure* | `a:test-a-colon-b.html` | `a:test-a-colon-b.html` |
+| non-ASCII or percent-encoded host | `'http://GOO\u200b\u2060\ufeffgoo.com'` | `http://other.com/` | *failure* | `http://googoo.com/` | *failure* | *failure* |
+| non-ASCII or percent-encoded host | `sc://%/` | *none* | *failure* | `sc://%/` | *failure* | *failure* |
+| non-ASCII or percent-encoded host | `` 'sc://\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x7f!"$%&\'()*+,-.;=_`{}~/' `` | *none* | *failure* | `` sc://%01%02%03%04%05%06%07%08%0B%0C%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%7F!"$%&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
+| non-ASCII or percent-encoded host | `'file://a\xadb/p'` | *none* | *failure* | `file://ab/p` | *failure* | *failure* |
+| non-ASCII or percent-encoded host | `file://a%C2%ADb/p` | *none* | *failure* | `file://ab/p` | `file://a%c2%adb/p` | `file://a%C2%ADb/p` |
+| non-ASCII or percent-encoded host | `` foo://!"$%&'()*+,-.;=_`{}~/ `` | *none* | *failure* | `` foo://!"$%&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
+| non-ASCII or percent-encoded host | `https://a%C2%ADb/` | *none* | *failure* | `https://ab/` | `https://a%c2%adb/` | `https://a%C2%ADb/` |
 | characters outside the RFC 3986 grammar | `http://&a:foo(b]c@d:2/` | `http://example.org/foo/bar` | *failure* | `http://&a:foo(b%5Dc@d:2/` | *failure* | *failure* |
 | characters outside the RFC 3986 grammar | `` http://!"$&'()*+,-.;=_`{}~/ `` | *none* | *failure* | `` http://!"$&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
 | characters outside the RFC 3986 grammar | `'https://user:pass[\x7f@foo/bar'` | `http://example.org` | *failure* | `https://user:pass%5B%7F@foo/bar` | *failure* | *failure* |
@@ -205,7 +138,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | `http:` | `https://example.org/foo/bar` | `http://` | *failure* | `http:` | `http:` |
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test@test/x` | `non-special://test:@test/x` | `non-special://test:@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://test/x` | `non-special://:@test/x` | `non-special://:@test/x` |
-| numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://%30%78%63%30%2e%30%32%35%30.01` |
 
 ## RFC mode differs from RFC 3986, WHATWG mode follows WHATWG (117)
 
@@ -457,11 +389,12 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | `file:///c:////foo/bar.html` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | *failure* |
 | special scheme without an authority | `http:[61:27]/:foo` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/[61:27]/:foo` | `http://example.org/foo/%5B61:27%5D/:foo` | *failure* |
 
-## yarl follows each standard in its mode (99)
+## yarl follows each standard in its mode (166)
 
 | Category | Cases |
 |---|---|
-| numeric host that is not a dotted quad | 35 |
+| non-ASCII or percent-encoded host | 66 |
+| numeric host that is not a dotted quad | 36 |
 | special scheme without an authority | 33 |
 | other | 15 |
 | empty host | 8 |
@@ -470,7 +403,74 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986 |
 |---|---|---|---|---|---|---|
+| non-ASCII or percent-encoded host | `http://%ef%b7%90zyx.com` | `http://other.com/` | *failure* | *failure* | `http://%ef%b7%90zyx.com` | `http://%ef%b7%90zyx.com` |
+| non-ASCII or percent-encoded host | `https://%EF%BF%BD` | *none* | *failure* | *failure* | `https://%ef%bf%bd` | `https://%EF%BF%BD` |
+| non-ASCII or percent-encoded host | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` | `http://other.com/` | *failure* | *failure* | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` | `http://%ef%bc%85%ef%bc%94%ef%bc%91.com` |
+| non-ASCII or percent-encoded host | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` | `http://other.com/` | *failure* | *failure* | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` | `http://%ef%bc%85%ef%bc%90%ef%bc%90.com` |
+| non-ASCII or percent-encoded host | `http://%25` | `http://other.com/` | *failure* | *failure* | `http://%25` | `http://%25` |
+| non-ASCII or percent-encoded host | `http://hello%00` | `http://other.com/` | *failure* | *failure* | `http://hello%00` | `http://hello%00` |
+| non-ASCII or percent-encoded host | `http://%30%78%63%30%2e%30%32%35%30.01%2e` | `http://other.com/` | `http://192.168.0.1` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01%2e` | `http://%30%78%63%30%2e%30%32%35%30.01%2e` |
+| non-ASCII or percent-encoded host | `http://ho%00st/` | *none* | *failure* | *failure* | `http://ho%00st/` | `http://ho%00st/` |
+| non-ASCII or percent-encoded host | `http://ho%01st/` | *none* | *failure* | *failure* | `http://ho%01st/` | `http://ho%01st/` |
+| non-ASCII or percent-encoded host | `http://ho%02st/` | *none* | *failure* | *failure* | `http://ho%02st/` | `http://ho%02st/` |
+| non-ASCII or percent-encoded host | `http://ho%03st/` | *none* | *failure* | *failure* | `http://ho%03st/` | `http://ho%03st/` |
+| non-ASCII or percent-encoded host | `http://ho%04st/` | *none* | *failure* | *failure* | `http://ho%04st/` | `http://ho%04st/` |
+| non-ASCII or percent-encoded host | `http://ho%05st/` | *none* | *failure* | *failure* | `http://ho%05st/` | `http://ho%05st/` |
+| non-ASCII or percent-encoded host | `http://ho%06st/` | *none* | *failure* | *failure* | `http://ho%06st/` | `http://ho%06st/` |
+| non-ASCII or percent-encoded host | `http://ho%07st/` | *none* | *failure* | *failure* | `http://ho%07st/` | `http://ho%07st/` |
+| non-ASCII or percent-encoded host | `http://ho%08st/` | *none* | *failure* | *failure* | `http://ho%08st/` | `http://ho%08st/` |
+| non-ASCII or percent-encoded host | `http://ho%09st/` | *none* | *failure* | *failure* | `http://ho%09st/` | `http://ho%09st/` |
+| non-ASCII or percent-encoded host | `http://ho%0Ast/` | *none* | *failure* | *failure* | `http://ho%0ast/` | `http://ho%0Ast/` |
+| non-ASCII or percent-encoded host | `http://ho%0Bst/` | *none* | *failure* | *failure* | `http://ho%0bst/` | `http://ho%0Bst/` |
+| non-ASCII or percent-encoded host | `http://ho%0Cst/` | *none* | *failure* | *failure* | `http://ho%0cst/` | `http://ho%0Cst/` |
+| non-ASCII or percent-encoded host | `http://ho%0Dst/` | *none* | *failure* | *failure* | `http://ho%0dst/` | `http://ho%0Dst/` |
+| non-ASCII or percent-encoded host | `http://ho%0Est/` | *none* | *failure* | *failure* | `http://ho%0est/` | `http://ho%0Est/` |
+| non-ASCII or percent-encoded host | `http://ho%0Fst/` | *none* | *failure* | *failure* | `http://ho%0fst/` | `http://ho%0Fst/` |
+| non-ASCII or percent-encoded host | `http://ho%10st/` | *none* | *failure* | *failure* | `http://ho%10st/` | `http://ho%10st/` |
+| non-ASCII or percent-encoded host | `http://ho%11st/` | *none* | *failure* | *failure* | `http://ho%11st/` | `http://ho%11st/` |
+| non-ASCII or percent-encoded host | `http://ho%12st/` | *none* | *failure* | *failure* | `http://ho%12st/` | `http://ho%12st/` |
+| non-ASCII or percent-encoded host | `http://ho%13st/` | *none* | *failure* | *failure* | `http://ho%13st/` | `http://ho%13st/` |
+| non-ASCII or percent-encoded host | `http://ho%14st/` | *none* | *failure* | *failure* | `http://ho%14st/` | `http://ho%14st/` |
+| non-ASCII or percent-encoded host | `http://ho%15st/` | *none* | *failure* | *failure* | `http://ho%15st/` | `http://ho%15st/` |
+| non-ASCII or percent-encoded host | `http://ho%16st/` | *none* | *failure* | *failure* | `http://ho%16st/` | `http://ho%16st/` |
+| non-ASCII or percent-encoded host | `http://ho%17st/` | *none* | *failure* | *failure* | `http://ho%17st/` | `http://ho%17st/` |
+| non-ASCII or percent-encoded host | `http://ho%18st/` | *none* | *failure* | *failure* | `http://ho%18st/` | `http://ho%18st/` |
+| non-ASCII or percent-encoded host | `http://ho%19st/` | *none* | *failure* | *failure* | `http://ho%19st/` | `http://ho%19st/` |
+| non-ASCII or percent-encoded host | `http://ho%1Ast/` | *none* | *failure* | *failure* | `http://ho%1ast/` | `http://ho%1Ast/` |
+| non-ASCII or percent-encoded host | `http://ho%1Bst/` | *none* | *failure* | *failure* | `http://ho%1bst/` | `http://ho%1Bst/` |
+| non-ASCII or percent-encoded host | `http://ho%1Cst/` | *none* | *failure* | *failure* | `http://ho%1cst/` | `http://ho%1Cst/` |
+| non-ASCII or percent-encoded host | `http://ho%1Dst/` | *none* | *failure* | *failure* | `http://ho%1dst/` | `http://ho%1Dst/` |
+| non-ASCII or percent-encoded host | `http://ho%1Est/` | *none* | *failure* | *failure* | `http://ho%1est/` | `http://ho%1Est/` |
+| non-ASCII or percent-encoded host | `http://ho%1Fst/` | *none* | *failure* | *failure* | `http://ho%1fst/` | `http://ho%1Fst/` |
+| non-ASCII or percent-encoded host | `http://ho%20st/` | *none* | *failure* | *failure* | `http://ho%20st/` | `http://ho%20st/` |
+| non-ASCII or percent-encoded host | `http://ho%23st/` | *none* | *failure* | *failure* | `http://ho%23st/` | `http://ho%23st/` |
+| non-ASCII or percent-encoded host | `http://ho%25st/` | *none* | *failure* | *failure* | `http://ho%25st/` | `http://ho%25st/` |
+| non-ASCII or percent-encoded host | `http://ho%2Fst/` | *none* | *failure* | *failure* | `http://ho%2fst/` | `http://ho%2Fst/` |
+| non-ASCII or percent-encoded host | `http://ho%3Ast/` | *none* | *failure* | *failure* | `http://ho%3ast/` | `http://ho%3Ast/` |
+| non-ASCII or percent-encoded host | `http://ho%3Cst/` | *none* | *failure* | *failure* | `http://ho%3cst/` | `http://ho%3Cst/` |
+| non-ASCII or percent-encoded host | `http://ho%3Est/` | *none* | *failure* | *failure* | `http://ho%3est/` | `http://ho%3Est/` |
+| non-ASCII or percent-encoded host | `http://ho%3Fst/` | *none* | *failure* | *failure* | `http://ho%3fst/` | `http://ho%3Fst/` |
+| non-ASCII or percent-encoded host | `http://ho%40st/` | *none* | *failure* | *failure* | `http://ho%40st/` | `http://ho%40st/` |
+| non-ASCII or percent-encoded host | `http://ho%5Bst/` | *none* | *failure* | *failure* | `http://ho%5bst/` | `http://ho%5Bst/` |
+| non-ASCII or percent-encoded host | `http://ho%5Cst/` | *none* | *failure* | *failure* | `http://ho%5cst/` | `http://ho%5Cst/` |
+| non-ASCII or percent-encoded host | `http://ho%5Dst/` | *none* | *failure* | *failure* | `http://ho%5dst/` | `http://ho%5Dst/` |
+| non-ASCII or percent-encoded host | `http://ho%7Cst/` | *none* | *failure* | *failure* | `http://ho%7cst/` | `http://ho%7Cst/` |
+| non-ASCII or percent-encoded host | `http://ho%7Fst/` | *none* | *failure* | *failure* | `http://ho%7fst/` | `http://ho%7Fst/` |
+| non-ASCII or percent-encoded host | `ftp://example.com%80/` | *none* | *failure* | *failure* | `ftp://example.com%80/` | `ftp://example.com%80/` |
+| non-ASCII or percent-encoded host | `ftp://example.com%A0/` | *none* | *failure* | *failure* | `ftp://example.com%a0/` | `ftp://example.com%A0/` |
+| non-ASCII or percent-encoded host | `https://example.com%80/` | *none* | *failure* | *failure* | `https://example.com%80/` | `https://example.com%80/` |
+| non-ASCII or percent-encoded host | `https://example.com%A0/` | *none* | *failure* | *failure* | `https://example.com%a0/` | `https://example.com%A0/` |
+| non-ASCII or percent-encoded host | `ftp://%e2%98%83` | *none* | `ftp://xn--n3h` | `ftp://xn--n3h/` | `ftp://%e2%98%83` | `ftp://%e2%98%83` |
+| non-ASCII or percent-encoded host | `https://%e2%98%83` | *none* | `https://xn--n3h` | `https://xn--n3h/` | `https://%e2%98%83` | `https://%e2%98%83` |
+| non-ASCII or percent-encoded host | `file://%43%3A` | *none* | *failure* | *failure* | `file://%43%3a` | `file://%43%3A` |
+| non-ASCII or percent-encoded host | `file://%43%7C` | *none* | *failure* | *failure* | `file://%43%7c` | `file://%43%7C` |
+| non-ASCII or percent-encoded host | `file://C%7C` | *none* | *failure* | *failure* | `file://c%7c` | `file://C%7C` |
+| non-ASCII or percent-encoded host | `file://%43%7C/` | *none* | *failure* | *failure* | `file://%43%7c/` | `file://%43%7C/` |
+| non-ASCII or percent-encoded host | `https://%43%7C/` | *none* | *failure* | *failure* | `https://%43%7c/` | `https://%43%7C/` |
+| non-ASCII or percent-encoded host | `file://%C2%AD/p` | *none* | *failure* | *failure* | `file://%c2%ad/p` | `file://%C2%AD/p` |
+| non-ASCII or percent-encoded host | `https://%C2%AD/` | *none* | *failure* | *failure* | `https://%c2%ad/` | `https://%C2%AD/` |
 | numeric host that is not a dotted quad | `http://192.0x00A80001` | *none* | `http://192.168.0.1` | `http://192.168.0.1/` | `http://192.0x00a80001` | `http://192.0x00A80001` |
+| numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | `http://192.168.0.1` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://%30%78%63%30%2e%30%32%35%30.01` |
 | numeric host that is not a dotted quad | `http://192.168.0.257` | `http://other.com/` | *failure* | *failure* | `http://192.168.0.257` | `http://192.168.0.257` |
 | numeric host that is not a dotted quad | `http://192.168.257` | `http://other.com/` | `http://192.168.1.1` | `http://192.168.1.1/` | `http://192.168.257` | `http://192.168.257` |
 | numeric host that is not a dotted quad | `http://256` | `http://other.com/` | `http://0.0.1.0` | `http://0.0.1.0/` | `http://256` | `http://256` |
