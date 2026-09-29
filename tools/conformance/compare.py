@@ -27,7 +27,7 @@ from pathlib import Path
 import idna
 import rfc3986_oracle as rfc
 
-from yarl import URL
+from yarl import URL, Mode
 
 HERE = Path(__file__).resolve().parent
 WPT_DIR = HERE / "wpt"
@@ -67,10 +67,12 @@ def load_wpt(name: str) -> list[dict[str, str | None]]:
     return [case for case in json.loads(data) if isinstance(case, dict)]
 
 
-def yarl_outcome(reference: str, base: str | None) -> str | None:
+def yarl_outcome(reference: str, base: str | None, mode: Mode) -> str | None:
     """Return the resolved URL, or None when yarl fails or stays relative."""
     try:
-        url = URL(reference) if base is None else URL(base).join(URL(reference))
+        url = URL(reference, mode=mode)
+        if base is not None:
+            url = URL(base, mode=mode).join(url)
         href = str(url)
     except ValueError:
         return None
@@ -88,32 +90,33 @@ def same(first: str | None, second: str | None) -> bool:
 class Case:
     reference: str
     base: str | None
-    yarl: str | None
+    yarl: str | None  # WHATWG mode, the default
+    yarl_rfc: str | None  # RFC 3986 mode
     rfc: str | None
     wpt: str | None
 
     @property
     def bucket(self) -> str:
-        yarl_rfc = same(self.yarl, self.rfc)
-        yarl_wpt = same(self.yarl, self.wpt)
-        wpt_rfc = same(self.wpt, self.rfc)
-        if yarl_rfc and yarl_wpt:
-            return "agree"
-        if wpt_rfc:
-            return "yarl"
-        if yarl_rfc:
-            return "wpt"
-        if yarl_wpt:
-            return "rfc"
+        whatwg_ok = same(self.yarl, self.wpt)
+        rfc_ok = same(self.yarl_rfc, self.rfc)
+        if same(self.wpt, self.rfc):
+            return "agree" if whatwg_ok and rfc_ok else "yarl"
+        if whatwg_ok and rfc_ok:
+            return "both"
+        if rfc_ok:
+            return "whatwg_mode"
+        if whatwg_ok:
+            return "rfc_mode"
         return "none"
 
 
 BUCKETS = {
-    "agree": "All three agree",
+    "agree": "RFC 3986, WHATWG and yarl in both modes agree",
+    "both": "yarl follows each standard in its mode",
     "yarl": "yarl differs, RFC 3986 and WHATWG agree",
-    "wpt": "WHATWG differs, yarl follows RFC 3986",
-    "rfc": "RFC 3986 differs, yarl follows WHATWG",
-    "none": "All three differ",
+    "whatwg_mode": "WHATWG mode differs from WHATWG, RFC mode follows RFC 3986",
+    "rfc_mode": "RFC mode differs from RFC 3986, WHATWG mode follows WHATWG",
+    "none": "Both modes differ from their standard",
 }
 
 
@@ -206,12 +209,20 @@ def case_row(case: Case) -> list[str]:
         md(case.reference),
         md(case.base, "none"),
         md(case.yarl),
-        md(case.rfc),
         md(case.wpt),
+        md(case.yarl_rfc),
+        md(case.rfc),
     ]
 
 
-CASE_HEADER = ["Input", "Base", "yarl", "RFC 3986", "WHATWG"]
+CASE_HEADER = [
+    "Input",
+    "Base",
+    "yarl WHATWG mode",
+    "WHATWG",
+    "yarl RFC mode",
+    "RFC 3986",
+]
 
 
 def grouped(cases: list[Case]) -> list[str]:
@@ -283,7 +294,8 @@ def render() -> str:
         Case(
             reference=(ref := test["input"] or ""),
             base=test.get("base"),
-            yarl=yarl_outcome(ref, test.get("base")),
+            yarl=yarl_outcome(ref, test.get("base"), Mode.WHATWG),
+            yarl_rfc=yarl_outcome(ref, test.get("base"), Mode.RFC),
             rfc=rfc.outcome(ref, test.get("base")),
             wpt=None if test.get("failure") else test["href"],
         )
@@ -294,8 +306,8 @@ def render() -> str:
         by_bucket[case.bucket].append(case)
     pairs = Counter[str]()
     for case in cases:
-        pairs["yarl vs RFC 3986"] += not same(case.yarl, case.rfc)
-        pairs["yarl vs WHATWG"] += not same(case.yarl, case.wpt)
+        pairs["yarl WHATWG mode vs WHATWG"] += not same(case.yarl, case.wpt)
+        pairs["yarl RFC mode vs RFC 3986"] += not same(case.yarl_rfc, case.rfc)
         pairs["WHATWG vs RFC 3986"] += not same(case.wpt, case.rfc)
 
     lines = [
@@ -308,8 +320,10 @@ def render() -> str:
         f"([`{WPT_COMMIT[:12]}`](https://github.com/web-platform-tests/wpt/tree/"
         f"{WPT_COMMIT}/url/resources), {WPT_DATE}).",
         "",
-        "* **yarl**: `URL(input)`, or `URL(base).join(URL(input))` when the "
-        "case has a base; a result without a scheme counts as a failure.",
+        "* **yarl**: `URL(input, mode=mode)`, or `URL(base, mode=mode)"
+        ".join(URL(input, mode=mode))` when the case has a base, once in the "
+        "default WHATWG mode and once in RFC 3986 mode; a result without a "
+        "scheme counts as a failure.",
         "* **RFC 3986**: the strict oracle in `rfc3986_oracle.py`, with no "
         "input preprocessing.",
         "* **WHATWG**: the expected `href` from `urltestdata.json`.",
@@ -317,6 +331,11 @@ def render() -> str:
         "Outcomes that are equal after RFC 3986 section 6.2 normalization "
         "count as agreeing. Known deviations of yarl from the RFCs are "
         "listed as strict xfails in `tests/test_rfc*.py`.",
+        "",
+        "The goal is that every case is in one of the first two sections: "
+        "where the standards agree, yarl agrees with them in both modes; "
+        "where they differ, WHATWG mode follows WHATWG and RFC 3986 mode "
+        "follows RFC 3986.",
         "",
         "## Standards",
         "",
@@ -333,12 +352,12 @@ def render() -> str:
         "",
         f"## yarl differs, RFC 3986 and WHATWG agree ({len(by_bucket['yarl'])})",
         "",
-        "Every case where yarl is the odd one out. A change must not add rows "
-        "here; see AGENTS.md.",
+        "Every case where the standards agree and yarl, in either mode, does "
+        "not. A change must not add rows here; see AGENTS.md.",
         "",
         *table(CASE_HEADER, map(case_row, by_bucket["yarl"])),
     ]
-    for key in ("wpt", "rfc", "none"):
+    for key in ("whatwg_mode", "rfc_mode", "none", "both"):
         lines += [
             "",
             f"## {BUCKETS[key]} ({len(by_bucket[key])})",

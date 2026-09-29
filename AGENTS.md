@@ -386,13 +386,21 @@ vendored JSON files.
 
 ### Where RFC 3986 and WHATWG agree, yarl must agree too
 
+The report runs every case through yarl twice, once in the
+default WHATWG mode and once in RFC 3986 mode (`mode="rfc"`).
+The goal is that every case ends up in one of two sections:
+*RFC 3986, WHATWG and yarl in both modes agree*, or, where the
+standards differ, *yarl follows each standard in its mode*
+(WHATWG mode gives the WHATWG result, RFC mode the RFC 3986
+one).
+
 The report section *yarl differs, RFC 3986 and WHATWG agree*
 lists every case where both standards give the same result and
-yarl does something else. **A change that adds a row to that
-section is rejected**, whether it is new functionality, a
-refactor or a bug fix for something else. There is no
-"acceptable trade-off" exception: if both standards agree,
-yarl follows them.
+yarl, in either mode, does something else. **A change that adds
+a row to that section is rejected**, whether it is new
+functionality, a refactor or a bug fix for something else. There
+is no "acceptable trade-off" exception: if both standards agree,
+yarl follows them in both modes.
 
 - When the regenerated report shows a new row in that section,
   change the code until the row disappears; do not open the PR
@@ -401,10 +409,15 @@ yarl follows them.
   behaviour change, so it needs a `bugfix` or `breaking`
   fragment and a test, and the matching strict xfail in
   `tests/test_rfc*.py` must be turned into a plain passing case.
-- Rows in the other sections (only WHATWG differs, only RFC 3986
-  differs, all three differ) record deliberate choices. Moving a
-  case between those sections is a behaviour change that the PR
-  body must call out explicitly.
+- Where the standards differ, implement both legs in the same
+  PR: the WHATWG behaviour in WHATWG mode and the RFC 3986
+  behaviour in RFC mode, branching on the URL's mode.
+- Rows in the sections where one or both modes differ from their
+  standard (*WHATWG mode differs from WHATWG*, *RFC mode differs
+  from RFC 3986*, *Both modes differ from their standard*) are
+  open gaps or deliberate choices. Moving a case between those
+  sections, or into *yarl follows each standard in its mode*, is
+  a behaviour change that the PR body must call out explicitly.
 
 ## Cython quoter
 

@@ -181,3 +181,72 @@ def test_unpickle_default_style_state_is_whatwg() -> None:
     u.__setstate__((None, {"_val": val}))
     assert u._val == val
     assert u.mode is WHATWG
+
+
+# RFC 3986 userinfo cannot contain "@"; WHATWG percent-encodes all but the
+# last one.
+@pytest.mark.parametrize(
+    ("url", "whatwg"),
+    [
+        ("http://a@b@example.com/", "http://a%40b@example.com/"),
+        ("sc://a:b@c@example.com/", "sc://a:b%40c@example.com/"),
+    ],
+)
+def test_at_sign_in_userinfo(url: str, whatwg: str) -> None:
+    assert str(URL(url)) == whatwg
+    with pytest.raises(ValueError, match="userinfo cannot contain '@'"):
+        URL(url, mode=RFC)
+
+
+def test_at_sign_in_userinfo_rejected_by_build() -> None:
+    with pytest.raises(ValueError, match="userinfo cannot contain '@'"):
+        URL.build(scheme="http", authority="a@b@example.com", mode=RFC)
+    url = URL.build(scheme="http", authority="a@b@example.com")
+    assert str(url) == "http://a%40b@example.com"
+
+
+def test_rfc_mode_empty_host_with_at_sign_rejected() -> None:
+    with pytest.raises(ValueError):
+        URL("sc://us@er:pw@/", mode=RFC)
+
+
+# RFC 3987 encodes internationalized hosts with IDNA2008, which disallows
+# emoji; WHATWG uses UTS #46, which accepts them.
+@pytest.mark.parametrize("host", ["💩", "💩.example", "💩.123"])
+def test_idna2008_host_in_rfc_mode(host: str) -> None:
+    with pytest.raises(ValueError, match="not a valid IDNA2008 name"):
+        URL(f"http://{host}/", mode=RFC)
+    with pytest.raises(ValueError, match="not a valid IDNA2008 name"):
+        URL.build(scheme="http", host=host, mode=RFC)
+    with pytest.raises(ValueError, match="not a valid IDNA2008 name"):
+        URL.build(scheme="http", authority=f"user@{host}", mode=RFC)
+    with pytest.raises(ValueError, match="not a valid IDNA2008 name"):
+        URL("http://example.com/", mode=RFC).with_host(host)
+
+
+def test_idna2008_host_in_whatwg_mode() -> None:
+    assert str(URL("http://💩.example/")) == "http://xn--ls8h.example/"
+    assert URL("http://example.com/").with_host("💩").raw_host == "xn--ls8h"
+
+
+@pytest.mark.parametrize("mode", [RFC, WHATWG])
+def test_idna2008_host_accepted(mode: Mode) -> None:
+    url = URL("http://ñ.example/", mode=mode)
+    assert url.raw_host == "xn--ida.example"
+    # A zone identifier is not a host name, so IDNA does not apply to it.
+    ipv6 = URL("http://[fe80::1%25ñ]/", mode=mode)
+    assert ipv6.raw_host == "fe80::1%25ñ"
+
+
+@pytest.mark.parametrize("first", [RFC, WHATWG])
+def test_idna2008_check_shares_host_cache(first: Mode) -> None:
+    # The host encoding cache is shared by both modes; the IDNA2008 flag is
+    # cached with it, so the order of the calls does not matter.
+    host = "💩-cache.example"
+    for mode in (first, RFC if first is WHATWG else WHATWG):
+        if mode is RFC:
+            with pytest.raises(ValueError, match="not a valid IDNA2008 name"):
+                URL.build(scheme="http", host=host, mode=mode)
+        else:
+            url = URL.build(scheme="http", host=host, mode=mode)
+            assert url.raw_host == "xn---cache-hx54e.example"

@@ -2895,7 +2895,7 @@ def test_url_host_idna_normalizes_to_delimiter_rejected(delimiter: str) -> None:
 def _idna_collapses(code_point: int) -> bool:
     """True if IDNA encoding silently deletes ``code_point`` from a host."""
     try:
-        return _idna_encode(f"ab{chr(code_point)}cd.com") == "abcd.com"
+        return _idna_encode(f"ab{chr(code_point)}cd.com")[0] == "abcd.com"
     except UnicodeError:
         return False
 

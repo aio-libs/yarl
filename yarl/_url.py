@@ -274,6 +274,29 @@ def _check_missing_host(scheme: str, mode: Mode) -> None:
         raise ValueError("Invalid URL: host is required with userinfo or a port")
 
 
+def _idna2003_host_error(host: str) -> str:
+    """Explain why RFC 3986 mode rejected a non-ASCII host.
+
+    RFC 3987 converts an internationalized host with IDNA, now IDNA2008
+    (RFC 5891), which disallows code points such as emoji. WHATWG mode keeps
+    the IDNA2003 fallback of _idna_encode(), as UTS #46 accepts them.
+    """
+    return f"Host {host!r} is not a valid IDNA2008 name"
+
+
+# The RFC 3986 mode check below is guarded with ``mode is not _WHATWG`` at
+# the call sites, so that the default mode does not pay for a call on the
+# URL.build() hot path (CodSpeed).
+def _check_rfc_authority(authority: str) -> None:
+    """Reject "@" in the userinfo in RFC 3986 mode.
+
+    RFC 3986 userinfo cannot contain "@", so "sc://a@b@c/" has no valid
+    parse; WHATWG splits at the last "@" and percent-encodes the others.
+    """
+    if authority.count("@") > 1:
+        raise ValueError(f"Invalid URL: userinfo cannot contain '@' in {authority!r}")
+
+
 def _encode_url(url_str: str, mode: Mode) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
@@ -284,6 +307,8 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
             # Complex netloc
+            if mode is not _WHATWG:
+                _check_rfc_authority(netloc)
             username, password, host, port = split_netloc(netloc)
         else:
             username = password = port = None
@@ -297,7 +322,12 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
         # the host, producing a ``str(url)`` that yarl cannot re-parse
         # (#1829). Validate like the builder APIs do, but keep accepting an
         # empty IPv6 zone identifier, which parsing has always allowed (#998).
-        host, numeric = _encode_host(host, validate_host=True, reject_empty_zone=False)
+        encoded, numeric, idna2003 = _encode_host(
+            host, validate_host=True, reject_empty_zone=False
+        )
+        if idna2003 and mode is not _WHATWG:
+            raise ValueError(_idna2003_host_error(host))
+        host = encoded
         if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
             raise ValueError(_numeric_host_error(host))
         # Remove brackets as host encoder adds back brackets for IPv6 addresses.
@@ -683,17 +713,26 @@ class URL:
         self._scheme = scheme
         _host: str | None = None
         if authority:
+            if mode is not _WHATWG:
+                _check_rfc_authority(authority)
             user, password, _host, port = split_netloc(authority)
             if not _host:
                 _check_missing_host(scheme, mode)
             if _host:
-                _host, numeric = _encode_host(_host, validate_host=False)
+                encoded_host, numeric, idna2003 = _encode_host(
+                    _host, validate_host=False
+                )
+                if idna2003 and mode is not _WHATWG:
+                    raise ValueError(_idna2003_host_error(_host))
+                _host = encoded_host
                 if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
                     raise ValueError(_numeric_host_error(_host))
             else:
                 _host = ""
         elif host:
-            _host, numeric = _encode_host(host, validate_host=True)
+            _host, numeric, idna2003 = _encode_host(host, validate_host=True)
+            if idna2003 and mode is not _WHATWG:
+                raise ValueError(_idna2003_host_error(host))
             if numeric and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
                 raise ValueError(_numeric_host_error(_host))
         else:
@@ -1560,7 +1599,9 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        encoded_host, numeric = _encode_host(host, validate_host=True)
+        encoded_host, numeric, idna2003 = _encode_host(host, validate_host=True)
+        if idna2003 and self._mode is not _WHATWG:
+            raise ValueError(_idna2003_host_error(host))
         if numeric and self._mode is _WHATWG and self._scheme in SPECIAL_SCHEMES:
             raise ValueError(_numeric_host_error(encoded_host))
         port = self.explicit_port
@@ -2137,11 +2178,16 @@ def _idna_decode(raw: str) -> str:
 
 
 @lru_cache(_DEFAULT_IDNA_SIZE)
-def _idna_encode(host: str) -> str:
+def _idna_encode(host: str) -> tuple[str, bool]:
+    """Encode a host with IDNA2008 and UTS #46, or else with IDNA2003.
+
+    The flag tells if the IDNA2003 fallback was needed, which RFC 3986 mode
+    rejects.
+    """
     try:
-        return idna.encode(host, uts46=True).decode("ascii")
+        return idna.encode(host, uts46=True).decode("ascii"), False
     except UnicodeError:
-        return host.encode("idna").decode("ascii")
+        return host.encode("idna").decode("ascii"), True
 
 
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
@@ -2198,12 +2244,13 @@ def _is_invalid_numeric_host(host: str) -> bool:
 @lru_cache(_DEFAULT_ENCODE_SIZE)
 def _encode_host(
     host: str, validate_host: bool, *, reject_empty_zone: bool = True
-) -> tuple[str, bool]:
+) -> tuple[str, bool, bool]:
     """Encode host part of URL.
 
-    The flag tells if the host ends in a number after a name label, like
-    "example.123", which WHATWG rejects for special schemes; it is computed
-    here so that the check is cached with the encoding.
+    The first flag tells if the host ends in a number after a name label,
+    like "example.123", which WHATWG rejects for special schemes; the second
+    one if IDNA2008 could not encode the host, which RFC 3986 mode rejects.
+    Both are computed here so that the checks are cached with the encoding.
     """
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
@@ -2248,8 +2295,8 @@ def _encode_host(
             # LRU to keep the cache size small
             host = ip.compressed
             if ip.version == 6:
-                return (f"[{host}{sep}{zone}]" if sep else f"[{host}]"), False
-            return (f"{host}{sep}{zone}" if sep else host), False
+                return (f"[{host}{sep}{zone}]" if sep else f"[{host}]"), False, False
+            return (f"{host}{sep}{zone}" if sep else host), False, False
 
     # IDNA encoding is slow, skip it for ASCII-only strings
     if host.isascii():
@@ -2267,7 +2314,7 @@ def _encode_host(
             raise ValueError(
                 f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
             ) from None
-        return host, bool(host) and _is_invalid_numeric_host(host)
+        return host, bool(host) and _is_invalid_numeric_host(host), False
 
     # IDNA/UTS-46 mapping silently deletes default-ignorable code points, which
     # would turn e.g. ``e<ZWSP>vil.com`` into ``evil.com``, a different host
@@ -2280,7 +2327,7 @@ def _encode_host(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"(at position {invalid.start()})"
         ) from None
-    encoded = _idna_encode(host)
+    encoded, idna2003 = _idna_encode(host)
     # IDNA uses NFKC equivalence, so normalization can expand a non-ascii
     # character into an ASCII delimiter (e.g. the fullwidth solidus U+FF0F
     # becomes '/'). split_url's _check_netloc screens '/?#@:%' but not '[',
@@ -2295,7 +2342,7 @@ def _encode_host(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"after IDNA normalization to {encoded!r}"
         ) from None
-    return encoded, _is_invalid_numeric_host(encoded)
+    return encoded, _is_invalid_numeric_host(encoded), idna2003
 
 
 @rewrite_module
