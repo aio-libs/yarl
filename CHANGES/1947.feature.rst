@@ -1,2 +1,2 @@
-Add ``__slots__`` to yarl quoters in pure python for enhanced speed and performance.
+Added ``__slots__`` to yarl quoters in pure python for enhanced speed and performance.
 -- by :user:`Vizonex`.
