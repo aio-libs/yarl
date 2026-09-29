@@ -448,6 +448,7 @@ def test_build_percent_encoded() -> None:
         path="/%2d",
         query_string="k%2d=v%2d",
         fragment="f%2d",
+        mode="rfc",
     )
     assert str(u) == "http://u%252d:p%252d@%2d.org/%252d?k%252d=v%252d#f%252d"
     assert u.raw_host == "%2d.org"
@@ -467,8 +468,17 @@ def test_build_percent_encoded() -> None:
     assert u.fragment == "f%2d"
 
 
+def test_build_percent_encoded_host_whatwg() -> None:
+    # The WHATWG host parser percent-decodes the host of a special URL.
+    u = URL.build(scheme="http", host="%2d.org", user="u%2d")
+    assert str(u) == "http://u%252d@-.org"
+    assert u.raw_host == "-.org"
+    u = URL.build(scheme="sc", host="%2d.org")
+    assert u.raw_host == "%2d.org"
+
+
 def test_build_with_authority_percent_encoded() -> None:
-    u = URL.build(scheme="http", authority="u%2d:p%2d@%2d.org")
+    u = URL.build(scheme="http", authority="u%2d:p%2d@%2d.org", mode="rfc")
     assert str(u) == "http://u%252d:p%252d@%2d.org"
     assert u.raw_host == "%2d.org"
     assert u.host == "%2d.org"
@@ -478,6 +488,12 @@ def test_build_with_authority_percent_encoded() -> None:
     assert u.password == "p%2d"
     assert u.raw_authority == "u%252d:p%252d@%2d.org"
     assert u.authority == "u%2d:p%2d@%2d.org:80"
+
+
+def test_build_with_authority_percent_encoded_host_whatwg() -> None:
+    u = URL.build(scheme="http", authority="u%2d:p%2d@%2d.org")
+    assert str(u) == "http://u%252d:p%252d@-.org"
+    assert u.raw_host == "-.org"
 
 
 def test_build_with_authority_percent_encoded_already_encoded() -> None:

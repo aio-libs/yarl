@@ -297,20 +297,32 @@ def test_reserved_percent_encoding_preserved(component: str, char: str) -> None:
         ("http://ExAmPlE.CoM/", "example.com"),
         ("http://1.2.3.4/", "1.2.3.4"),
         ("http://[2001:DB8::7]/", "2001:db8::7"),
+        # WHATWG mode decodes the host.
+        ("http://ex%41mple.com/", "example.com"),
+        ("http://EX%41mple.com/", "example.com"),
+    ],
+)
+def test_host_normalization(url: str, host: str) -> None:
+    assert URL(url).raw_host == host
+
+
+@pytest.mark.parametrize(
+    ("url", "host"),
+    [
         pytest.param(
             "http://ex%41mple.com/",
             "example.com",
             marks=diverges("percent-encoded unreserved octets in host kept"),
         ),
         pytest.param(
-            "http://EX%4Ample.com/",
-            "example.com",
+            "http://EX%2Fmple.com/",
+            "ex%2Fmple.com",
             marks=diverges("host lowercasing also lowercases percent-encodings"),
         ),
     ],
 )
-def test_host_normalization(url: str, host: str) -> None:
-    assert URL(url).raw_host == host
+def test_host_normalization_rfc_mode(url: str, host: str) -> None:
+    assert URL(url, mode="rfc").raw_host == host
 
 
 # Section 3.2.3: the port may be empty and may carry leading zeros.
@@ -442,16 +454,19 @@ def test_join_scheme_independent(base: str, reference: str, expected: str) -> No
             id="6.2.3-default-port",
             marks=diverges("explicit default port makes URLs compare unequal"),
         ),
-        pytest.param(
-            "http://ex%41mple.com/",
-            "http://example.com/",
-            id="6.2.2.2-host",
-            marks=diverges("percent-encoded unreserved octets in host kept"),
-        ),
+        pytest.param("http://ex%41mple.com/", "http://example.com/", id="6.2.2.2-host"),
     ],
 )
 def test_equivalent(first: str, second: str) -> None:
     assert URL(first) == URL(second)
+
+
+@diverges("percent-encoded unreserved octets in host kept")
+def test_equivalent_host_rfc_mode() -> None:
+    # Section 6.2.2.2; WHATWG mode decodes the host, see test_equivalent.
+    assert URL("http://ex%41mple.com/", mode="rfc") == URL(
+        "http://example.com/", mode="rfc"
+    )
 
 
 # Section 2.2: replacing a reserved character by its percent-encoding

@@ -1,0 +1,10 @@
+Percent-decoded the hosts of the ``http``, ``https``, ``ws``, ``wss``,
+``ftp`` and ``file`` schemes in the default WHATWG mode, following the
+WHATWG URL Standard: ``http://ex%41mple.com/`` now becomes
+``http://example.com/`` and ``https://%e2%98%83/`` becomes
+``https://xn--n3h/``, and a host that decodes to an invalid one, such as
+``http://ho%00st/``, is rejected. The host is decoded when parsing, in
+:meth:`~yarl.URL.build`, :meth:`~yarl.URL.with_host`,
+:meth:`~yarl.URL.with_scheme` and :meth:`~yarl.URL.join`. Other schemes,
+RFC 3986 mode and ``encoded=True`` keep the host as written
+-- by :user:`asvetlov`.
