@@ -301,12 +301,13 @@ def _check_rfc_authority(authority: str) -> None:
 def _special_authority_url(
     scheme: str, path: str, query: str, fragment: str, empty: int, encoded: bool
 ) -> "URL":
-    """Parse "http:host/p" in WHATWG mode, where the authority has no "//".
+    """Parse "http:host/p" or "http:///host/p" in WHATWG mode.
 
     The WHATWG URL Standard skips any slashes after the scheme of a special
-    URL and reads an authority, so "http:/example.com/" is
-    "http://example.com/". Against a base with the same scheme it is the
-    relative reference "/example.com/" instead; the path is kept for join().
+    URL and reads an authority, so "http:/example.com/" and
+    "http:///example.com/" are "http://example.com/". Against a base with the
+    same scheme, an input without "//" is the relative reference
+    "/example.com/" instead; its path is kept for join().
     """
     url_str = f"{scheme}://{path.lstrip('/')}"
     if query or empty & EMPTY_QUERY:
@@ -318,16 +319,18 @@ def _special_authority_url(
     else:
         url = _encode_url(url_str, _WHATWG)
         path = PATH_REQUOTER(path)
-    url._cache["_join_path"] = path
+    if not empty & EMPTY_AUTHORITY:
+        url._cache["_join_path"] = path
     return url
 
 
 def _is_special_authority_path(scheme: str, path: str, mode: Mode) -> bool:
-    """Tell if an authority-less path is an authority in WHATWG mode.
+    """Tell if the path of a URL without a host is its authority in WHATWG mode.
 
-    Only a path with text after the leading slashes is, so "http:" and
-    "http:/" stay references to their base, as the WHATWG parser reads them
-    against a base with the same scheme; alone it rejects them.
+    Only a path with text after the leading slashes is, so "http:", "http:/"
+    and "http:///" stay as they are: against a base with the same scheme the
+    WHATWG parser reads the first two as references to the base, and alone
+    it rejects all of them.
     """
     return mode is _WHATWG and scheme in SCHEME_REQUIRES_HOST and path.lstrip("/") != ""
 
@@ -337,11 +340,7 @@ def _encode_url(url_str: str, mode: Mode) -> "URL":
     cache: _InternalURLCache = {}
     host: str | None
     scheme, netloc, path, query, fragment, empty = split_url(url_str)
-    if (
-        not netloc
-        and not empty & EMPTY_AUTHORITY
-        and _is_special_authority_path(scheme, path, mode)
-    ):
+    if not netloc and _is_special_authority_path(scheme, path, mode):
         return _special_authority_url(scheme, path, query, fragment, empty, False)
     if not netloc:  # netloc
         host = ""
@@ -424,11 +423,7 @@ def _pre_encoded_url(url_str: str, mode: Mode) -> "URL":
     """Parse pre-encoded URL."""
     val = split_url(url_str)
     scheme, netloc, path, query, fragment, empty = val
-    if (
-        not netloc
-        and not empty & EMPTY_AUTHORITY
-        and _is_special_authority_path(scheme, path, mode)
-    ):
+    if not netloc and _is_special_authority_path(scheme, path, mode):
         return _special_authority_url(scheme, path, query, fragment, empty, True)
     self = object.__new__(URL)
     (

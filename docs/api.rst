@@ -106,12 +106,13 @@ and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
 
 For the special schemes other than ``file``, the default WHATWG mode reads
 the text after the scheme as the authority even without ``//``, skipping any
-leading slashes, as the WHATWG URL Standard does: ``http:example.com/`` and
-``http:/example.com/`` are both ``http://example.com/``. Such a URL with
-userinfo or a port but no host, like ``http:@/example.com``, is rejected.
-RFC 3986 mode keeps the text as the path of a URL without an authority.
-:meth:`URL.join` still resolves such a URL as a relative reference against a
-base with the same scheme, see there.
+number of leading slashes, as the WHATWG URL Standard does:
+``http:example.com/``, ``http:/example.com/`` and ``http:///example.com/`` are
+all ``http://example.com/``. Such a URL with userinfo or a port but no host,
+like ``http:@/example.com``, is rejected. RFC 3986 mode keeps the text as the
+path of a URL without a host. :meth:`URL.join` still resolves a URL written
+without ``//`` as a relative reference against a base with the same scheme,
+see there.
 
 .. doctest::
 
@@ -122,8 +123,8 @@ base with the same scheme, see there.
 
 .. versionchanged:: 1.26
 
-   ``http:example.com/`` was a URL without an authority in WHATWG mode,
-   printed as ``http:///example.com/``.
+   ``http:example.com/`` and ``http:///example.com/`` were URLs without a
+   host in WHATWG mode, printed as ``http:///example.com/``.
 
 Leading and trailing C0 control characters and spaces are stripped, and tabs
 and newlines are removed, in both modes, as the WHATWG URL Standard does and

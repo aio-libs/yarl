@@ -1,10 +1,10 @@
-"""Special-scheme URLs written without "//" before the authority.
+"""Special-scheme URLs without "//" or with extra slashes before the host.
 
 The WHATWG URL Standard skips the slashes after the scheme of a special URL
-other than file, so "http:example.com/" and "http:/example.com/" are both
-"http://example.com/". Against a base with the same scheme the same input is
-a relative reference instead. yarl follows that in WHATWG mode; RFC 3986
-mode keeps such a URL without an authority.
+other than file, so "http:example.com/", "http:/example.com/" and
+"http:///example.com/" are all "http://example.com/". Against a base with the
+same scheme an input without "//" is a relative reference instead. yarl
+follows that in WHATWG mode; RFC 3986 mode keeps such a URL without a host.
 """
 
 import pickle
@@ -29,6 +29,9 @@ from yarl import URL
         ("http:example.com?q#f", "http://example.com/?q#f"),
         ("http:example.com/p?#", "http://example.com/p?#"),
         ("http:example.com/%7e", "http://example.com/~"),
+        ("http:///example.com/", "http://example.com/"),
+        ("https:////example.com/a?q#f", "https://example.com/a?q#f"),
+        ("ws:///a:b@example.com:8080", "ws://a:b@example.com:8080"),
     ],
 )
 def test_parsed_as_authority(url: str, expected: str) -> None:
@@ -36,10 +39,11 @@ def test_parsed_as_authority(url: str, expected: str) -> None:
     assert URL(url) == URL(expected)
 
 
-def test_parsed_as_authority_encoded() -> None:
-    url = URL("http:/example.com/%7e", encoded=True)
-    assert str(url) == "http://example.com/%7e"
-    assert url.host == "example.com"
+@pytest.mark.parametrize("url", ["http:/example.com/%7e", "http:///example.com/%7e"])
+def test_parsed_as_authority_encoded(url: str) -> None:
+    parsed = URL(url, encoded=True)
+    assert str(parsed) == "http://example.com/%7e"
+    assert parsed.host == "example.com"
 
 
 @pytest.mark.parametrize(
@@ -51,6 +55,7 @@ def test_parsed_as_authority_encoded() -> None:
         "http:@:www.example.com",
         "https:[61:27]/:foo",
         "http:foo.123/",
+        "http:///@/www.example.com",
     ],
 )
 def test_rejected(url: str) -> None:
@@ -65,6 +70,9 @@ def test_rejected(url: str) -> None:
         ("http:", "http://", "http:"),
         ("http:/", "http:///", "http:/"),
         ("http:?q", "http://?q", "http:?q"),
+        ("http://", "http://", "http://"),
+        ("http:///", "http:///", "http:///"),
+        ("http:///?q", "http:///?q", "http:///?q"),
         # file and non-special schemes are not affected.
         ("file:p", "file:///p", "file:p"),
         ("sc:example.com/", "sc:example.com/", "sc:example.com/"),
@@ -78,7 +86,12 @@ def test_kept_without_authority(url: str, whatwg: str, rfc: str) -> None:
 
 @pytest.mark.parametrize(
     "url",
-    ["http:example.com/", "http:/example.com/", "http:@/www.example.com"],
+    [
+        "http:example.com/",
+        "http:/example.com/",
+        "http:@/www.example.com",
+        "http:///example.com/",
+    ],
 )
 def test_rfc_mode_keeps_path(url: str) -> None:
     parsed = URL(url, mode="rfc")
@@ -98,6 +111,9 @@ def test_rfc_mode_keeps_path(url: str) -> None:
         ("http://h/foo/bar", "https:example.com/", "https://example.com/"),
         ("http://h/foo/bar", "ftp:/example.com/", "ftp://example.com/"),
         ("sc://h/foo/bar", "http:example.com/", "http://example.com/"),
+        # With "//" the input is absolute against any base, as in WHATWG.
+        ("http://h/foo/bar", "http:///example.com/", "http://example.com/"),
+        ("http://h/foo/bar", "http:////example.com/p", "http://example.com/p"),
     ],
 )
 def test_join(base: str, reference: str, expected: str) -> None:
@@ -132,8 +148,9 @@ def test_pickle_keeps_join_path() -> None:
     assert str(URL("http://h/foo/bar").join(url)) == "http://h/foo/example.com/"
 
 
-def test_pickle_without_join_path() -> None:
-    url = URL("http://example.com/")
-    assert len(url.__getstate__()) == 3
-    loaded = pickle.loads(pickle.dumps(url))
+@pytest.mark.parametrize("url", ["http://example.com/", "http:///example.com/"])
+def test_pickle_without_join_path(url: str) -> None:
+    parsed = URL(url)
+    assert len(parsed.__getstate__()) == 3
+    loaded = pickle.loads(pickle.dumps(parsed))
     assert str(URL("http://h/foo/bar").join(loaded)) == "http://example.com/"
