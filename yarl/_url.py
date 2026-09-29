@@ -2300,18 +2300,31 @@ def _numeric_host(host: str, whatwg_host: str | None) -> str:
     return whatwg_host
 
 
+# A number with more significant digits than this in its base is at least
+# 2**32, out of range for any part of an IPv4 address. Checking the length
+# first keeps int() away from huge labels, which Python refuses to convert.
+_IPV4_MAX_DIGITS = {16: 8, 8: 11, 10: 10}
+_IPV4_OUT_OF_RANGE = 2**32
+
+
 def _ipv4_number(label: str) -> int | None:
     """Parse a WHATWG IPv4 number: decimal, 0x hex or 0 octal."""
     if label[:2] in ("0x", "0X"):
-        digits = label[2:]
-        if all(c in _HEX_DIGITS for c in digits):
-            return int(digits, 16) if digits else 0
+        digits, base = label[2:], 16
+        if not all(c in _HEX_DIGITS for c in digits):
+            return None
+    elif label == "" or not label.isascii() or not label.isdigit():
         return None
-    if label == "" or not label.isascii() or not label.isdigit():
-        return None
-    if label[0] == "0" and len(label) > 1:
-        return int(label, 8) if "8" not in label and "9" not in label else None
-    return int(label)
+    elif label[0] == "0" and len(label) > 1:
+        digits, base = label[1:], 8
+        if "8" in digits or "9" in digits:
+            return None
+    else:
+        digits, base = label, 10
+    digits = digits.lstrip("0")
+    if len(digits) > _IPV4_MAX_DIGITS[base]:
+        return _IPV4_OUT_OF_RANGE
+    return int(digits, base) if digits else 0
 
 
 def _whatwg_numeric_host(host: str) -> str | None:

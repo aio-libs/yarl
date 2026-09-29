@@ -179,3 +179,12 @@ def test_mode_change() -> None:
     assert URL(URL("http://1.2.3/"), mode="rfc").host == "1.2.0.3"
     url = URL(URL("http://1.2.3.4/", mode="rfc"), mode="whatwg")
     assert str(url) == "http://1.2.3.4/"
+
+
+@pytest.mark.parametrize("digits", ["1" * 5000, "0x" + "f" * 5000, "0" + "7" * 5000])
+def test_huge_number(digits: str) -> None:
+    # Longer than Python converts with int(); must not leak that error.
+    with pytest.raises(ValueError, match="ends in a number"):
+        URL(f"http://{digits}/")
+    assert URL(f"http://{digits}/", mode="rfc").host == digits
+    assert URL(f"sc://{digits}/").host == digits
