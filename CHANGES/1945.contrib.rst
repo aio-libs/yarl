@@ -1,0 +1,4 @@
+Built yarl without Cython line tracing in the aiohttp CI job, whose
+coverage run crashed on the ``yarl/_quoting_c.pyx`` source it could
+not find once :pr:`1808` made the tracing record lines on Python 3.13
+-- by :user:`asvetlov`.

@@ -64,8 +64,12 @@ jobs:
       run: make cythonize
     - name: Install yarl
       working-directory: vendor/yarl
+      # Editable builds default to Cython line tracing, which aiohttp's
+      # coverage run then records for yarl/_quoting_c.pyx and fails to
+      # report, as that path is not in the aiohttp checkout.
       run: >-
         uv pip install -e .
+        --config-settings=with-cython-tracing=false
     - name: Run tests
       # aiohttp 3.14+ no longer enables xdist via its setup.cfg, so pass
       # --numprocesses=auto here to keep the run parallel on every branch.
