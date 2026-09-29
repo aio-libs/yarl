@@ -58,15 +58,15 @@ def test_http_empty_path() -> None:
         "http://user@/",
         pytest.param(
             "http:///path",
-            marks=diverges("empty authority parses as a relative URL"),
+            marks=diverges("WHATWG mode reads the path as the authority"),
         ),
         pytest.param(
             "https:///path",
-            marks=diverges("empty authority parses as a relative URL"),
+            marks=diverges("WHATWG mode reads the path as the authority"),
         ),
         pytest.param(
             "http:/example.com/",
-            marks=diverges("an empty authority is inserted"),
+            marks=diverges("WHATWG mode reads the path as the authority"),
         ),
     ],
 )

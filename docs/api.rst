@@ -96,13 +96,35 @@ and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
    'data:///test'
    >>> str(URL('gopher:/example.com/'))
    'gopher:/example.com/'
-   >>> str(URL('http:/x')), str(URL('http:/x', mode='rfc'))
-   ('http:///x', 'http:/x')
+   >>> str(URL('file:/p')), str(URL('file:/p', mode='rfc'))
+   ('file:///p', 'file:/p')
 
 .. versionchanged:: 1.26
 
    Empty components are kept; previously they were dropped, and ``//`` was
    added for every scheme listed in ``urllib.parse.uses_netloc``.
+
+For the special schemes other than ``file``, the default WHATWG mode reads
+the text after the scheme as the authority even without ``//``, skipping any
+number of leading slashes, as the WHATWG URL Standard does:
+``http:example.com/``, ``http:/example.com/`` and ``http:///example.com/`` are
+all ``http://example.com/``. Such a URL with userinfo or a port but no host,
+like ``http:@/example.com``, is rejected. RFC 3986 mode keeps the text as the
+path of a URL without a host. :meth:`URL.join` still resolves a URL written
+without ``//`` as a relative reference against a base with the same scheme,
+see there.
+
+.. doctest::
+
+   >>> URL('http:example.com/path')
+   URL('http://example.com/path')
+   >>> URL('http:example.com/path', mode='rfc')
+   URL('http:example.com/path', mode='rfc')
+
+.. versionchanged:: 1.26
+
+   ``http:example.com/`` and ``http:///example.com/`` were URLs without a
+   host in WHATWG mode, printed as ``http:///example.com/``.
 
 Leading and trailing C0 control characters and spaces are stripped, and tabs
 and newlines are removed, in both modes, as the WHATWG URL Standard does and
@@ -1221,6 +1243,20 @@ The path is encoded if needed.
 
       >>> URL('urn:example:animal').join(URL('#ferret'))
       URL('urn:example:animal#ferret')
+
+   A ``url`` with the same scheme as the base but without ``//``, like
+   ``http:page.html``, is resolved as a relative reference, which
+   :rfc:`3986#section-5.4.2` permits and the WHATWG URL Standard requires.
+   That holds for a URL parsed in WHATWG mode too, although it has an
+   authority on its own (see :class:`URL`):
+
+   .. doctest::
+
+      >>> base = URL('http://example.com/path/index.html')
+      >>> base.join(URL('http:page.html'))
+      URL('http://example.com/path/page.html')
+      >>> URL('http:page.html')
+      URL('http://page.html')
 
    .. note::
 
