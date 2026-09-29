@@ -13,7 +13,7 @@ comment:
   require_changes: true
 
 coverage:
-  range: 99.34..100
+  range: 99.61..100
   status:
     patch:
       default:
@@ -22,13 +22,13 @@ coverage:
         - pytest
     project:
       default:
-        target: 99%
+        target: 99.61%
       lib:
         flags:
         - pytest
         paths:
         - yarl/
-        target: 97.91%
+        target: 98.73%
       packaging:
         paths:
         - packaging/
@@ -38,6 +38,6 @@ coverage:
         - pytest
         paths:
         - tests/
-        target: 99.87%  # 100%
+        target: 100%
 
 ...
