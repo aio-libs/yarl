@@ -38,16 +38,16 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986, WHATWG and yarl in both modes agree | 450 |
-| yarl follows each standard in its mode | 61 |
+| yarl follows each standard in its mode | 99 |
 | yarl differs, RFC 3986 and WHATWG agree | 1 |
-| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 | 169 |
-| RFC mode differs from RFC 3986, WHATWG mode follows WHATWG | 116 |
-| Both modes differ from their standard | 99 |
+| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 | 131 |
+| RFC mode differs from RFC 3986, WHATWG mode follows WHATWG | 117 |
+| Both modes differ from their standard | 98 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 269 |
+| yarl WHATWG mode vs WHATWG | 230 |
 | yarl RFC mode vs RFC 3986 | 216 |
 | WHATWG vs RFC 3986 | 445 |
 
@@ -59,19 +59,19 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 |---|---|---|---|---|---|
 | `http://[::%31]` | `http://other.com/` | `http://[::%31]` | *failure* | `http://[::%31]` | *failure* |
 
-## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 (169)
+## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986 (131)
 
 | Category | Cases |
 |---|---|
 | non-ASCII or percent-encoded host | 73 |
-| numeric host that is not a dotted quad | 29 |
-| other | 27 |
 | file scheme | 19 |
+| other | 17 |
 | characters outside the RFC 3986 grammar | 6 |
 | backslash | 6 |
 | empty host | 4 |
 | special scheme without an authority | 3 |
 | non-special scheme | 2 |
+| numeric host that is not a dotted quad | 1 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986 |
 |---|---|---|---|---|---|---|
@@ -148,62 +148,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | non-ASCII or percent-encoded host | `` foo://!"$%&'()*+,-.;=_`{}~/ `` | *none* | *failure* | `` foo://!"$%&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
 | non-ASCII or percent-encoded host | `https://a%C2%ADb/` | *none* | `https://a%c2%adb/` | `https://ab/` | `https://a%c2%adb/` | `https://a%C2%ADb/` |
 | non-ASCII or percent-encoded host | `https://%C2%AD/` | *none* | `https://%c2%ad/` | *failure* | `https://%c2%ad/` | `https://%C2%AD/` |
-| numeric host that is not a dotted quad | `http://192.0x00A80001` | *none* | `http://192.0x00a80001` | `http://192.168.0.1/` | `http://192.0x00a80001` | `http://192.0x00A80001` |
-| numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://%30%78%63%30%2e%30%32%35%30.01` |
-| numeric host that is not a dotted quad | `http://192.168.0.257` | `http://other.com/` | `http://192.168.0.257` | *failure* | `http://192.168.0.257` | `http://192.168.0.257` |
-| numeric host that is not a dotted quad | `http://192.168.257` | `http://other.com/` | `http://192.168.257` | `http://192.168.1.1/` | `http://192.168.257` | `http://192.168.257` |
-| numeric host that is not a dotted quad | `http://256` | `http://other.com/` | `http://256` | `http://0.0.1.0/` | `http://256` | `http://256` |
-| numeric host that is not a dotted quad | `http://999999999` | `http://other.com/` | `http://999999999` | `http://59.154.201.255/` | `http://999999999` | `http://999999999` |
-| numeric host that is not a dotted quad | `http://10000000000` | `http://other.com/` | `http://10000000000` | *failure* | `http://10000000000` | `http://10000000000` |
-| numeric host that is not a dotted quad | `http://4294967295` | `http://other.com/` | `http://4294967295` | `http://255.255.255.255/` | `http://4294967295` | `http://4294967295` |
-| numeric host that is not a dotted quad | `http://4294967296` | `http://other.com/` | `http://4294967296` | *failure* | `http://4294967296` | `http://4294967296` |
-| numeric host that is not a dotted quad | `http://18446744073709551616` | `http://other.com/` | `http://18446744073709551616` | *failure* | `http://18446744073709551616` | `http://18446744073709551616` |
-| numeric host that is not a dotted quad | `http://18446744075840258049` | `http://other.com/` | `http://18446744075840258049` | *failure* | `http://18446744075840258049` | `http://18446744075840258049` |
-| numeric host that is not a dotted quad | `http://0xffffffff` | `http://other.com/` | `http://0xffffffff` | `http://255.255.255.255/` | `http://0xffffffff` | `http://0xffffffff` |
-| numeric host that is not a dotted quad | `http://0xffffffff1` | `http://other.com/` | `http://0xffffffff1` | *failure* | `http://0xffffffff1` | `http://0xffffffff1` |
-| numeric host that is not a dotted quad | `http://256.256.256.256` | `http://other.com/` | `http://256.256.256.256` | *failure* | `http://256.256.256.256` | `http://256.256.256.256` |
-| numeric host that is not a dotted quad | `https://0x.0x.0` | *none* | `https://0x.0x.0` | `https://0.0.0.0/` | `https://0x.0x.0` | `https://0x.0x.0` |
-| numeric host that is not a dotted quad | `https://0x.0x.0x.0x` | *none* | `https://0x.0x.0x.0x` | `https://0.0.0.0/` | `https://0x.0x.0x.0x` | `https://0x.0x.0x.0x` |
-| numeric host that is not a dotted quad | `https://00.00.00.00` | *none* | `https://00.00.00.00` | `https://0.0.0.0/` | `https://00.00.00.00` | `https://00.00.00.00` |
-| numeric host that is not a dotted quad | `https://0000000000000000000000000000000000000000177.0.0.1` | *none* | `https://0000000000000000000000000000000000000000177.0.0.1` | `https://127.0.0.1/` | `https://0000000000000000000000000000000000000000177.0.0.1` | `https://0000000000000000000000000000000000000000177.0.0.1` |
-| numeric host that is not a dotted quad | `https://0x100000000/test` | *none* | `https://0x100000000/test` | *failure* | `https://0x100000000/test` | `https://0x100000000/test` |
-| numeric host that is not a dotted quad | `https://256.0.0.1/test` | *none* | `https://256.0.0.1/test` | *failure* | `https://256.0.0.1/test` | `https://256.0.0.1/test` |
-| numeric host that is not a dotted quad | `http://1.2.3.4.5` | `http://other.com/` | `http://1.2.3.4.5` | *failure* | `http://1.2.3.4.5` | `http://1.2.3.4.5` |
-| numeric host that is not a dotted quad | `http://256.256.256.256.256` | `http://other.com/` | `http://256.256.256.256.256` | *failure* | `http://256.256.256.256.256` | `http://256.256.256.256.256` |
-| numeric host that is not a dotted quad | `http://1.2.3.08` | *none* | `http://1.2.3.08` | *failure* | `http://1.2.3.08` | `http://1.2.3.08` |
-| numeric host that is not a dotted quad | `http://1.2.3.09` | *none* | `http://1.2.3.09` | *failure* | `http://1.2.3.09` | `http://1.2.3.09` |
-| numeric host that is not a dotted quad | `http://09.2.3.4` | *none* | `http://09.2.3.4` | *failure* | `http://09.2.3.4` | `http://09.2.3.4` |
-| numeric host that is not a dotted quad | `http://01.2.3.4.5` | *none* | `http://01.2.3.4.5` | *failure* | `http://01.2.3.4.5` | `http://01.2.3.4.5` |
-| numeric host that is not a dotted quad | `http://0x100.2.3.4` | *none* | `http://0x100.2.3.4` | *failure* | `http://0x100.2.3.4` | `http://0x100.2.3.4` |
-| numeric host that is not a dotted quad | `http://0x1.2.3.4.5` | *none* | `http://0x1.2.3.4.5` | *failure* | `http://0x1.2.3.4.5` | `http://0x1.2.3.4.5` |
-| numeric host that is not a dotted quad | `http://0999999999999999999/` | *none* | `http://0999999999999999999/` | *failure* | `http://0999999999999999999/` | `http://0999999999999999999/` |
-| other | `https://test:@test` | *none* | `https://test:@test` | `https://test@test/` | `https://test:@test` | `https://test:@test` |
-| other | `https://:@test` | *none* | `https://:@test` | `https://test/` | `https://:@test` | `https://:@test` |
-| other | `http://a:@www.example.com` | *none* | `http://a:@www.example.com` | `http://a@www.example.com/` | `http://a:@www.example.com` | `http://a:@www.example.com` |
-| other | `http://:@www.example.com` | *none* | `http://:@www.example.com` | `http://www.example.com/` | `http://:@www.example.com` | `http://:@www.example.com` |
-| other | `http://host/?'` | *none* | `http://host/?'` | `http://host/?%27` | `http://host/?'` | `http://host/?'` |
-| other | `i` | `sc:sd` | `sc:i` | *failure* | `sc:i` | `sc:i` |
-| other | `i` | `sc:sd/sd` | `sc:sd/i` | *failure* | `sc:sd/i` | `sc:sd/i` |
-| other | `../i` | `sc:sd` | `sc:i` | *failure* | `sc:i` | `sc:i` |
-| other | `/i` | `sc:sd` | `sc:/i` | *failure* | `sc:/i` | `sc:/i` |
-| other | `/i` | `sc:sd/sd` | `sc:/i` | *failure* | `sc:/i` | `sc:/i` |
-| other | `?i` | `sc:sd` | `sc:sd?i` | *failure* | `sc:sd?i` | `sc:sd?i` |
-| other | `?i` | `sc:sd/sd` | `sc:sd/sd?i` | *failure* | `sc:sd/sd?i` | `sc:sd/sd?i` |
-| other | `http://1.2.3.4./` | `http://other.com/` | `http://1.2.3.4./` | `http://1.2.3.4/` | `http://1.2.3.4./` | `http://1.2.3.4./` |
-| other | `http://192.168.257.` | `http://other.com/` | `http://192.168.257.` | `http://192.168.1.1/` | `http://192.168.257.` | `http://192.168.257.` |
-| other | `http://999999999.` | `http://other.com/` | `http://999999999.` | `http://59.154.201.255/` | `http://999999999.` | `http://999999999.` |
-| other | `//d:` | `file:///C:/a/b` | `file://d` | `file:///d:` | `file://d` | `file://d:` |
-| other | `//d:/..` | `file:///C:/a/b` | `file://d/` | `file:///d:/` | `file://d/` | `file://d:/` |
-| other | `//C:/` | `file://host/` | `file://c/` | `file:///C:/` | `file://c/` | `file://C:/` |
-| other | `test-a-colon.html` | `a:` | `a:test-a-colon.html` | *failure* | `a:test-a-colon.html` | `a:test-a-colon.html` |
-| other | `test-a-colon-b.html` | `a:b` | `a:test-a-colon-b.html` | *failure* | `a:test-a-colon-b.html` | `a:test-a-colon-b.html` |
-| other | `http://1.2.3.4.5.` | `http://other.com/` | `http://1.2.3.4.5.` | *failure* | `http://1.2.3.4.5.` | `http://1.2.3.4.5.` |
-| other | `http://256.256.256.256.256.` | `http://other.com/` | `http://256.256.256.256.256.` | *failure* | `http://256.256.256.256.256.` | `http://256.256.256.256.256.` |
-| other | `http://1.2.3.08.` | *none* | `http://1.2.3.08.` | *failure* | `http://1.2.3.08.` | `http://1.2.3.08.` |
-| other | `http://09.2.3.4.` | *none* | `http://09.2.3.4.` | *failure* | `http://09.2.3.4.` | `http://09.2.3.4.` |
-| other | `http://01.2.3.4.5.` | *none* | `http://01.2.3.4.5.` | *failure* | `http://01.2.3.4.5.` | `http://01.2.3.4.5.` |
-| other | `http://0x100.2.3.4.` | *none* | `http://0x100.2.3.4.` | *failure* | `http://0x100.2.3.4.` | `http://0x100.2.3.4.` |
-| other | `http://0x1.2.3.4.5.` | *none* | `http://0x1.2.3.4.5.` | *failure* | `http://0x1.2.3.4.5.` | `http://0x1.2.3.4.5.` |
 | file scheme | `file://example:1/` | *none* | `file://example:1/` | *failure* | `file://example:1/` | `file://example:1/` |
 | file scheme | `//C\|/foo/bar` | `file:///tmp/mock/path` | *failure* | `file:///C:/foo/bar` | *failure* | *failure* |
 | file scheme | `file://test` | `file:///tmp/mock/path` | `file://test` | `file://test/` | `file://test` | `file://test` |
@@ -223,6 +167,23 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | file scheme | `file:#frag` | *none* | `file://#frag` | `file:///#frag` | `file:#frag` | `file:#frag` |
 | file scheme | `file://localhost//a//../..//foo` | *none* | `file://localhost///foo` | `file://///foo` | `file://localhost///foo` | `file://localhost///foo` |
 | file scheme | `file://localhost////foo` | *none* | `file://localhost////foo` | `file://////foo` | `file://localhost////foo` | `file://localhost////foo` |
+| other | `https://test:@test` | *none* | `https://test:@test` | `https://test@test/` | `https://test:@test` | `https://test:@test` |
+| other | `https://:@test` | *none* | `https://:@test` | `https://test/` | `https://:@test` | `https://:@test` |
+| other | `http://a:@www.example.com` | *none* | `http://a:@www.example.com` | `http://a@www.example.com/` | `http://a:@www.example.com` | `http://a:@www.example.com` |
+| other | `http://:@www.example.com` | *none* | `http://:@www.example.com` | `http://www.example.com/` | `http://:@www.example.com` | `http://:@www.example.com` |
+| other | `http://host/?'` | *none* | `http://host/?'` | `http://host/?%27` | `http://host/?'` | `http://host/?'` |
+| other | `i` | `sc:sd` | `sc:i` | *failure* | `sc:i` | `sc:i` |
+| other | `i` | `sc:sd/sd` | `sc:sd/i` | *failure* | `sc:sd/i` | `sc:sd/i` |
+| other | `../i` | `sc:sd` | `sc:i` | *failure* | `sc:i` | `sc:i` |
+| other | `/i` | `sc:sd` | `sc:/i` | *failure* | `sc:/i` | `sc:/i` |
+| other | `/i` | `sc:sd/sd` | `sc:/i` | *failure* | `sc:/i` | `sc:/i` |
+| other | `?i` | `sc:sd` | `sc:sd?i` | *failure* | `sc:sd?i` | `sc:sd?i` |
+| other | `?i` | `sc:sd/sd` | `sc:sd/sd?i` | *failure* | `sc:sd/sd?i` | `sc:sd/sd?i` |
+| other | `//d:` | `file:///C:/a/b` | `file://d` | `file:///d:` | `file://d` | `file://d:` |
+| other | `//d:/..` | `file:///C:/a/b` | `file://d/` | `file:///d:/` | `file://d/` | `file://d:/` |
+| other | `//C:/` | `file://host/` | `file://c/` | `file:///C:/` | `file://c/` | `file://C:/` |
+| other | `test-a-colon.html` | `a:` | `a:test-a-colon.html` | *failure* | `a:test-a-colon.html` | `a:test-a-colon.html` |
+| other | `test-a-colon-b.html` | `a:b` | `a:test-a-colon-b.html` | *failure* | `a:test-a-colon-b.html` | `a:test-a-colon-b.html` |
 | characters outside the RFC 3986 grammar | `http://&a:foo(b]c@d:2/` | `http://example.org/foo/bar` | *failure* | `http://&a:foo(b%5Dc@d:2/` | *failure* | *failure* |
 | characters outside the RFC 3986 grammar | `` http://!"$&'()*+,-.;=_`{}~/ `` | *none* | *failure* | `` http://!"$&'()*+,-.;=_`{}~/ `` | *failure* | *failure* |
 | characters outside the RFC 3986 grammar | `'https://user:pass[\x7f@foo/bar'` | `http://example.org` | *failure* | `https://user:pass%5B%7F@foo/bar` | *failure* | *failure* |
@@ -244,8 +205,9 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | `http:` | `https://example.org/foo/bar` | `http://` | *failure* | `http:` | `http:` |
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test@test/x` | `non-special://test:@test/x` | `non-special://test:@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://test/x` | `non-special://:@test/x` | `non-special://:@test/x` |
+| numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://%30%78%63%30%2e%30%32%35%30.01` |
 
-## RFC mode differs from RFC 3986, WHATWG mode follows WHATWG (116)
+## RFC mode differs from RFC 3986, WHATWG mode follows WHATWG (117)
 
 | Category | Cases |
 |---|---|
@@ -255,8 +217,8 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | 10 |
 | other | 7 |
 | special scheme without an authority | 6 |
+| non-ASCII or percent-encoded host | 6 |
 | leading or trailing C0 control or space | 5 |
-| non-ASCII or percent-encoded host | 5 |
 | IP-literal host | 5 |
 | non-special scheme | 1 |
 
@@ -362,16 +324,17 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | `http:/` | `http://example.com/` | `http://example.com/` | `http://example.com/` | `http://example.com/` | `http:/` |
 | special scheme without an authority | `http:example.com/` | `http://example.org/foo/bar` | `http://example.org/foo/example.com/` | `http://example.org/foo/example.com/` | `http://example.org/foo/example.com/` | `http:example.com/` |
 | special scheme without an authority | `http:` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http:` |
-| leading or trailing C0 control or space | `'\t   :foo.com   \n'` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com` | `http://example.org/foo/:foo.com` | `http://example.org/foo/:foo.com` | *failure* |
-| leading or trailing C0 control or space | ` foo.com  ` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | *failure* |
-| leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* |
-| leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/` | `http://example.com/` | `http://example.com/` | *failure* |
-| leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque` | `non-special:opaque` | `non-special:opaque` | *failure* |
 | non-ASCII or percent-encoded host | `http://é@é` | *none* | `http://%C3%A9@xn--9ca` | `http://%C3%A9@xn--9ca/` | `http://%C3%A9@xn--9ca` | *failure* |
 | non-ASCII or percent-encoded host | `http://www.foo。bar.com` | `http://other.com/` | `http://www.foo.bar.com` | `http://www.foo.bar.com/` | `http://www.foo.bar.com` | *failure* |
 | non-ASCII or percent-encoded host | `http://Ｇｏ.com` | `http://other.com/` | `http://go.com` | `http://go.com/` | `http://go.com` | *failure* |
 | non-ASCII or percent-encoded host | `http://你好你好` | `http://other.com/` | `http://xn--6qqa088eba` | `http://xn--6qqa088eba/` | `http://xn--6qqa088eba` | *failure* |
 | non-ASCII or percent-encoded host | `https://faß.ExAmPlE/` | *none* | `https://xn--fa-hia.example/` | `https://xn--fa-hia.example/` | `https://xn--fa-hia.example/` | *failure* |
+| non-ASCII or percent-encoded host | `http://０Ｘｃ０．０２５０．０１` | `http://other.com/` | `http://192.168.0.1` | `http://192.168.0.1/` | `http://0xc0.0250.01` | *failure* |
+| leading or trailing C0 control or space | `'\t   :foo.com   \n'` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com` | `http://example.org/foo/:foo.com` | `http://example.org/foo/:foo.com` | *failure* |
+| leading or trailing C0 control or space | ` foo.com  ` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | *failure* |
+| leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* |
+| leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/` | `http://example.com/` | `http://example.com/` | *failure* |
+| leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque` | `non-special:opaque` | `non-special:opaque` | *failure* |
 | IP-literal host | `http://[::127.0.0.1]` | `http://example.org/foo/bar` | `http://[::7f00:1]` | `http://[::7f00:1]/` | `http://[::7f00:1]` | `http://[::127.0.0.1]` |
 | IP-literal host | `http://[0:0:0:0:0:0:13.1.68.3]` | `http://example.org/foo/bar` | `http://[::d01:4403]` | `http://[::d01:4403]/` | `http://[::d01:4403]` | `http://[0:0:0:0:0:0:13.1.68.3]` |
 | IP-literal host | `http://[1:0::]` | `http://example.net/` | `http://[1::]` | `http://[1::]/` | `http://[1::]` | `http://[1:0::]` |
@@ -379,7 +342,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | IP-literal host | `non-special://[1:2:0:0:0:0:0:3]/` | *none* | `non-special://[1:2::3]/` | `non-special://[1:2::3]/` | `non-special://[1:2::3]/` | `non-special://[1:2:0:0:0:0:0:3]/` |
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | *failure* | *failure* | `non-special://f:999999/c` |
 
-## Both modes differ from their standard (99)
+## Both modes differ from their standard (98)
 
 | Category | Cases |
 |---|---|
@@ -387,7 +350,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986 grammar | 19 |
 | file scheme | 12 |
 | tab or newline inside the input | 7 |
-| non-ASCII or percent-encoded host | 7 |
+| non-ASCII or percent-encoded host | 6 |
 | empty host | 5 |
 | other | 4 |
 | leading or trailing C0 control or space | 2 |
@@ -476,7 +439,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | tab or newline inside the input | `` 'data:text/plain,test#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `data:text/plain,test#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `data:text/plain,test#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | `data:text/plain,test#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* |
 | tab or newline inside the input | `` 'about:blank#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `about:blank#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `about:blank#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | `about:blank#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* |
 | non-ASCII or percent-encoded host | `sc://faß.ExAmPlE/` | *none* | `sc://xn--fa-hia.example/` | `sc://fa%C3%9F.ExAmPlE/` | `sc://xn--fa-hia.example/` | *failure* |
-| non-ASCII or percent-encoded host | `http://０Ｘｃ０．０２５０．０１` | `http://other.com/` | `http://0xc0.0250.01` | `http://192.168.0.1/` | `http://0xc0.0250.01` | *failure* |
 | non-ASCII or percent-encoded host | `sc://ñ.test/` | *none* | `sc://xn--ida.test/` | `sc://%C3%B1.test/` | `sc://xn--ida.test/` | *failure* |
 | non-ASCII or percent-encoded host | `sc://ñ` | *none* | `sc://xn--ida` | `sc://%C3%B1` | `sc://xn--ida` | *failure* |
 | non-ASCII or percent-encoded host | `sc://ñ?x` | *none* | `sc://xn--ida/?x` | `sc://%C3%B1?x` | `sc://xn--ida/?x` | *failure* |
@@ -495,19 +457,54 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | `file:///c:////foo/bar.html` | `file:///tmp/mock/c%7C////foo%5Cbar.html` | *failure* |
 | special scheme without an authority | `http:[61:27]/:foo` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/[61:27]/:foo` | `http://example.org/foo/%5B61:27%5D/:foo` | *failure* |
 
-## yarl follows each standard in its mode (61)
+## yarl follows each standard in its mode (99)
 
 | Category | Cases |
 |---|---|
+| numeric host that is not a dotted quad | 35 |
 | special scheme without an authority | 33 |
+| other | 15 |
 | empty host | 8 |
-| numeric host that is not a dotted quad | 7 |
 | file scheme | 5 |
-| other | 5 |
 | characters outside the RFC 3986 grammar | 3 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986 |
 |---|---|---|---|---|---|---|
+| numeric host that is not a dotted quad | `http://192.0x00A80001` | *none* | `http://192.168.0.1` | `http://192.168.0.1/` | `http://192.0x00a80001` | `http://192.0x00A80001` |
+| numeric host that is not a dotted quad | `http://192.168.0.257` | `http://other.com/` | *failure* | *failure* | `http://192.168.0.257` | `http://192.168.0.257` |
+| numeric host that is not a dotted quad | `http://192.168.257` | `http://other.com/` | `http://192.168.1.1` | `http://192.168.1.1/` | `http://192.168.257` | `http://192.168.257` |
+| numeric host that is not a dotted quad | `http://256` | `http://other.com/` | `http://0.0.1.0` | `http://0.0.1.0/` | `http://256` | `http://256` |
+| numeric host that is not a dotted quad | `http://999999999` | `http://other.com/` | `http://59.154.201.255` | `http://59.154.201.255/` | `http://999999999` | `http://999999999` |
+| numeric host that is not a dotted quad | `http://10000000000` | `http://other.com/` | *failure* | *failure* | `http://10000000000` | `http://10000000000` |
+| numeric host that is not a dotted quad | `http://4294967295` | `http://other.com/` | `http://255.255.255.255` | `http://255.255.255.255/` | `http://4294967295` | `http://4294967295` |
+| numeric host that is not a dotted quad | `http://4294967296` | `http://other.com/` | *failure* | *failure* | `http://4294967296` | `http://4294967296` |
+| numeric host that is not a dotted quad | `http://18446744073709551616` | `http://other.com/` | *failure* | *failure* | `http://18446744073709551616` | `http://18446744073709551616` |
+| numeric host that is not a dotted quad | `http://18446744075840258049` | `http://other.com/` | *failure* | *failure* | `http://18446744075840258049` | `http://18446744075840258049` |
+| numeric host that is not a dotted quad | `http://0xffffffff` | `http://other.com/` | `http://255.255.255.255` | `http://255.255.255.255/` | `http://0xffffffff` | `http://0xffffffff` |
+| numeric host that is not a dotted quad | `http://0xffffffff1` | `http://other.com/` | *failure* | *failure* | `http://0xffffffff1` | `http://0xffffffff1` |
+| numeric host that is not a dotted quad | `http://256.256.256.256` | `http://other.com/` | *failure* | *failure* | `http://256.256.256.256` | `http://256.256.256.256` |
+| numeric host that is not a dotted quad | `https://0x.0x.0` | *none* | `https://0.0.0.0` | `https://0.0.0.0/` | `https://0x.0x.0` | `https://0x.0x.0` |
+| numeric host that is not a dotted quad | `https://0x.0x.0x.0x` | *none* | `https://0.0.0.0` | `https://0.0.0.0/` | `https://0x.0x.0x.0x` | `https://0x.0x.0x.0x` |
+| numeric host that is not a dotted quad | `https://00.00.00.00` | *none* | `https://0.0.0.0` | `https://0.0.0.0/` | `https://00.00.00.00` | `https://00.00.00.00` |
+| numeric host that is not a dotted quad | `https://0000000000000000000000000000000000000000177.0.0.1` | *none* | `https://127.0.0.1` | `https://127.0.0.1/` | `https://0000000000000000000000000000000000000000177.0.0.1` | `https://0000000000000000000000000000000000000000177.0.0.1` |
+| numeric host that is not a dotted quad | `https://0x100000000/test` | *none* | *failure* | *failure* | `https://0x100000000/test` | `https://0x100000000/test` |
+| numeric host that is not a dotted quad | `https://256.0.0.1/test` | *none* | *failure* | *failure* | `https://256.0.0.1/test` | `https://256.0.0.1/test` |
+| numeric host that is not a dotted quad | `http://1.2.3.4.5` | `http://other.com/` | *failure* | *failure* | `http://1.2.3.4.5` | `http://1.2.3.4.5` |
+| numeric host that is not a dotted quad | `http://0..0x300/` | *none* | *failure* | *failure* | `http://0..0x300/` | `http://0..0x300/` |
+| numeric host that is not a dotted quad | `http://256.256.256.256.256` | `http://other.com/` | *failure* | *failure* | `http://256.256.256.256.256` | `http://256.256.256.256.256` |
+| numeric host that is not a dotted quad | `http://1.2.3.08` | *none* | *failure* | *failure* | `http://1.2.3.08` | `http://1.2.3.08` |
+| numeric host that is not a dotted quad | `http://1.2.3.09` | *none* | *failure* | *failure* | `http://1.2.3.09` | `http://1.2.3.09` |
+| numeric host that is not a dotted quad | `http://09.2.3.4` | *none* | *failure* | *failure* | `http://09.2.3.4` | `http://09.2.3.4` |
+| numeric host that is not a dotted quad | `http://01.2.3.4.5` | *none* | *failure* | *failure* | `http://01.2.3.4.5` | `http://01.2.3.4.5` |
+| numeric host that is not a dotted quad | `http://0x100.2.3.4` | *none* | *failure* | *failure* | `http://0x100.2.3.4` | `http://0x100.2.3.4` |
+| numeric host that is not a dotted quad | `http://0x1.2.3.4.5` | *none* | *failure* | *failure* | `http://0x1.2.3.4.5` | `http://0x1.2.3.4.5` |
+| numeric host that is not a dotted quad | `http://foo.1.2.3.4` | *none* | *failure* | *failure* | `http://foo.1.2.3.4` | `http://foo.1.2.3.4` |
+| numeric host that is not a dotted quad | `http://foo.2.3.4` | *none* | *failure* | *failure* | `http://foo.2.3.4` | `http://foo.2.3.4` |
+| numeric host that is not a dotted quad | `http://foo.09` | *none* | *failure* | *failure* | `http://foo.09` | `http://foo.09` |
+| numeric host that is not a dotted quad | `http://foo.0x4` | *none* | *failure* | *failure* | `http://foo.0x4` | `http://foo.0x4` |
+| numeric host that is not a dotted quad | `http://0999999999999999999/` | *none* | *failure* | *failure* | `http://0999999999999999999/` | `http://0999999999999999999/` |
+| numeric host that is not a dotted quad | `http://foo.0x` | *none* | *failure* | *failure* | `http://foo.0x` | `http://foo.0x` |
+| numeric host that is not a dotted quad | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` | *none* | *failure* | *failure* | `http://foo.0xfffffffffffffffffface123` | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` |
 | special scheme without an authority | `ftp:/example.com/` | `http://example.org/foo/bar` | `ftp://example.com/` | `ftp://example.com/` | `ftp:/example.com/` | `ftp:/example.com/` |
 | special scheme without an authority | `https:/example.com/` | `http://example.org/foo/bar` | `https://example.com/` | `https://example.com/` | `https:/example.com/` | `https:/example.com/` |
 | special scheme without an authority | `ws:/example.com/` | `http://example.org/foo/bar` | `ws://example.com/` | `ws://example.com/` | `ws:/example.com/` | `ws:/example.com/` |
@@ -541,6 +538,21 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | `http::@/www.example.com` | *none* | *failure* | *failure* | `http::@/www.example.com` | `http::@/www.example.com` |
 | special scheme without an authority | `http:@:www.example.com` | *none* | *failure* | *failure* | `http:@:www.example.com` | `http:@:www.example.com` |
 | special scheme without an authority | `http:/@:www.example.com` | *none* | *failure* | *failure* | `http:/@:www.example.com` | `http:/@:www.example.com` |
+| other | `http://1.2.3.4./` | `http://other.com/` | `http://1.2.3.4/` | `http://1.2.3.4/` | `http://1.2.3.4./` | `http://1.2.3.4./` |
+| other | `http://192.168.257.` | `http://other.com/` | `http://192.168.1.1` | `http://192.168.1.1/` | `http://192.168.257.` | `http://192.168.257.` |
+| other | `http://999999999.` | `http://other.com/` | `http://59.154.201.255` | `http://59.154.201.255/` | `http://999999999.` | `http://999999999.` |
+| other | `http://1.2.3.4.5.` | `http://other.com/` | *failure* | *failure* | `http://1.2.3.4.5.` | `http://1.2.3.4.5.` |
+| other | `http://0..0x300./` | *none* | *failure* | *failure* | `http://0..0x300./` | `http://0..0x300./` |
+| other | `http://256.256.256.256.256.` | `http://other.com/` | *failure* | *failure* | `http://256.256.256.256.256.` | `http://256.256.256.256.256.` |
+| other | `http://1.2.3.08.` | *none* | *failure* | *failure* | `http://1.2.3.08.` | `http://1.2.3.08.` |
+| other | `http://09.2.3.4.` | *none* | *failure* | *failure* | `http://09.2.3.4.` | `http://09.2.3.4.` |
+| other | `http://01.2.3.4.5.` | *none* | *failure* | *failure* | `http://01.2.3.4.5.` | `http://01.2.3.4.5.` |
+| other | `http://0x100.2.3.4.` | *none* | *failure* | *failure* | `http://0x100.2.3.4.` | `http://0x100.2.3.4.` |
+| other | `http://0x1.2.3.4.5.` | *none* | *failure* | *failure* | `http://0x1.2.3.4.5.` | `http://0x1.2.3.4.5.` |
+| other | `http://foo.1.2.3.4.` | *none* | *failure* | *failure* | `http://foo.1.2.3.4.` | `http://foo.1.2.3.4.` |
+| other | `http://foo.2.3.4.` | *none* | *failure* | *failure* | `http://foo.2.3.4.` | `http://foo.2.3.4.` |
+| other | `http://foo.09.` | *none* | *failure* | *failure* | `http://foo.09.` | `http://foo.09.` |
+| other | `http://foo.0x4.` | *none* | *failure* | *failure* | `http://foo.0x4.` | `http://foo.0x4.` |
 | empty host | `sc://:12/` | *none* | *failure* | *failure* | `sc://:12/` | `sc://:12/` |
 | empty host | `data://:443` | *none* | *failure* | *failure* | `data://:443` | `data://:443` |
 | empty host | `javascript://:443` | *none* | *failure* | *failure* | `javascript://:443` | `javascript://:443` |
@@ -549,23 +561,11 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `urn://:443` | *none* | *failure* | *failure* | `urn://:443` | `urn://:443` |
 | empty host | `turn://:443` | *none* | *failure* | *failure* | `turn://:443` | `turn://:443` |
 | empty host | `stun://:443` | *none* | *failure* | *failure* | `stun://:443` | `stun://:443` |
-| numeric host that is not a dotted quad | `http://0..0x300/` | *none* | *failure* | *failure* | `http://0..0x300/` | `http://0..0x300/` |
-| numeric host that is not a dotted quad | `http://foo.1.2.3.4` | *none* | *failure* | *failure* | `http://foo.1.2.3.4` | `http://foo.1.2.3.4` |
-| numeric host that is not a dotted quad | `http://foo.2.3.4` | *none* | *failure* | *failure* | `http://foo.2.3.4` | `http://foo.2.3.4` |
-| numeric host that is not a dotted quad | `http://foo.09` | *none* | *failure* | *failure* | `http://foo.09` | `http://foo.09` |
-| numeric host that is not a dotted quad | `http://foo.0x4` | *none* | *failure* | *failure* | `http://foo.0x4` | `http://foo.0x4` |
-| numeric host that is not a dotted quad | `http://foo.0x` | *none* | *failure* | *failure* | `http://foo.0x` | `http://foo.0x` |
-| numeric host that is not a dotted quad | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` | *none* | *failure* | *failure* | `http://foo.0xfffffffffffffffffface123` | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` |
 | file scheme | `file:/example.com/` | `http://example.org/foo/bar` | `file:///example.com/` | `file:///example.com/` | `file:/example.com/` | `file:/example.com/` |
 | file scheme | `file:/example.com/` | *none* | `file:///example.com/` | `file:///example.com/` | `file:/example.com/` | `file:/example.com/` |
 | file scheme | `file:...` | `http://www.example.com/test` | `file:///...` | `file:///...` | `file:...` | `file:...` |
 | file scheme | `file:a` | `http://www.example.com/test` | `file:///a` | `file:///a` | `file:a` | `file:a` |
 | file scheme | `file:/.//p` | *none* | `file:////p` | `file:////p` | `file:/.//p` | `file://p` |
-| other | `http://0..0x300./` | *none* | *failure* | *failure* | `http://0..0x300./` | `http://0..0x300./` |
-| other | `http://foo.1.2.3.4.` | *none* | *failure* | *failure* | `http://foo.1.2.3.4.` | `http://foo.1.2.3.4.` |
-| other | `http://foo.2.3.4.` | *none* | *failure* | *failure* | `http://foo.2.3.4.` | `http://foo.2.3.4.` |
-| other | `http://foo.09.` | *none* | *failure* | *failure* | `http://foo.09.` | `http://foo.09.` |
-| other | `http://foo.0x4.` | *none* | *failure* | *failure* | `http://foo.0x4.` | `http://foo.0x4.` |
 | characters outside the RFC 3986 grammar | `http://::@c@d:2` | `http://example.org/foo/bar` | `http://:%3A%40c@d:2` | `http://:%3A%40c@d:2/` | *failure* | *failure* |
 | characters outside the RFC 3986 grammar | `https://@test@test@example:800/` | `http://doesnotmatter/` | `https://%40test%40test@example:800/` | `https://%40test%40test@example:800/` | *failure* | *failure* |
 | characters outside the RFC 3986 grammar | `https://@@@example` | `http://doesnotmatter/` | `https://%40%40@example` | `https://%40%40@example/` | *failure* | *failure* |
