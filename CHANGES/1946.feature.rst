@@ -1,0 +1,2 @@
+enable cython freethreading-compatible mode with yarl quoters.
+-- by :user:`Vizonex`.
