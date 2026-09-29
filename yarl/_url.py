@@ -2139,11 +2139,11 @@ class URL:
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
-        if (special_ref := url._cache.get("_special_ref")) is not None and (
+        if "_special_ref" in url._cache and (
             scheme in SPECIAL_SCHEMES and self._mode is _WHATWG
         ):
             # A relative reference with "\\" (see _backslashes()).
-            url = encode_url(special_ref)
+            url = encode_url(url._cache["_special_ref"])
 
         if url._netloc and (join_path := url._cache.get("_join_path")) is not None:
             # "http:g" was parsed in WHATWG mode as "http://g/", but against
