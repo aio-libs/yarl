@@ -439,6 +439,7 @@ jobs:
         --only-binary=:all:
         '${{ env.PROJECT_NAME }}'
     - name: Produce the C-files for the Coverage.py Cython plugin
+      id: translate-cython  # consumed by the measurement check below
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
         && (github.event_name != 'push' || github.ref_type != 'tag')
@@ -490,6 +491,31 @@ jobs:
         python -Im
         pytest --no-cov -vvvvv --lf -rA
         && exit 1
+      shell: bash
+    # `!cancelled()` keeps a coverage drop from muting this check, since
+    # `Run unittests` enforces `fail_under` and would fail first.
+    # Windows gets no CYTHON_TRACE: the defines ride on CFLAGS, and
+    # setuptools forwards those only to the Unix compiler -- MSVCCompiler
+    # never reads them. Not a platform limitation, just unwired.
+    - name: Check that the Cython modules were measured
+      if: >-
+        !cancelled()
+        && steps.translate-cython.outcome == 'success'
+        && runner.os != 'Windows'
+      # `--fail-under=0`: the floor is already enforced by the test run, and
+      # here it would only print a failure line after the JSON.
+      run: |  # A `.pyx` with nothing recorded is how #1581 went unnoticed
+        python -Im coverage json --fail-under=0 -o - | python -c '
+        import json, sys
+        pyx = {
+            path: info["summary"]["covered_lines"]
+            for path, info in json.load(sys.stdin)["files"].items()
+            if path.endswith(".pyx")
+        }
+        if not pyx or not all(pyx.values()):
+            sys.exit(f"Cython modules with no measured lines: {pyx}")
+        print(f"Measured lines: {pyx}")
+        '
       shell: bash
     - name: Send coverage data to Codecov
       if: >-
