@@ -28,6 +28,8 @@ from ._parse import (
     EMPTY_FRAGMENT,
     EMPTY_QUERY,
     SPECIAL_SCHEMES,
+    UNSAFE_URL_BYTES_TO_REMOVE,
+    WHATWG_C0_CONTROL_OR_SPACE,
     SplitURLType,
     has_dot_prefix,
     make_netloc,
@@ -335,9 +337,40 @@ def _is_special_authority_path(scheme: str, path: str, mode: Mode) -> bool:
     return mode is _WHATWG and scheme in SCHEME_REQUIRES_HOST and path.lstrip("/") != ""
 
 
+def _backslashes(url_str: str, mode: Mode) -> str:
+    """Handle "\\" in a URL string before it is parsed.
+
+    RFC 3986 has no "\\" in its grammar, so RFC 3986 mode rejects it. The
+    WHATWG URL Standard reads it as "/" in the authority and the path of a
+    special URL, and so does WHATWG mode, also for a relative reference,
+    which is almost always joined with a special base. Other schemes keep
+    it, percent-encoded, as do the query and the fragment.
+    """
+    if mode is not _WHATWG:
+        raise ValueError(f"Invalid URL: RFC 3986 does not allow '\\' in {url_str!r}")
+    # Find the scheme the way split_url() does.
+    url = url_str.strip(WHATWG_C0_CONTROL_OR_SPACE)
+    for b in UNSAFE_URL_BYTES_TO_REMOVE:
+        url = url.replace(b, "")
+    i = url.find(":")
+    if (
+        i > 0
+        and all(c in _SCHEME_CHARS for c in url[:i])
+        and url[:i].lower() not in SPECIAL_SCHEMES
+    ):
+        return url_str
+    end = len(url)
+    for c in "?#":
+        if (pos := url.find(c)) >= 0 and pos < end:
+            end = pos
+    return url[:end].replace("\\", "/") + url[end:]
+
+
 def _encode_url(url_str: str, mode: Mode) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
+    if "\\" in url_str:
+        url_str = _backslashes(url_str, mode)
     host: str | None
     scheme, netloc, path, query, fragment, empty = split_url(url_str)
     if not netloc and _is_special_authority_path(scheme, path, mode):
@@ -2188,7 +2221,8 @@ class URL:
         password = human_quote(self.password, "#/:?@[]\\")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
-        path = human_quote(self.path, "#?")
+        # WHATWG mode reads "\\" in the path as "/", so it stays encoded.
+        path = human_quote(self.path, "#?\\")
         if TYPE_CHECKING:
             assert path is not None
         if not self._scheme and not self._netloc:
