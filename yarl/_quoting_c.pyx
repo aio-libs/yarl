@@ -16,7 +16,6 @@ from cpython.unicode cimport (
     PyUnicode_KIND,
     PyUnicode_READ,
 )
-cimport cython
 from libc.stdint cimport uint8_t, uint64_t
 from libc.string cimport memcpy, memset
 
