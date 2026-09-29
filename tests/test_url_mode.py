@@ -236,3 +236,17 @@ def test_idna2008_host_accepted(mode: Mode) -> None:
     # A zone identifier is not a host name, so IDNA does not apply to it.
     ipv6 = URL("http://[fe80::1%25ñ]/", mode=mode)
     assert ipv6.raw_host == "fe80::1%25ñ"
+
+
+@pytest.mark.parametrize("first", [RFC, WHATWG])
+def test_idna2008_check_shares_host_cache(first: Mode) -> None:
+    # The host encoding cache is shared by both modes; the IDNA2008 flag is
+    # cached with it, so the order of the calls does not matter.
+    host = "💩-cache.example"
+    for mode in (first, RFC if first is WHATWG else WHATWG):
+        if mode is RFC:
+            with pytest.raises(ValueError, match="not a valid IDNA2008 name"):
+                URL.build(scheme="http", host=host, mode=mode)
+        else:
+            url = URL.build(scheme="http", host=host, mode=mode)
+            assert url.raw_host == "xn---cache-hx54e.example"
