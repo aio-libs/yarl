@@ -478,13 +478,12 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
 
 
 def test_ipv4_zone() -> None:
-    # I'm unsure if it is correct. WHATWG mode decodes the host instead.
+    # WHATWG mode decodes the host; in RFC 3986 mode "%" must start a
+    # percent-encoded octet.
     with pytest.raises(ValueError, match="once percent-decoded"):
         URL("http://1.2.3.4%тест%42:123")
-    url = URL("http://1.2.3.4%тест%42:123", mode="rfc")
-    assert url.raw_host == "1.2.3.4%тест%42"
-    assert url.host == url.raw_host
-    assert url.raw_host == SplitResult(*url._val).hostname
+    with pytest.raises(ValueError, match="hexadecimal digits in the host"):
+        URL("http://1.2.3.4%тест%42:123", mode="rfc")
 
 
 def test_ipv4_zone_percent25() -> None:
@@ -2806,8 +2805,12 @@ def test_control_chars_are_removed(byte: str) -> None:
     assert str(url) == "http://example.com/"
 
 
-@pytest.mark.parametrize("encoded", [False, True])
-@pytest.mark.parametrize("mode", list(Mode))
+# RFC 3986 mode rejects them when it parses an unencoded string, see
+# tests/test_url_rfc_grammar.py.
+@pytest.mark.parametrize(
+    ("mode", "encoded"),
+    [(Mode.WHATWG, False), (Mode.WHATWG, True), (Mode.RFC, True)],
+)
 @pytest.mark.parametrize("byte", tuple(_WHATWG_C0_CONTROL_OR_SPACE))
 def test_trailing_control_chars_are_removed(
     byte: str, mode: Mode, encoded: bool
@@ -2818,12 +2821,9 @@ def test_trailing_control_chars_are_removed(
     assert str(url) == "http://example.com/?q"
 
 
-@pytest.mark.parametrize("mode", list(Mode))
-def test_join_strips_surrounding_spaces(mode: Mode) -> None:
-    base = URL("http://example.org/foo/bar", mode=mode)
-    assert str(base.join(URL(" foo.com  ", mode=mode))) == (
-        "http://example.org/foo/foo.com"
-    )
+def test_join_strips_surrounding_spaces() -> None:
+    base = URL("http://example.org/foo/bar")
+    assert str(base.join(URL(" foo.com  "))) == "http://example.org/foo/foo.com"
 
 
 @pytest.mark.parametrize(

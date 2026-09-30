@@ -300,6 +300,103 @@ def _check_rfc_authority(authority: str) -> None:
         raise ValueError(f"Invalid URL: userinfo cannot contain '@' in {authority!r}")
 
 
+def _char_ranges(*pairs: tuple[int, int]) -> str:
+    return "".join(f"{chr(first)}-{chr(last)}" for first, last in pairs)
+
+
+# The characters of an IRI outside ASCII, RFC 3987 section 2.2, less the
+# bidi formatting characters that section 4.1 forbids (U+200E, U+200F and
+# U+202A to U+202E).
+_UCSCHAR = _char_ranges(
+    (0xA0, 0x200D),
+    (0x2010, 0x2029),
+    (0x202F, 0xD7FF),
+    (0xF900, 0xFDCF),
+    (0xFDF0, 0xFFEF),
+    *((plane << 16, (plane << 16) + 0xFFFD) for plane in range(1, 14)),
+    (0xE1000, 0xEFFFD),
+)
+_IPRIVATE = _char_ranges((0xE000, 0xF8FF), (0xF0000, 0xFFFFD), (0x100000, 0x10FFFD))
+_IUNRESERVED = r"A-Za-z0-9\-._~" + _UCSCHAR
+_SUB_DELIMS = "!$&'()*+,;="
+_RFC_SPLIT_RE = re.compile(
+    r"(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?", re.S
+)
+_RFC_SCHEME_RE = re.compile(r"[A-Za-z][A-Za-z0-9+\-.]*")
+
+
+def _rfc_re(chars: str) -> re.Pattern[str]:
+    return re.compile(f"(?:[{chars}]|%[0-9A-Fa-f]{{2}})*")
+
+
+# Several "@" are left to _check_rfc_authority(), which says so.
+_RFC_USERINFO_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@")
+_RFC_REG_NAME_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}")
+_RFC_PATH_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@/")
+_RFC_QUERY_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@/?{_IPRIVATE}")
+_RFC_FRAGMENT_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@/?")
+_RFC_PORT_RE = re.compile("[0-9]*")
+
+
+def _check_rfc_component(
+    url_str: str, name: str, value: str | None, pattern: re.Pattern[str]
+) -> None:
+    if value is None:
+        return
+    end = cast(re.Match[str], pattern.match(value)).end()
+    if end == len(value):
+        return
+    char = value[end]
+    if char == "%" and pattern is not _RFC_PORT_RE:
+        what = "a '%' not followed by two hexadecimal digits"
+    else:
+        what = repr(char)
+    raise ValueError(
+        f"Invalid URL: RFC 3986 and RFC 3987 do not allow {what} in the {name}"
+        f" of {url_str!r}"
+    )
+
+
+def _check_rfc_url(url_str: str) -> None:
+    """Reject a URL string outside the grammar of RFC 3986 and RFC 3987.
+
+    RFC 3986 mode takes IRIs (RFC 3987): URL() percent-encodes their
+    non-ASCII characters and encodes a non-ASCII host with IDNA2008. Other
+    characters, such as a space, "<" or a "%" that does not start a
+    percent-encoded octet, make the string invalid, where WHATWG mode
+    percent-encodes or removes them. An IP-literal host is checked when it is
+    parsed.
+    """
+    if "\\" in url_str:
+        raise ValueError(f"Invalid URL: RFC 3986 does not allow '\\' in {url_str!r}")
+    # RFC 3986 Appendix B, with no preprocessing.
+    match = cast(re.Match[str], _RFC_SPLIT_RE.fullmatch(url_str))
+    scheme, authority, path, query, fragment = match.groups()
+    if scheme is not None and _RFC_SCHEME_RE.fullmatch(scheme) is None:
+        raise ValueError(
+            f"Invalid URL: {scheme!r} is not a valid scheme in {url_str!r}"
+        )
+    if authority is not None:
+        _check_rfc_authority(authority)
+        userinfo, _, hostport = authority.rpartition("@")
+        _check_rfc_component(url_str, "userinfo", userinfo, _RFC_USERINFO_RE)
+        if hostport.startswith("["):
+            port = hostport.rpartition("]")[2].partition(":")[2]
+        else:
+            host, _, port = hostport.partition(":")
+            _check_rfc_component(url_str, "host", host, _RFC_REG_NAME_RE)
+        _check_rfc_component(url_str, "port", port, _RFC_PORT_RE)
+    elif scheme is None and ":" in path.partition("/")[0]:
+        # RFC 3986 section 4.2: "./" must come first to make it relative.
+        raise ValueError(
+            "Invalid URL: the first segment of a relative path cannot contain"
+            f" ':' in {url_str!r}"
+        )
+    _check_rfc_component(url_str, "path", path, _RFC_PATH_RE)
+    _check_rfc_component(url_str, "query", query, _RFC_QUERY_RE)
+    _check_rfc_component(url_str, "fragment", fragment, _RFC_FRAGMENT_RE)
+
+
 def _special_authority_url(
     scheme: str, path: str, query: str, fragment: str, empty: int, encoded: bool
 ) -> "URL":
@@ -337,21 +434,19 @@ def _is_special_authority_path(scheme: str, path: str, mode: Mode) -> bool:
     return mode is _WHATWG and scheme in SCHEME_REQUIRES_HOST and path.lstrip("/") != ""
 
 
-def _backslashes(url_str: str, mode: Mode) -> tuple[str, bool]:
-    """Handle "\\" in a URL string before it is parsed.
+def _backslashes(url_str: str) -> tuple[str, bool]:
+    """Handle "\\" in a URL string before it is parsed in WHATWG mode.
 
-    RFC 3986 has no "\\" in its grammar, so RFC 3986 mode rejects it. The
-    WHATWG URL Standard reads it as "/" in the authority and the path of a
-    special URL, and so does WHATWG mode; other schemes keep it,
-    percent-encoded, as do the query and the fragment.
+    RFC 3986 has no "\\" in its grammar, so RFC 3986 mode rejects it (see
+    _check_rfc_url()). The WHATWG URL Standard reads it as "/" in the
+    authority and the path of a special URL, and so does WHATWG mode; other
+    schemes keep it, percent-encoded, as do the query and the fragment.
 
     Return the string with "\\" read as "/" and whether it is a relative
     reference, whose "\\" is read as "/" only when it is joined with a
     special base: against another base, "\\/a" must not become the
     network-path reference "//a".
     """
-    if mode is not _WHATWG:
-        raise ValueError(f"Invalid URL: RFC 3986 does not allow '\\' in {url_str!r}")
     # Find the scheme the way split_url() does.
     url = url_str.strip(WHATWG_C0_CONTROL_OR_SPACE)
     for b in UNSAFE_URL_BYTES_TO_REMOVE:
@@ -373,7 +468,7 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
     if backslashes and "\\" in url_str:
-        special_str, relative = _backslashes(url_str, mode)
+        special_str, relative = _backslashes(url_str)
         if not relative:
             url_str = special_str
         elif not url_str.lstrip(WHATWG_C0_CONTROL_OR_SPACE).startswith("//"):
@@ -395,8 +490,6 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
             # Complex netloc
-            if mode is not _WHATWG:
-                _check_rfc_authority(netloc)
             username, password, host, port = split_netloc(netloc)
         else:
             username = password = port = None
@@ -506,6 +599,7 @@ def encode_url(url_str: str) -> "URL":
 @lru_cache
 def encode_url_rfc(url_str: str) -> "URL":
     """Parse unencoded URL in RFC 3986 mode."""
+    _check_rfc_url(url_str)
     return _encode_url(url_str, Mode.RFC)
 
 

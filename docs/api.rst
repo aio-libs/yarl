@@ -126,9 +126,10 @@ see there.
    ``http:example.com/`` and ``http:///example.com/`` were URLs without a
    host in WHATWG mode, printed as ``http:///example.com/``.
 
-Leading and trailing C0 control characters and spaces are stripped, and tabs
-and newlines are removed, in both modes, as the WHATWG URL Standard does and
-as :rfc:`3986#appendix-C` recommends for user-typed URIs:
+In WHATWG mode, leading and trailing C0 control characters and spaces are
+stripped, and tabs and newlines are removed, as the WHATWG URL Standard does
+and as :rfc:`3986#appendix-C` recommends for user-typed URIs; RFC 3986 mode
+rejects them, see below:
 
 .. doctest::
 
@@ -162,6 +163,37 @@ string that contains one:
 
    A backslash is read as a slash in WHATWG mode; previously it was rejected
    in the authority and percent-encoded elsewhere.
+
+RFC 3986 mode takes IRIs (:rfc:`3987`): non-ASCII characters are
+percent-encoded as UTF-8, and a non-ASCII host is encoded with IDNA2008.
+Any other character outside the grammar of the two RFCs makes the URL
+string invalid, where WHATWG mode percent-encodes or removes it: a space,
+``"``, ``<``, ``>``, ``^``, a backtick, ``{``, ``|``, ``}``, a control
+character, ``[`` or ``]`` outside an IP-literal host, a second ``#``, a
+``%`` that does not start a percent-encoded octet, a code point that
+:rfc:`3987` excludes (such as ``U+FFFF``, a C1 control, a bidi formatting
+character, or a private-use character outside the query), an invalid scheme,
+and a ``:`` in the first segment of a relative path. Only parsing a string is
+checked: :meth:`URL.build`, :meth:`URL.with_path` and the other methods that
+take decoded components percent-encode them, and ``encoded=True`` keeps the
+string as it is.
+
+.. doctest::
+
+   >>> URL('http://example.com/a b')
+   URL('http://example.com/a%20b')
+   >>> URL('http://example.com/a b', mode='rfc')
+   Traceback (most recent call last):
+     ...
+   ValueError: Invalid URL: RFC 3986 and RFC 3987 do not allow ' ' in the path of 'http://example.com/a b'
+   >>> URL('http://example.com/шлях', mode='rfc')
+   URL('http://example.com/%D1%88%D0%BB%D1%8F%D1%85', mode='rfc')
+
+.. versionchanged:: 1.26
+
+   RFC 3986 mode rejects characters outside the grammar of :rfc:`3986` and
+   :rfc:`3987`; previously it percent-encoded them, and stripped or removed
+   control characters, spaces, tabs and newlines.
 
 Already encoded URL is not changed:
 
@@ -254,7 +286,7 @@ Compatibility mode
 
 Every URL carries the standard it follows, set by the *mode* argument:
 ``"whatwg"`` (the default) for the WHATWG URL Standard or ``"rfc"`` for
-:rfc:`3986`. A :class:`Mode` member is accepted as well; any other
+:rfc:`3986`, which takes IRIs as :rfc:`3987` defines them. A :class:`Mode` member is accepted as well; any other
 value raises :exc:`ValueError`.
 
 .. doctest::
@@ -284,11 +316,8 @@ URL in WHATWG mode:
 The mode is not part of the URL value: URLs that differ only in their mode
 compare equal and have the same hash.
 
-.. note::
-
-   Both modes currently parse and build URLs the same way. Behavior that
-   differs between the two standards will follow the selected mode in future
-   releases.
+Where the two standards differ, each mode follows its own; the sections
+above describe the differences.
 
 .. versionadded:: 1.26
 
@@ -298,7 +327,7 @@ compare equal and have the same hash.
 
    .. attribute:: RFC
 
-      ``"rfc"``, :rfc:`3986`.
+      ``"rfc"``, :rfc:`3986` with IRIs as :rfc:`3987` defines them.
 
    .. attribute:: WHATWG
 

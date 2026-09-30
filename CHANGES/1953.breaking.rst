@@ -1,0 +1,8 @@
+Made RFC 3986 mode reject a URL string with characters outside the
+grammar of :rfc:`3986` and :rfc:`3987`, such as a space, ``<``, a second
+``#`` or a ``%`` that does not start a percent-encoded octet, instead of
+percent-encoding them, and stopped it from stripping control characters,
+spaces, tabs and newlines. Non-ASCII characters allowed in an IRI are still
+percent-encoded; :meth:`~yarl.URL.build` and the other methods that take
+decoded components are unchanged
+-- by :user:`asvetlov`.
