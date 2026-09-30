@@ -63,7 +63,7 @@ def test_unquoter_concurrency(unquoter: type[_Unquoter]) -> None:
     }
 
     q = unquoter()
-    
+
     def unquote(item: str) -> bool:
         return q(item) == PAIRS[item]
 
