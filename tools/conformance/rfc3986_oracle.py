@@ -1,22 +1,28 @@
 """A strict reference implementation of RFC 3986, used as a test oracle.
 
-* Validation compiles the Appendix A ABNF to regular expressions.  Input
-  is never preprocessed, so whitespace, backslashes, non-ASCII and other
-  characters outside the grammar make it invalid.
+* Validation compiles the Appendix A ABNF to regular expressions, extended
+  to IRIs by RFC 3987 section 2.2.  Input is never preprocessed, so
+  whitespace, backslashes and other characters outside the grammar make it
+  invalid.
+* An IRI is mapped to a URI by RFC 3987 section 3.1: a non-ASCII host with
+  the RFC 5895 mapping and IDNA2008 (RFC 5891), everything else by
+  percent-encoding its UTF-8.  Unlike UTS #46, RFC 5895 does not delete
+  invisible code points such as U+200B, so a host with one is invalid.
 * Resolution follows sections 5.2.2 (strict parser), 5.2.3, 5.2.4 and 5.3.
 * Normalization follows section 6.2.2, plus the small scheme-based layer
   of section 6.2.3 (default ports, empty port, empty http path).
 """
 
 import re
+import unicodedata
 from dataclasses import dataclass, replace
+
+import idna
 
 UNRESERVED = r"A-Za-z0-9\-._~"
 SUB_DELIMS = r"!$&'()*+,;="
 PCT = r"%[0-9A-Fa-f]{2}"
-PCHAR = rf"(?:[{UNRESERVED}{SUB_DELIMS}:@]|{PCT})"
 SCHEME = r"[A-Za-z][A-Za-z0-9+\-.]*"
-USERINFO = rf"(?:[{UNRESERVED}{SUB_DELIMS}:]|{PCT})*"
 DEC_OCTET = r"(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])"
 IPV4 = rf"{DEC_OCTET}\.{DEC_OCTET}\.{DEC_OCTET}\.{DEC_OCTET}"
 H16 = r"[0-9A-Fa-f]{1,4}"
@@ -36,22 +42,51 @@ IPV6 = (
 )
 IPVFUTURE = rf"v[0-9A-Fa-f]+\.[{UNRESERVED}{SUB_DELIMS}:]+"
 IP_LITERAL = rf"\[(?:{IPV6}|{IPVFUTURE})\]"
-REG_NAME = rf"(?:[{UNRESERVED}{SUB_DELIMS}]|{PCT})*"
-HOST = rf"(?:{IP_LITERAL}|{IPV4}|{REG_NAME})"
-AUTHORITY = rf"(?:{USERINFO}@)?{HOST}(?::[0-9]*)?"
-SEGMENT = rf"{PCHAR}*"
-SEGMENT_NZ = rf"{PCHAR}+"
-SEGMENT_NZ_NC = rf"(?:[{UNRESERVED}{SUB_DELIMS}@]|{PCT})+"
-PATH_ABEMPTY = rf"(?:/{SEGMENT})*"
-PATH_ABSOLUTE = rf"/(?:{SEGMENT_NZ}(?:/{SEGMENT})*)?"
-PATH_NOSCHEME = rf"{SEGMENT_NZ_NC}(?:/{SEGMENT})*"
-PATH_ROOTLESS = rf"{SEGMENT_NZ}(?:/{SEGMENT})*"
-QUERY = rf"(?:{PCHAR}|[/?])*"
-HIER_PART = rf"(?://{AUTHORITY}{PATH_ABEMPTY}|{PATH_ABSOLUTE}|{PATH_ROOTLESS}|)"
-RELATIVE_PART = rf"(?://{AUTHORITY}{PATH_ABEMPTY}|{PATH_ABSOLUTE}|{PATH_NOSCHEME}|)"
 
-RE_URI = re.compile(rf"{SCHEME}:{HIER_PART}(?:\?{QUERY})?(?:#{QUERY})?")
-RE_RELATIVE_REF = re.compile(rf"{RELATIVE_PART}(?:\?{QUERY})?(?:#{QUERY})?")
+
+def _ranges(*pairs: tuple[int, int]) -> str:
+    return "".join(f"{chr(first)}-{chr(last)}" for first, last in pairs)
+
+
+# RFC 3987 section 2.2.
+UCSCHAR = _ranges(
+    (0xA0, 0xD7FF),
+    (0xF900, 0xFDCF),
+    (0xFDF0, 0xFFEF),
+    *((plane << 16, (plane << 16) + 0xFFFD) for plane in range(1, 14)),
+    (0xE1000, 0xEFFFD),
+)
+IPRIVATE = _ranges((0xE000, 0xF8FF), (0xF0000, 0xFFFFD), (0x100000, 0x10FFFD))
+# RFC 3987 section 4.1: LRM, RLM, LRE, RLE, PDF, LRO and RLO.
+BIDI_FORMATTING = frozenset("\u200e\u200f\u202a\u202b\u202c\u202d\u202e")
+
+
+def _compile(unreserved: str, private: str) -> tuple[re.Pattern[str], re.Pattern[str]]:
+    """Compile the URI grammar, or the IRI one with the extra characters."""
+    pchar = rf"(?:[{unreserved}{SUB_DELIMS}:@]|{PCT})"
+    userinfo = rf"(?:[{unreserved}{SUB_DELIMS}:]|{PCT})*"
+    reg_name = rf"(?:[{unreserved}{SUB_DELIMS}]|{PCT})*"
+    host = rf"(?:{IP_LITERAL}|{IPV4}|{reg_name})"
+    authority = rf"(?:{userinfo}@)?{host}(?::[0-9]*)?"
+    segment = rf"{pchar}*"
+    segment_nz = rf"{pchar}+"
+    segment_nz_nc = rf"(?:[{unreserved}{SUB_DELIMS}@]|{PCT})+"
+    path_abempty = rf"(?:/{segment})*"
+    path_absolute = rf"/(?:{segment_nz}(?:/{segment})*)?"
+    path_noscheme = rf"{segment_nz_nc}(?:/{segment})*"
+    path_rootless = rf"{segment_nz}(?:/{segment})*"
+    query = rf"(?:{pchar}|[/?{private}])*"
+    fragment = rf"(?:{pchar}|[/?])*"
+    hier_part = rf"(?://{authority}{path_abempty}|{path_absolute}|{path_rootless}|)"
+    relative_part = rf"(?://{authority}{path_abempty}|{path_absolute}|{path_noscheme}|)"
+    return (
+        re.compile(rf"{SCHEME}:{hier_part}(?:\?{query})?(?:#{fragment})?"),
+        re.compile(rf"{relative_part}(?:\?{query})?(?:#{fragment})?"),
+    )
+
+
+RE_URI, RE_RELATIVE_REF = _compile(UNRESERVED, "")
+RE_IRI, RE_IRELATIVE_REF = _compile(UNRESERVED + UCSCHAR, IPRIVATE)
 RE_IPV4 = re.compile(IPV4)
 
 # Appendix B.
@@ -93,6 +128,64 @@ def is_uri(value: str) -> bool:
 
 def is_uri_reference(value: str) -> bool:
     return is_uri(value) or RE_RELATIVE_REF.fullmatch(value) is not None
+
+
+def is_iri_reference(value: str) -> bool:
+    """RFC 3987 sections 2.2 and 4.1."""
+    if not BIDI_FORMATTING.isdisjoint(value):
+        return False
+    return (
+        RE_IRI.fullmatch(value) is not None
+        or RE_IRELATIVE_REF.fullmatch(value) is not None
+    )
+
+
+def _pct_encode(value: str) -> str:
+    return "".join(
+        c if c.isascii() else "".join(f"%{b:02X}" for b in c.encode()) for c in value
+    )
+
+
+# RFC 5895 section 2, step 4.
+_IDEOGRAPHIC_FULL_STOPS = str.maketrans("\u3002\uff0e\uff61", "...")
+
+
+def _width(char: str) -> str:
+    decomposition = unicodedata.decomposition(char).split()
+    if decomposition[:1] in (["<wide>"], ["<narrow>"]):
+        return "".join(chr(int(code, 16)) for code in decomposition[1:])
+    return char
+
+
+def idna_host(host: str) -> str | None:
+    """Encode a non-ASCII host with RFC 5895 and IDNA2008, or return None."""
+    host = "".join(map(_width, host.lower()))
+    host = unicodedata.normalize("NFC", host).translate(_IDEOGRAPHIC_FULL_STOPS)
+    try:
+        return idna.encode(host).decode("ascii")
+    except idna.IDNAError:
+        return None
+
+
+def to_uri(value: str) -> str | None:
+    """Map an IRI reference to a URI reference, RFC 3987 section 3.1.
+
+    Return None when the value is not an IRI reference, or when its
+    non-ASCII host is not a valid IDNA2008 name.
+    """
+    if not is_iri_reference(value):
+        return None
+    if value.isascii():
+        return value
+    parts = split(value)
+    if parts.authority is not None and not parts.authority.isascii():
+        # An IP-literal is ASCII, so the host is a reg-name, without ":".
+        userinfo, at, hostport = parts.authority.rpartition("@")
+        host, colon, port = hostport.partition(":")
+        if not host.isascii() and (host := idna_host(host)) is None:
+            return None
+        parts.authority = f"{userinfo}{at}{host}{colon}{port}"
+    return _pct_encode(parts.recompose())
 
 
 def remove_dot_segments(path: str) -> str:
@@ -143,15 +236,20 @@ def resolve(base: str, reference: str) -> str:
 
 
 def outcome(reference: str, base: str | None) -> str | None:
-    """Return the target URI, or None when RFC 3986 gives no result."""
-    if not is_uri_reference(reference):
+    """Return the target URI, or None when RFC 3986 gives no result.
+
+    The reference and the base may be IRIs, mapped to URIs first.
+    """
+    uri = to_uri(reference)
+    if uri is None:
         return None
-    if is_uri(reference):
-        parts = split(reference)
+    if is_uri(uri):
+        parts = split(uri)
         return replace(parts, path=remove_dot_segments(parts.path)).recompose()
-    if base is None or not is_uri(base):
+    base_uri = None if base is None else to_uri(base)
+    if base_uri is None or not is_uri(base_uri):
         return None
-    return resolve(base, reference)
+    return resolve(base_uri, uri)
 
 
 _PCT_RE = re.compile(r"%([0-9A-Fa-f]{2})")

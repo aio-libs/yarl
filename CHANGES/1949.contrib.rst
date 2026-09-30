@@ -1,0 +1,6 @@
+Extended the RFC 3986 oracle of the conformance report in
+``tools/conformance/`` to IRIs: it now maps an RFC 3987 IRI to a URI,
+converting a non-ASCII host with the RFC 5895 mapping and IDNA2008 and
+percent-encoding other non-ASCII characters, instead of rejecting every
+non-ASCII input
+-- by :user:`asvetlov`.

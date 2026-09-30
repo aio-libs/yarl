@@ -2,7 +2,7 @@
 
 The WHATWG side comes from the web-platform-tests corpus, pinned to one
 commit and verified by checksum; the RFC 3986 side comes from the strict
-oracle in rfc3986_oracle.py.  The result is written to REPORT.md next to
+oracle in rfc3986_oracle.py, which takes IRIs (RFC 3987) as well.  The result is written to REPORT.md next to
 this file.  The WPT files are vendored under wpt/, so regenerating and
 checking the report never touches the network.
 
@@ -274,6 +274,7 @@ STANDARDS = """\
 | RFC 9110 section 4.2 | http and https schemes | Internet Standard (STD 97) |
 | RFC 3987 | Internationalized Resource Identifiers | Proposed Standard |
 | RFC 5891, RFC 5892 | IDNA2008 | Proposed Standard |
+| RFC 5895 | Mapping characters for IDNA2008 | Informational |
 | RFC 3492 | Punycode | Proposed Standard |
 | RFC 5952 | IPv6 address text representation | Proposed Standard |
 | RFC 8089 | file scheme | Proposed Standard |
@@ -325,7 +326,9 @@ def render() -> str:
         "default WHATWG mode and once in RFC 3986 mode; a result without a "
         "scheme counts as a failure.",
         "* **RFC 3986**: the strict oracle in `rfc3986_oracle.py`, with no "
-        "input preprocessing.",
+        "input preprocessing. It takes IRIs too and maps them to URIs as "
+        "RFC 3987 section 3.1 does: a non-ASCII host with the RFC 5895 "
+        "mapping and IDNA2008, other non-ASCII characters percent-encoded.",
         "* **WHATWG**: the expected `href` from `urltestdata.json`.",
         "",
         "Outcomes that are equal after RFC 3986 section 6.2 normalization "
