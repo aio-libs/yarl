@@ -12,12 +12,12 @@ ft_mark = pytest.mark.skipif(
 
 
 @pytest.fixture(params=[_Quoter], ids=["c_quoter"])
-def quoter(request: pytest.FixtureRequest) -> _Quoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
+def quoter(request: pytest.FixtureRequest) -> _Quoter:  # type: ignore[no-any-unimported,misc,unused-ignore,no-any-return]
     return request.param
 
 
 @pytest.fixture(params=[_Unquoter], ids=["c_unquoter"])
-def unquoter(request: pytest.FixtureRequest) -> _Unquoter:  # type: ignore[no-any-unimported,misc,unused-ignore]
+def unquoter(request: pytest.FixtureRequest) -> _Unquoter:  # type: ignore[no-any-unimported,misc,unused-ignore,no-any-return]
     return request.param
 
 
