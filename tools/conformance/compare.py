@@ -371,6 +371,34 @@ def render() -> str:
     return "\n".join(lines)
 
 
+# The oracle's answers for inputs the WPT corpus does not cover well,
+# checked on every run: (reference, base, target URI or None).
+ORACLE_CASES: list[tuple[str, str | None, str | None]] = [
+    ("a b", "http://x/", None),
+    ("http://example.com/\u4f60\u597d", None, "http://example.com/%E4%BD%A0%E5%A5%BD"),
+    ("http://\u00e9@example.com:8080/", None, "http://%C3%A9@example.com:8080/"),
+    ("\u4e2d/x", "http://\u4f8b\u3048.jp/a/b", "http://xn--r8jz45g.jp/a/%E4%B8%AD/x"),
+    # Private use only in the query; no noncharacters or bidi formatting.
+    ("https://localhost?q=\ue000", None, "https://localhost?q=%EE%80%80"),
+    ("https://localhost/\ue000", None, None),
+    ("https://x/\uffffy", None, None),
+    ("http://a/\u202e", None, None),
+    # Hosts: RFC 5895 and IDNA2008, else percent-encoded.
+    ("http://\uff27\uff4f.com", None, "http://go.com"),
+    ("http://www.foo\u3002bar.com", None, "http://www.foo.bar.com"),
+    ("https://fa\u00df.example/", None, "https://xn--fa-hia.example/"),
+    ("sc://\u00f1_foo/", None, "sc://%C3%B1_foo/"),
+    ("http://GOO\u200bgoo.com", None, "http://GOO%E2%80%8Bgoo.com"),
+]
+
+
+def check_oracle() -> None:
+    for reference, base, expected in ORACLE_CASES:
+        got = rfc.outcome(reference, base)
+        if got != expected:
+            sys.exit(f"oracle: {reference!r} on {base!r} is {got!r}, not {expected!r}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = parser.add_mutually_exclusive_group()
@@ -384,6 +412,7 @@ def main() -> None:
     if args.fetch:
         fetch_wpt()
         return
+    check_oracle()
     text = render()
     if not args.check:
         REPORT.write_text(text, encoding="utf-8")

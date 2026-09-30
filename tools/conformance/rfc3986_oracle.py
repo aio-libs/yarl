@@ -5,9 +5,10 @@
   whitespace, backslashes and other characters outside the grammar make it
   invalid.
 * An IRI is mapped to a URI by RFC 3987 section 3.1: a non-ASCII host with
-  the RFC 5895 mapping and IDNA2008 (RFC 5891), everything else by
-  percent-encoding its UTF-8.  Unlike UTS #46, RFC 5895 does not delete
-  invisible code points such as U+200B, so a host with one is invalid.
+  the RFC 5895 mapping and IDNA2008 (RFC 5891) when it is a valid IDNA2008
+  name, everything else by percent-encoding its UTF-8.  Unlike UTS #46,
+  RFC 5895 does not delete invisible code points such as U+200B, so a host
+  with one is percent-encoded rather than shortened.
 * Resolution follows sections 5.2.2 (strict parser), 5.2.3, 5.2.4 and 5.3.
 * Normalization follows section 6.2.2, plus the small scheme-based layer
   of section 6.2.3 (default ports, empty port, empty http path).
@@ -157,21 +158,24 @@ def _width(char: str) -> str:
     return char
 
 
-def idna_host(host: str) -> str | None:
-    """Encode a non-ASCII host with RFC 5895 and IDNA2008, or return None."""
-    host = "".join(map(_width, host.lower()))
-    host = unicodedata.normalize("NFC", host).translate(_IDEOGRAPHIC_FULL_STOPS)
+def idna_host(host: str) -> str:
+    """Encode a non-ASCII host with RFC 5895 and IDNA2008.
+
+    RFC 3987 section 3.1 makes this optional: a host that is not a valid
+    IDNA2008 name is percent-encoded instead, like the rest of the IRI.
+    """
+    mapped = "".join(map(_width, host.lower()))
+    mapped = unicodedata.normalize("NFC", mapped).translate(_IDEOGRAPHIC_FULL_STOPS)
     try:
-        return idna.encode(host).decode("ascii")
+        return idna.encode(mapped).decode("ascii")
     except idna.IDNAError:
-        return None
+        return _pct_encode(host)
 
 
 def to_uri(value: str) -> str | None:
     """Map an IRI reference to a URI reference, RFC 3987 section 3.1.
 
-    Return None when the value is not an IRI reference, or when its
-    non-ASCII host is not a valid IDNA2008 name.
+    Return None when the value is not an IRI reference.
     """
     if not is_iri_reference(value):
         return None
@@ -182,8 +186,8 @@ def to_uri(value: str) -> str | None:
         # An IP-literal is ASCII, so the host is a reg-name, without ":".
         userinfo, at, hostport = parts.authority.rpartition("@")
         host, colon, port = hostport.partition(":")
-        if not host.isascii() and (host := idna_host(host)) is None:
-            return None
+        if not host.isascii():
+            host = idna_host(host)
         parts.authority = f"{userinfo}{at}{host}{colon}{port}"
     return _pct_encode(parts.recompose())
 
