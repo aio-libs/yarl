@@ -1,4 +1,6 @@
-Built yarl without Cython line tracing in the aiohttp CI job, whose
-coverage run crashed on the ``yarl/_quoting_c.pyx`` source it could
-not find once tracing started recording lines on Python 3.13
+Fixed the aiohttp CI job, broken on master since :pr:`1808`, a regression
+from that change: its coverage run crashed on ``yarl/_quoting_c.pyx``,
+whose source it could not find, once the Cython line tracing of editable
+builds started recording lines on Python 3.13. The job now builds yarl
+without line tracing
 -- by :user:`asvetlov`.
