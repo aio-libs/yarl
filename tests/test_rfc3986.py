@@ -207,7 +207,8 @@ def test_invalid_reference_rejected(url: str) -> None:
         URL(url)
 
 
-# Section 2.1: characters outside the URI grammar must be percent-encoded.
+# Section 2.1: WHATWG mode percent-encodes characters outside the URI
+# grammar; RFC 3986 mode rejects them, see tests/test_url_rfc_grammar.py.
 @pytest.mark.parametrize(
     ("url", "expected"),
     [

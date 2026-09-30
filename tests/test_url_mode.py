@@ -233,9 +233,14 @@ def test_idna2008_host_in_whatwg_mode() -> None:
 def test_idna2008_host_accepted(mode: Mode) -> None:
     url = URL("http://ñ.example/", mode=mode)
     assert url.raw_host == "xn--ida.example"
+
+
+def test_zone_identifier_not_idna_encoded() -> None:
     # A zone identifier is not a host name, so IDNA does not apply to it.
-    ipv6 = URL("http://[fe80::1%25ñ]/", mode=mode)
-    assert ipv6.raw_host == "fe80::1%25ñ"
+    # RFC 3986 mode rejects it: an IP-literal is ASCII in RFC 3987 too.
+    assert URL("http://[fe80::1%25ñ]/").raw_host == "fe80::1%25ñ"
+    with pytest.raises(ValueError, match="'ñ' in the host"):
+        URL("http://[fe80::1%25ñ]/", mode=RFC)
 
 
 @pytest.mark.parametrize("first", [RFC, WHATWG])
