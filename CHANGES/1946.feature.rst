@@ -1,2 +1,2 @@
-Enabled Cython free-threading-compatible mode with yarl quoters.
+Enabled Cython free-threading-compatible mode with yarl quoter and unquoter.
 -- by :user:`Vizonex`.
