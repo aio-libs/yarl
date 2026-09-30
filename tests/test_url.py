@@ -2583,7 +2583,7 @@ def test_human_repr_delimiters() -> None:
         s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         "@хост.домен:8080"
-        "/ !\"%23$%25&'()*+,-./:;<=>%3F@[\\]^_`{|}~"
+        "/ !\"%23$%25&'()*+,-./:;<=>%3F@[%5C]^_`{|}~"
         "? !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
         "= !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
         "# !\"#$%25&'()*+,-./:;<=>?@[\\]^_`{|}~"
@@ -2775,18 +2775,23 @@ def test_build_with_invalid_ipv6_host(host: str, is_authority: bool) -> None:
     ],
 )
 def test_url_with_backslash_in_netloc(url: str) -> None:
+    # WHATWG mode reads "\\" as "/" in a special URL, as browsers do, so the
+    # host ends before it.
+    assert URL(url) == URL(url.replace("\\", "/"))
+    with pytest.raises(ValueError, match=r"RFC 3986 does not allow '\\'"):
+        URL(url, mode="rfc")
     with pytest.raises(
         ValueError, match=r"backslash \('\\'\) is not allowed in the authority"
     ):
-        URL(url)
+        URL(url, encoded=True)
 
 
 def test_url_with_backslash_in_path_after_ipv6_host() -> None:
     url = URL(r"http://[::1]/\path")
 
-    assert str(url) == r"http://[::1]/%5Cpath"
+    assert str(url) == "http://[::1]//path"
     assert url.host == "::1"
-    assert url.path == r"/\path"
+    assert url.path == "//path"
 
 
 @pytest.mark.parametrize("byte", ["\r", "\n", "\t"])
