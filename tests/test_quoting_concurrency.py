@@ -32,7 +32,7 @@ def test_quoter_concurrency(quoter:type[_Quoter]) -> None:
     }
     q = quoter()
 
-    def quote(item: str):
+    def quote(item: str) -> bool:
         return q(item) == PAIRS[item]
 
     with ThreadPoolExecutor(3) as te:
@@ -59,7 +59,7 @@ def test_unquoter_concurrency(unquoter: type[_Unquoter]) -> None:
 
     q = unquoter()
     
-    def unquote(item: str):
+    def unquote(item: str) -> bool:
         return q(item) == PAIRS[item]
 
     with ThreadPoolExecutor(3) as te:
