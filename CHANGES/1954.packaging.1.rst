@@ -1,0 +1,3 @@
+Moved the core project metadata and the runtime dependencies from
+:file:`setup.cfg` to :file:`pyproject.toml` per :pep:`621`, and dropped
+the obsolete ``zip_safe`` flag -- by :user:`cdce8p`.
