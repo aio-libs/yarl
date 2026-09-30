@@ -212,9 +212,10 @@ def test_invalid_reference_rejected(url: str) -> None:
     ("url", "expected"),
     [
         ("http://example.com/a b", "http://example.com/a%20b"),
+        # No "\\" in the path: WHATWG mode reads it as "/".
         (
-            'http://example.com/"<>\\^`{|}[]',
-            "http://example.com/%22%3C%3E%5C%5E%60%7B%7C%7D%5B%5D",
+            'http://example.com/"<>^`{|}[]',
+            "http://example.com/%22%3C%3E%5E%60%7B%7C%7D%5B%5D",
         ),
         (
             'http://example.com/?"<>\\^`{|}[]',
@@ -229,6 +230,22 @@ def test_invalid_reference_rejected(url: str) -> None:
 )
 def test_disallowed_characters_encoded(url: str, expected: str) -> None:
     assert str(URL(url)) == expected
+
+
+# Section 2: "\\" is not in the grammar at all; RFC 3986 mode rejects it.
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://example.com/a\\b",
+        "http://example.com/?a\\b",
+        "http://example.com/#a\\b",
+        "sc://example.com/a\\b",
+        "a\\b",
+    ],
+)
+def test_backslash_rejected(url: str) -> None:
+    with pytest.raises(ValueError, match="does not allow"):
+        URL(url, mode="rfc")
 
 
 PCT_TEMPLATES = {

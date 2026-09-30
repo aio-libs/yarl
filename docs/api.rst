@@ -140,6 +140,29 @@ as :rfc:`3986#appendix-C` recommends for user-typed URIs:
    Trailing C0 control characters and spaces are stripped; previously they
    were kept and percent-encoded.
 
+In WHATWG mode a backslash (``\``) before the query is read as a slash in
+URLs of the ``http``, ``https``, ``ws``, ``wss``, ``ftp`` and ``file``
+schemes, as the WHATWG URL Standard does for special URLs. A relative URL
+keeps it until :meth:`URL.join` joins it with such a URL, so that ``\/a``
+cannot replace the host of another base. Other schemes, the query and the
+fragment keep it, percent-encoded.
+RFC 3986 has no backslash in its grammar, so RFC 3986 mode rejects a URL
+string that contains one:
+
+.. doctest::
+
+   >>> URL('http://example.com\\path\\file')
+   URL('http://example.com/path/file')
+   >>> URL('http://example.com\\path', mode='rfc')
+   Traceback (most recent call last):
+     ...
+   ValueError: Invalid URL: RFC 3986 does not allow '\' in 'http://example.com\\path'
+
+.. versionchanged:: 1.26
+
+   A backslash is read as a slash in WHATWG mode; previously it was rejected
+   in the authority and percent-encoded elsewhere.
+
 Already encoded URL is not changed:
 
 .. doctest::

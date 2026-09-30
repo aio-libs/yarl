@@ -8,6 +8,7 @@ follows that in WHATWG mode; RFC 3986 mode keeps such a URL without a host.
 """
 
 import pickle
+from collections.abc import Callable
 
 import pytest
 
@@ -130,10 +131,41 @@ def test_join_rfc_base() -> None:
     assert joined.mode == "rfc"
 
 
+@pytest.mark.parametrize(
+    ("modify", "expected"),
+    [
+        (lambda u: u.with_query("a=1"), "http://h/foo/example.com/?a=1#g"),
+        (lambda u: u.with_query(None), "http://h/foo/example.com/#g"),
+        (lambda u: u.extend_query(a=1), "http://h/foo/example.com/?b=2&a=1#g"),
+        (lambda u: u.update_query(a=1), "http://h/foo/example.com/?b=2&a=1#g"),
+        (lambda u: u % {"a": 1}, "http://h/foo/example.com/?b=2&a=1#g"),
+        (lambda u: u.without_query_params("b"), "http://h/foo/example.com/#g"),
+        (lambda u: u.with_fragment("f"), "http://h/foo/example.com/?b=2#f"),
+        (lambda u: u.with_fragment(None), "http://h/foo/example.com/?b=2"),
+    ],
+)
+def test_join_after_query_or_fragment_change(
+    modify: Callable[[URL], URL], expected: str
+) -> None:
+    # "http:example.com/?a=1" is still a relative reference for WHATWG.
+    url = modify(URL("http:example.com/?b=2#g"))
+    assert str(URL("http://h/foo/bar").join(url)) == expected
+
+
+def test_join_after_fragment_change_does_not_share() -> None:
+    # with_fragment() must not hand the join path to a URL shared through
+    # the from_parts() cache.
+    URL("http:example.com/").with_fragment("f")
+    url = URL("http://example.com/").with_fragment("f")
+    assert str(URL("http://h/foo/bar").join(url)) == "http://example.com/#f"
+
+
 def test_join_after_modification() -> None:
-    # A modified URL is an ordinary absolute URL.
-    url = URL("http:example.com/").with_query("a=1")
-    assert str(URL("http://h/foo/bar").join(url)) == "http://example.com/?a=1"
+    # A URL with another path or host is an ordinary absolute URL.
+    url = URL("http:example.com/").with_path("/p")
+    assert str(URL("http://h/foo/bar").join(url)) == "http://example.com/p"
+    url = URL("http:example.com/").with_host("other.com")
+    assert str(URL("http://h/foo/bar").join(url)) == "http://other.com/"
 
 
 def test_join_after_mode_change() -> None:

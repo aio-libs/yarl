@@ -28,6 +28,8 @@ from ._parse import (
     EMPTY_FRAGMENT,
     EMPTY_QUERY,
     SPECIAL_SCHEMES,
+    UNSAFE_URL_BYTES_TO_REMOVE,
+    WHATWG_C0_CONTROL_OR_SPACE,
     SplitURLType,
     has_dot_prefix,
     make_netloc,
@@ -335,9 +337,55 @@ def _is_special_authority_path(scheme: str, path: str, mode: Mode) -> bool:
     return mode is _WHATWG and scheme in SCHEME_REQUIRES_HOST and path.lstrip("/") != ""
 
 
-def _encode_url(url_str: str, mode: Mode) -> "URL":
+def _backslashes(url_str: str, mode: Mode) -> tuple[str, bool]:
+    """Handle "\\" in a URL string before it is parsed.
+
+    RFC 3986 has no "\\" in its grammar, so RFC 3986 mode rejects it. The
+    WHATWG URL Standard reads it as "/" in the authority and the path of a
+    special URL, and so does WHATWG mode; other schemes keep it,
+    percent-encoded, as do the query and the fragment.
+
+    Return the string with "\\" read as "/" and whether it is a relative
+    reference, whose "\\" is read as "/" only when it is joined with a
+    special base: against another base, "\\/a" must not become the
+    network-path reference "//a".
+    """
+    if mode is not _WHATWG:
+        raise ValueError(f"Invalid URL: RFC 3986 does not allow '\\' in {url_str!r}")
+    # Find the scheme the way split_url() does.
+    url = url_str.strip(WHATWG_C0_CONTROL_OR_SPACE)
+    for b in UNSAFE_URL_BYTES_TO_REMOVE:
+        url = url.replace(b, "")
+    i = url.find(":")
+    relative = True
+    if i > 0 and all(c in _SCHEME_CHARS for c in url[:i]):
+        if url[:i].lower() not in SPECIAL_SCHEMES:
+            return url_str, False
+        relative = False
+    end = len(url)
+    for c in "?#":
+        if (pos := url.find(c)) >= 0 and pos < end:
+            end = pos
+    return url[:end].replace("\\", "/") + url[end:], relative
+
+
+def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
+    if backslashes and "\\" in url_str:
+        special_str, relative = _backslashes(url_str, mode)
+        if not relative:
+            url_str = special_str
+        elif not url_str.lstrip(WHATWG_C0_CONTROL_OR_SPACE).startswith("//"):
+            # Keep "\\" as a character; join() reads it as "/" when the base
+            # is special.
+            url = _encode_url(url_str, mode, False)
+            url._cache["_join_path"] = special_str
+            return url
+        else:
+            # A network-path reference has an authority either way, and one
+            # with "\\" in it would be rejected.
+            url_str = special_str
     host: str | None
     scheme, netloc, path, query, fragment, empty = split_url(url_str)
     if not netloc and _is_special_authority_path(scheme, path, mode):
@@ -958,8 +1006,9 @@ class URL:
         # pickles produced by older yarl releases (which embed a real
         # ``SplitResult``) still load correctly. The compatibility mode goes
         # second and the mask of empty components third; older releases
-        # ignore trailing items of the state. The path that join() uses for
-        # "http:g" (see _special_authority_url()) goes last, when there is one.
+        # ignore trailing items of the state. What join() reads for "http:g"
+        # (see _special_authority_url()) or for a relative reference with
+        # "\\" (see _backslashes()) goes last, when there is one.
         if (join_path := self._cache.get("_join_path")) is not None:
             return (self._val, self._mode.value, self._empty, join_path)
         return (self._val, self._mode.value, self._empty)
@@ -990,6 +1039,16 @@ class URL:
         self._empty = empty
         self._cache = cache
         self._mode = mode
+
+    def _keep_join_path(self, url: "URL") -> None:
+        """Give url, a copy of self with another query or fragment, what
+        join() reads instead of self's path: the path of "http:g" (see
+        _special_authority_url()) or, for a relative reference without an
+        authority, the reference with "\\" read as "/" (see _backslashes()).
+
+        url must be a new URL, not one shared through the from_parts() cache.
+        """
+        url._cache["_join_path"] = self._cache["_join_path"]
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
@@ -1753,7 +1812,7 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         query = get_str_query(*args, **kwargs) or ""
-        return from_parts_uncached(
+        url = from_parts_uncached(
             self._scheme,
             self._netloc,
             self._path,
@@ -1762,6 +1821,9 @@ class URL:
             self._mode,
             self._empty and self._empty & ~EMPTY_QUERY,
         )
+        if "_join_path" in self._cache:
+            self._keep_join_path(url)
+        return url
 
     @overload
     def extend_query(self, query: Query) -> "URL": ...
@@ -1787,7 +1849,7 @@ class URL:
             query += new_query if query[-1] == "&" else f"&{new_query}"
         else:
             query = new_query
-        return from_parts_uncached(
+        url = from_parts_uncached(
             self._scheme,
             self._netloc,
             self._path,
@@ -1796,6 +1858,9 @@ class URL:
             self._mode,
             self._empty and self._empty & ~EMPTY_QUERY,
         )
+        if "_join_path" in self._cache:
+            self._keep_join_path(url)
+        return url
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1861,19 +1926,10 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
-        if not (empty := self._empty):
-            return from_parts_uncached(
-                self._scheme,
-                self._netloc,
-                self._path,
-                query,
-                self._fragment,
-                self._mode,
-            )
         # An empty query stays when nothing is added, "None" removes it.
-        if query or in_query is None:
+        if (empty := self._empty) and (query or in_query is None):
             empty &= ~EMPTY_QUERY
-        return from_parts_uncached(
+        url = from_parts_uncached(
             self._scheme,
             self._netloc,
             self._path,
@@ -1882,6 +1938,9 @@ class URL:
             self._mode,
             empty,
         )
+        if "_join_path" in self._cache:
+            self._keep_join_path(url)
+        return url
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
@@ -1914,17 +1973,22 @@ class URL:
         if empty := self._empty:
             if self._fragment == raw_fragment and not empty & EMPTY_FRAGMENT:
                 return self
-            return from_parts(
+            empty &= ~EMPTY_FRAGMENT
+        elif self._fragment == raw_fragment:
+            return self
+        if "_join_path" in self._cache:
+            # from_parts() may return a shared URL, which must not get it.
+            url = from_parts_uncached(
                 self._scheme,
                 self._netloc,
                 self._path,
                 self._query,
                 raw_fragment,
                 self._mode,
-                empty & ~EMPTY_FRAGMENT,
+                empty,
             )
-        if self._fragment == raw_fragment:
-            return self
+            self._keep_join_path(url)
+            return url
         return from_parts(
             self._scheme,
             self._netloc,
@@ -1932,6 +1996,7 @@ class URL:
             self._query,
             raw_fragment,
             self._mode,
+            empty,
         )
 
     def with_name(
@@ -2064,12 +2129,33 @@ class URL:
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
-        if url._netloc and (join_path := url._cache.get("_join_path")) is not None:
-            # "http:g" was parsed in WHATWG mode as "http://g/", but against
-            # an http base it is the relative reference "g".
-            url = from_parts(
-                scheme, "", join_path, url._query, url._fragment, url._mode, url._empty
-            )
+        if "_join_path" in url._cache:
+            join_path = url._cache["_join_path"]
+            if url._netloc:
+                # "http:g" was parsed in WHATWG mode as "http://g/", but
+                # against an http base it is the relative reference "g".
+                url = from_parts(
+                    scheme,
+                    "",
+                    join_path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    url._empty,
+                )
+            elif scheme in SPECIAL_SCHEMES and self._mode is _WHATWG:
+                # A relative reference with "\\" (see _backslashes()); the
+                # query and the fragment may have changed since it was parsed.
+                ref = encode_url(join_path)
+                url = from_parts(
+                    ref._scheme,
+                    ref._netloc,
+                    ref._path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    ref._empty & EMPTY_AUTHORITY | url._empty,
+                )
 
         if url._empty or self._empty:
             return self._join_with_empty(url, scheme)
@@ -2174,7 +2260,8 @@ class URL:
         password = human_quote(self.password, "#/:?@[]\\")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
-        path = human_quote(self.path, "#?")
+        # WHATWG mode reads "\\" in the path as "/", so it stays encoded.
+        path = human_quote(self.path, "#?\\")
         if TYPE_CHECKING:
             assert path is not None
         if not self._scheme and not self._netloc:
