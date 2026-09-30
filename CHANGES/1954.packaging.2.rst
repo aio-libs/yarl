@@ -1,0 +1,6 @@
+Adopted :pep:`639` license metadata: the license is now declared as the
+SPDX expression ``Apache-2.0`` and ``license-files`` moved to the
+``[project]`` table, which bumps the build-time requirement to
+``setuptools >= 77.0``. Built distributions now carry
+``License-Expression`` and ship :file:`LICENSE` and :file:`NOTICE` under
+:file:`*.dist-info/licenses/` -- by :user:`aiolibsbot`.

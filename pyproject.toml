@@ -3,10 +3,9 @@ requires = [
   # NOTE: The following build dependencies are necessary for initial
   # NOTE: provisioning of the in-tree build backend located under
   # NOTE: `packaging/pep517_backend/`.
-  # setuptools >= 67.0 is required for Python 3.12+ support.
-  # Next step should be >= 77.0 for PEP 639 support; don't bump too
-  # early, to give distributors time to update their setuptools.
-  "setuptools >= 67.0",
+  # setuptools >= 77.0 is required for PEP 639 SPDX license metadata
+  # (it also covers the >= 67.0 floor needed for Python 3.12+ support).
+  "setuptools >= 77.0",
   "tomli; python_version < '3.11'",
 ]
 backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
@@ -14,7 +13,8 @@ build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
 
 [project]
 name = "yarl"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 description = "Yet another URL library"
 authors = [{ name = "Andrew Svetlov", email = "andrew.svetlov@gmail.com" }]
 maintainers = [{ name = "aiohttp team", email = "team@aiohttp.org" }]
@@ -61,7 +61,6 @@ dynamic = ["version", "readme"]
 "GitHub: repo" = "https://github.com/aio-libs/yarl"
 
 [tool.setuptools]
-license-files = ["LICENSE", "NOTICE"]
 include-package-data = true
 packages = ["yarl"]
 
