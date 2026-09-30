@@ -4,5 +4,7 @@ grammar of :rfc:`3986` and :rfc:`3987`, such as a space, ``<``, a second
 percent-encoding them, and stopped it from stripping control characters,
 spaces, tabs and newlines. Non-ASCII characters allowed in an IRI are still
 percent-encoded; :meth:`~yarl.URL.build` and the other methods that take
-decoded components are unchanged
+decoded components are unchanged, except that a ``:`` in the first segment
+of a relative path is now encoded as ``%3A`` in RFC 3986 mode, so that the
+URL parses back
 -- by :user:`asvetlov`.

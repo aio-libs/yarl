@@ -263,6 +263,19 @@ def _encode_relative_scheme_colon(path: str) -> str:
     return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
 
 
+def _encode_relative_colon(path: str, mode: Mode) -> str:
+    """Re-encode a ``:`` in a relative path that would not parse back.
+
+    WHATWG mode only encodes one that would read as a scheme. RFC 3986
+    section 4.2 allows no ``:`` in the first segment at all, and RFC 3986
+    mode rejects one when it parses a string, so it encodes all of them.
+    """
+    if mode is _WHATWG:
+        return _encode_relative_scheme_colon(path)
+    first, slash, rest = path.partition("/")
+    return first.replace(":", "%3A") + slash + rest
+
+
 def _check_missing_host(scheme: str, mode: Mode) -> None:
     """Reject an authority that has userinfo or a port but no host.
 
@@ -317,7 +330,8 @@ _UCSCHAR = _char_ranges(
     (0xE1000, 0xEFFFD),
 )
 _IPRIVATE = _char_ranges((0xE000, 0xF8FF), (0xF0000, 0xFFFFD), (0x100000, 0x10FFFD))
-_IUNRESERVED = r"A-Za-z0-9\-._~" + _UCSCHAR
+_UNRESERVED = r"A-Za-z0-9\-._~"
+_IUNRESERVED = _UNRESERVED + _UCSCHAR
 _SUB_DELIMS = "!$&'()*+,;="
 _RFC_SPLIT_RE = re.compile(
     r"(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?", re.S
@@ -336,6 +350,9 @@ _RFC_PATH_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@/")
 _RFC_QUERY_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@/?{_IPRIVATE}")
 _RFC_FRAGMENT_RE = _rfc_re(f"{_IUNRESERVED}{_SUB_DELIMS}:@/?")
 _RFC_PORT_RE = re.compile("[0-9]*")
+# The characters of IPv6address and IPvFuture, and of a zone identifier
+# (RFC 6874); the parser checks the rest.
+_RFC_IP_LITERAL_RE = _rfc_re(f"{_UNRESERVED}{_SUB_DELIMS}:")
 
 
 def _check_rfc_component(
@@ -364,8 +381,8 @@ def _check_rfc_url(url_str: str) -> None:
     non-ASCII characters and encodes a non-ASCII host with IDNA2008. Other
     characters, such as a space, "<" or a "%" that does not start a
     percent-encoded octet, make the string invalid, where WHATWG mode
-    percent-encodes or removes them. An IP-literal host is checked when it is
-    parsed.
+    percent-encodes or removes them. The characters of an IP-literal host are
+    checked here, its syntax when it is parsed.
     """
     if "\\" in url_str:
         raise ValueError(f"Invalid URL: RFC 3986 does not allow '\\' in {url_str!r}")
@@ -381,7 +398,9 @@ def _check_rfc_url(url_str: str) -> None:
         userinfo, _, hostport = authority.rpartition("@")
         _check_rfc_component(url_str, "userinfo", userinfo, _RFC_USERINFO_RE)
         if hostport.startswith("["):
-            port = hostport.rpartition("]")[2].partition(":")[2]
+            literal, _, after = hostport[1:].partition("]")
+            _check_rfc_component(url_str, "host", literal, _RFC_IP_LITERAL_RE)
+            port = after.partition(":")[2]
         else:
             host, _, port = hostport.partition(":")
             _check_rfc_component(url_str, "host", host, _RFC_REG_NAME_RE)
@@ -643,7 +662,7 @@ def build_pre_encoded_url(
     else:
         self._netloc = ""
     if path and not scheme and not self._netloc and ":" in path:
-        path = _encode_relative_scheme_colon(path)
+        path = _encode_relative_colon(path, mode)
     self._path = path
     self._query = query_string
     self._fragment = fragment
@@ -680,7 +699,7 @@ def from_parts_uncached(
     self._scheme = scheme
     self._netloc = netloc
     if path and not scheme and not netloc and ":" in path:
-        path = _encode_relative_scheme_colon(path)
+        path = _encode_relative_colon(path, mode)
     self._path = path
     self._query = query
     self._fragment = fragment
@@ -952,7 +971,7 @@ class URL:
                 raise ValueError(msg)
 
         if path and not self._scheme and not self._netloc and ":" in path:
-            path = _encode_relative_scheme_colon(path)
+            path = _encode_relative_colon(path, mode)
         self._path = path
         if not query and query_string:
             query_string = QUERY_QUOTER(query_string)
@@ -2359,7 +2378,7 @@ class URL:
         if TYPE_CHECKING:
             assert path is not None
         if not self._scheme and not self._netloc:
-            path = _encode_relative_scheme_colon(path)
+            path = _encode_relative_colon(path, self._mode)
         query_string = "&".join(
             "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()

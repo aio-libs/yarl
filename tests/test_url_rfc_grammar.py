@@ -10,7 +10,7 @@ the caller.
 
 import pytest
 
-from yarl import URL
+from yarl import URL, Mode
 
 
 @pytest.mark.parametrize(
@@ -45,6 +45,9 @@ def test_iri_accepted(url: str, expected: str) -> None:
         ("http://a%zz@example.com/", "two hexadecimal digits in the userinfo"),
         ("http://exa mple.com/", "' ' in the host"),
         ("http://exa<mple.com/", "'<' in the host"),
+        ("http://[fe80::1%25a b]/", "' ' in the host"),
+        ("http://[fe80::1%]/", "two hexadecimal digits in the host"),
+        ("http://[fe80::1%eth0]/", "two hexadecimal digits in the host"),
         ("http://a%2/", "two hexadecimal digits in the host"),
         ("http://f:\n/c", "'\\\\n' in the port"),
         ("http://h:%31/", "'%' in the port"),
@@ -122,3 +125,30 @@ def test_built_components_encoded() -> None:
     assert str(base.joinpath("\xe9")) == "http://example.com/%C3%A9"
     assert str(base.with_query(q="a b")) == "http://example.com/?q=a+b"
     assert str(base.with_fragment("a#b")) == "http://example.com/#a%23b"
+
+
+# RFC 3986 section 4.2: a relative path has no ":" in its first segment, so
+# a built one is encoded to parse back in RFC 3986 mode. WHATWG mode only
+# encodes a ":" that would read as a scheme.
+@pytest.mark.parametrize(
+    ("path", "whatwg", "rfc"),
+    [
+        (":foo", ":foo", "%3Afoo"),
+        (":a/b:c", ":a/b:c", "%3Aa/b:c"),
+        ("a:b", "a%3Ab", "a%3Ab"),
+        ("\u00e9:x", "%C3%A9:x", "%C3%A9%3Ax"),
+    ],
+)
+def test_built_relative_colon(path: str, whatwg: str, rfc: str) -> None:
+    for mode, expected in ((Mode.WHATWG, whatwg), (Mode.RFC, rfc)):
+        url = URL.build(path=path, mode=mode)
+        assert str(url) == expected
+        assert url.path == path
+        assert URL(str(url), mode=mode) == url
+
+
+def test_relative_colon_on_mode_change() -> None:
+    url = URL(URL.build(path=":foo"), mode="rfc")
+    assert str(url) == "%3Afoo"
+    assert url.human_repr() == "%3Afoo"
+    assert URL.build(path=":foo").human_repr() == ":foo"

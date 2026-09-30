@@ -316,8 +316,11 @@ URL in WHATWG mode:
 The mode is not part of the URL value: URLs that differ only in their mode
 compare equal and have the same hash.
 
-Where the two standards differ, each mode follows its own; the sections
-above describe the differences.
+Where the two standards differ, each mode aims to follow its own; the
+sections above describe the differences. Some cases still deviate from the
+selected standard; the `conformance report
+<https://github.com/aio-libs/yarl/blob/master/tools/conformance/REPORT.md>`_
+lists them.
 
 .. versionadded:: 1.26
 
