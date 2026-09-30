@@ -127,11 +127,6 @@ VALID = [
     pytest.param("?q", id="4.2-query-only"),
     pytest.param("#f", id="4.2-fragment-only"),
     pytest.param(
-        "http://[v1.fe]/",
-        id="3.2.2-ipvfuture",
-        marks=diverges("IPvFuture literal loses its brackets"),
-    ),
-    pytest.param(
         "foo:///a",
         id="3.2-empty-authority",
     ),
@@ -174,6 +169,12 @@ NUMERIC_REG_NAME = [
 @pytest.mark.parametrize("url", NUMERIC_REG_NAME)
 def test_numeric_reg_name_round_trips(url: str) -> None:
     assert str(URL(url, mode="rfc")) == url
+
+
+# Section 3.2.2: an IPvFuture literal, which WHATWG does not have, keeps its
+# brackets; without them it would be a reg-name.
+def test_ipvfuture_round_trips_rfc_mode() -> None:
+    assert str(URL("http://[v1.fe]/", mode="rfc")) == "http://[v1.fe]/"
 
 
 # Strings that do not match URI-reference in Appendix A.

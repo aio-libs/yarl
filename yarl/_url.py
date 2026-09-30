@@ -27,6 +27,7 @@ from ._parse import (
     EMPTY_AUTHORITY,
     EMPTY_FRAGMENT,
     EMPTY_QUERY,
+    IP_FUTURE_RE,
     SPECIAL_SCHEMES,
     UNSAFE_URL_BYTES_TO_REMOVE,
     WHATWG_C0_CONTROL_OR_SPACE,
@@ -528,12 +529,19 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
         if idna2003 and mode is not _WHATWG:
             raise ValueError(_idna2003_host_error(host))
         host = encoded
-        if whatwg_host is not host and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
+        if (
+            whatwg_host is not host
+            and mode is _WHATWG
+            and (scheme in SPECIAL_SCHEMES or host[0] == "[")
+        ):
             host = _whatwg_special_host(host, whatwg_host)
         # Remove brackets as host encoder adds back brackets for IPv6 addresses.
+        # An IPvFuture address keeps them, see split_netloc().
         # An empty host (RFC mode, e.g. "sc://user@:8080") is None, as for
         # built and pre-encoded URLs.
-        cache["raw_host"] = (host[1:-1] if "[" in host else host) or None
+        cache["raw_host"] = (
+            host[1:-1] if "[" in host and host[1] != "v" else host
+        ) or None
         cache["explicit_port"] = port
         if password is None and username is None:
             # Fast path for URLs without user, password
@@ -933,7 +941,7 @@ class URL:
                 if (
                     whatwg_host is not _host
                     and mode is _WHATWG
-                    and scheme in SPECIAL_SCHEMES
+                    and (scheme in SPECIAL_SCHEMES or _host[0] == "[")
                 ):
                     _host = _whatwg_special_host(_host, whatwg_host)
             else:
@@ -945,7 +953,7 @@ class URL:
             if (
                 whatwg_host is not _host
                 and mode is _WHATWG
-                and scheme in SPECIAL_SCHEMES
+                and (scheme in SPECIAL_SCHEMES or _host[0] == "[")
             ):
                 _host = _whatwg_special_host(_host, whatwg_host)
         else:
@@ -1388,7 +1396,7 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        if raw and raw[-1].isdigit() or ":" in raw:
+        if raw and (raw[-1].isdigit() or raw[-1] == "]") or ":" in raw:
             # IP addresses are never IDNA encoded. The replace decodes
             # every %25 in the raw host, i.e. the RFC 6874 zone
             # separator and any %25 that percent-encodes a literal %
@@ -1418,7 +1426,8 @@ class URL:
         """
         if (raw := self.raw_host) is None:
             return None
-        return f"[{raw}]" if ":" in raw else raw
+        # An IPvFuture address keeps its brackets in the raw host.
+        return f"[{raw}]" if ":" in raw and raw[-1] != "]" else raw
 
     @cached_property
     def host_port_subcomponent(self) -> str | None:
@@ -1453,10 +1462,12 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
+        if ":" in raw and raw[-1] != "]":
+            raw = f"[{raw}]"
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
-            return f"[{raw}]" if ":" in raw else raw
-        return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
+            return raw
+        return f"{raw}:{port}"
 
     @cached_property
     def port(self) -> int | None:
@@ -1838,7 +1849,7 @@ class URL:
         if (
             whatwg_host is not encoded_host
             and self._mode is _WHATWG
-            and self._scheme in SPECIAL_SCHEMES
+            and (self._scheme in SPECIAL_SCHEMES or encoded_host[0] == "[")
         ):
             encoded_host = _whatwg_special_host(encoded_host, whatwg_host)
         port = self.explicit_port
@@ -2371,7 +2382,7 @@ class URL:
         """Return decoded human readable string for URL representation."""
         user = human_quote(self.user, "#/:?@[]\\")
         password = human_quote(self.password, "#/:?@[]\\")
-        if (host := self.host) and ":" in host:
+        if (host := self.host) and ":" in host and host[-1] != "]":
             host = f"[{host}]"
         # WHATWG mode reads "\\" in the path as "/", so it stays encoded.
         path = human_quote(self.path, "#?\\")
@@ -2477,7 +2488,11 @@ def _moved_netloc(url: "URL", scheme: str, mode: Mode) -> str:
     parsed as an IPv4 address.
     """
     netloc = url._netloc
-    if mode is _WHATWG and scheme in SPECIAL_SCHEMES and (host := url.raw_host):
+    if (
+        mode is _WHATWG
+        and (scheme in SPECIAL_SCHEMES or "[" in netloc)
+        and (host := url.raw_host)
+    ):
         # The WHATWG host is cached with the encoding of the host.
         encoded, whatwg_host, _ = _encode_host(host, False)
         if whatwg_host is not encoded:
@@ -2498,6 +2513,11 @@ def _whatwg_special_host(host: str, whatwg_host: str | None) -> str:
     of them as a reg-name.
     """
     if whatwg_host is None:
+        if host[0] == "[":
+            raise ValueError(
+                f"Host {host!r} is an IPvFuture address, which the WHATWG URL"
+                " Standard does not have"
+            )
         if "%" in host:
             raise ValueError(f"Host {host!r} is not a valid host once percent-decoded")
         raise ValueError(f"Host {host!r} ends in a number but is not an IPv4 address")
@@ -2655,6 +2675,13 @@ def _encode_host(
         # Check for invalid characters explicitly; _idna_encode() does this
         # for non-ascii host names.
         host = host.lower()
+        if host[:2] == "[v":
+            # Only an IPvFuture address keeps its brackets up to here, see
+            # split_netloc(). WHATWG has no IPvFuture, hence None.
+            end = len(host) - 1
+            if host[end] != "]" or IP_FUTURE_RE.fullmatch(host, 1, end) is None:
+                raise ValueError(f"IPvFuture address is invalid: {host!r}")
+            return host, None, False
         if validate_host and (invalid := NOT_REG_NAME.search(host)):
             value, pos, extra = invalid.group(), invalid.start(), ""
             if value == "@" or (value == ":" and "@" in host[pos:]):

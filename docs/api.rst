@@ -239,6 +239,9 @@ RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
 one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
 as one with an emoji, which WHATWG mode accepts as UTS #46 does.
+An IPvFuture address (:rfc:`3986#section-3.2.2`), such as ``[v1.x]``, is
+accepted in RFC 3986 mode and keeps its brackets, which are part of the
+host; the WHATWG URL Standard has no IPvFuture, so WHATWG mode rejects it.
 
 .. doctest::
 
@@ -252,6 +255,8 @@ as one with an emoji, which WHATWG mode accepts as UTS #46 does.
    URL('http://0x7f.1/', mode='rfc')
    >>> URL('http://ex%41mple.com/')
    URL('http://example.com/')
+   >>> URL('http://[v1.x]:8080/', mode='rfc')
+   URL('http://[v1.x]:8080/', mode='rfc')
 
 .. versionchanged:: 1.25.2
 
@@ -263,6 +268,8 @@ as one with an emoji, which WHATWG mode accepts as UTS #46 does.
    Hosts made only of numbers, such as ``0x7f.1`` or ``256``, are parsed as
    IPv4 addresses in WHATWG mode; previously they were kept as written.
    Percent-encoded hosts of these schemes are decoded in WHATWG mode.
+   An IPvFuture address keeps its brackets in RFC 3986 mode and is
+   rejected in WHATWG mode; previously the brackets were dropped.
 
 
 .. note::
@@ -424,6 +431,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    Brackets are stripped for IPv6. Host is converted to lowercase,
    address is validated and converted to compressed form.
+   An IPvFuture address (RFC 3986 mode only) keeps its brackets.
 
    For IPv6 addresses that carry an :rfc:`6874` zone identifier, the
    ``%25`` zone separator is decoded to ``%``, so the value matches the
@@ -458,6 +466,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
       '::1'
       >>> URL('http://[fe80::1%25eth0]/').raw_host
       'fe80::1%25eth0'
+      >>> URL('http://[v1.x]/', mode='rfc').raw_host
+      '[v1.x]'
 
 .. attribute:: URL.host_subcomponent
 

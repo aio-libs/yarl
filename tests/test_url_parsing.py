@@ -178,9 +178,9 @@ class TestHost:
         assert u.fragment == ""
 
     def test_ipvfuture_address(self) -> None:
-        u = URL("//[v1.-1]/")
+        u = URL("//[v1.-1]/", mode="rfc")
         assert u.scheme == ""
-        assert u.host == "v1.-1"
+        assert u.host == "[v1.-1]"
         assert u.path == "/"
         assert u.query_string == ""
         assert u.fragment == ""
