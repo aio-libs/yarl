@@ -991,6 +991,14 @@ class URL:
         self._cache = cache
         self._mode = mode
 
+    def _keep_join_path(self, url: "URL") -> None:
+        """Give url, a copy of self with another query or fragment, the path
+        that join() uses for "http:g" (see _special_authority_url()).
+
+        url must be a new URL, not one shared through the from_parts() cache.
+        """
+        url._cache["_join_path"] = self._cache["_join_path"]
+
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
         c = self._cache
@@ -1753,7 +1761,7 @@ class URL:
         """
         # N.B. doesn't cleanup query/fragment
         query = get_str_query(*args, **kwargs) or ""
-        return from_parts_uncached(
+        url = from_parts_uncached(
             self._scheme,
             self._netloc,
             self._path,
@@ -1762,6 +1770,9 @@ class URL:
             self._mode,
             self._empty and self._empty & ~EMPTY_QUERY,
         )
+        if "_join_path" in self._cache:
+            self._keep_join_path(url)
+        return url
 
     @overload
     def extend_query(self, query: Query) -> "URL": ...
@@ -1787,7 +1798,7 @@ class URL:
             query += new_query if query[-1] == "&" else f"&{new_query}"
         else:
             query = new_query
-        return from_parts_uncached(
+        url = from_parts_uncached(
             self._scheme,
             self._netloc,
             self._path,
@@ -1796,6 +1807,9 @@ class URL:
             self._mode,
             self._empty and self._empty & ~EMPTY_QUERY,
         )
+        if "_join_path" in self._cache:
+            self._keep_join_path(url)
+        return url
 
     @overload
     def update_query(self, query: Query) -> "URL": ...
@@ -1861,19 +1875,10 @@ class URL:
                 "Invalid query type: only str, mapping or "
                 "sequence of (key, value) pairs is allowed"
             )
-        if not (empty := self._empty):
-            return from_parts_uncached(
-                self._scheme,
-                self._netloc,
-                self._path,
-                query,
-                self._fragment,
-                self._mode,
-            )
         # An empty query stays when nothing is added, "None" removes it.
-        if query or in_query is None:
+        if (empty := self._empty) and (query or in_query is None):
             empty &= ~EMPTY_QUERY
-        return from_parts_uncached(
+        url = from_parts_uncached(
             self._scheme,
             self._netloc,
             self._path,
@@ -1882,6 +1887,9 @@ class URL:
             self._mode,
             empty,
         )
+        if "_join_path" in self._cache:
+            self._keep_join_path(url)
+        return url
 
     def without_query_params(self, *query_params: str) -> "URL":
         """Remove some keys from query part and return new URL."""
@@ -1914,17 +1922,22 @@ class URL:
         if empty := self._empty:
             if self._fragment == raw_fragment and not empty & EMPTY_FRAGMENT:
                 return self
-            return from_parts(
+            empty &= ~EMPTY_FRAGMENT
+        elif self._fragment == raw_fragment:
+            return self
+        if "_join_path" in self._cache:
+            # from_parts() may return a shared URL, which must not get it.
+            url = from_parts_uncached(
                 self._scheme,
                 self._netloc,
                 self._path,
                 self._query,
                 raw_fragment,
                 self._mode,
-                empty & ~EMPTY_FRAGMENT,
+                empty,
             )
-        if self._fragment == raw_fragment:
-            return self
+            self._keep_join_path(url)
+            return url
         return from_parts(
             self._scheme,
             self._netloc,
@@ -1932,6 +1945,7 @@ class URL:
             self._query,
             raw_fragment,
             self._mode,
+            empty,
         )
 
     def with_name(
