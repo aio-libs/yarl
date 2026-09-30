@@ -1,6 +1,7 @@
 """WHATWG mode reads "\\" as "/" in special URLs; RFC 3986 mode rejects it."""
 
 import pickle
+from collections.abc import Callable
 
 import pytest
 
@@ -84,6 +85,31 @@ def test_join_non_special_base(reference: str, expected: str) -> None:
     url = URL("foo://foo/a").join(URL(reference))
     assert str(url) == expected
     assert url.host == "foo"
+
+
+@pytest.mark.parametrize(
+    ("modify", "expected"),
+    [
+        (lambda u: u.with_query("a=1"), "http://x/hello?a=1#f"),
+        (lambda u: u.with_query(None), "http://x/hello#f"),
+        (lambda u: u.extend_query(a=1), "http://x/hello?q=0&a=1#f"),
+        (lambda u: u.update_query(a=1), "http://x/hello?q=0&a=1#f"),
+        (lambda u: u % {"a": 1}, "http://x/hello?q=0&a=1#f"),
+        (lambda u: u.without_query_params("q"), "http://x/hello#f"),
+        (lambda u: u.with_fragment("g"), "http://x/hello?q=0#g"),
+        (lambda u: u.with_fragment(None), "http://x/hello?q=0"),
+        # Another path makes it an ordinary relative reference.
+        (lambda u: u.with_path("p"), "http://example.org/p"),
+    ],
+)
+def test_join_after_modification(modify: Callable[[URL], URL], expected: str) -> None:
+    url = modify(URL("\\\\x\\hello?q=0#f"))
+    assert str(URL("http://example.org/foo/bar").join(url)) == expected
+
+
+def test_join_after_modification_empty_query() -> None:
+    url = URL("\\\\x\\hello?#").with_fragment("f")
+    assert str(URL("http://example.org/").join(url)) == "http://x/hello?#f"
 
 
 def test_join_rfc_base() -> None:

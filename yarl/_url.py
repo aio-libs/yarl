@@ -210,7 +210,6 @@ class CacheInfo(TypedDict):
 class _InternalURLCache(TypedDict, total=False):
     _val: SplitURLType
     _join_path: str
-    _special_ref: str
     _origin: "URL"
     absolute: bool
     hash: int
@@ -381,7 +380,7 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             # Keep "\\" as a character; join() reads it as "/" when the base
             # is special.
             url = _encode_url(url_str, mode, False)
-            url._cache["_special_ref"] = special_str
+            url._cache["_join_path"] = special_str
             return url
         else:
             # A network-path reference has an authority either way, and one
@@ -998,11 +997,7 @@ class URL:
 
     def __getstate__(
         self,
-    ) -> (
-        tuple[SplitURLType, str, int]
-        | tuple[SplitURLType, str, int, str | None]
-        | tuple[SplitURLType, str, int, str | None, str]
-    ):
+    ) -> tuple[SplitURLType, str, int] | tuple[SplitURLType, str, int, str]:
         # Return a plain tuple rather than a ``SplitResult``. Constructing a
         # ``SplitResult`` via ``tuple.__new__`` skips its ``__init__`` and on
         # Python 3.15+ leaves ``_keep_empty`` unset, which breaks pickling: the
@@ -1011,23 +1006,18 @@ class URL:
         # pickles produced by older yarl releases (which embed a real
         # ``SplitResult``) still load correctly. The compatibility mode goes
         # second and the mask of empty components third; older releases
-        # ignore trailing items of the state. The path that join() uses for
-        # "http:g" (see _special_authority_url()) goes next, when there is one,
-        # or None, when the reference with "\\" read as "/" for a special base
-        # (see _backslashes()) follows.
-        join_path = self._cache.get("_join_path")
-        if (special_ref := self._cache.get("_special_ref")) is not None:
-            return (self._val, self._mode.value, self._empty, join_path, special_ref)
-        if join_path is not None:
+        # ignore trailing items of the state. What join() reads for "http:g"
+        # (see _special_authority_url()) or for a relative reference with
+        # "\\" (see _backslashes()) goes last, when there is one.
+        if (join_path := self._cache.get("_join_path")) is not None:
             return (self._val, self._mode.value, self._empty, join_path)
         return (self._val, self._mode.value, self._empty)
 
     def __setstate__(
         self,
         # ``(val,)`` or ``(val, mode)`` from older releases,
-        # ``(val, mode, empty)``, ``(val, mode, empty, join_path)``,
-        # ``(val, mode, empty, join_path, special_ref)``, or the legacy
-        # default style
+        # ``(val, mode, empty)``, ``(val, mode, empty, join_path)``, or the
+        # legacy default style
         # ``(None, {"_val": val})``.
         state: tuple[Any, ...],
     ) -> None:
@@ -1043,18 +1033,18 @@ class URL:
                 mode = Mode(rest[0])
                 if rest[1:]:
                     empty = rest[1]
-                    if rest[2:] and rest[2] is not None:
+                    if rest[2:]:
                         cache["_join_path"] = rest[2]
-                    if rest[3:]:
-                        cache["_special_ref"] = rest[3]
         self._scheme, self._netloc, self._path, self._query, self._fragment = val
         self._empty = empty
         self._cache = cache
         self._mode = mode
 
     def _keep_join_path(self, url: "URL") -> None:
-        """Give url, a copy of self with another query or fragment, the path
-        that join() uses for "http:g" (see _special_authority_url()).
+        """Give url, a copy of self with another query or fragment, what
+        join() reads instead of self's path: the path of "http:g" (see
+        _special_authority_url()) or, for a relative reference without an
+        authority, the reference with "\\" read as "/" (see _backslashes()).
 
         url must be a new URL, not one shared through the from_parts() cache.
         """
@@ -2139,18 +2129,33 @@ class URL:
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
-        if "_special_ref" in url._cache and (
-            scheme in SPECIAL_SCHEMES and self._mode is _WHATWG
-        ):
-            # A relative reference with "\\" (see _backslashes()).
-            url = encode_url(url._cache["_special_ref"])
-
-        if url._netloc and (join_path := url._cache.get("_join_path")) is not None:
-            # "http:g" was parsed in WHATWG mode as "http://g/", but against
-            # an http base it is the relative reference "g".
-            url = from_parts(
-                scheme, "", join_path, url._query, url._fragment, url._mode, url._empty
-            )
+        if "_join_path" in url._cache:
+            join_path = url._cache["_join_path"]
+            if url._netloc:
+                # "http:g" was parsed in WHATWG mode as "http://g/", but
+                # against an http base it is the relative reference "g".
+                url = from_parts(
+                    scheme,
+                    "",
+                    join_path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    url._empty,
+                )
+            elif scheme in SPECIAL_SCHEMES and self._mode is _WHATWG:
+                # A relative reference with "\\" (see _backslashes()); the
+                # query and the fragment may have changed since it was parsed.
+                ref = encode_url(join_path)
+                url = from_parts(
+                    ref._scheme,
+                    ref._netloc,
+                    ref._path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    ref._empty & EMPTY_AUTHORITY | url._empty,
+                )
 
         if url._empty or self._empty:
             return self._join_with_empty(url, scheme)
