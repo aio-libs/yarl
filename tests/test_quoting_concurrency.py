@@ -40,7 +40,7 @@ def test_quoter_concurrency(quoter: type[_Quoter]) -> None:
         return q(item) == PAIRS[item]
 
     with ThreadPoolExecutor(3) as te:
-        assert all(te.map(quote(PAIRS)))
+        assert all(te.map(quote, PAIRS))
 
 
 @ft_mark
