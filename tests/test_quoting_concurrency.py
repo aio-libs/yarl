@@ -39,8 +39,8 @@ def test_quoter_concurrency(quoter: type[_Quoter]) -> None:
     def quote(item: str) -> bool:
         return q(item) == PAIRS[item]
 
-    with ThreadPoolExecutor(3) as te:
-        assert all(te.map(quote, PAIRS))
+    with ThreadPoolExecutor(3) as pool:
+        assert all(pool.map(quote, PAIRS))
 
 
 @ft_mark
@@ -67,5 +67,5 @@ def test_unquoter_concurrency(unquoter: type[_Unquoter]) -> None:
     def unquote(item: str) -> bool:
         return q(item) == PAIRS[item]
 
-    with ThreadPoolExecutor(3) as te:
-        assert all(te.map(unquote, PAIRS))
+    with ThreadPoolExecutor(3) as pool:
+        assert all(pool.map(unquote, PAIRS))
