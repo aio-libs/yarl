@@ -384,10 +384,56 @@ def test_remove_dot_segments(path: str, expected: str) -> None:
     assert normalize_path(path) == expected
 
 
-# Section 5.4.2: "http:g" resolves to "http:g" in strict parsers; the
-# backward-compatible variant yarl implements is explicitly permitted.
+# Section 5.4.2: "http:g" resolves to "http:g" in strict parsers; WHATWG
+# mode implements the backward-compatible variant, which is permitted.
 def test_join_same_scheme_backward_compatible() -> None:
     assert str(URL("http://a/b/c/d;p?q").join(URL("http:g"))) == "http://a/b/c/g"
+
+
+# Section 5.2.2: RFC 3986 mode is a strict parser, a reference with a
+# scheme is used as is, also with the scheme of the base.
+@pytest.mark.parametrize(
+    ("base", "reference"),
+    [
+        ("http://a/b/c/d;p?q", "http:g"),
+        ("http://a/b/c/d;p?q", "http:"),
+        ("file:///tmp/mock/path", "file:test"),
+        ("file:///test?test#test", "file:?x"),
+        ("file:///test?test#test", "file:#x"),
+        ("file://host/", "file:/C:/"),
+    ],
+)
+def test_join_same_scheme_strict(base: str, reference: str) -> None:
+    joined = URL(base, mode="rfc").join(URL(reference, mode="rfc"))
+    assert str(joined) == reference
+    assert joined.mode == "rfc"
+
+
+# Section 5.2.2: the dot segments of a URI with a scheme are removed, also
+# from a path without an authority.
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("file:..", "file:"),
+        ("file:.", "file:"),
+        ("file:.//p", "file:/p"),
+        ("file:/a/./b/../c", "file:/a/c"),
+        ("urn:a/../b", "urn:b"),
+        ("mailto:a.b@example.com", "mailto:a.b@example.com"),
+    ],
+)
+def test_dot_segments_without_authority(url: str, expected: str) -> None:
+    assert str(URL(url, mode="rfc")) == expected
+
+
+def test_dot_segments_without_authority_join() -> None:
+    base = URL("http://www.example.com/test", mode="rfc")
+    assert str(base.join(URL("file:..", mode="rfc"))) == "file:"
+
+
+# WHATWG mode keeps the opaque path of a non-special URL as is.
+def test_dot_segments_opaque_path_whatwg() -> None:
+    assert str(URL("urn:a/../b")) == "urn:a/../b"
 
 
 # Section 5.2.2: components of the target URI.

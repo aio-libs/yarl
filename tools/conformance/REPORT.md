@@ -39,17 +39,17 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 462 |
-| yarl follows each standard in its mode | 248 |
+| yarl follows each standard in its mode | 264 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 1 |
 | WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 131 |
-| RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 44 |
+| RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 28 |
 | Both modes differ from their standard | 10 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
 | yarl WHATWG mode vs WHATWG | 142 |
-| yarl RFC mode vs RFC 3986+3987 | 55 |
+| yarl RFC mode vs RFC 3986+3987 | 39 |
 | WHATWG vs RFC 3986+3987 | 433 |
 
 ## yarl differs, RFC 3986+3987 and WHATWG agree (1)
@@ -209,13 +209,11 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | leading or trailing C0 control or space | `http://f:21/ b ? d # e ` | `http://example.org/foo/bar` | `http://f:21/%20b%20?+d+#%20e` | `http://f:21/%20b%20?%20d%20#%20e` | *failure* | *failure* |
 | leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///tmp/mock/c%7C////foo/bar.html` | `file:///c:////foo/bar.html` | *failure* | *failure* |
 
-## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (44)
+## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (28)
 
 | Category | Cases |
 |---|---|
-| file scheme | 10 |
 | empty host | 10 |
-| special scheme without an authority | 6 |
 | other | 6 |
 | IP-literal host | 5 |
 | non-ASCII or percent-encoded host | 5 |
@@ -224,16 +222,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
-| file scheme | `file:test` | `file:///tmp/mock/path` | `file:///tmp/mock/test` | `file:///tmp/mock/test` | `file:///tmp/mock/test` | `file:test` |
-| file scheme | `file:..` | `http://www.example.com/test` | `file:///..` | `file:///` | `file:..` | `file:` |
-| file scheme | `file:.` | *none* | `file:///.` | `file:///` | `file:.` | `file:` |
-| file scheme | `file:.` | `http://www.example.com/test` | `file:///.` | `file:///` | `file:.` | `file:` |
-| file scheme | `file:` | `file:///test?test#test` | `file:///test?test` | `file:///test?test` | `file:///test?test` | `file:` |
-| file scheme | `file:?x` | `file:///test?test#test` | `file:///test?x` | `file:///test?x` | `file:///test?x` | `file:?x` |
-| file scheme | `file:#x` | `file:///test?test#test` | `file:///test?test#x` | `file:///test?test#x` | `file:///test?test#x` | `file:#x` |
-| file scheme | `file:C:/` | `file://host/` | `file://host/C:/` | `file://host/C:/` | `file://host/C:/` | `file:C:/` |
-| file scheme | `file:/C:/` | `file://host/` | `file://host/C:/` | `file://host/C:/` | `file://host/C:/` | `file:/C:/` |
-| file scheme | `file:.//p` | *none* | `file:///.//p` | `file:////p` | `file:.//p` | `file:/p` |
 | empty host | `http://user:pass@/` | *none* | *failure* | *failure* | *failure* | `http://user:pass@/` |
 | empty host | `http://user@/www.example.com` | *none* | *failure* | *failure* | *failure* | `http://user@/www.example.com` |
 | empty host | `http://@/www.example.com` | *none* | *failure* | *failure* | *failure* | `http://@/www.example.com` |
@@ -244,12 +232,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `///example.org/../../` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http:///` |
 | empty host | `///example.org/../path/../../` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http:///` |
 | empty host | `///example.org/../path/../../path` | `http://example.org/` | `http://example.org/path` | `http://example.org/path` | `http://example.org/path` | `http:///path` |
-| special scheme without an authority | `http:foo.com` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | `http:foo.com` |
-| special scheme without an authority | `http::@c:29` | `http://example.org/foo/bar` | `http://example.org/foo/:@c:29` | `http://example.org/foo/:@c:29` | `http://example.org/foo/:@c:29` | `http::@c:29` |
-| special scheme without an authority | `http:/example.com/` | `http://example.org/foo/bar` | `http://example.org/example.com/` | `http://example.org/example.com/` | `http://example.org/example.com/` | `http:/example.com/` |
-| special scheme without an authority | `http:/` | `http://example.com/` | `http://example.com/` | `http://example.com/` | `http://example.com/` | `http:/` |
-| special scheme without an authority | `http:example.com/` | `http://example.org/foo/bar` | `http://example.org/foo/example.com/` | `http://example.org/foo/example.com/` | `http://example.org/foo/example.com/` | `http:example.com/` |
-| special scheme without an authority | `http:` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http:` |
 | other | `http://f:999999/c` | `http://example.org/foo/bar` | *failure* | *failure* | *failure* | `http://f:999999/c` |
 | other | `http://@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http://www.example.com` | `http://@www.example.com` |
 | other | `http://@pple.com` | *none* | `http://pple.com` | `http://pple.com/` | `http://pple.com` | `http://@pple.com` |
@@ -290,20 +272,20 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `///test` | `http://example.org/` | `http://example.org/test` | `http://test/` | `http://example.org/test` | `http:///test` |
 | empty host | `///example.org/path` | `http://example.org/` | `http://example.org/example.org/path` | `http://example.org/path` | `http://example.org/example.org/path` | `http:///example.org/path` |
 
-## yarl follows each standard in its mode (248)
+## yarl follows each standard in its mode (264)
 
 | Category | Cases |
 |---|---|
 | non-ASCII or percent-encoded host | 67 |
 | characters outside the RFC 3986+3987 grammar | 46 |
+| special scheme without an authority | 39 |
 | numeric host that is not a dotted quad | 36 |
-| special scheme without an authority | 33 |
 | backslash | 21 |
 | other | 16 |
+| file scheme | 15 |
 | tab or newline inside the input | 11 |
 | empty host | 8 |
 | leading or trailing C0 control or space | 5 |
-| file scheme | 5 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
@@ -420,6 +402,45 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | `https://example.com/"quoted"` | *none* | `https://example.com/%22quoted%22` | `https://example.com/%22quoted%22` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `data:text/plain,test#<foo> <bar>` | *none* | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `about:blank#<foo> <bar>` | *none* | `about:blank#%3Cfoo%3E%20%3Cbar%3E` | `about:blank#%3Cfoo%3E%20%3Cbar%3E` | *failure* | *failure* |
+| special scheme without an authority | `http:foo.com` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | `http:foo.com` | `http:foo.com` |
+| special scheme without an authority | `http::@c:29` | `http://example.org/foo/bar` | `http://example.org/foo/:@c:29` | `http://example.org/foo/:@c:29` | `http::@c:29` | `http::@c:29` |
+| special scheme without an authority | `http:/example.com/` | `http://example.org/foo/bar` | `http://example.org/example.com/` | `http://example.org/example.com/` | `http:/example.com/` | `http:/example.com/` |
+| special scheme without an authority | `http:/` | `http://example.com/` | `http://example.com/` | `http://example.com/` | `http:/` | `http:/` |
+| special scheme without an authority | `ftp:/example.com/` | `http://example.org/foo/bar` | `ftp://example.com/` | `ftp://example.com/` | `ftp:/example.com/` | `ftp:/example.com/` |
+| special scheme without an authority | `https:/example.com/` | `http://example.org/foo/bar` | `https://example.com/` | `https://example.com/` | `https:/example.com/` | `https:/example.com/` |
+| special scheme without an authority | `ws:/example.com/` | `http://example.org/foo/bar` | `ws://example.com/` | `ws://example.com/` | `ws:/example.com/` | `ws:/example.com/` |
+| special scheme without an authority | `wss:/example.com/` | `http://example.org/foo/bar` | `wss://example.com/` | `wss://example.com/` | `wss:/example.com/` | `wss:/example.com/` |
+| special scheme without an authority | `http:example.com/` | `http://example.org/foo/bar` | `http://example.org/foo/example.com/` | `http://example.org/foo/example.com/` | `http:example.com/` | `http:example.com/` |
+| special scheme without an authority | `ftp:example.com/` | `http://example.org/foo/bar` | `ftp://example.com/` | `ftp://example.com/` | `ftp:example.com/` | `ftp:example.com/` |
+| special scheme without an authority | `https:example.com/` | `http://example.org/foo/bar` | `https://example.com/` | `https://example.com/` | `https:example.com/` | `https:example.com/` |
+| special scheme without an authority | `ws:example.com/` | `http://example.org/foo/bar` | `ws://example.com/` | `ws://example.com/` | `ws:example.com/` | `ws:example.com/` |
+| special scheme without an authority | `wss:example.com/` | `http://example.org/foo/bar` | `wss://example.com/` | `wss://example.com/` | `wss:example.com/` | `wss:example.com/` |
+| special scheme without an authority | `http:/example.com/` | *none* | `http://example.com/` | `http://example.com/` | `http:/example.com/` | `http:/example.com/` |
+| special scheme without an authority | `ftp:/example.com/` | *none* | `ftp://example.com/` | `ftp://example.com/` | `ftp:/example.com/` | `ftp:/example.com/` |
+| special scheme without an authority | `https:/example.com/` | *none* | `https://example.com/` | `https://example.com/` | `https:/example.com/` | `https:/example.com/` |
+| special scheme without an authority | `ws:/example.com/` | *none* | `ws://example.com/` | `ws://example.com/` | `ws:/example.com/` | `ws:/example.com/` |
+| special scheme without an authority | `wss:/example.com/` | *none* | `wss://example.com/` | `wss://example.com/` | `wss:/example.com/` | `wss:/example.com/` |
+| special scheme without an authority | `http:example.com/` | *none* | `http://example.com/` | `http://example.com/` | `http:example.com/` | `http:example.com/` |
+| special scheme without an authority | `ftp:example.com/` | *none* | `ftp://example.com/` | `ftp://example.com/` | `ftp:example.com/` | `ftp:example.com/` |
+| special scheme without an authority | `https:example.com/` | *none* | `https://example.com/` | `https://example.com/` | `https:example.com/` | `https:example.com/` |
+| special scheme without an authority | `ws:example.com/` | *none* | `ws://example.com/` | `ws://example.com/` | `ws:example.com/` | `ws:example.com/` |
+| special scheme without an authority | `wss:example.com/` | *none* | `wss://example.com/` | `wss://example.com/` | `wss:example.com/` | `wss:example.com/` |
+| special scheme without an authority | `http:@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http:@www.example.com` | `http:@www.example.com` |
+| special scheme without an authority | `http:/@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http:/@www.example.com` | `http:/@www.example.com` |
+| special scheme without an authority | `http:a:b@www.example.com` | *none* | `http://a:b@www.example.com` | `http://a:b@www.example.com/` | `http:a:b@www.example.com` | `http:a:b@www.example.com` |
+| special scheme without an authority | `http:/a:b@www.example.com` | *none* | `http://a:b@www.example.com` | `http://a:b@www.example.com/` | `http:/a:b@www.example.com` | `http:/a:b@www.example.com` |
+| special scheme without an authority | `http::b@www.example.com` | *none* | `http://:b@www.example.com` | `http://:b@www.example.com/` | `http::b@www.example.com` | `http::b@www.example.com` |
+| special scheme without an authority | `http:/:b@www.example.com` | *none* | `http://:b@www.example.com` | `http://:b@www.example.com/` | `http:/:b@www.example.com` | `http:/:b@www.example.com` |
+| special scheme without an authority | `http:/:@/www.example.com` | *none* | *failure* | *failure* | `http:/:@/www.example.com` | `http:/:@/www.example.com` |
+| special scheme without an authority | `http:@/www.example.com` | *none* | *failure* | *failure* | `http:@/www.example.com` | `http:@/www.example.com` |
+| special scheme without an authority | `http:/@/www.example.com` | *none* | *failure* | *failure* | `http:/@/www.example.com` | `http:/@/www.example.com` |
+| special scheme without an authority | `https:@/www.example.com` | *none* | *failure* | *failure* | `https:@/www.example.com` | `https:@/www.example.com` |
+| special scheme without an authority | `http:a:b@/www.example.com` | *none* | *failure* | *failure* | `http:a:b@/www.example.com` | `http:a:b@/www.example.com` |
+| special scheme without an authority | `http:/a:b@/www.example.com` | *none* | *failure* | *failure* | `http:/a:b@/www.example.com` | `http:/a:b@/www.example.com` |
+| special scheme without an authority | `http::@/www.example.com` | *none* | *failure* | *failure* | `http::@/www.example.com` | `http::@/www.example.com` |
+| special scheme without an authority | `http:@:www.example.com` | *none* | *failure* | *failure* | `http:@:www.example.com` | `http:@:www.example.com` |
+| special scheme without an authority | `http:/@:www.example.com` | *none* | *failure* | *failure* | `http:/@:www.example.com` | `http:/@:www.example.com` |
+| special scheme without an authority | `http:` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http:` | `http:` |
 | numeric host that is not a dotted quad | `http://192.0x00A80001` | *none* | `http://192.168.0.1` | `http://192.168.0.1/` | `http://192.0x00a80001` | `http://192.0x00A80001` |
 | numeric host that is not a dotted quad | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://other.com/` | `http://192.168.0.1` | `http://192.168.0.1/` | `http://%30%78%63%30%2e%30%32%35%30.01` | `http://%30%78%63%30%2e%30%32%35%30.01` |
 | numeric host that is not a dotted quad | `http://192.168.0.257` | `http://other.com/` | *failure* | *failure* | `http://192.168.0.257` | `http://192.168.0.257` |
@@ -456,39 +477,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | numeric host that is not a dotted quad | `http://0999999999999999999/` | *none* | *failure* | *failure* | `http://0999999999999999999/` | `http://0999999999999999999/` |
 | numeric host that is not a dotted quad | `http://foo.0x` | *none* | *failure* | *failure* | `http://foo.0x` | `http://foo.0x` |
 | numeric host that is not a dotted quad | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` | *none* | *failure* | *failure* | `http://foo.0xfffffffffffffffffface123` | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` |
-| special scheme without an authority | `ftp:/example.com/` | `http://example.org/foo/bar` | `ftp://example.com/` | `ftp://example.com/` | `ftp:/example.com/` | `ftp:/example.com/` |
-| special scheme without an authority | `https:/example.com/` | `http://example.org/foo/bar` | `https://example.com/` | `https://example.com/` | `https:/example.com/` | `https:/example.com/` |
-| special scheme without an authority | `ws:/example.com/` | `http://example.org/foo/bar` | `ws://example.com/` | `ws://example.com/` | `ws:/example.com/` | `ws:/example.com/` |
-| special scheme without an authority | `wss:/example.com/` | `http://example.org/foo/bar` | `wss://example.com/` | `wss://example.com/` | `wss:/example.com/` | `wss:/example.com/` |
-| special scheme without an authority | `ftp:example.com/` | `http://example.org/foo/bar` | `ftp://example.com/` | `ftp://example.com/` | `ftp:example.com/` | `ftp:example.com/` |
-| special scheme without an authority | `https:example.com/` | `http://example.org/foo/bar` | `https://example.com/` | `https://example.com/` | `https:example.com/` | `https:example.com/` |
-| special scheme without an authority | `ws:example.com/` | `http://example.org/foo/bar` | `ws://example.com/` | `ws://example.com/` | `ws:example.com/` | `ws:example.com/` |
-| special scheme without an authority | `wss:example.com/` | `http://example.org/foo/bar` | `wss://example.com/` | `wss://example.com/` | `wss:example.com/` | `wss:example.com/` |
-| special scheme without an authority | `http:/example.com/` | *none* | `http://example.com/` | `http://example.com/` | `http:/example.com/` | `http:/example.com/` |
-| special scheme without an authority | `ftp:/example.com/` | *none* | `ftp://example.com/` | `ftp://example.com/` | `ftp:/example.com/` | `ftp:/example.com/` |
-| special scheme without an authority | `https:/example.com/` | *none* | `https://example.com/` | `https://example.com/` | `https:/example.com/` | `https:/example.com/` |
-| special scheme without an authority | `ws:/example.com/` | *none* | `ws://example.com/` | `ws://example.com/` | `ws:/example.com/` | `ws:/example.com/` |
-| special scheme without an authority | `wss:/example.com/` | *none* | `wss://example.com/` | `wss://example.com/` | `wss:/example.com/` | `wss:/example.com/` |
-| special scheme without an authority | `http:example.com/` | *none* | `http://example.com/` | `http://example.com/` | `http:example.com/` | `http:example.com/` |
-| special scheme without an authority | `ftp:example.com/` | *none* | `ftp://example.com/` | `ftp://example.com/` | `ftp:example.com/` | `ftp:example.com/` |
-| special scheme without an authority | `https:example.com/` | *none* | `https://example.com/` | `https://example.com/` | `https:example.com/` | `https:example.com/` |
-| special scheme without an authority | `ws:example.com/` | *none* | `ws://example.com/` | `ws://example.com/` | `ws:example.com/` | `ws:example.com/` |
-| special scheme without an authority | `wss:example.com/` | *none* | `wss://example.com/` | `wss://example.com/` | `wss:example.com/` | `wss:example.com/` |
-| special scheme without an authority | `http:@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http:@www.example.com` | `http:@www.example.com` |
-| special scheme without an authority | `http:/@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http:/@www.example.com` | `http:/@www.example.com` |
-| special scheme without an authority | `http:a:b@www.example.com` | *none* | `http://a:b@www.example.com` | `http://a:b@www.example.com/` | `http:a:b@www.example.com` | `http:a:b@www.example.com` |
-| special scheme without an authority | `http:/a:b@www.example.com` | *none* | `http://a:b@www.example.com` | `http://a:b@www.example.com/` | `http:/a:b@www.example.com` | `http:/a:b@www.example.com` |
-| special scheme without an authority | `http::b@www.example.com` | *none* | `http://:b@www.example.com` | `http://:b@www.example.com/` | `http::b@www.example.com` | `http::b@www.example.com` |
-| special scheme without an authority | `http:/:b@www.example.com` | *none* | `http://:b@www.example.com` | `http://:b@www.example.com/` | `http:/:b@www.example.com` | `http:/:b@www.example.com` |
-| special scheme without an authority | `http:/:@/www.example.com` | *none* | *failure* | *failure* | `http:/:@/www.example.com` | `http:/:@/www.example.com` |
-| special scheme without an authority | `http:@/www.example.com` | *none* | *failure* | *failure* | `http:@/www.example.com` | `http:@/www.example.com` |
-| special scheme without an authority | `http:/@/www.example.com` | *none* | *failure* | *failure* | `http:/@/www.example.com` | `http:/@/www.example.com` |
-| special scheme without an authority | `https:@/www.example.com` | *none* | *failure* | *failure* | `https:@/www.example.com` | `https:@/www.example.com` |
-| special scheme without an authority | `http:a:b@/www.example.com` | *none* | *failure* | *failure* | `http:a:b@/www.example.com` | `http:a:b@/www.example.com` |
-| special scheme without an authority | `http:/a:b@/www.example.com` | *none* | *failure* | *failure* | `http:/a:b@/www.example.com` | `http:/a:b@/www.example.com` |
-| special scheme without an authority | `http::@/www.example.com` | *none* | *failure* | *failure* | `http::@/www.example.com` | `http::@/www.example.com` |
-| special scheme without an authority | `http:@:www.example.com` | *none* | *failure* | *failure* | `http:@:www.example.com` | `http:@:www.example.com` |
-| special scheme without an authority | `http:/@:www.example.com` | *none* | *failure* | *failure* | `http:/@:www.example.com` | `http:/@:www.example.com` |
 | backslash | `:foo.com\` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com/` | `http://example.org/foo/:foo.com/` | *failure* | *failure* |
 | backslash | `:\` | `http://example.org/foo/bar` | `http://example.org/foo/:/` | `http://example.org/foo/:/` | *failure* | *failure* |
 | backslash | `\x` | `http://example.org/foo/bar` | `http://example.org/x` | `http://example.org/x` | *failure* | *failure* |
@@ -526,6 +514,21 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | other | `http://foo.2.3.4.` | *none* | *failure* | *failure* | `http://foo.2.3.4.` | `http://foo.2.3.4.` |
 | other | `http://foo.09.` | *none* | *failure* | *failure* | `http://foo.09.` | `http://foo.09.` |
 | other | `http://foo.0x4.` | *none* | *failure* | *failure* | `http://foo.0x4.` | `http://foo.0x4.` |
+| file scheme | `file:/example.com/` | `http://example.org/foo/bar` | `file:///example.com/` | `file:///example.com/` | `file:/example.com/` | `file:/example.com/` |
+| file scheme | `file:test` | `file:///tmp/mock/path` | `file:///tmp/mock/test` | `file:///tmp/mock/test` | `file:test` | `file:test` |
+| file scheme | `file:/example.com/` | *none* | `file:///example.com/` | `file:///example.com/` | `file:/example.com/` | `file:/example.com/` |
+| file scheme | `file:...` | `http://www.example.com/test` | `file:///...` | `file:///...` | `file:...` | `file:...` |
+| file scheme | `file:..` | `http://www.example.com/test` | `file:///..` | `file:///` | `file:` | `file:` |
+| file scheme | `file:a` | `http://www.example.com/test` | `file:///a` | `file:///a` | `file:a` | `file:a` |
+| file scheme | `file:.` | *none* | `file:///.` | `file:///` | `file:` | `file:` |
+| file scheme | `file:.` | `http://www.example.com/test` | `file:///.` | `file:///` | `file:` | `file:` |
+| file scheme | `file:` | `file:///test?test#test` | `file:///test?test` | `file:///test?test` | `file:` | `file:` |
+| file scheme | `file:?x` | `file:///test?test#test` | `file:///test?x` | `file:///test?x` | `file:?x` | `file:?x` |
+| file scheme | `file:#x` | `file:///test?test#test` | `file:///test?test#x` | `file:///test?test#x` | `file:#x` | `file:#x` |
+| file scheme | `file:C:/` | `file://host/` | `file://host/C:/` | `file://host/C:/` | `file:C:/` | `file:C:/` |
+| file scheme | `file:/C:/` | `file://host/` | `file://host/C:/` | `file://host/C:/` | `file:/C:/` | `file:/C:/` |
+| file scheme | `file:.//p` | *none* | `file:///.//p` | `file:////p` | `file:/p` | `file:/p` |
+| file scheme | `file:/.//p` | *none* | `file:////p` | `file:////p` | `file:/.//p` | `file://p` |
 | tab or newline inside the input | `'http://example\t.\norg'` | `http://example.org/foo/bar` | `http://example.org` | `http://example.org/` | *failure* | *failure* |
 | tab or newline inside the input | `'http://f:\n/c'` | `http://example.org/foo/bar` | `http://f/c` | `http://f/c` | *failure* | *failure* |
 | tab or newline inside the input | `'http://example.com/foo\t\x91%91'` | *none* | `http://example.com/foo%C2%91%91` | `http://example.com/foo%C2%91%91` | *failure* | *failure* |
@@ -550,11 +553,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | *failure* |
 | leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/` | `http://example.com/` | *failure* | *failure* |
 | leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque` | `non-special:opaque` | *failure* | *failure* |
-| file scheme | `file:/example.com/` | `http://example.org/foo/bar` | `file:///example.com/` | `file:///example.com/` | `file:/example.com/` | `file:/example.com/` |
-| file scheme | `file:/example.com/` | *none* | `file:///example.com/` | `file:///example.com/` | `file:/example.com/` | `file:/example.com/` |
-| file scheme | `file:...` | `http://www.example.com/test` | `file:///...` | `file:///...` | `file:...` | `file:...` |
-| file scheme | `file:a` | `http://www.example.com/test` | `file:///a` | `file:///a` | `file:a` | `file:a` |
-| file scheme | `file:/.//p` | *none* | `file:////p` | `file:////p` | `file:/.//p` | `file://p` |
 
 ## IDNA: WHATWG toascii.json
 

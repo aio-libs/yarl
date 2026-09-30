@@ -1,0 +1,8 @@
+Made :meth:`~yarl.URL.join` with a base in RFC 3986 mode a strict
+parser in the terms of :rfc:`3986#section-5.2.2`: a reference with a
+scheme is used as is, also when the base has the same scheme, so
+``file:test`` against ``file:///tmp/path`` stays ``file:test``; WHATWG mode
+still resolves it as a relative reference. RFC 3986 mode also removes dot
+segments from the path of a URL with a scheme but without an authority, so
+``file:..`` is ``file:``
+-- by :user:`asvetlov`.

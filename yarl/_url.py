@@ -553,6 +553,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             path = normalize_path(path)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
+        elif mode is not _WHATWG and "." in path:
+            # RFC 3986 section 5.2.2 removes the dot segments of any URI
+            # with a scheme, also one without an authority ("file:.." is
+            # "file:").
+            path = normalize_path(path)
         if not netloc and has_dot_prefix(path) and not empty & EMPTY_AUTHORITY:
             # Undo the "/." that str() puts in front of a path starting
             # with "//" when there is no authority.
@@ -2235,10 +2240,12 @@ class URL:
             raise TypeError("url should be URL")
 
         scheme = url._scheme or self._scheme
-        # A reference with a scheme is used as is (RFC 3986 section 5.2.2),
-        # except that "http:g" is still resolved against an http base, the
+        # A reference with a scheme is used as is (RFC 3986 section 5.2.2).
+        # In WHATWG mode "http:g" is still resolved against an http base, the
         # backward-compatible behavior RFC 3986 section 5.4.2 permits.
-        if scheme != self._scheme or (url._scheme and scheme not in USES_RELATIVE):
+        if scheme != self._scheme or (
+            url._scheme and (scheme not in USES_RELATIVE or self._mode is not _WHATWG)
+        ):
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
