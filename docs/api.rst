@@ -270,6 +270,9 @@ also once percent-decoded) becomes the empty host, so
 ``file://host:1/``, is rejected. RFC 3986 mode keeps both. The same
 applies when :meth:`URL.build`, :meth:`URL.with_host`,
 :meth:`URL.with_scheme` or :meth:`URL.join` makes a ``file`` URL.
+Since a ``file`` URL always has an authority in WHATWG mode, the dot
+segments of its path are removed also when the host is empty:
+``file:///a/../b`` is ``file:///b``.
 RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
 one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such

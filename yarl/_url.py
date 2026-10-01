@@ -544,7 +544,7 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     if not netloc and _is_special_authority_path(scheme, path, mode):
         return _special_authority_url(scheme, path, query, fragment, empty, False)
     # Set when "localhost" is dropped from a file URL in WHATWG mode; the
-    # URL still has an (empty) authority, which the path must follow.
+    # URL still has an (empty) authority, so its path is at least "/".
     localhost = False
     if not netloc:  # netloc
         host = ""
@@ -606,7 +606,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
 
     if path:
         path = PATH_REQUOTER(path)
-        if (netloc or localhost) and "." in path:
+        if "." in path and (
+            netloc or (mode is _WHATWG and scheme == "file" and path[0] == "/")
+        ):
+            # A file URL always has an authority in WHATWG mode, also an
+            # empty one: "file:///a/../b" is "file:///b".
             path = normalize_path(path)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
@@ -1025,16 +1029,8 @@ class URL:
             else:
                 self._netloc = make_netloc(user, password, _host, port, True)
 
-        # As the parser does, see _check_whatwg_file_authority().
-        localhost = False
-        if mode is _WHATWG and scheme == "file" and self._netloc:
-            _check_whatwg_file_authority(authority or self._netloc)
-            if _host == "localhost":
-                self._netloc = ""
-                localhost = True
-
         path = PATH_QUOTER(path) if path else path
-        if path and (self._netloc or localhost):
+        if path and self._netloc:
             if "." in path:
                 path = normalize_path(path)
             if path[0] != "/":
@@ -1046,17 +1042,28 @@ class URL:
         elif path and scheme and mode is not _WHATWG and "." in path:
             # Without an authority, as the parser does in RFC 3986 mode.
             path = remove_dot_segments(path)
+        elif path and scheme == "file" and path[0] == "/" and "." in path:
+            # A file URL has an authority in WHATWG mode, also an empty one.
+            path = normalize_path(path)
 
         if path and not self._scheme and not self._netloc and ":" in path:
             path = _encode_relative_colon(path, mode)
-        self._path = path or ("/" if localhost else "")
+        self._path = path
         if not query and query_string:
             query_string = QUERY_QUOTER(query_string)
         self._query = query_string
         self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
-        self._empty = EMPTY_AUTHORITY if localhost else 0
+        self._empty = 0
         self._cache = {}
         self._mode = mode
+        if scheme == "file" and mode is _WHATWG and self._netloc:
+            # As the parser does, see _check_whatwg_file_authority(). The path
+            # was checked and normalized as one with an authority above.
+            _check_whatwg_file_authority(authority or self._netloc)
+            if _host == "localhost":
+                self._netloc = ""
+                self._path = path or "/"
+                self._empty = EMPTY_AUTHORITY
         return self
 
     def __init_subclass__(cls) -> NoReturn:
@@ -1239,11 +1246,6 @@ class URL:
         url must be a new URL, not one shared through the from_parts() cache.
         """
         url._cache["_join_path"] = self._cache["_join_path"]
-
-    def _check_file_netloc(self, netloc: str) -> None:
-        """Reject userinfo and a port added to a file URL in WHATWG mode."""
-        if self._mode is _WHATWG and self._scheme == "file":
-            _check_whatwg_file_authority(netloc)
 
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
@@ -1795,7 +1797,12 @@ class URL:
         # path to an absolute URL where there was none before.
         netloc = self._netloc
         authority_empty = self._empty & EMPTY_AUTHORITY
-        has_authority = netloc or authority_empty
+        # A file URL has an authority in WHATWG mode, also an empty one.
+        has_authority = (
+            netloc
+            or authority_empty
+            or (self._scheme == "file" and self._mode is _WHATWG)
+        )
         if has_authority and parsed and parsed[-1] != "":
             parsed.append("")
 
@@ -1836,20 +1843,29 @@ class URL:
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
-        path = self._path
-        empty = self._empty
-        if netloc and (self._scheme not in SPECIAL_SCHEMES or lower_scheme == "file"):
+        if (self._scheme not in SPECIAL_SCHEMES or lower_scheme == "file") and netloc:
             # A special scheme in WHATWG mode had its host parsed already, but
             # only for a file URL is "localhost" dropped.
-            netloc, path, empty = _moved_parts(self, lower_scheme, self._mode, empty)
+            netloc, path, empty = _moved_parts(
+                self, lower_scheme, self._mode, self._empty
+            )
+            return from_parts(
+                lower_scheme,
+                netloc,
+                path,
+                self._query,
+                self._fragment,
+                self._mode,
+                empty,
+            )
         return from_parts(
             lower_scheme,
             netloc,
-            path,
+            self._path,
             self._query,
             self._fragment,
             self._mode,
-            empty,
+            self._empty,
         )
 
     def with_user(self, user: str | None) -> "URL":
@@ -1872,7 +1888,8 @@ class URL:
             raise ValueError("user replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(user, password, encoded_host, self.explicit_port)
-        self._check_file_netloc(netloc)
+        if self._scheme == "file" and self._mode is _WHATWG:
+            _check_whatwg_file_authority(netloc)
         return from_parts(
             self._scheme,
             netloc,
@@ -1903,7 +1920,8 @@ class URL:
         encoded_host = self.host_subcomponent or ""
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, password, encoded_host, port)
-        self._check_file_netloc(netloc)
+        if self._scheme == "file" and self._mode is _WHATWG:
+            _check_whatwg_file_authority(netloc)
         return from_parts(
             self._scheme,
             netloc,
@@ -1941,23 +1959,27 @@ class URL:
             encoded_host = _whatwg_special_host(encoded_host, whatwg_host)
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        path = self._path
-        empty = self._empty
-        if self._mode is _WHATWG and self._scheme == "file":
+        if self._scheme == "file" and self._mode is _WHATWG:
             # As the parser does, see _check_whatwg_file_authority().
             _check_whatwg_file_authority(netloc)
             if encoded_host == "localhost":
-                netloc = ""
-                path = path or "/"
-                empty |= EMPTY_AUTHORITY
+                return from_parts(
+                    self._scheme,
+                    "",
+                    self._path or "/",
+                    self._query,
+                    self._fragment,
+                    self._mode,
+                    self._empty | EMPTY_AUTHORITY,
+                )
         return from_parts(
             self._scheme,
             netloc,
-            path,
+            self._path,
             self._query,
             self._fragment,
             self._mode,
-            empty,
+            self._empty,
         )
 
     def with_port(self, port: int | None) -> "URL":
@@ -1976,7 +1998,8 @@ class URL:
             raise ValueError("port replacement is not allowed for relative URLs")
         encoded_host = self.host_subcomponent or ""
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
-        self._check_file_netloc(netloc)
+        if self._scheme == "file" and self._mode is _WHATWG:
+            _check_whatwg_file_authority(netloc)
         return from_parts(
             self._scheme,
             netloc,
@@ -1999,7 +2022,8 @@ class URL:
         netloc = self._netloc
         if not encoded:
             path = PATH_QUOTER(path)
-            if netloc:
+            if netloc or (self._scheme == "file" and self._mode is _WHATWG):
+                # A file URL has an authority in WHATWG mode, also an empty one.
                 path = normalize_path(path) if "." in path else path
             elif self._scheme and self._mode is not _WHATWG and "." in path:
                 # Without an authority, as the parser does in RFC 3986 mode.

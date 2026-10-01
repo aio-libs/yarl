@@ -272,3 +272,34 @@ def test_path_building() -> None:
 def test_pickle() -> None:
     url = URL("file://localhost/x")
     assert pickle.loads(pickle.dumps(url)) == url
+
+
+@pytest.mark.parametrize("base", ["file://localhost/a/", "file:///a/", "file:/a/"])
+def test_empty_host_removes_dot_segments(base: str) -> None:
+    # A file URL has an authority in WHATWG mode, also an empty one, so its
+    # path loses dot segments as one with a host does.
+    url = URL(base)
+    assert str(url.with_path("/a/../b")) == "file:///b"
+    assert str(url.with_path("a/../b")) == "file:///b"
+    assert str(url / "../b") == "file:///b"
+    assert str(url.joinpath("x/../y")) == "file:///a/y"
+    assert str(URL(f"{base}x/../y")) == "file:///a/y"
+    assert str(url.join(URL("x/../y"))) == "file:///a/y"
+
+
+def test_empty_host_removes_dot_segments_build() -> None:
+    assert str(URL.build(scheme="file", path="/a/../b")) == "file:///b"
+    assert str(URL.build(scheme="file", path="/a/b")) == "file:///a/b"
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("file:///a/../b", "file:///b"),
+        ("file:/a/../b", "file:/b"),
+    ],
+)
+def test_empty_host_dot_segments_rfc(url: str, expected: str) -> None:
+    rfc_url = URL(url, mode="rfc")
+    assert str(rfc_url) == expected
+    assert str(rfc_url.with_path("/a/../b")) == expected
