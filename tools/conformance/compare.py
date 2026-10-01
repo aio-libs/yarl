@@ -132,13 +132,36 @@ def _host(authority: str) -> str:
     return host if host.startswith("[") else host.partition(":")[0]
 
 
+def _scheme(reference: str, base: str | None) -> str | None:
+    """Return the scheme the reference resolves under, lowercased."""
+    for url in (reference, base or ""):
+        if m := re.match(r"([A-Za-z][A-Za-z0-9+.\-]*):", url):
+            return m.group(1).lower()
+    return None
+
+
+def _backslash_separator(reference: str, base: str | None) -> bool:
+    """Tell whether WHATWG reads a backslash as a slash and nothing else is odd.
+
+    Only special schemes read a backslash before the query as a slash;
+    elsewhere it is an ordinary character outside the RFC 3986+3987 grammar.
+    The input must be within that grammar once those backslashes are slashes,
+    so that an unrelated difference is not filed under the backslash.
+    """
+    if _scheme(reference, base) not in SPECIAL_SCHEMES:
+        return False
+    head = re.split(r"[?#]", reference, maxsplit=1)[0]
+    return "\\" in head and rfc.is_iri_reference(
+        head.replace("\\", "/") + reference[len(head) :]
+    )
+
+
 CATEGORIES: list[tuple[str, Callable[[str, str | None], bool]]] = [
     (
         "leading or trailing C0 control or space",
         lambda r, b: r != r.strip(C0_OR_SPACE),
     ),
     ("tab or newline inside the input", lambda r, b: any(c in r for c in "\t\n\r")),
-    ("backslash", lambda r, b: "\\" in r),
     (
         "IP-literal host",
         lambda r, b: (a := _authority(r)) is not None and _host(a).startswith("["),
@@ -161,6 +184,7 @@ CATEGORIES: list[tuple[str, Callable[[str, str | None], bool]]] = [
     ),
     ("empty host", lambda r, b: (a := _authority(r)) is not None and not _host(a)),
     ("file scheme", lambda r, b: (r if ":" in r else b or "").startswith("file:")),
+    ("backslash read as a slash", _backslash_separator),
     (
         "special scheme without an authority",
         lambda r, b: (
