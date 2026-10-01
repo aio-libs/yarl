@@ -49,7 +49,7 @@ from ._parse import (
     unsplit_result,
     unsplit_result_empty,
 )
-from ._path import normalize_path, normalize_path_segments
+from ._path import normalize_path, normalize_path_segments, remove_dot_segments
 from ._query import (
     Query,
     QueryVariable,
@@ -570,6 +570,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             path = normalize_path(path)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
+        elif mode is not _WHATWG and "." in path:
+            # RFC 3986 section 5.2.2 removes the dot segments of any URI
+            # with a scheme, also one without an authority ("file:.." is
+            # "file:").
+            path = remove_dot_segments(path)
         if not netloc and has_dot_prefix(path) and not empty & EMPTY_AUTHORITY:
             # Undo the "/." that str() puts in front of a path starting
             # with "//" when there is no authority.
@@ -988,6 +993,9 @@ class URL:
                     "start with a slash ('/') if set"
                 )
                 raise ValueError(msg)
+        elif path and scheme and mode is not _WHATWG and "." in path:
+            # Without an authority, as the parser does in RFC 3986 mode.
+            path = remove_dot_segments(path)
 
         if path and not self._scheme and not self._netloc and ":" in path:
             path = _encode_relative_colon(path, mode)
@@ -1733,10 +1741,14 @@ class URL:
 
         parsed.reverse()
         if not has_authority or not needs_normalize:
+            path = "/".join(parsed)
+            if needs_normalize and self._scheme and self._mode is not _WHATWG:
+                # Without an authority, as the parser does in RFC 3986 mode.
+                path = remove_dot_segments(path)
             return from_parts(
                 self._scheme,
                 netloc,
-                "/".join(parsed),
+                path,
                 "",
                 "",
                 self._mode,
@@ -1914,6 +1926,9 @@ class URL:
             path = PATH_QUOTER(path)
             if netloc:
                 path = normalize_path(path) if "." in path else path
+            elif self._scheme and self._mode is not _WHATWG and "." in path:
+                # Without an authority, as the parser does in RFC 3986 mode.
+                path = remove_dot_segments(path)
         if path and path[0] != "/":
             path = f"/{path}"
         query = self._query if keep_query else ""
@@ -2256,10 +2271,12 @@ class URL:
             raise TypeError("url should be URL")
 
         scheme = url._scheme or self._scheme
-        # A reference with a scheme is used as is (RFC 3986 section 5.2.2),
-        # except that "http:g" is still resolved against an http base, the
+        # A reference with a scheme is used as is (RFC 3986 section 5.2.2).
+        # In WHATWG mode "http:g" is still resolved against an http base, the
         # backward-compatible behavior RFC 3986 section 5.4.2 permits.
-        if scheme != self._scheme or (url._scheme and scheme not in USES_RELATIVE):
+        if scheme != self._scheme or (
+            url._scheme and (scheme not in USES_RELATIVE or self._mode is not _WHATWG)
+        ):
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 

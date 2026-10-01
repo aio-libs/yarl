@@ -104,15 +104,34 @@ and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
    Empty components are kept; previously they were dropped, and ``//`` was
    added for every scheme listed in ``urllib.parse.uses_netloc``.
 
+RFC 3986 mode removes the dot segments of a URL with a scheme also when it has
+no authority, as :rfc:`3986#section-5.2.2` does, so ``file:..`` is ``file:``
+and ``file:.//p`` is ``file:/p``. That follows :rfc:`3986#section-5.2.4`
+step by step: a ``..`` above the first segment of a path without a leading
+``/`` leaves one, so ``urn:a/../b`` is ``urn:/b``. :meth:`URL.build`,
+:meth:`URL.with_path`, :meth:`URL.joinpath` and ``/`` do the same. WHATWG
+mode keeps the path of such a URL with a non-special scheme as is.
+
+.. doctest::
+
+   >>> URL('file:.//p', mode='rfc')
+   URL('file:/p', mode='rfc')
+   >>> URL('urn:a/./b', mode='rfc'), URL('urn:a/./b')
+   (URL('urn:a/b', mode='rfc'), URL('urn:a/./b'))
+
+.. versionchanged:: 1.26
+
+   RFC 3986 mode removes dot segments from a path without an authority.
+
 For the special schemes other than ``file``, the default WHATWG mode reads
 the text after the scheme as the authority even without ``//``, skipping any
 number of leading slashes, as the WHATWG URL Standard does:
 ``http:example.com/``, ``http:/example.com/`` and ``http:///example.com/`` are
 all ``http://example.com/``. Such a URL with userinfo or a port but no host,
 like ``http:@/example.com``, is rejected. RFC 3986 mode keeps the text as the
-path of a URL without a host. :meth:`URL.join` still resolves a URL written
-without ``//`` as a relative reference against a base with the same scheme,
-see there.
+path of a URL without a host. In WHATWG mode :meth:`URL.join` still resolves
+a URL written without ``//`` as a relative reference against a base with the
+same scheme, see there.
 
 .. doctest::
 
@@ -1339,11 +1358,13 @@ The path is encoded if needed.
       >>> URL('urn:example:animal').join(URL('#ferret'))
       URL('urn:example:animal#ferret')
 
-   A ``url`` with the same scheme as the base but without ``//``, like
-   ``http:page.html``, is resolved as a relative reference, which
-   :rfc:`3986#section-5.4.2` permits and the WHATWG URL Standard requires.
-   That holds for a URL parsed in WHATWG mode too, although it has an
-   authority on its own (see :class:`URL`):
+   In WHATWG mode, a ``url`` with the same scheme as the base but without
+   ``//``, like ``http:page.html``, is resolved as a relative reference,
+   which :rfc:`3986#section-5.4.2` permits and the WHATWG URL Standard
+   requires. That holds for a URL parsed in WHATWG mode too, although it has
+   an authority on its own (see :class:`URL`). A base in RFC 3986 mode is a
+   strict parser in the terms of :rfc:`3986#section-5.2.2` and uses a ``url``
+   with a scheme as is:
 
    .. doctest::
 
@@ -1352,6 +1373,14 @@ The path is encoded if needed.
       URL('http://example.com/path/page.html')
       >>> URL('http:page.html')
       URL('http://page.html')
+      >>> base = URL('file:///tmp/index.html', mode='rfc')
+      >>> base.join(URL('file:page.html', mode='rfc'))
+      URL('file:page.html', mode='rfc')
+
+   .. versionchanged:: 1.26
+
+      A base in RFC 3986 mode no longer resolves a ``url`` with the same
+      scheme as a relative reference.
 
    .. note::
 
