@@ -264,6 +264,12 @@ WHATWG URL Standard does, and encodes the result like any other host:
 ``xn--n3h``. A host that decodes to something that is not a valid host,
 such as ``ho%00st`` or ``a%2Fb``, is rejected. RFC 3986 mode keeps the
 percent-encoded host.
+A ``file`` URL has a host only in WHATWG mode: ``localhost`` (in any case,
+also once percent-decoded) becomes the empty host, so
+``file://localhost/p`` is ``file:///p``, and userinfo or a port, as in
+``file://host:1/``, is rejected. RFC 3986 mode keeps both. The same
+applies when :meth:`URL.build`, :meth:`URL.with_host`,
+:meth:`URL.with_scheme` or :meth:`URL.join` makes a ``file`` URL.
 RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
 one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
@@ -284,6 +290,10 @@ host; the WHATWG URL Standard has no IPvFuture, so WHATWG mode rejects it.
    URL('http://0x7f.1/', mode='rfc')
    >>> URL('http://ex%41mple.com/')
    URL('http://example.com/')
+   >>> URL('file://localhost/etc/hosts')
+   URL('file:///etc/hosts')
+   >>> URL('file://localhost/etc/hosts', mode='rfc')
+   URL('file://localhost/etc/hosts', mode='rfc')
    >>> URL('http://[v1.x]:8080/', mode='rfc')
    URL('http://[v1.x]:8080/', mode='rfc')
 
@@ -299,6 +309,8 @@ host; the WHATWG URL Standard has no IPvFuture, so WHATWG mode rejects it.
    Percent-encoded hosts of these schemes are decoded in WHATWG mode.
    An IPvFuture address keeps its brackets in RFC 3986 mode and is
    rejected in WHATWG mode; previously the brackets were dropped.
+   In WHATWG mode the ``localhost`` host of a ``file`` URL is dropped and
+   a ``file`` URL with userinfo or a port is rejected.
 
 
 .. note::
