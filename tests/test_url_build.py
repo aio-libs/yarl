@@ -113,28 +113,33 @@ def test_url_build_ipv6_zone_id_numeric_scope_percent25() -> None:
 
 
 @pytest.mark.parametrize(
-    ("zone", "encoded"),
+    ("zone", "encoded", "host_zone"),
     (
-        ("e/h", "e%2Fh"),
-        ("a?b", "a%3Fb"),
-        ("a#c", "a%23c"),
-        ("a%b", "a%25b"),
-        ("\u65e5\u672c", "%E6%97%A5%E6%9C%AC"),
+        ("e/h", "e%2Fh", "e%2Fh"),
+        ("a?b", "a%3Fb", "a%3Fb"),
+        ("a#c", "a%23c", "a%23c"),
+        ("a%b", "a%25b", "a%25b"),
+        ("a%2Fb", "a%2Fb", "a%2Fb"),
+        ("\u65e5\u672c", "%E6%97%A5%E6%9C%AC", "\u65e5\u672c"),
     ),
-    ids=("slash", "question", "hash", "percent", "non-ascii"),
+    ids=("slash", "question", "hash", "percent", "pct-encoded", "non-ascii"),
 )
-def test_url_build_ipv6_zone_id_percent_encoded(zone: str, encoded: str) -> None:
+def test_url_build_ipv6_zone_id_percent_encoded(
+    zone: str, encoded: str, host_zone: str
+) -> None:
     """A zone identifier given after a bare ``%`` is percent-encoded.
 
     RFC 6874 section 2 requires non-unreserved zone characters to be
     percent-encoded, so the URL can be parsed back and serialized as
-    ASCII.
+    ASCII. Percent-encoded octets are kept, and ``.host`` keeps ``%``
+    and delimiters encoded.
     """
     u = URL.build(scheme="http", host=f"fe80::1%{zone}", path="/x")
     assert str(u) == f"http://[fe80::1%25{encoded}]/x"
-    assert u.host == f"fe80::1%{zone}"
+    assert u.host == f"fe80::1%{host_zone}"
     assert URL(str(u)) == u
     assert bytes(u) == str(u).encode()
+    assert URL.build(scheme="http", host=u.host, path="/x") == u
 
 
 @pytest.mark.parametrize("zone", ("e/h", "a b", "\u65e5", "a%2"))

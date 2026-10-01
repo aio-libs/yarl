@@ -244,8 +244,9 @@ any other percent-encoded octet after the address (``http://[::%31]/``)
 raises :exc:`ValueError`, also with ``encoded=True``. :meth:`URL.build`
 and :meth:`URL.with_host` take a *host* with the zone identifier after a
 bare ``%``, as :mod:`socket` and :mod:`ipaddress` write it, and
-percent-encode it, so ``URL.build(scheme="http", host="fe80::1%eth0")``
-is ``http://[fe80::1%25eth0]``.
+percent-encode it, keeping octets that are already percent-encoded, so
+``URL.build(scheme="http", host="fe80::1%eth0")`` is
+``http://[fe80::1%25eth0]``.
 An authority with userinfo or a port but no host, such as
 ``sc://user@/`` or ``//:8080``, is rejected for every scheme in the default
 WHATWG mode, as in the WHATWG URL Standard; RFC 3986 mode accepts it, with
@@ -465,7 +466,9 @@ There are two kinds of properties: *decoded* and *encoded* (with
    ``%25`` zone separator is decoded to ``%`` and the zone identifier is
    percent-decoded, so the value matches the
    scoped address format understood by :mod:`socket` and
-   :mod:`ipaddress`.
+   :mod:`ipaddress`. A ``%``, a delimiter such as ``/`` or an octet that
+   is not UTF-8 stays percent-encoded in the zone identifier, so the value
+   can be passed back to :meth:`URL.with_host` or :meth:`URL.build`.
 
    .. doctest::
 
@@ -1412,6 +1415,10 @@ bad for memorizing by humans.
       'http://xn--jxagkqfkduily1i.eu/%E9%80%99%E8%A3%A1'
       >>> url.human_repr()
       'http://εμπορικόσήμα.eu/這裡'
+
+   An IPv6 zone identifier is written percent-encoded, as in
+   :meth:`str`, since parsing does not accept a bare ``%`` zone
+   separator.
 
 .. _yarl-api-default-ports:
 

@@ -16,6 +16,8 @@ FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
 UNQUOTER = _Unquoter()
 PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")
+# Keeps "%" and the delimiters of an authority encoded in a zone identifier.
+ZONE_ID_UNQUOTER = _Unquoter(ignore="%/:?#[]@")
 QS_UNQUOTER = _Unquoter(qs=True)
 # to match urllib.parse.unquote_plus
 UNQUOTER_PLUS = _Unquoter(plus=True, replace_invalid=True)

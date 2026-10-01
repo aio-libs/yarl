@@ -5,6 +5,9 @@ now raises :exc:`ValueError` for a bare ``%`` such as
 as ``http://[::%31]/``, which both RFC 3986 and the WHATWG URL Standard
 reject. :meth:`~yarl.URL.build` and :meth:`~yarl.URL.with_host` still
 take the zone identifier after a bare ``%``, and now write it as
-``%25`` followed by the percent-encoded zone identifier, which
-:attr:`~yarl.URL.host` decodes back
+``%25`` followed by the percent-encoded zone identifier.
+:attr:`~yarl.URL.host` decodes the zone identifier except for ``%``,
+delimiters and octets that are not UTF-8, so it can be passed back to
+the builders, and :meth:`~yarl.URL.human_repr` keeps the zone
+identifier percent-encoded so that its result can be parsed
 -- by :user:`asvetlov`.
