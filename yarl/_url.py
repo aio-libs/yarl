@@ -17,7 +17,13 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import SplitResult, scheme_chars, unquote_to_bytes, uses_relative
+from urllib.parse import (
+    SplitResult,
+    quote,
+    scheme_chars,
+    unquote_to_bytes,
+    uses_relative,
+)
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
@@ -31,7 +37,9 @@ from ._parse import (
     SPECIAL_SCHEMES,
     UNSAFE_URL_BYTES_TO_REMOVE,
     WHATWG_C0_CONTROL_OR_SPACE,
+    ZONE_ID_RE,
     SplitURLType,
+    check_zone_id,
     has_dot_prefix,
     make_netloc,
     query_to_pairs,
@@ -61,6 +69,7 @@ from ._quoters import (
     QUOTER,
     REQUOTER,
     UNQUOTER,
+    ZONE_ID_UNQUOTER,
     human_quote,
 )
 
@@ -147,6 +156,13 @@ _DEFAULT_IGNORABLE_RE = re.compile(
 # environment; for yarl we reject ASCII control characters (CTL):
 # https://datatracker.ietf.org/doc/html/rfc9844#section-6-3
 _ZONE_ID_UNSAFE_RE = re.compile(r"[\x00-\x1f\x7f]")
+# A character of a zone identifier that RFC 6874 percent-encodes.
+_ZONE_ID_REQUOTE_RE = re.compile(r"%(?![0-9A-Fa-f]{2})|[^0-9A-Za-z._~%-]")
+
+
+def _quote_match(match: re.Match[str]) -> str:
+    return quote(match[0], safe="")
+
 
 _T = TypeVar("_T")
 
@@ -937,6 +953,8 @@ class URL:
             if not _host:
                 _check_missing_host(scheme, mode)
             if _host:
+                if "%" in _host and ":" in _host and _host[0] != "[":
+                    check_zone_id(_host)
                 encoded_host, whatwg_host, idna2003 = _encode_host(
                     _host, validate_host=False
                 )
@@ -1397,20 +1415,24 @@ class URL:
         None for relative URLs.
 
         For IPv6 hosts that carry an RFC 6874 zone identifier, the
-        ``%25`` zone separator is decoded back to ``%``; the encoded
-        form is still available via :attr:`raw_host` and
-        :attr:`host_subcomponent`.
+        ``%25`` zone separator is decoded back to ``%`` and the zone
+        identifier is percent-decoded; the encoded form is still
+        available via :attr:`raw_host` and :attr:`host_subcomponent`.
 
         """
         if (raw := self.raw_host) is None:
             return None
         if raw and (raw[-1].isdigit() or raw[-1] == "]") or ":" in raw:
-            # IP addresses are never IDNA encoded. The replace decodes
-            # every %25 in the raw host, i.e. the RFC 6874 zone
-            # separator and any %25 that percent-encodes a literal %
-            # inside the zone identifier.
+            # IP addresses are never IDNA encoded. The RFC 6874 zone
+            # separator "%25" of an IPv6 address decodes to "%"; the zone
+            # identifier is decoded except for "%", the delimiters of an
+            # authority and octets that are not UTF-8, so that passing
+            # the result to with_host() gives the same URL back.
             if "%25" in raw:
-                return raw.replace("%25", "%")
+                if ":" not in raw:
+                    return raw.replace("%25", "%")
+                address, _, zone = raw.partition("%25")
+                return f"{address}%{ZONE_ID_UNQUOTER(zone)}"
             return raw
         return _idna_decode(raw)
 
@@ -2400,7 +2422,9 @@ class URL:
         user = human_quote(self.user, "#/:?@[]\\")
         password = human_quote(self.password, "#/:?@[]\\")
         if (host := self.host) and ":" in host and host[-1] != "]":
-            host = f"[{host}]"
+            # An IPv6 zone identifier stays percent-encoded, which is the
+            # only form the parser accepts.
+            host = f"[{self.raw_host}]" if "%" in host else f"[{host}]"
         # WHATWG mode reads "\\" in the path as "/", so it stays encoded.
         path = human_quote(self.path, "#?\\")
         if TYPE_CHECKING:
@@ -2640,9 +2664,9 @@ def _encode_host(
     # an IP address.
     if host and (host[-1].isdigit() or ":" in host):
         # RFC 6874 spells the IPv6 zone separator as the percent-encoded
-        # ``%25``; bare ``%`` is still accepted so that hosts constructed
-        # programmatically (e.g. ``with_host("fe80::1%1")``) keep working.
-        part = "%25" if "%25" in host else "%"
+        # ``%25``; the builders also take a bare ``%`` followed by the
+        # decoded zone (e.g. ``with_host("fe80::1%1")``).
+        part = "%25" if host.startswith("%25", host.find("%")) else "%"
         raw_ip, sep, zone = host.partition(part)
         # If it looks like an IP, we check with _ip_compressed_version
         # and fall-through if its not an IP address. This is a performance
@@ -2667,14 +2691,20 @@ def _encode_host(
         except ValueError:
             pass
         else:
-            if (
-                sep
-                and validate_host
-                and (
-                    (reject_empty_zone and not zone) or _ZONE_ID_UNSAFE_RE.search(zone)
-                )
-            ):
-                raise ValueError("Invalid characters in zone identifier")
+            if sep and validate_host:
+                if ip.version == 6:
+                    if sep == "%" and not _ZONE_ID_UNSAFE_RE.search(zone):
+                        # A zone identifier given after a bare "%" is
+                        # decoded, as host returns it; RFC 6874 writes it
+                        # as "%25" followed by the percent-encoded zone.
+                        # Percent-encoded octets are kept as they are.
+                        zone = _ZONE_ID_REQUOTE_RE.sub(_quote_match, zone)
+                        sep = "%25"
+                    bad_zone = ZONE_ID_RE.fullmatch(zone) is None
+                else:
+                    bad_zone = _ZONE_ID_UNSAFE_RE.search(zone) is not None
+                if bad_zone or (reject_empty_zone and not zone):
+                    raise ValueError("Invalid characters in zone identifier")
             # These checks should not happen in the
             # LRU to keep the cache size small
             host = ip.compressed

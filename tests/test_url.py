@@ -506,7 +506,7 @@ def test_ipv6_zone_rfc6874() -> None:
     assert url.host_subcomponent == "[fe80::1%251]"
     assert url.host_port_subcomponent == "[fe80::1%251]"
     assert url.authority == "fe80::1%1:80"
-    assert url.human_repr() == "http://[fe80::1%1]/"
+    assert url.human_repr() == "http://[fe80::1%251]/"
     assert str(url) == "http://[fe80::1%251]/"
     assert URL(str(url)) == url
 
@@ -517,7 +517,7 @@ def test_ipv6_zone_rfc6874_named_zone() -> None:
     assert url.host == "fe80::1%eth0"
     assert url.host_subcomponent == "[fe80::1%25eth0]"
     assert url.authority == "fe80::1%eth0:80"
-    assert url.human_repr() == "http://[fe80::1%eth0]/"
+    assert url.human_repr() == "http://[fe80::1%25eth0]/"
     assert str(url) == "http://[fe80::1%25eth0]/"
     assert URL(str(url)) == url
 
@@ -534,59 +534,24 @@ def test_ipv6_zone_rfc6874_with_port() -> None:
 
 def test_ipv6_zone_rfc6874_pct_encoded_inside_zone() -> None:
     # Multiple ``%25`` sequences: ``_encode_host`` partitions on the
-    # first one (the RFC 6874 separator); ``.host`` then decodes every
-    # ``%25`` in the result, including the one that originally encoded
-    # a ``%`` inside the zone identifier.
+    # first one (the RFC 6874 separator); ``.host`` decodes it to ``%``
+    # and keeps a ``%25`` inside the zone identifier encoded.
     url = URL("http://[fe80::1%25foo%252fbar]/")
     assert url.raw_host == "fe80::1%25foo%252fbar"
-    assert url.host == "fe80::1%foo%2fbar"
+    assert url.host == "fe80::1%foo%252fbar"
     assert url.host_subcomponent == "[fe80::1%25foo%252fbar]"
     assert str(url) == "http://[fe80::1%25foo%252fbar]/"
     assert URL(str(url)) == url
 
 
-def test_ipv6_zone_bare_percent_parse() -> None:
-    """A bare ``%`` zone separator is accepted and preserved verbatim.
-
-    This is the pre-RFC 6874 de-facto form; RFC 6874 §3 suggests
-    (non-normatively) accepting it, and curl/wget/urllib3 all do.
-    yarl does not re-encode it to ``%25``.
-    """
-    url = URL("http://[fe80::1%eth0]:8080/")
-    assert url.raw_host == "fe80::1%eth0"
-    assert url.host == "fe80::1%eth0"
-    assert url.host_subcomponent == "[fe80::1%eth0]"
-    assert url.host_port_subcomponent == "[fe80::1%eth0]:8080"
-    assert url.authority == "fe80::1%eth0:8080"
-    assert url.human_repr() == "http://[fe80::1%eth0]:8080/"
-    assert str(url) == "http://[fe80::1%eth0]:8080/"
-    assert URL(str(url)) == url
-
-
-def test_ipv6_zone_bare_percent_hex_ambiguous() -> None:
-    """A bare ``%`` is accepted even when followed by two hex digits.
-
-    RFC 6874 §3 (non-normative) suggests accepting a bare ``%`` only
-    when it is not followed by two valid hexadecimal characters; like
-    the rest of the ecosystem, yarl accepts it unconditionally, so
-    ``%ee1`` is zone ``ee1`` rather than an error (#998).
-    """
-    url = URL("http://[fe80::a%ee1]/")
-    assert url.raw_host == "fe80::a%ee1"
-    assert url.host == "fe80::a%ee1"
-
-
 def test_ipv6_zone_empty_zone_parse() -> None:
-    """The string-parse path accepts empty zone identifiers.
+    """The string-parse path accepts an empty zone identifier.
 
-    ``URL.build(host=...)`` rejects them (RFC 9844 §6.3), but parsing
-    uses ``validate_host=False``; this documents the asymmetry (#998).
+    ``URL.build(host=...)`` rejects it (RFC 9844 section 6.3), but parsing
+    has always accepted it (#998).
     """
     url = URL("http://[fe80::1%25]/")
     assert url.raw_host == "fe80::1%25"
-    assert url.host == "fe80::1%"
-    url = URL("http://[fe80::1%]/")
-    assert url.raw_host == "fe80::1%"
     assert url.host == "fe80::1%"
 
 
@@ -594,9 +559,31 @@ def test_ipv6_zone_rfc6874_multiple_percent25() -> None:
     """Only the first ``%25`` is the separator; later ones are zone text."""
     url = URL("http://[fe80::1%25a%25b]/")
     assert url.raw_host == "fe80::1%25a%25b"
-    assert url.host == "fe80::1%a%b"
+    assert url.host == "fe80::1%a%25b"
     assert str(url) == "http://[fe80::1%25a%25b]/"
     assert URL(str(url)) == url
+
+
+@pytest.mark.parametrize(
+    ("url", "host"),
+    [
+        ("http://[fe80::1%25eth0]:8080/p", "fe80::1%eth0"),
+        ("http://[fe80::1%25e%20th]/", "fe80::1%e th"),
+        ("http://[fe80::1%25%C3%B1]/", "fe80::1%\xf1"),
+        # Delimiters and "%" stay encoded, so human_repr() can be parsed.
+        ("http://[fe80::1%25a%2Fb]/", "fe80::1%a%2Fb"),
+        ("http://[fe80::1%25a%25b]/", "fe80::1%a%25b"),
+        # An octet that is not UTF-8 is kept, not replaced with U+FFFD.
+        ("http://[fe80::1%25e%FF]/", "fe80::1%e%FF"),
+    ],
+)
+def test_ipv6_zone_host_round_trip(url: str, host: str) -> None:
+    """``.host`` can be passed back to the builders unchanged."""
+    u = URL(url)
+    assert u.host == host
+    assert u.with_host(host) == u
+    assert URL.build(scheme="http", host=host, port=u.explicit_port, path=u.path) == u
+    assert URL(u.human_repr()) == u
 
 
 def test_ipv6_zone_rfc6874_encoded_url() -> None:
@@ -605,19 +592,6 @@ def test_ipv6_zone_rfc6874_encoded_url() -> None:
     assert url.raw_host == "fe80::1%25eth0"
     assert url.host == "fe80::1%eth0"
     assert str(url) == "http://[fe80::1%25eth0]/"
-
-
-def test_ipv6_zone_separator_spellings_not_equal() -> None:
-    """The two zone separator spellings are distinct URLs.
-
-    yarl performs no normalization between ``%25`` and bare ``%``, so
-    URLs denoting the same scoped address compare unequal even though
-    ``.host`` decodes both to the same value (#998).
-    """
-    encoded = URL("http://[fe80::1%25eth0]/")
-    bare = URL("http://[fe80::1%eth0]/")
-    assert encoded != bare
-    assert encoded.host == bare.host
 
 
 def test_ipv6_zone_rfc6874_global_address() -> None:
@@ -2966,7 +2940,7 @@ def test_url_parse_rejects_control_characters_in_ipv6_zone() -> None:
     ``URL.build(host="fe80::1%\x00")`` already rejected them; the parser
     previously accepted ``[fe80::1%25\x00evil]`` (#1829).
     """
-    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+    with pytest.raises(ValueError, match="Invalid IPv6 zone identifier"):
         URL("http://[fe80::1%25\x00evil]/")
 
 

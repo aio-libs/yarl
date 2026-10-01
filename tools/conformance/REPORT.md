@@ -38,9 +38,9 @@ The goal is that every case is in one of the first two sections: where the stand
 
 | Outcome | Cases |
 |---|---|
-| RFC 3986+3987, WHATWG and yarl in both modes agree | 462 |
+| RFC 3986+3987, WHATWG and yarl in both modes agree | 463 |
 | yarl follows each standard in its mode | 264 |
-| yarl differs, RFC 3986+3987 and WHATWG agree | 1 |
+| yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
 | WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 131 |
 | RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 28 |
 | Both modes differ from their standard | 10 |
@@ -48,17 +48,16 @@ The goal is that every case is in one of the first two sections: where the stand
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 142 |
-| yarl RFC mode vs RFC 3986+3987 | 39 |
+| yarl WHATWG mode vs WHATWG | 141 |
+| yarl RFC mode vs RFC 3986+3987 | 38 |
 | WHATWG vs RFC 3986+3987 | 433 |
 
-## yarl differs, RFC 3986+3987 and WHATWG agree (1)
+## yarl differs, RFC 3986+3987 and WHATWG agree (0)
 
 Every case where the standards agree and yarl, in either mode, does not. A change must not add rows here; see AGENTS.md.
 
 | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|
-| `http://[::%31]` | `http://other.com/` | `http://[::%31]` | *failure* | `http://[::%31]` | *failure* |
 
 ## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (131)
 
