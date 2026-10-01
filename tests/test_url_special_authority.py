@@ -124,10 +124,11 @@ def test_join(base: str, reference: str, expected: str) -> None:
 
 
 def test_join_rfc_base() -> None:
-    # RFC 3986 section 5.4.2 lets "http:g" resolve against an http base too.
+    # An RFC mode base is a strict parser (RFC 3986 section 5.2.2): the
+    # reference, "http://example.com/" in WHATWG mode, is used as is.
     base = URL("http://h/foo/bar", mode="rfc")
     joined = base.join(URL("http:example.com/"))
-    assert str(joined) == "http://h/foo/example.com/"
+    assert str(joined) == "http://example.com/"
     assert joined.mode == "rfc"
 
 
