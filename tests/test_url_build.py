@@ -72,24 +72,26 @@ def test_url_build_ipv6_zone_id_empty() -> None:
     ids=("iface-name", "numeric", "spaces", "parens", "unicode"),
 )
 def test_url_build_ipv6_zone_id_valid(zone: str) -> None:
-    """Zone IDs accept any non-CTL text per RFC 4007 §11.2."""
+    """Zone IDs accept any non-CTL text per RFC 4007 section 11.2."""
     u = URL.build(scheme="http", host=f"::1%{zone}", path="/")
     assert u.host == f"::1%{zone}"
     assert URL(str(u)).host == f"::1%{zone}"
 
 
 def test_url_build_ipv6_zone_id_bare_percent_round_trip() -> None:
-    """Programmatic hosts keep the bare ``%`` zone separator.
+    """Programmatic hosts take a bare ``%`` zone separator.
 
     ``_encode_host`` falls back to partitioning on ``%`` when no
     ``%25`` is present so that hosts constructed from RFC 4007 scoped
-    literals keep working; this pins that fallback (#998).
+    literals keep working (#998); the URL spells the separator ``%25``
+    as RFC 6874 does.
     """
     u = URL.build(scheme="http", host="fe80::1%eth0")
-    assert str(u) == "http://[fe80::1%eth0]"
-    assert u.raw_host == "fe80::1%eth0"
+    assert str(u) == "http://[fe80::1%25eth0]"
+    assert u.raw_host == "fe80::1%25eth0"
     assert u.host == "fe80::1%eth0"
     assert URL(str(u)) == u
+    assert u == URL.build(scheme="http", host="fe80::1%25eth0")
 
 
 def test_url_build_ipv6_zone_id_numeric_scope_percent25() -> None:
@@ -111,33 +113,35 @@ def test_url_build_ipv6_zone_id_numeric_scope_percent25() -> None:
 
 
 @pytest.mark.parametrize(
-    "zone",
+    ("zone", "encoded"),
     (
-        "e/h",
-        "a?b",
-        "a#c",
+        ("e/h", "e%2Fh"),
+        ("a?b", "a%3Fb"),
+        ("a#c", "a%23c"),
+        ("a%b", "a%25b"),
+        ("\u65e5\u672c", "%E6%97%A5%E6%9C%AC"),
     ),
-    ids=("slash", "question", "hash"),
+    ids=("slash", "question", "hash", "percent", "non-ascii"),
 )
-def test_url_build_ipv6_zone_id_reserved_chars_break_round_trip(zone: str) -> None:
-    """Reserved characters in a zone produce URLs yarl cannot re-parse.
+def test_url_build_ipv6_zone_id_percent_encoded(zone: str, encoded: str) -> None:
+    """A zone identifier given after a bare ``%`` is percent-encoded.
 
-    RFC 6874 §2 requires non-unreserved zone characters to be
-    percent-encoded; the liberal RFC 4007 policy emits them raw, so
-    the serialized URL fails yarl's own parser. Documents current
-    behavior (#998).
+    RFC 6874 section 2 requires non-unreserved zone characters to be
+    percent-encoded, so the URL can be parsed back and serialized as
+    ASCII.
     """
     u = URL.build(scheme="http", host=f"fe80::1%{zone}", path="/x")
-    assert str(u) == f"http://[fe80::1%{zone}]/x"
-    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
-        URL(str(u))
+    assert str(u) == f"http://[fe80::1%25{encoded}]/x"
+    assert u.host == f"fe80::1%{zone}"
+    assert URL(str(u)) == u
+    assert bytes(u) == str(u).encode()
 
 
-def test_url_build_ipv6_zone_id_non_ascii_not_ascii_encodable() -> None:
-    """Non-ASCII zone identifiers make the URL non-ASCII-serializable."""
-    u = URL.build(scheme="http", host="fe80::1%日本語", path="/")
-    with pytest.raises(UnicodeEncodeError):
-        bytes(u)
+@pytest.mark.parametrize("zone", ("e/h", "a b", "\u65e5", "a%2"))
+def test_url_build_ipv6_zone_id_after_percent25_invalid(zone: str) -> None:
+    """A zone identifier after ``%25`` must already be percent-encoded."""
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL.build(scheme="http", host=f"fe80::1%25{zone}")
 
 
 def test_url_build_ipv6_zone_id_empty_authority_not_validated() -> None:

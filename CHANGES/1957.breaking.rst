@@ -1,0 +1,10 @@
+Accepted IPv6 zone identifiers only in the :rfc:`6874` form, ``%25``
+followed by the percent-encoded zone identifier, in both modes. Parsing
+now raises :exc:`ValueError` for a bare ``%`` such as
+``http://[fe80::1%eth0]/`` and for another percent-encoded octet such
+as ``http://[::%31]/``, which both RFC 3986 and the WHATWG URL Standard
+reject. :meth:`~yarl.URL.build` and :meth:`~yarl.URL.with_host` still
+take the zone identifier after a bare ``%``, and now write it as
+``%25`` followed by the percent-encoded zone identifier, which
+:attr:`~yarl.URL.host` decodes back
+-- by :user:`asvetlov`.

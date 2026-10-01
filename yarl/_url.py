@@ -17,7 +17,14 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import SplitResult, scheme_chars, unquote_to_bytes, uses_relative
+from urllib.parse import (
+    SplitResult,
+    quote,
+    scheme_chars,
+    unquote,
+    unquote_to_bytes,
+    uses_relative,
+)
 
 import idna
 from multidict import MultiDict, MultiDictProxy, istr
@@ -30,7 +37,9 @@ from ._parse import (
     SPECIAL_SCHEMES,
     UNSAFE_URL_BYTES_TO_REMOVE,
     WHATWG_C0_CONTROL_OR_SPACE,
+    ZONE_ID_RE,
     SplitURLType,
+    check_zone_id,
     has_dot_prefix,
     make_netloc,
     query_to_pairs,
@@ -924,6 +933,8 @@ class URL:
             if not _host:
                 _check_missing_host(scheme, mode)
             if _host:
+                if "%" in _host and ":" in _host:
+                    check_zone_id(_host)
                 encoded_host, whatwg_host, idna2003 = _encode_host(
                     _host, validate_host=False
                 )
@@ -1381,20 +1392,19 @@ class URL:
         None for relative URLs.
 
         For IPv6 hosts that carry an RFC 6874 zone identifier, the
-        ``%25`` zone separator is decoded back to ``%``; the encoded
-        form is still available via :attr:`raw_host` and
-        :attr:`host_subcomponent`.
+        ``%25`` zone separator is decoded back to ``%`` and the zone
+        identifier is percent-decoded; the encoded form is still
+        available via :attr:`raw_host` and :attr:`host_subcomponent`.
 
         """
         if (raw := self.raw_host) is None:
             return None
         if raw and raw[-1].isdigit() or ":" in raw:
-            # IP addresses are never IDNA encoded. The replace decodes
-            # every %25 in the raw host, i.e. the RFC 6874 zone
-            # separator and any %25 that percent-encodes a literal %
-            # inside the zone identifier.
-            if "%25" in raw:
-                return raw.replace("%25", "%")
+            # IP addresses are never IDNA encoded. An IPv6 address is
+            # followed by "%25" and its percent-encoded zone identifier
+            # (RFC 6874), which decode to "%" and the zone identifier.
+            if "%" in raw:
+                return unquote(raw) if ":" in raw else raw.replace("%25", "%")
             return raw
         return _idna_decode(raw)
 
@@ -2603,8 +2613,8 @@ def _encode_host(
     # an IP address.
     if host and (host[-1].isdigit() or ":" in host):
         # RFC 6874 spells the IPv6 zone separator as the percent-encoded
-        # ``%25``; bare ``%`` is still accepted so that hosts constructed
-        # programmatically (e.g. ``with_host("fe80::1%1")``) keep working.
+        # ``%25``; the builders also take a bare ``%`` followed by the
+        # decoded zone (e.g. ``with_host("fe80::1%1")``).
         part = "%25" if "%25" in host else "%"
         raw_ip, sep, zone = host.partition(part)
         # If it looks like an IP, we check with _ip_compressed_version
@@ -2630,14 +2640,18 @@ def _encode_host(
         except ValueError:
             pass
         else:
-            if (
-                sep
-                and validate_host
-                and (
-                    (reject_empty_zone and not zone) or _ZONE_ID_UNSAFE_RE.search(zone)
-                )
-            ):
-                raise ValueError("Invalid characters in zone identifier")
+            if sep and validate_host:
+                if ip.version == 6:
+                    if sep == "%" and not _ZONE_ID_UNSAFE_RE.search(zone):
+                        # A zone identifier given after a bare "%" is not
+                        # encoded; RFC 6874 writes it as "%25" followed by
+                        # the percent-encoded zone.
+                        zone, sep = quote(zone, safe=""), "%25"
+                    bad_zone = ZONE_ID_RE.fullmatch(zone) is None
+                else:
+                    bad_zone = _ZONE_ID_UNSAFE_RE.search(zone) is not None
+                if bad_zone or (reject_empty_zone and not zone):
+                    raise ValueError("Invalid characters in zone identifier")
             # These checks should not happen in the
             # LRU to keep the cache size small
             host = ip.compressed

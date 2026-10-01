@@ -30,6 +30,26 @@ EMPTY_FRAGMENT = 4
 
 SplitURLType = tuple[str, str, str, str, str]
 
+# The ZoneID of RFC 6874; in a URL it follows the address as "%25" <ZoneID>.
+# RFC 6874 requires at least one character, yarl also accepts an empty zone
+# identifier (#998).
+ZONE_ID_RE = re.compile(r"(?:[0-9A-Za-z._~-]|%[0-9A-Fa-f]{2})*")
+
+
+def check_zone_id(ip_literal: str) -> None:
+    """Reject an IPv6 zone identifier not written as RFC 6874 says.
+
+    The zone identifier follows the address as "%25" and the ZoneID, whose
+    characters other than unreserved ones are percent-encoded. A bare "%",
+    as in "fe80::1%eth0" (the user interface form of RFC 9844), or another
+    percent-encoded octet, as in "::%31", is not URI syntax.
+    """
+    pct = ip_literal.index("%")
+    if ip_literal[pct : pct + 3] != "%25" or not ZONE_ID_RE.fullmatch(
+        ip_literal, pct + 3
+    ):
+        raise ValueError(f"Invalid IPv6 zone identifier in {ip_literal!r}")
+
 
 def split_url(url: str) -> tuple[str, str, str, str, str, int]:
     """Split URL into parts and the mask of present but empty parts."""
@@ -109,6 +129,8 @@ def split_url(url: str) -> tuple[str, str, str, str, str, int]:
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
+            elif "%" in bracketed_host:
+                check_zone_id(bracketed_host)
     if has_hash:
         url, _, fragment = url.partition("#")
         empty |= EMPTY_FRAGMENT

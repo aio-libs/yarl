@@ -216,8 +216,17 @@ The *host* is validated the same way as by :meth:`URL.build` and
 :meth:`URL.with_host`: a :exc:`ValueError` is raised for a host that is
 neither a valid IP address nor a valid *reg-name* (:rfc:`3986#section-3.2.2`),
 for example one containing a space, a control character or a character that
-turns into a URL delimiter after IDNA normalization. An empty IPv6 zone
-identifier (``http://[fe80::1%25]/``) is still accepted when parsing.
+turns into a URL delimiter after IDNA normalization. An IPv6 zone
+identifier is accepted in both modes only in the :rfc:`6874` form,
+``%25`` followed by the percent-encoded zone identifier, as in
+``http://[fe80::1%25eth0]/``; an empty one (``http://[fe80::1%25]/``) is
+still accepted when parsing. A bare ``%`` (``http://[fe80::1%eth0]/``) or
+any other percent-encoded octet after the address (``http://[::%31]/``)
+raises :exc:`ValueError`, also with ``encoded=True``. :meth:`URL.build`
+and :meth:`URL.with_host` take a *host* with the zone identifier after a
+bare ``%``, as :mod:`socket` and :mod:`ipaddress` write it, and
+percent-encode it, so ``URL.build(scheme="http", host="fe80::1%eth0")``
+is ``http://[fe80::1%25eth0]``.
 An authority with userinfo or a port but no host, such as
 ``sc://user@/`` or ``//:8080``, is rejected for every scheme in the default
 WHATWG mode, as in the WHATWG URL Standard; RFC 3986 mode accepts it, with
@@ -426,7 +435,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
    address is validated and converted to compressed form.
 
    For IPv6 addresses that carry an :rfc:`6874` zone identifier, the
-   ``%25`` zone separator is decoded to ``%``, so the value matches the
+   ``%25`` zone separator is decoded to ``%`` and the zone identifier is
+   percent-decoded, so the value matches the
    scoped address format understood by :mod:`socket` and
    :mod:`ipaddress`.
 
