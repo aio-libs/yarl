@@ -1417,7 +1417,7 @@ bad for memorizing by humans.
       'http://εμπορικόσήμα.eu/這裡'
 
    An IPv6 zone identifier is written percent-encoded, as in
-   :meth:`str`, since parsing does not accept a bare ``%`` zone
+   ``str(url)``, since parsing does not accept a bare ``%`` zone
    separator.
 
 .. _yarl-api-default-ports:
