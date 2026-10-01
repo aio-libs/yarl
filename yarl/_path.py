@@ -39,3 +39,36 @@ def normalize_path(path: str) -> str:
 
     segments = path.split("/")
     return prefix + "/".join(normalize_path_segments(segments))
+
+
+def remove_dot_segments(path: str) -> str:
+    """Remove '.' and '..' as the remove_dot_segments algorithm does.
+
+    The steps of RFC 3986 section 5.2.4, also for a path without a leading
+    "/": unlike normalize_path(), "a/../b" is "/b".
+    """
+    output: list[str] = []
+    while path:
+        if path.startswith("../"):
+            path = path[3:]
+        elif path.startswith(("./", "/./")):
+            path = path[2:]
+        elif path.startswith("/../"):
+            path = path[3:]
+            if output:
+                output.pop()
+        elif path == "/.":
+            path = "/"
+        elif path == "/..":
+            path = "/"
+            if output:
+                output.pop()
+        elif path in (".", ".."):
+            path = ""
+        else:
+            end = path.find("/", 1)
+            if end == -1:
+                end = len(path)
+            output.append(path[:end])
+            path = path[end:]
+    return "".join(output)

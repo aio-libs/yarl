@@ -106,15 +106,18 @@ and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
 
 RFC 3986 mode removes the dot segments of a URL with a scheme also when it has
 no authority, as :rfc:`3986#section-5.2.2` does, so ``file:..`` is ``file:``
-and ``file:.//p`` is ``file:/p``. WHATWG mode keeps the path of such a URL
-with a non-special scheme as is.
+and ``file:.//p`` is ``file:/p``. That follows :rfc:`3986#section-5.2.4`
+step by step: a ``..`` above the first segment of a path without a leading
+``/`` leaves one, so ``urn:a/../b`` is ``urn:/b``. :meth:`URL.build`,
+:meth:`URL.with_path`, :meth:`URL.joinpath` and ``/`` do the same. WHATWG
+mode keeps the path of such a URL with a non-special scheme as is.
 
 .. doctest::
 
    >>> URL('file:.//p', mode='rfc')
    URL('file:/p', mode='rfc')
-   >>> URL('urn:a/../b', mode='rfc'), URL('urn:a/../b')
-   (URL('urn:b', mode='rfc'), URL('urn:a/../b'))
+   >>> URL('urn:a/./b', mode='rfc'), URL('urn:a/./b')
+   (URL('urn:a/b', mode='rfc'), URL('urn:a/./b'))
 
 .. versionchanged:: 1.26
 

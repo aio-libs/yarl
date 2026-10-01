@@ -11,10 +11,12 @@ xfails whose reason starts with ``yarl:``, so the suite documents each
 divergence and flags it once the behaviour changes.
 """
 
+from collections.abc import Callable
+
 import pytest
 
 from yarl import URL
-from yarl._path import normalize_path
+from yarl._path import normalize_path, remove_dot_segments
 
 
 def diverges(reason: str) -> pytest.MarkDecorator:
@@ -418,12 +420,29 @@ def test_join_same_scheme_strict(base: str, reference: str) -> None:
         ("file:.", "file:"),
         ("file:.//p", "file:/p"),
         ("file:/a/./b/../c", "file:/a/c"),
-        ("urn:a/../b", "urn:b"),
+        ("urn:a/../b", "urn:/b"),
+        ("urn:a/./b", "urn:a/b"),
         ("mailto:a.b@example.com", "mailto:a.b@example.com"),
     ],
 )
 def test_dot_segments_without_authority(url: str, expected: str) -> None:
     assert str(URL(url, mode="rfc")) == expected
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda: URL.build(scheme="urn", path="a/../b", mode="rfc"),
+        lambda: URL("urn:x", mode="rfc").with_path("a/../b"),
+        lambda: URL("urn:x", mode="rfc").joinpath("..", "b"),
+        lambda: URL("urn:x/", mode="rfc") / ".." / "b",
+    ],
+    ids=["build", "with_path", "joinpath", "truediv"],
+)
+def test_dot_segments_without_authority_built(make: Callable[[], URL]) -> None:
+    url = make()
+    assert str(url) == "urn:/b"
+    assert URL(str(url), mode="rfc") == url
 
 
 def test_dot_segments_without_authority_join() -> None:
@@ -434,6 +453,36 @@ def test_dot_segments_without_authority_join() -> None:
 # WHATWG mode keeps the opaque path of a non-special URL as is.
 def test_dot_segments_opaque_path_whatwg() -> None:
     assert str(URL("urn:a/../b")) == "urn:a/../b"
+    assert str(URL("urn:x").joinpath("..", "b")) == "urn:x/../b"
+
+
+# A relative reference keeps its dot segments until it is resolved.
+def test_dot_segments_relative_reference_kept() -> None:
+    assert str(URL("x", mode="rfc").joinpath("..", "b")) == "x/../b"
+
+
+# Section 5.2.4, step by step; a ".." that climbs above the first segment
+# of a path without a leading "/" leaves one.
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("/a/b/c/./../../g", "/a/g"),
+        ("mid/content=5/../6", "mid/6"),
+        ("a/../b", "/b"),
+        ("a/..", "/"),
+        ("../a", "a"),
+        ("./a", "a"),
+        ("/../a", "/a"),
+        ("/..", "/"),
+        ("/.", "/"),
+        ("a/.", "a/"),
+        ("..", ""),
+        (".", ""),
+        (".//p", "/p"),
+    ],
+)
+def test_remove_dot_segments_literal(path: str, expected: str) -> None:
+    assert remove_dot_segments(path) == expected
 
 
 # Section 5.2.2: components of the target URI.
