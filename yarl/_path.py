@@ -45,30 +45,38 @@ def remove_dot_segments(path: str) -> str:
     """Remove '.' and '..' as the remove_dot_segments algorithm does.
 
     The steps of RFC 3986 section 5.2.4, also for a path without a leading
-    "/": unlike normalize_path(), "a/../b" is "/b".
+    "/": unlike normalize_path(), "a/../b" is "/b". The input buffer is
+    path[pos:], so each step takes constant time apart from the segment it
+    copies.
     """
     output: list[str] = []
-    while path:
-        if path.startswith("../"):
-            path = path[3:]
-        elif path.startswith(("./", "/./")):
-            path = path[2:]
-        elif path.startswith("/../"):
-            path = path[3:]
+    pos = 0
+    end = len(path)
+    while pos < end:
+        if path.startswith("../", pos):
+            pos += 3
+        elif path.startswith(("./", "/./"), pos):
+            pos += 2
+        elif path.startswith("/../", pos):
+            pos += 3
             if output:
                 output.pop()
-        elif path == "/.":
-            path = "/"
-        elif path == "/..":
-            path = "/"
+        elif end - pos == 2 and path.startswith("/.", pos):
+            # "/." is replaced by "/", the last segment.
+            output.append("/")
+            break
+        elif end - pos == 3 and path.startswith("/..", pos):
+            # "/.." is replaced by "/" after dropping the previous segment.
             if output:
                 output.pop()
-        elif path in (".", ".."):
-            path = ""
+            output.append("/")
+            break
+        elif end - pos <= 2 and path[pos:] in (".", ".."):
+            break
         else:
-            end = path.find("/", 1)
-            if end == -1:
-                end = len(path)
-            output.append(path[:end])
-            path = path[end:]
+            next_pos = path.find("/", pos + 1)
+            if next_pos == -1:
+                next_pos = end
+            output.append(path[pos:next_pos])
+            pos = next_pos
     return "".join(output)
