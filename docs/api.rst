@@ -264,7 +264,7 @@ WHATWG URL Standard does, and encodes the result like any other host:
 ``xn--n3h``. A host that decodes to something that is not a valid host,
 such as ``ho%00st`` or ``a%2Fb``, is rejected. RFC 3986 mode keeps the
 percent-encoded host.
-A ``file`` URL has a host only in WHATWG mode: ``localhost`` (in any case,
+Only in WHATWG mode, a ``file`` URL's ``localhost`` host (in any case,
 also once percent-decoded) becomes the empty host, so
 ``file://localhost/p`` is ``file:///p``, and userinfo or a port, as in
 ``file://host:1/``, is rejected. RFC 3986 mode keeps both. The same
