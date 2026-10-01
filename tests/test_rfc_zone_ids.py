@@ -59,6 +59,9 @@ def test_non_rfc6874_zone_id_rejected_in_authority() -> None:
         URL.build(scheme="http", authority="[fe80::1%eth0]")
     url = URL.build(scheme="http", authority="[fe80::1%25eth0]")
     assert url.host == "fe80::1%eth0"
+    # An IPvFuture address has no zone identifier.
+    with pytest.raises(ValueError, match="IPvFuture address is invalid"):
+        URL.build(scheme="sc", authority="[v1.a:b%25]")
 
 
 @pytest.mark.parametrize("mode", [Mode.WHATWG, Mode.RFC])

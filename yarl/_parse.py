@@ -21,6 +21,10 @@ UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 # WHATWG mode "//" is written out even when the authority is missing.
 SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp", "file"})
 
+# IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" ), RFC 3986
+# section 3.2.2; the "v" is case-insensitive.
+IP_FUTURE_RE = re.compile(r"[vV][0-9A-Fa-f]+\.[A-Za-z0-9\-._~!$&'()*+,;=:]+")
+
 # Bits of the "empty" mask: the component is present but empty, as in
 # "sc://", "http://h/?" or "http://h/#". An absent and an empty component
 # are different per RFC 3986 section 5.3, but both are stored as "".
@@ -124,8 +128,8 @@ def split_url(url: str) -> tuple[str, str, str, str, str, int]:
             # Valid bracketed hosts are defined in
             # https://www.rfc-editor.org/rfc/rfc3986#page-49
             # https://url.spec.whatwg.org/
-            if bracketed_host and bracketed_host[0] == "v":
-                if not re.match(r"\Av[a-fA-F0-9]+\..+\Z", bracketed_host):
+            if bracketed_host and bracketed_host[0] in "vV":
+                if not IP_FUTURE_RE.fullmatch(bracketed_host):
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
@@ -196,6 +200,10 @@ def split_netloc(
         if port_str and port_str[0] != ":":
             raise ValueError("Invalid IPv6 URL")
         _, _, port_str = port_str.partition(":")
+        if hostname[:1] in ("v", "V"):
+            # An IPvFuture address keeps its brackets: without them it would
+            # read as a reg-name. IPv6 addresses never start with "v".
+            hostname = f"[{hostname}]"
     else:
         hostname, _, port_str = hostinfo.partition(":")
 
