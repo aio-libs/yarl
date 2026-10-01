@@ -140,6 +140,72 @@ def _scheme(reference: str, base: str | None) -> str | None:
     return None
 
 
+def _file_parts(reference: str) -> tuple[str | None, str]:
+    """Split a file reference into its authority and path.
+
+    WHATWG reads a backslash as a slash in a file URL, so it is one here.
+    """
+    rest = re.sub(r"^[A-Za-z][A-Za-z0-9+.\-]*:", "", reference).replace("\\", "/")
+    rest = re.split(r"[?#]", rest, maxsplit=1)[0]
+    if not rest.startswith("//"):
+        return None, rest
+    authority, slash, path = rest[2:].partition("/")
+    return authority, slash + path
+
+
+def _drive_letter(reference: str, base: str | None) -> bool:
+    """Tell whether a Windows drive letter takes part in a file URL.
+
+    WHATWG keeps a drive letter such as ``C:`` or ``C|`` as the first path
+    segment and never climbs above it, where RFC 8089 leaves it to the
+    application. A reference that starts like one, as ``C|a`` does, is
+    counted too, since WHATWG has to decide it is not a drive letter. A
+    reference without an authority inherits the drive letter of its base.
+    """
+    if _scheme(reference, base) != "file":
+        return False
+    drive = re.compile(r"/*[A-Za-z][:|](?:/|$)")
+    authority, path = _file_parts(reference)
+    lookalike = re.compile(r"/*[A-Za-z][:|]")
+    if authority is not None and lookalike.match(authority + path):
+        return True
+    if lookalike.match(path):
+        return True
+    return (
+        authority is None
+        and not re.match(r"[A-Za-z][A-Za-z0-9+.\-]*:", reference)
+        and base is not None
+        and drive.match(_file_parts(base)[1]) is not None
+    )
+
+
+def _file_host(reference: str, base: str | None) -> bool:
+    """Tell whether WHATWG rewrites or rejects the host of a file URL.
+
+    WHATWG turns ``localhost`` into an empty host and allows no port.
+    """
+    if _scheme(reference, base) != "file":
+        return False
+    authority, _ = _file_parts(reference)
+    return authority is not None and (
+        _host(authority).lower() == "localhost" or ":" in authority
+    )
+
+
+def _empty_file_path(reference: str, base: str | None) -> bool:
+    """Tell whether WHATWG fills the empty path of a file URL with ``/``.
+
+    A reference without an authority against a file base is resolved
+    relative to it instead, so it does not count.
+    """
+    if _scheme(reference, base) != "file":
+        return False
+    authority, path = _file_parts(reference)
+    if path:
+        return False
+    return authority is not None or not (base or "").lower().startswith("file:")
+
+
 def _backslash_separator(reference: str, base: str | None) -> bool:
     """Tell whether WHATWG reads a backslash as a slash and nothing else is odd.
 
@@ -183,7 +249,9 @@ CATEGORIES: list[tuple[str, Callable[[str, str | None], bool]]] = [
         ),
     ),
     ("empty host", lambda r, b: (a := _authority(r)) is not None and not _host(a)),
-    ("file scheme", lambda r, b: (r if ":" in r else b or "").startswith("file:")),
+    ("Windows drive letter", _drive_letter),
+    ("file host that WHATWG rewrites", _file_host),
+    ("empty file path", _empty_file_path),
     ("backslash read as a slash", _backslash_separator),
     (
         "special scheme without an authority",
