@@ -39,17 +39,17 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 463 |
-| yarl follows each standard in its mode | 317 |
+| yarl follows each standard in its mode | 318 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
 | WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 81 |
-| RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 26 |
+| RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 25 |
 | Both modes differ from their standard | 9 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
 | yarl WHATWG mode vs WHATWG | 90 |
-| yarl RFC mode vs RFC 3986+3987 | 35 |
+| yarl RFC mode vs RFC 3986+3987 | 34 |
 | WHATWG vs RFC 3986+3987 | 433 |
 
 ## yarl differs, RFC 3986+3987 and WHATWG agree (0)
@@ -157,11 +157,11 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | IP-literal host | `` foo://joe: !"$%&'()*+,-.:;<=>@[\]^_`{\|}~@host/ `` | *none* | *failure* | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
 | leading or trailing C0 control or space | `http://f:21/ b ? d # e ` | `http://example.org/foo/bar` | `http://f:21/%20b%20?+d+#%20e` | `http://f:21/%20b%20?%20d%20#%20e` | *failure* | *failure* |
 
-## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (26)
+## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (25)
 
 | Category | Cases |
 |---|---|
-| empty host | 9 |
+| empty host | 8 |
 | non-ASCII or percent-encoded host | 6 |
 | IP-literal host | 5 |
 | other | 4 |
@@ -174,7 +174,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `http://user@/www.example.com` | *none* | *failure* | *failure* | *failure* | `http://user@/www.example.com` |
 | empty host | `http://@/www.example.com` | *none* | *failure* | *failure* | *failure* | `http://@/www.example.com` |
 | empty host | `http://a:b@/www.example.com` | *none* | *failure* | *failure* | *failure* | `http://a:b@/www.example.com` |
-| empty host | `sc://:/` | *none* | *failure* | *failure* | `sc:/` | `sc://:/` |
 | empty host | `///example.org/../path` | `http://example.org/` | `http://example.org/path` | `http://example.org/path` | `http://example.org/path` | `http:///path` |
 | empty host | `///example.org/../../` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http:///` |
 | empty host | `///example.org/../path/../../` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http://example.org/` | `http:///` |
@@ -217,7 +216,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `///test` | `http://example.org/` | `http://example.org/test` | `http://test/` | `http://example.org/test` | `http:///test` |
 | empty host | `///example.org/path` | `http://example.org/` | `http://example.org/example.org/path` | `http://example.org/path` | `http://example.org/example.org/path` | `http:///example.org/path` |
 
-## yarl follows each standard in its mode (317)
+## yarl follows each standard in its mode (318)
 
 | Category | Cases |
 |---|---|
@@ -227,7 +226,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | numeric host that is not a dotted quad | 36 |
 | Windows drive letter | 26 |
 | other | 22 |
-| empty host | 19 |
+| empty host | 20 |
 | tab or newline inside the input | 12 |
 | backslash read as a slash | 11 |
 | file host that WHATWG rewrites | 10 |
@@ -493,6 +492,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `//` | `file:///tmp/mock/path` | `file:///` | `file:///` | `file://` | `file://` |
 | empty host | `file:///w\|/m` | *none* | `file:///w:/m` | `file:///w:/m` | *failure* | *failure* |
 | empty host | `sc://@/` | *none* | *failure* | *failure* | `sc://@/` | `sc://@/` |
+| empty host | `sc://:/` | *none* | *failure* | *failure* | `sc:///` | `sc://:/` |
 | empty host | `sc://:12/` | *none* | *failure* | *failure* | `sc://:12/` | `sc://:12/` |
 | empty host | `file:\\//` | *none* | `file:////` | `file:////` | *failure* | *failure* |
 | empty host | `file:\\\\` | *none* | `file:////` | `file:////` | *failure* | *failure* |

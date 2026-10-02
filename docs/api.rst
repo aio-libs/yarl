@@ -711,7 +711,32 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://john:pass@example.com:8000').authority
       'john:pass@example.com:8000'
 
+   An empty port is dropped with its ``":"`` (:rfc:`3986#section-6.2.3`).
+   In RFC 3986 mode an authority that is only an empty port, with no host,
+   becomes an empty authority, which is still written out as ``"//"``;
+   WHATWG mode rejects it, as it rejects any port without a host:
+
+   .. doctest::
+
+      >>> URL('sc://:/path', mode='rfc')
+      URL('sc:///path', mode='rfc')
+      >>> URL('sc://:/path', mode='rfc').authority
+      ''
+      >>> URL('sc://:/path')
+      Traceback (most recent call last):
+        ...
+      ValueError: Invalid URL: host is required with userinfo or a port
+
+   :meth:`URL.build` with ``authority=':'`` and :meth:`URL.join` follow the
+   same rule.
+
    .. versionadded:: 1.5
+
+   .. versionchanged:: 1.26
+
+      An authority that is only an empty port is kept as an empty
+      authority in RFC 3986 mode; previously the authority was dropped,
+      and ``sc://:/path`` became ``sc:/path``.
 
 .. attribute:: URL.raw_authority
 
