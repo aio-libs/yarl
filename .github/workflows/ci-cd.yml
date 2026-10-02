@@ -223,9 +223,53 @@ jobs:
       xfail: >-
         ${{ matrix.xfail }}
 
-  build-wheels-for-tested-arches:
+  build-linux-wheels:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
-      📦 Build wheels for tested arches${{ '' }}
+      📦 Build Linux wheels${{ '' }}
+    needs:
+    - build
+    - pre-setup  # transitive, for accessing settings
+    uses: ./.github/workflows/reusable-cibuildwheel.yml
+    with:
+      check-name: Build wheels on ubuntu-latest
+      runner-vm-os: ubuntu-latest
+      timeout-minutes: 20
+      source-tarball-name: >-
+        ${{ needs.pre-setup.outputs.sdist-artifact-name }}
+      dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
+      # by the `test` job, which installs these wheels
+      # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      # CIBW_SKIP: i686 wheels are built for releases only; musllinux ones
+      # come from `build-wheels-for-other-platforms`.
+      # CIBW_TEST_SKIP: the `test` job runs the suite on the x86_64 wheels
+      # with coverage, so `cibuildwheel` does not run it a second time. The
+      # i686 wheels, built for releases only, keep their in-build test run
+      # since nothing else tests them.
+      environment-variables: |-
+        CIBW_CONFIG_SETTINGS<<EOF
+        pure-python=false
+        with-cython-tracing=${{
+          (github.event_name == 'push' && github.ref_type == 'tag')
+          && 'false'
+          || 'true'
+        }}
+        EOF
+
+        CIBW_SKIP<<EOF
+        ${{
+          (github.event_name != 'push' || github.ref_type != 'tag')
+          && '*_i686
+          *-musllinux_*'
+          || '*-musllinux_*'
+        }}
+        EOF
+
+        CIBW_TEST_SKIP=*-manylinux_x86_64
+
+  build-wheels-for-other-platforms:
+    name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
+      📦 Build wheels for other platforms${{ '' }}
     needs:
     - build
     - pre-setup  # transitive, for accessing settings
@@ -240,6 +284,9 @@ jobs:
         - ''
         - 'musllinux'
         exclude:
+        # manylinux wheels come from `build-linux-wheels`.
+        - runner-vm-os: ubuntu-latest
+          tag: ''
         - runner-vm-os: windows-latest
           tag: 'musllinux'
         - runner-vm-os: windows-11-arm
@@ -252,10 +299,9 @@ jobs:
            (github.event_name != 'push' || github.ref_type != 'tag')
            && 'musllinux' || 'none'
            }}
-        # On PRs and non-tag pushes, skip the native windows-on-arm runner —
-        # the test matrix only runs on ubuntu/macos/windows-latest (amd64), so
-        # win_arm64 wheels built here are never installed. They take ~6 minutes
-        # and are on the critical path. Tag releases still build them.
+        # On PRs and non-tag pushes, skip the native windows-on-arm runner;
+        # its wheels take ~6 minutes to build and are only needed for
+        # releases. Tag releases still build them.
         - runner-vm-os: >-
            ${{
            (github.event_name != 'push' || github.ref_type != 'tag')
@@ -271,19 +317,19 @@ jobs:
       source-tarball-name: >-
         ${{ needs.pre-setup.outputs.sdist-artifact-name }}
       dists-artifact-name: ${{ needs.pre-setup.outputs.dists-artifact-name }}
-      # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
+      # `cibuildwheel` runs the test suite against every wheel built here;
+      # the `test` job only installs the Linux ones, so these gate
+      # `test-summary` rather than the tests.
+      # CIBW_CONFIG_SETTINGS: `with-cython-tracing` is off, since these
+      # wheels feed no coverage and should match the released build
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
-      # CIBW_ARCHS_*: on PR/non-tag, only build the arches that the test matrix
-      # actually consumes (linux x86_64 from cibw default, macos arm64,
-      # windows AMD64). Tag releases keep the full arch set; CIBW_ARCHS_WINDOWS
+      # CIBW_ARCHS_*: on PR/non-tag, only build macOS arm64 and Windows
+      # AMD64. Tag releases keep the full arch set; CIBW_ARCHS_WINDOWS
       # is pinned per runner so each Windows host builds only its native arch.
       # Building both arches on both Windows runners produced two artifacts
       # with identically-named wheels but different bytes, which the Deploy
       # job's `download-artifact ... merge-multiple: true` step then tore
       # together, yielding a wheel PyPI rejected with `Mis-matched data size`.
-      # CIBW_TEST_SKIP: on PR/non-tag, skip the in-build test run; the `test`
-      # job installs and tests these same wheels in parallel. Tag releases
-      # build arches the `test` job never installs, so they still test here.
       environment-variables: |-
         CIBW_ARCHS_MACOS=${{
           (github.event_name == 'push' && github.ref_type == 'tag')
@@ -297,11 +343,7 @@ jobs:
 
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
-        with-cython-tracing=${{
-          (github.event_name == 'push' && github.ref_type == 'tag')
-          && 'false'
-          || 'true'
-        }}
+        with-cython-tracing=false
         EOF
 
         CIBW_SKIP<<EOF
@@ -316,19 +358,12 @@ jobs:
         }}
         EOF
 
-        CIBW_TEST_SKIP<<EOF
-        ${{
-          (github.event_name != 'push' || github.ref_type != 'tag')
-          && '*'
-          || ''
-        }}
-        EOF
-
   metadata-validation:
     name: 🧹 Validate metadata of all built dists
     needs:
     - build  # sdist + pure-python wheel
-    - build-wheels-for-tested-arches  # cibuildwheel binary wheels
+    - build-linux-wheels  # cibuildwheel binary wheels
+    - build-wheels-for-other-platforms  # cibuildwheel binary wheels
     - pre-setup  # transitive, for accessing settings
 
     uses: tox-dev/workflow/.github/workflows/reusable-tox.yml@34958348bac6272f9729229f1b5679c76c3f9651  # yamllint disable-line rule:line-length
@@ -352,8 +387,10 @@ jobs:
     name: Test
     needs:
     - build  # transitive, ensures dists are built
-    - build-wheels-for-tested-arches
+    - build-linux-wheels
     - pre-setup  # transitive, for accessing settings
+    # macOS and Windows wheels are tested by `cibuildwheel` itself, on the
+    # same suite; only the Linux ones are re-tested here, for coverage.
     strategy:
       matrix:
         pyver:
@@ -367,28 +404,16 @@ jobs:
         - >-
           3.10
         no-extensions: ['', 'Y']
-        os:
-        - ubuntu-latest
-        - macos-latest
-        - windows-latest
         experimental: [false]
-        exclude:
-        - os: macos-latest
-          no-extensions: Y
-        - os: windows-latest
-          no-extensions: Y
         include:
         - pyver: pypy-3.11
           no-extensions: Y
           experimental: false
-          os: ubuntu-latest
       fail-fast: false
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: ${{ matrix.experimental }}
     steps:
-    - name: Checkout project
-      uses: actions/checkout@v7
     - name: Retrieve the project source from an sdist inside the GHA artifact
       uses: re-actors/checkout-python-sdist@release/v2
       with:
@@ -528,7 +553,7 @@ jobs:
           CI-GHA,
           pytest,
           OS-${{ runner.os }},
-          VM-${{ matrix.os }},
+          VM-ubuntu-latest,
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: true
 
@@ -536,13 +561,18 @@ jobs:
     name: Conformance report is current
     needs:
     - build  # transitive, ensures dists are built
-    - build-wheels-for-tested-arches
+    - build-linux-wheels
     - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-    - name: Checkout project
-      uses: actions/checkout@v7
+    - name: Retrieve the project source from an sdist inside the GHA artifact
+      uses: re-actors/checkout-python-sdist@release/v2
+      with:
+        source-tarball-name: >-
+          ${{ needs.pre-setup.outputs.sdist-artifact-name }}
+        workflow-artifact-name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
     - name: Download distributions
       uses: actions/download-artifact@v8
       with:
@@ -570,8 +600,9 @@ jobs:
     - name: Show the difference
       if: failure()
       run: |
+        cp tools/conformance/REPORT.md "${RUNNER_TEMP}/REPORT.md"
         python tools/conformance/compare.py
-        git diff --exit-code -- tools/conformance/REPORT.md
+        diff -u "${RUNNER_TEMP}/REPORT.md" tools/conformance/REPORT.md
 
   benchmark-src:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
@@ -596,7 +627,7 @@ jobs:
     if: github.event_name == 'push' && github.ref_type == 'tag'
     needs:
     - build  # transitive, ensures dists are built
-    - build-wheels-for-tested-arches
+    - build-linux-wheels
     - pre-setup  # transitive, for accessing settings
     uses: ./.github/workflows/reusable-codspeed.yml
     with:
@@ -634,6 +665,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     needs:
+    - build-wheels-for-other-platforms
     - conformance
     - lint
     - metadata-validation
@@ -749,8 +781,9 @@ jobs:
     name: Deploy
     needs:
     - build
+    - build-linux-wheels
     - build-wheels-for-odd-archs
-    - build-wheels-for-tested-arches
+    - build-wheels-for-other-platforms
     - pre-setup  # transitive, for accessing settings
     runs-on: ubuntu-latest
     timeout-minutes: 30
