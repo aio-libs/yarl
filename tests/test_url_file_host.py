@@ -88,8 +88,9 @@ def test_parse_rejected(url: str) -> None:
 
 
 def test_parse_drive_letter_is_not_a_port() -> None:
-    # The Windows drive letter is left as yarl parsed it before.
-    assert str(URL("file://C:/x")) == "file://c/x"
+    # The Windows drive letter is the start of the path, see
+    # test_url_file_drive.py.
+    assert str(URL("file://C:/x")) == "file:///C:/x"
 
 
 def test_parse_encoded_is_kept() -> None:

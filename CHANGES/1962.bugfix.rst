@@ -1,0 +1,10 @@
+Kept Windows drive letters in file URLs in WHATWG mode, as the WHATWG URL
+Standard does: ``C|`` in the first path segment is read as ``C:``, a drive
+letter in the authority starts the path (``file://C:/x`` is
+``file:///C:/x``), ``..`` and absolute-path references no longer remove
+the drive letter of the base, and a reference that starts with a drive
+letter replaces the path of a file base. :meth:`~yarl.URL.join`,
+:meth:`~yarl.URL.build`, :meth:`~yarl.URL.with_path`,
+:meth:`~yarl.URL.joinpath` and ``/`` follow the parser. RFC 3986 mode is
+unchanged
+-- by :user:`asvetlov`.

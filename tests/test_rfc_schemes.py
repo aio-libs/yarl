@@ -95,29 +95,23 @@ def test_file_minimal_form_equivalent() -> None:
     assert URL("file:/path/to/file") == URL("file:///path/to/file")
 
 
-# RFC 8089 appendix E.2: DOS and Windows drive letters.
-@pytest.mark.parametrize(
-    "url",
-    [
-        "file:///c:/path/to/file",
-        pytest.param(
-            "file:c:/path/to/file",
-            marks=diverges("'///' is inserted, turning a rootless path absolute"),
-        ),
-    ],
-)
+# RFC 8089 appendix E.2: DOS and Windows drive letters. WHATWG mode writes
+# "file:c:/path/to/file" as "file:///c:/path/to/file", as WHATWG does.
+@pytest.mark.parametrize("url", ["file:///c:/path/to/file", "file:c:/path/to/file"])
 def test_file_drive_letter_round_trips(url: str) -> None:
-    assert str(URL(url)) == url
+    assert str(URL(url, mode="rfc")) == url
 
 
-# RFC 8089 appendix E.2.2: "|" is not allowed by RFC 3986 and gets
-# percent-encoded when present in legacy drive letters.
+# RFC 8089 appendix E.2.2: "|" in legacy drive letters is not allowed by
+# RFC 3986. WHATWG mode reads it as ":", as WHATWG does.
 def test_file_vertical_line_drive_letter() -> None:
-    assert str(URL("file:///c|/path/to/file")) == "file:///c%7C/path/to/file"
+    with pytest.raises(ValueError, match="do not allow '|'"):
+        URL("file:///c|/path/to/file", mode="rfc")
 
 
 # RFC 8089 appendix E.2.1 describes resolving against a drive letter as
-# the root as a non-standard option; yarl follows RFC 3986 section 5.2.
+# the root as a non-standard option; yarl follows RFC 3986 section 5.2 in
+# RFC mode. WHATWG mode keeps the drive letter, as WHATWG does.
 @pytest.mark.parametrize(
     ("base", "reference", "expected"),
     [
@@ -131,7 +125,8 @@ def test_file_vertical_line_drive_letter() -> None:
     ],
 )
 def test_file_drive_letter_join(base: str, reference: str, expected: str) -> None:
-    assert str(URL(base).join(URL(reference))) == expected
+    joined = URL(base, mode="rfc").join(URL(reference, mode="rfc"))
+    assert str(joined) == expected
 
 
 # RFC 8089 appendix E.3.2: UNC paths with an empty authority.
