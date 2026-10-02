@@ -536,12 +536,15 @@ class TestStripEmptyParts:
             URL("//@:?#")
 
     def test_all_empty_rfc(self) -> None:
+        # RFC 3986 keeps the empty userinfo, so the authority is "@" and
+        # the path is "/", as with any other authority.
         u = URL("//@:?#", mode="rfc")
+        assert str(u) == "//@/?#"
         assert u.scheme == ""
-        assert u.user is None
+        assert u.user == ""
         assert u.password is None
         assert u.host is None
-        assert u.path == ""
+        assert u.path == "/"
         assert u.query_string == ""
         assert u.fragment == ""
 

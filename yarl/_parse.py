@@ -178,7 +178,10 @@ def _check_netloc(netloc: str) -> None:
 def split_netloc(
     netloc: str,
 ) -> tuple[str | None, str | None, str | None, int | None]:
-    """Split netloc into username, password, host and port."""
+    """Split netloc into username, password, host and port.
+
+    An empty username is None, see split_netloc_rfc() for RFC 3986 mode.
+    """
     if "@" not in netloc:
         username: str | None = None
         password: str | None = None
@@ -220,6 +223,23 @@ def split_netloc(
     if not (0 <= port <= 65535):
         raise ValueError("Port out of range 0-65535")
     return username or None, password, hostname or None, port
+
+
+@lru_cache
+def split_netloc_rfc(
+    netloc: str,
+) -> tuple[str | None, str | None, str | None, int | None]:
+    """Split netloc into username, password, host and port in RFC 3986 mode.
+
+    As split_netloc(), but an empty username is "" when the netloc has
+    userinfo, as RFC 3986 keeps an empty userinfo: "@h" and ":p@h" have the
+    username "". A separate cache keeps the single string key, which a mode
+    argument would turn into a tuple.
+    """
+    username, password, host, port = split_netloc(netloc)
+    if username is None and "@" in netloc:
+        username = ""
+    return username, password, host, port
 
 
 # "//" behind any number of "/." segments, see needs_dot_prefix().
@@ -296,7 +316,9 @@ def make_netloc(
 ) -> str:
     """Make netloc from parts.
 
-    The user and password are encoded if encode is True.
+    The user and password are encoded if encode is True. A user that is
+    not None is written with "@" even when it is empty, as RFC 3986 mode
+    keeps an empty userinfo; WHATWG mode passes None for an empty user.
 
     The host must already be encoded with _encode_host.
     """
@@ -317,7 +339,7 @@ def make_netloc(
         user = f"{user}:{password}"
     elif user and encode:
         user = QUOTER(user)
-    return f"{user}@{ret}" if user else ret
+    return f"{user}@{ret}"
 
 
 def query_to_pairs(
