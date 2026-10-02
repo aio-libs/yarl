@@ -653,6 +653,10 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             # The authority is not empty, so it has userinfo or a port.
             _check_missing_host(scheme, mode)
             host = ""
+            if port is None and username is None:
+                # Only an empty port, which RFC 3986 section 6.2.3 drops:
+                # "sc://:/" is "sc:///", the authority is kept.
+                empty |= EMPTY_AUTHORITY
         # The parser historically encoded without validation, which let
         # control characters (NUL/C0) and IDNA-normalized delimiters into
         # the host, producing a ``str(url)`` that yarl cannot re-parse
@@ -1105,6 +1109,7 @@ class URL:
 
         self = object.__new__(URL)
         self._scheme = scheme
+        self._empty = 0
         _host: str | None = None
         if authority:
             if mode is _WHATWG:
@@ -1131,6 +1136,9 @@ class URL:
                     _host = _whatwg_special_host(_host, whatwg_host)
             else:
                 _host = ""
+                if port is None and user is None:
+                    # As the parser does, see _encode_url().
+                    self._empty = EMPTY_AUTHORITY
         elif host:
             _host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
             if idna2003 and mode is not _WHATWG:
@@ -1159,7 +1167,7 @@ class URL:
                 self._netloc = make_netloc(user, password, _host, port, True)
 
         path = PATH_QUOTER(path) if path else path
-        if path and self._netloc:
+        if path and (self._netloc or self._empty):
             if "." in path:
                 path = _normalize_path(path, scheme, mode)
             if path[0] != "/":
@@ -1183,7 +1191,6 @@ class URL:
             query_string = QUERY_QUOTER(query_string)
         self._query = query_string
         self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
-        self._empty = 0
         self._cache = {}
         self._mode = mode
         if scheme == "file" and mode is _WHATWG:

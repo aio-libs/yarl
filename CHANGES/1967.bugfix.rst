@@ -1,0 +1,7 @@
+Kept the authority of a URL whose authority is only an empty port in
+RFC 3986 mode: ``sc://:/`` is now ``sc:///`` there, as
+:rfc:`3986#section-6.2.3` drops the empty port, instead of ``sc:/``
+without an authority. Parsing, :meth:`~yarl.URL.build` with
+``authority=':'`` and :meth:`~yarl.URL.join` with a reference such as
+``//:/p`` follow the same rule; WHATWG mode still rejects such a URL
+-- by :user:`asvetlov`.
