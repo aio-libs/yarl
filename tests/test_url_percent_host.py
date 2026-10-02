@@ -81,6 +81,32 @@ def test_build_ipv4_zone() -> None:
     assert URL.build(scheme="sc", host="127.0.0.1%00").raw_host == "127.0.0.1%00"
 
 
+@pytest.mark.parametrize("host", ["127.0.0.1%::", "1.2.3.4%x@9", "127.0.0.1%25::"])
+def test_build_ipv4_suffix_invalid_reg_name(host: str) -> None:
+    """An IPv4 address with a "%" suffix must be a valid reg-name.
+
+    The suffix is percent-encoding in the host, so a ":" or a bare "%" in it
+    makes a netloc that ``split_netloc`` cannot parse back; the validating
+    entry points must reject it instead of building a URL whose ``raw_host``
+    then raises (RFC 3986 mode and non-special schemes skip the WHATWG
+    host decode that caught this for special schemes).
+    """
+    for build in (
+        lambda: URL.build(scheme="http", host=host, mode="rfc"),
+        lambda: URL.build(scheme="sc", host=host),
+        lambda: URL("sc://example.com/").with_host(host),
+        lambda: URL("http://example.com/", mode="rfc").with_host(host),
+    ):
+        with pytest.raises(ValueError, match="cannot contain"):
+            build()
+
+
+def test_build_ipv4_suffix_valid_pct_encoding() -> None:
+    """Valid percent-encoding in an IPv4 suffix is kept, any hex case."""
+    assert URL.build(scheme="sc", host="1.2.3.4%2F9").raw_host == "1.2.3.4%2F9"
+    assert URL.build(scheme="sc", host="127.0.0.1%250").raw_host == "127.0.0.1%250"
+
+
 def test_build_non_ascii() -> None:
     url = URL.build(scheme="http", host="ñ%41")
     assert url.raw_host == "xn--a-qga"
