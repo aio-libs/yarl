@@ -181,7 +181,8 @@ def test_password_without_user() -> None:
 
 def test_empty_password_without_user() -> None:
     url = URL("http://:@example.com", mode="rfc")
-    assert url.user is None
+    # RFC 3986 keeps the userinfo, so the username is empty, not missing.
+    assert url.user == ""
     assert url.password == ""
     assert url.raw_password == ""
     assert url.raw_password == SplitResult(*url._val).password

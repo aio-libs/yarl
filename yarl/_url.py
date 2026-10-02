@@ -44,6 +44,7 @@ from ._parse import (
     make_netloc,
     query_to_pairs,
     split_netloc,
+    split_netloc_rfc,
     split_url,
     unsplit_result,
     unsplit_result_empty,
@@ -641,7 +642,10 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
             # Complex netloc
-            username, password, host, port = split_netloc(netloc)
+            if mode is _WHATWG:
+                username, password, host, port = split_netloc(netloc)
+            else:
+                username, password, host, port = split_netloc_rfc(netloc)
         else:
             username = password = port = None
             host = netloc
@@ -690,7 +694,8 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             if not password and mode is _WHATWG:
                 # WHATWG writes ":" only before a password that is not
                 # empty: "http://a:@h" is "http://a@h", "http://:@h" is
-                # "http://h".
+                # "http://h". RFC 3986 keeps the empty userinfo and an
+                # empty username is "", see split_netloc_rfc().
                 password = None
             raw_user = REQUOTER(username) if username else username
             raw_password = REQUOTER(password) if password else password
@@ -832,6 +837,9 @@ def build_pre_encoded_url(
         if user is None and password is None:
             self._netloc = host if port is None else f"{host}:{port}"
         else:
+            if not user and mode is _WHATWG:
+                # WHATWG has no empty userinfo, see make_netloc().
+                user = None
             self._netloc = make_netloc(user, password, host, port)
     else:
         self._netloc = ""
@@ -1099,9 +1107,11 @@ class URL:
         self._scheme = scheme
         _host: str | None = None
         if authority:
-            if mode is not _WHATWG:
+            if mode is _WHATWG:
+                user, password, _host, port = split_netloc(authority)
+            else:
                 _check_rfc_authority(authority)
-            user, password, _host, port = split_netloc(authority)
+                user, password, _host, port = split_netloc_rfc(authority)
             if not _host:
                 _check_missing_host(scheme, mode)
             if _host:
@@ -1143,6 +1153,9 @@ class URL:
                 if not password and mode is _WHATWG:
                     # As the parser does, see _encode_url().
                     password = None
+                if not user and mode is _WHATWG:
+                    # An empty user is None, see make_netloc().
+                    user = None
                 self._netloc = make_netloc(user, password, _host, port, True)
 
         path = PATH_QUOTER(path) if path else path
@@ -1374,7 +1387,11 @@ class URL:
     def _cache_netloc(self) -> None:
         """Cache the netloc parts of the URL."""
         c = self._cache
-        split_loc = split_netloc(self._netloc)
+        if self._mode is _WHATWG:
+            split_loc = split_netloc(self._netloc)
+        else:
+            # An empty username is "" in RFC 3986 mode, see split_netloc_rfc().
+            split_loc = split_netloc_rfc(self._netloc)
         c["raw_user"], c["raw_password"], c["raw_host"], c["explicit_port"] = split_loc
 
     def is_absolute(self) -> bool:
@@ -2008,10 +2025,18 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        if user is None:
+        if user:
+            if not isinstance(user, str):
+                raise TypeError("Invalid user type")
+            user = QUOTER(user)
+            password = self.raw_password
+        elif user is None:
             password = None
         elif isinstance(user, str):
-            user = QUOTER(user)
+            # An empty user keeps the empty userinfo in RFC 3986 mode,
+            # "http://@h"; WHATWG has none, see make_netloc().
+            if self._mode is _WHATWG:
+                user = None
             password = self.raw_password
         else:
             raise TypeError("Invalid user type")
@@ -2825,9 +2850,10 @@ def _moved_parts(
     parsed under another scheme or mode into a special-scheme WHATWG URL,
     where the host is percent-decoded and one that ends in a number is
     parsed as an IPv4 address. An RFC 3986 mode URL moved into WHATWG mode
-    also loses an empty password, see _drop_empty_password(). A file URL
-    also loses "localhost" and must not have userinfo or a port, see _check_whatwg_file_authority(), and
-    reads a drive letter in the authority as the start of the path.
+    also loses an empty password and an empty userinfo, see
+    _drop_empty_password(). A file URL also loses "localhost" and must not
+    have userinfo or a port, see _check_whatwg_file_authority(), and reads a
+    drive letter in the authority as the start of the path.
     """
     netloc = url._netloc
     if mode is not _WHATWG:
@@ -2846,7 +2872,7 @@ def _moved_parts(
             netloc = make_netloc(
                 url.raw_user, url.raw_password, host, url.explicit_port
             )
-    if ":@" in netloc:
+    if ":@" in netloc or netloc[0] == "@":
         netloc = _drop_empty_password(netloc)
     if scheme == "file":
         if is_drive_letter(netloc):
@@ -2866,7 +2892,7 @@ def _drop_empty_password(netloc: str) -> str:
 
     WHATWG writes ":" only before a password that is not empty, and "@" only
     after a username or a password that is not empty: "a:@h" is "a@h" and
-    ":@h" is "h".
+    ":@h" and "@h" are "h".
     """
     userinfo, _, hostinfo = netloc.rpartition("@")
     user, _, password = userinfo.partition(":")

@@ -33,8 +33,8 @@ from yarl import URL
         ("http://:p@h/", "http://:p@h/", "http://:p@h/"),
         ("http://a:p@h/", "http://a:p@h/", "http://a:p@h/"),
         ("http://a@h/", "http://a@h/", "http://a@h/"),
-        # An empty username without a password drops "@" in both modes.
-        ("http://@h/", "http://h/", "http://h/"),
+        # An empty userinfo drops "@" in WHATWG mode; RFC 3986 keeps it.
+        ("http://@h/", "http://h/", "http://@h/"),
     ],
 )
 def test_parse(url: str, whatwg: str, rfc: str | None) -> None:
@@ -57,12 +57,12 @@ def test_parse(url: str, whatwg: str, rfc: str | None) -> None:
 )
 def test_parts(url: str, user: str | None, password: str) -> None:
     # WHATWG mode has no empty password, as yarl has no empty username: both
-    # are None. RFC mode keeps the empty password.
+    # are None. RFC mode keeps the empty username and the empty password.
     whatwg_url = URL(url)
     assert whatwg_url.raw_user == whatwg_url.user == user
     assert whatwg_url.raw_password == whatwg_url.password == (password or None)
     rfc_url = URL(url, mode="rfc")
-    assert rfc_url.raw_user == rfc_url.user == user
+    assert rfc_url.raw_user == rfc_url.user == (user or "")
     assert rfc_url.raw_password == rfc_url.password == password
 
 
@@ -208,7 +208,7 @@ def test_mode_change_password_with_colon() -> None:
     [
         ("http://u:p@h/a", "//:@x", "http://x", "http://:@x"),
         ("http://u:p@h/a", "//v:@x/p", "http://v@x/p", "http://v:@x/p"),
-        ("http://u:p@h/a", "//@x", "http://x", "http://x"),
+        ("http://u:p@h/a", "//@x", "http://x", "http://@x"),
         ("http://u:p@h/a", "//:q@x", "http://:q@x", "http://:q@x"),
         ("sc://u@h/a", "//:@x", "sc://x", "sc://:@x"),
         ("sc://u@h/a", "//v:@x", "sc://v@x", "sc://v:@x"),

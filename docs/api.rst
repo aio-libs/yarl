@@ -454,6 +454,40 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://example.com').user is None
       True
 
+   An empty *user* is ``None`` in WHATWG mode, which drops an empty
+   userinfo with its ``"@"`` as the WHATWG URL Standard does. RFC 3986
+   mode keeps it (sections 3.2 and 6.2.3), so there *user* is ``''``
+   whenever the URL has a userinfo, and ``None`` only when it has none;
+   ``http://@example.com`` and ``http://example.com`` are different URLs
+   there:
+
+   .. doctest::
+
+      >>> URL('http://@example.com')
+      URL('http://example.com')
+      >>> URL('http://@example.com').user is None
+      True
+      >>> URL('http://@example.com', mode='rfc')
+      URL('http://@example.com', mode='rfc')
+      >>> URL('http://@example.com', mode='rfc').user
+      ''
+      >>> URL('http://:pass@example.com', mode='rfc').user
+      ''
+      >>> URL('http://@example.com', mode='rfc') == URL(
+      ...     'http://example.com', mode='rfc'
+      ... )
+      False
+
+   :meth:`URL.build`, :meth:`URL.with_user` and the other ``with_*()``
+   methods, :meth:`URL.join` and a change of mode follow the same rule;
+   a URL moved into WHATWG mode loses its empty userinfo. A URL parsed
+   with ``encoded=True`` keeps its ``"@"`` in both modes.
+
+   .. versionchanged:: 1.26
+
+      An empty *user* is ``''`` in RFC 3986 mode, which keeps an empty
+      userinfo.
+
 
 .. attribute:: URL.raw_user
 
@@ -466,6 +500,14 @@ There are two kinds of properties: *decoded* and *encoded* (with
       '%D0%B4%D0%BE%D0%B2%D0%B1%D1%83%D1%88'
       >>> URL('http://example.com').raw_user is None
       True
+
+   As for :attr:`URL.user`, an empty *user* is ``''`` in RFC 3986 mode
+   and ``None`` in WHATWG mode.
+
+   .. versionchanged:: 1.26
+
+      An empty *user* is ``''`` in RFC 3986 mode, which keeps an empty
+      userinfo.
 
 
 .. attribute:: URL.password
@@ -1007,6 +1049,20 @@ section generates a new :class:`URL` instance.
       URL('http://%D0%BE%D0%BB%D0%B5%D0%BA%D1%81%D0%B0:pass@example.com')
       >>> URL('http://user:pass@example.com').with_user(None)
       URL('http://example.com')
+
+   An empty *user* keeps the userinfo in RFC 3986 mode, and drops it in
+   WHATWG mode unless there is a password, see :attr:`URL.user`:
+
+   .. doctest::
+
+      >>> URL('http://example.com').with_user('')
+      URL('http://example.com')
+      >>> URL('http://example.com', mode='rfc').with_user('')
+      URL('http://@example.com', mode='rfc')
+
+   .. versionchanged:: 1.26
+
+      An empty *user* keeps an empty userinfo in RFC 3986 mode.
 
 .. method:: URL.with_password(password)
 
