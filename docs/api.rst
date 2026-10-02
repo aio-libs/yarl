@@ -610,9 +610,10 @@ section generates a new :class:`URL` instance.
 
    .. note::
 
-      Unless ``encoded=True`` is passed, *scheme* must match the
+      Unless ``encoded=True`` is passed, a non-empty *scheme* must match the
       :rfc:`3986#section-3.1` grammar (an ASCII letter followed by letters,
-      digits, ``+``, ``-`` or ``.``); ``ValueError`` is raised otherwise.
+      digits, ``+``, ``-`` or ``.``); ``ValueError`` is raised otherwise. An
+      empty string produces a relative URL.
 
 .. method:: URL.with_scheme(scheme)
 
@@ -623,8 +624,8 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com').with_scheme('https')
       URL('https://example.com')
 
-   *scheme* must match the :rfc:`3986#section-3.1` grammar; ``ValueError`` is
-   raised otherwise.
+   A non-empty *scheme* must match the :rfc:`3986#section-3.1` grammar;
+   ``ValueError`` is raised otherwise. An empty string removes the scheme.
 
    Returned URL may have a *different* ``port``
    (:ref:`default port substitution <yarl-api-default-ports>`).

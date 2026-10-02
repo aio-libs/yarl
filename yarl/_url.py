@@ -219,11 +219,13 @@ def rewrite_module(obj: _T) -> _T:
 
 
 def _validate_scheme(scheme: str) -> None:
-    """Check a scheme against the RFC 3986 grammar.
+    """Check a non-empty scheme against the RFC 3986 grammar.
 
-    An empty scheme is allowed; it stands for a relative URL.
+    Callers skip the well-known schemes and the empty scheme (a relative URL)
+    before calling this, so neither the regex nor this call runs on the hot
+    paths that pass those.
     """
-    if scheme and (invalid := NOT_SCHEME.search(scheme)):
+    if invalid := NOT_SCHEME.search(scheme):
         raise ValueError(
             f"Scheme {scheme!r} cannot contain {invalid.group()!r} "
             f"(at position {invalid.start()})"
@@ -537,7 +539,8 @@ class URL:
                 fragment,
             )
 
-        _validate_scheme(scheme)
+        if scheme and scheme not in SCHEME_REQUIRES_HOST:
+            _validate_scheme(scheme)
         self = object.__new__(URL)
         self._scheme = scheme
         _host: str | None = None
@@ -1176,7 +1179,8 @@ class URL:
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
         lower_scheme = scheme.lower()
-        _validate_scheme(lower_scheme)
+        if lower_scheme and lower_scheme not in SCHEME_REQUIRES_HOST:
+            _validate_scheme(lower_scheme)
         netloc = self._netloc
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (

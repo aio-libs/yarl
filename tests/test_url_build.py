@@ -173,6 +173,14 @@ def test_build_with_scheme_outside_rfc3986_grammar(scheme: str) -> None:
         URL.build(scheme=scheme, host="good.example", path="/p")
 
 
+@pytest.mark.parametrize(
+    "scheme", ("svn+ssh", "coap+tcp", "iris.beep", "h2c", "z39.50r")
+)
+def test_build_with_valid_uncommon_scheme(scheme: str) -> None:
+    """A scheme with ``+``, ``-`` or ``.`` is within the grammar."""
+    assert str(URL.build(scheme=scheme, host="example.com")).startswith(f"{scheme}://")
+
+
 def test_build_with_host() -> None:
     u = URL.build(host="127.0.0.1")
     assert str(u) == "//127.0.0.1"
