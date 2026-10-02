@@ -331,6 +331,15 @@ def _check_whatwg_file_authority(authority: str) -> None:
         )
 
 
+def _empty_path(scheme: str, mode: Mode) -> str:
+    """Return the path of a URL whose path became empty.
+
+    A file URL has a path in WHATWG mode, "/" at least, so "file:///a" has
+    the parent "file:///". Every other URL keeps the empty path.
+    """
+    return "/" if scheme == "file" and mode is _WHATWG else ""
+
+
 def _whatwg_file_drive(netloc: str, path: str) -> str:
     """Return the path of a file URL whose authority is a drive letter.
 
@@ -627,9 +636,6 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             path = _whatwg_file_drive(netloc, path)
             netloc = ""
             empty |= EMPTY_AUTHORITY
-    # Set when "localhost" is dropped from a file URL in WHATWG mode; the
-    # URL still has an (empty) authority, so its path is at least "/".
-    localhost = False
     if not netloc:  # netloc
         host = ""
     else:
@@ -667,7 +673,6 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
                 # host: "file://localhost/p" is "file:///p".
                 host = ""
                 empty |= EMPTY_AUTHORITY
-                localhost = True
         # Remove brackets as host encoder adds back brackets for IPv6 addresses.
         # An IPvFuture address keeps them, see split_netloc().
         # An empty host (RFC mode, e.g. "sc://user@:8080") is None, as for
@@ -717,7 +722,14 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     if fragment:
         fragment = FRAGMENT_REQUOTER(fragment)
 
-    if localhost and not path:
+    if not path and scheme == "file" and mode is _WHATWG:
+        # A file URL has a path in WHATWG mode, "/" at least: "file:" and
+        # "file://h" are "file:///" and "file://h/".
+        if not netloc and not empty & EMPTY_AUTHORITY:
+            # As a reference "file:" and "file:?q" keep the path of a file
+            # base, so join() takes the path as it is written.
+            cache["_join_path"] = ""
+            empty |= EMPTY_AUTHORITY
         path = "/"
     cache["scheme"] = scheme
     cache["raw_path"] = "/" if not path and netloc else path
@@ -1155,14 +1167,21 @@ class URL:
         self._empty = 0
         self._cache = {}
         self._mode = mode
-        if scheme == "file" and mode is _WHATWG and self._netloc:
-            # As the parser does, see _check_whatwg_file_authority(). The path
-            # was checked and normalized as one with an authority above.
-            _check_whatwg_file_authority(authority or self._netloc)
-            if _host == "localhost":
-                self._netloc = ""
-                self._path = path or "/"
-                self._empty = EMPTY_AUTHORITY
+        if scheme == "file" and mode is _WHATWG:
+            if self._netloc:
+                # As the parser does, see _check_whatwg_file_authority(). The
+                # path was checked and normalized as one with an authority
+                # above.
+                _check_whatwg_file_authority(authority or self._netloc)
+                if _host == "localhost":
+                    self._netloc = ""
+                    self._empty = EMPTY_AUTHORITY
+            if not path:
+                # A file URL has an authority and a path in WHATWG mode, the
+                # path is "/" at least.
+                self._path = "/"
+                if not self._netloc:
+                    self._empty = EMPTY_AUTHORITY
         return self
 
     def __init_subclass__(cls) -> NoReturn:
@@ -1814,10 +1833,13 @@ class URL:
                 )
             return self
         parts = path.split("/")
+        if not (path := "/".join(parts[:-1])) and self._scheme == "file":
+            # A file URL has a path in WHATWG mode, "/" at least.
+            path = _empty_path(self._scheme, self._mode)
         return from_parts(
             self._scheme,
             self._netloc,
-            "/".join(parts[:-1]),
+            path,
             "",
             "",
             self._mode,
@@ -2145,7 +2167,9 @@ class URL:
             elif self._scheme and self._mode is not _WHATWG and "." in path:
                 # Without an authority, as the parser does in RFC 3986 mode.
                 path = remove_dot_segments(path)
-        if path and path[0] != "/":
+        if not path:
+            path = _empty_path(self._scheme, self._mode)
+        elif path[0] != "/":
             path = f"/{path}"
         query = self._query if keep_query else ""
         fragment = self._fragment if keep_fragment else ""
@@ -2511,8 +2535,8 @@ class URL:
                     url._empty,
                 )
             elif url._scheme:
-                # "file:a/../b", a rootless file path with dot segments, see
-                # _encode_url().
+                # "file:a/../b", a rootless file path with dot segments, or
+                # "file:" and "file:?q" without a path, see _encode_url().
                 url = from_parts(
                     scheme,
                     "",
@@ -2789,7 +2813,12 @@ def _moved_parts(
     reads a drive letter in the authority as the start of the path.
     """
     netloc = url._netloc
-    if mode is not _WHATWG or not netloc:
+    if mode is not _WHATWG:
+        return netloc, url._path, empty
+    if not netloc:
+        if not url._path and scheme == "file":
+            # A file URL has an authority and a path, "/" at least.
+            return "", "/", empty | EMPTY_AUTHORITY
         return netloc, url._path, empty
     host = url.raw_host
     if (scheme in SPECIAL_SCHEMES or "[" in netloc) and host:
@@ -2809,6 +2838,7 @@ def _moved_parts(
         _check_whatwg_file_authority(netloc)
         if host == "localhost":
             return "", url._path or "/", empty | EMPTY_AUTHORITY
+        return netloc, url._path or "/", empty
     return netloc, url._path, empty
 
 
