@@ -481,15 +481,45 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://example.com').password is None
       True
 
+   An empty password is ``None`` in WHATWG mode, which drops it as the
+   WHATWG URL Standard does, together with an empty *user*; RFC 3986
+   mode keeps it:
+
+   .. doctest::
+
+      >>> URL('http://john:@example.com')
+      URL('http://john@example.com')
+      >>> URL('http://john:@example.com').password is None
+      True
+      >>> URL('http://:@example.com')
+      URL('http://example.com')
+      >>> URL('http://john:@example.com', mode='rfc').password
+      ''
+
+   :meth:`URL.build`, :meth:`URL.with_password`, :meth:`URL.join` and a
+   change of mode follow the same rule. A URL parsed or built with
+   ``encoded=True`` keeps its empty password.
+
+   .. versionchanged:: 1.26
+
+      An empty password is dropped in WHATWG mode.
+
 
 .. attribute:: URL.raw_password
 
    Encoded *password* part of URL, ``None`` if *user* is missing.
 
+   As for :attr:`URL.password`, an empty password is ``None`` in WHATWG
+   mode.
+
    .. doctest::
 
       >>> URL('http://user:пароль@example.com').raw_password
       '%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C'
+
+   .. versionchanged:: 1.26
+
+      An empty password is dropped in WHATWG mode.
 
 
 .. attribute:: URL.host
@@ -990,6 +1020,20 @@ section generates a new :class:`URL` instance.
       URL('http://user:%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C@example.com')
       >>> URL('http://user:pass@example.com').with_password(None)
       URL('http://user@example.com')
+
+   In WHATWG mode an empty *password* clears the password too, see
+   :attr:`URL.password`:
+
+   .. doctest::
+
+      >>> URL('http://user:pass@example.com').with_password('')
+      URL('http://user@example.com')
+      >>> URL('http://user:pass@example.com', mode='rfc').with_password('')
+      URL('http://user:@example.com', mode='rfc')
+
+   .. versionchanged:: 1.26
+
+      An empty *password* clears the password in WHATWG mode.
 
 .. method:: URL.with_host(host)
 

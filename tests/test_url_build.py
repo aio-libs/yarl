@@ -318,8 +318,13 @@ def test_build_with_authority_empty_host_no_scheme() -> None:
 
 
 def test_build_with_authority_and_only_user() -> None:
-    url = URL.build(scheme="https", authority="user:@foo.com", path="/path")
+    url = URL.build(scheme="https", authority="user:@foo.com", path="/path", mode="rfc")
     assert str(url) == "https://user:@foo.com/path"
+
+
+def test_build_with_authority_and_only_user_whatwg() -> None:
+    url = URL.build(scheme="https", authority="user:@foo.com", path="/path")
+    assert str(url) == "https://user@foo.com/path"
 
 
 def test_build_with_authority_with_port() -> None:

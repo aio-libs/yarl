@@ -687,6 +687,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             cache["raw_user"] = None
             cache["raw_password"] = None
         else:
+            if not password and mode is _WHATWG:
+                # WHATWG writes ":" only before a password that is not
+                # empty: "http://a:@h" is "http://a@h", "http://:@h" is
+                # "http://h".
+                password = None
             raw_user = REQUOTER(username) if username else username
             raw_password = REQUOTER(password) if password else password
             netloc = make_netloc(raw_user, raw_password, host, port)
@@ -1135,6 +1140,9 @@ class URL:
             if user is None and password is None:
                 self._netloc = _host if port is None else f"{_host}:{port}"
             else:
+                if not password and mode is _WHATWG:
+                    # As the parser does, see _encode_url().
+                    password = None
                 self._netloc = make_netloc(user, password, _host, port, True)
 
         path = PATH_QUOTER(path) if path else path
@@ -2035,7 +2043,11 @@ class URL:
         if password is None:
             pass
         elif isinstance(password, str):
-            password = QUOTER(password)
+            if password:
+                password = QUOTER(password)
+            elif self._mode is _WHATWG:
+                # WHATWG has no empty password, see _encode_url().
+                password = None
         else:
             raise TypeError("Invalid password type")
         if not (netloc := self._netloc):
@@ -2812,8 +2824,9 @@ def _moved_parts(
     with_scheme(), join() and a change of mode can move a host that was
     parsed under another scheme or mode into a special-scheme WHATWG URL,
     where the host is percent-decoded and one that ends in a number is
-    parsed as an IPv4 address. A file URL also loses "localhost" and must
-    not have userinfo or a port, see _check_whatwg_file_authority(), and
+    parsed as an IPv4 address. An RFC 3986 mode URL moved into WHATWG mode
+    also loses an empty password, see _drop_empty_password(). A file URL
+    also loses "localhost" and must not have userinfo or a port, see _check_whatwg_file_authority(), and
     reads a drive letter in the authority as the start of the path.
     """
     netloc = url._netloc
@@ -2833,6 +2846,8 @@ def _moved_parts(
             netloc = make_netloc(
                 url.raw_user, url.raw_password, host, url.explicit_port
             )
+    if ":@" in netloc:
+        netloc = _drop_empty_password(netloc)
     if scheme == "file":
         if is_drive_letter(netloc):
             path = _whatwg_file_drive(netloc, url._path)
@@ -2844,6 +2859,20 @@ def _moved_parts(
             return "", url._path or "/", empty | EMPTY_AUTHORITY
         return netloc, url._path or "/", empty
     return netloc, url._path, empty
+
+
+def _drop_empty_password(netloc: str) -> str:
+    """Drop an empty password from an authority, as WHATWG writes it.
+
+    WHATWG writes ":" only before a password that is not empty, and "@" only
+    after a username or a password that is not empty: "a:@h" is "a@h" and
+    ":@h" is "h".
+    """
+    userinfo, _, hostinfo = netloc.rpartition("@")
+    user, _, password = userinfo.partition(":")
+    if password:
+        return netloc
+    return f"{user}@{hostinfo}" if user else hostinfo
 
 
 def _whatwg_special_host(host: str, whatwg_host: str | None) -> str:

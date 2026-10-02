@@ -180,17 +180,32 @@ def test_password_without_user() -> None:
 
 
 def test_empty_password_without_user() -> None:
-    url = URL("http://:@example.com")
+    url = URL("http://:@example.com", mode="rfc")
     assert url.user is None
     assert url.password == ""
     assert url.raw_password == ""
     assert url.raw_password == SplitResult(*url._val).password
 
 
+def test_empty_password_without_user_whatwg() -> None:
+    # WHATWG drops an empty password, and "@" with it.
+    url = URL("http://:@example.com")
+    assert url.user is None
+    assert url.password is None
+    assert url.raw_password is None
+    assert str(url) == "http://example.com"
+
+
 def test_user_empty_password() -> None:
-    url = URL("http://user:@example.com")
+    url = URL("http://user:@example.com", mode="rfc")
     assert "user" == url.user
     assert "" == url.password
+
+
+def test_user_empty_password_whatwg() -> None:
+    url = URL("http://user:@example.com")
+    assert "user" == url.user
+    assert url.password is None
 
 
 def test_raw_host() -> None:
