@@ -80,3 +80,76 @@ def remove_dot_segments(path: str) -> str:
             output.append(path[pos:next_pos])
             pos = next_pos
     return "".join(output)
+
+
+# Windows drive letters in file URLs, as the WHATWG URL Standard reads them:
+# https://url.spec.whatwg.org/#windows-drive-letter
+
+
+def is_drive_letter(segment: str) -> bool:
+    """Tell if segment is a Windows drive letter, as "C:" or "C|"."""
+    return (
+        len(segment) == 2
+        and segment[1] in ":|"
+        and segment[0].isascii()
+        and segment[0].isalpha()
+    )
+
+
+def starts_with_drive_letter(path: str, pos: int = 0) -> bool:
+    """Tell if path[pos:] starts with a Windows drive letter.
+
+    The drive letter must be the whole first segment: "C:/a" and "C|" do,
+    "C|a" does not.
+    """
+    return is_drive_letter(path[pos : pos + 2]) and (
+        len(path) == pos + 2 or path[pos + 2] == "/"
+    )
+
+
+def drive_letter(path: str) -> str:
+    """Return the normalized drive letter, as "C:", that path starts with.
+
+    It is the first segment of an absolute or a rootless path, and the
+    empty string when that is not a normalized drive letter.
+    """
+    pos = 1 if path[:1] == "/" else 0
+    if starts_with_drive_letter(path, pos) and path[pos + 1] == ":":
+        return path[pos : pos + 2]
+    return ""
+
+
+def normalize_drive_letter(path: str) -> str:
+    """Write the "|" of a drive letter that starts an unquoted path as ":".
+
+    The WHATWG path state does it only for the first segment, so "/C|/a" is
+    "/C:/a" while "//C|/a" and "/a/C|" are kept.
+    """
+    pos = 1 if path[:1] == "/" else 0
+    if starts_with_drive_letter(path, pos) and path[pos + 1] == "|":
+        return f"{path[: pos + 1]}:{path[pos + 2 :]}"
+    return path
+
+
+def normalize_file_path(path: str) -> str:
+    """Drop '.' and '..' from the path of a file URL, keeping its drive letter.
+
+    As normalize_path(), except that '..' never removes a drive letter that
+    is the first segment: the WHATWG "shorten a path" keeps "C:" in
+    "/C:/.." and in "/C:/a/../..".
+    """
+    prefix = ""
+    if path and path[0] == "/":
+        prefix = "/"
+        path = path[1:]
+    segments = path.split("/")
+    resolved: list[str] = []
+    for seg in segments:
+        if seg == "..":
+            if resolved and not (len(resolved) == 1 and drive_letter(resolved[0])):
+                resolved.pop()
+        elif seg != ".":
+            resolved.append(seg)
+    if segments[-1] in (".", ".."):
+        resolved.append("")
+    return prefix + "/".join(resolved)

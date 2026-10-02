@@ -48,7 +48,16 @@ from ._parse import (
     unsplit_result,
     unsplit_result_empty,
 )
-from ._path import normalize_path, normalize_path_segments, remove_dot_segments
+from ._path import (
+    drive_letter,
+    is_drive_letter,
+    normalize_drive_letter,
+    normalize_file_path,
+    normalize_path,
+    normalize_path_segments,
+    remove_dot_segments,
+    starts_with_drive_letter,
+)
 from ._query import (
     Query,
     QueryVariable,
@@ -313,20 +322,71 @@ def _check_whatwg_file_authority(authority: str) -> None:
     The WHATWG file host state reads the authority as a host only, which
     cannot have "@" or ":", so "file://user@host/" and "file://host:1/"
     fail. RFC 3986 mode keeps both. A Windows drive letter is not a host
-    with an empty port, WHATWG reads it as the start of the path.
+    with an empty port: callers move it into the path first, see
+    _whatwg_file_drive().
     """
-    if "@" in authority or (
-        ":" in authority.rpartition("]")[2]
-        and not (
-            len(authority) == 2
-            and authority[1] == ":"
-            and authority[0].isascii()
-            and authority[0].isalpha()
-        )
-    ):
+    if "@" in authority or ":" in authority.rpartition("]")[2]:
         raise ValueError(
             f"Invalid URL: a file URL cannot have userinfo or a port, got {authority!r}"
         )
+
+
+def _whatwg_file_drive(netloc: str, path: str) -> str:
+    """Return the path of a file URL whose authority is a drive letter.
+
+    The WHATWG file host state reads a Windows drive letter in the authority
+    as the start of the path, so "file://C:/x" and "file://C|/x" are
+    "file:///C:/x", with an empty host.
+    """
+    return f"/{netloc[0]}:{path}"
+
+
+def _normalize_path(path: str, scheme: str, mode: Mode) -> str:
+    """Drop '.' and '..' from path, keeping the drive letter of a file URL.
+
+    WHATWG mode keeps it, see normalize_file_path().
+    """
+    if scheme == "file" and mode is _WHATWG:
+        return normalize_file_path(path)
+    return normalize_path(path)
+
+
+def _file_join_path(base: str, path: str) -> str:
+    """Resolve the path of a reference against the path of a file URL base.
+
+    The WHATWG file and file slash states, in WHATWG mode: a path that
+    starts with a drive letter replaces the path of the base, an absolute
+    path keeps the drive letter of the base, and the drive letter alone is
+    never dropped from the base, so "x" against "file:///C:" is
+    "file:///C:/x".
+    """
+    if path[0] == "/":
+        if not starts_with_drive_letter(path, 1) and (drive := drive_letter(base)):
+            path = f"/{drive}{path}"
+    elif starts_with_drive_letter(path):
+        path = f"/{path}"
+    elif not base:
+        path = f"/{path}"
+    else:
+        if base[0] != "/":
+            base = f"/{base}"
+        if len(base) == 3 and drive_letter(base):
+            path = f"{base}/{path}"
+        else:
+            path = base[: base.rfind("/") + 1] + path
+    return normalize_file_path(path) if "." in path else path
+
+
+def _is_pipe_drive_authority(join_path: str) -> bool:
+    """Tell if a reference saved for join() has an authority like "C|".
+
+    Only a file URL reads it as a drive letter, it is no host for others.
+    """
+    return (
+        join_path[:2] == "//"
+        and join_path[3:4] == "|"
+        and starts_with_drive_letter(join_path, 2)
+    )
 
 
 def _idna2003_host_error(host: str) -> str:
@@ -543,6 +603,30 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     scheme, netloc, path, query, fragment, empty = split_url(url_str)
     if not netloc and _is_special_authority_path(scheme, path, mode):
         return _special_authority_url(scheme, path, query, fragment, empty, False)
+    if scheme == "file":
+        if mode is _WHATWG:
+            if is_drive_letter(netloc):
+                path = _whatwg_file_drive(netloc, path)
+                netloc = ""
+                empty |= EMPTY_AUTHORITY
+            if "|" in path:
+                path = normalize_drive_letter(path)
+    elif (
+        not scheme
+        and mode is _WHATWG
+        and (
+            is_drive_letter(netloc)
+            or ("|" in path and normalize_drive_letter(path) is not path)
+        )
+    ):
+        # A drive letter means something else when the reference is joined
+        # with a file URL, see join(); it is kept for that.
+        cache["_join_path"] = f"//{netloc}{path}" if netloc else path
+        if netloc[1:] == "|":
+            # Not a host, so the file URL is the only meaning it has.
+            path = _whatwg_file_drive(netloc, path)
+            netloc = ""
+            empty |= EMPTY_AUTHORITY
     # Set when "localhost" is dropped from a file URL in WHATWG mode; the
     # URL still has an (empty) authority, so its path is at least "/".
     localhost = False
@@ -606,12 +690,17 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
 
     if path:
         path = PATH_REQUOTER(path)
-        if "." in path and (
-            netloc or (mode is _WHATWG and scheme == "file" and path[0] == "/")
-        ):
+        if "." in path and (netloc or (mode is _WHATWG and scheme == "file")):
             # A file URL always has an authority in WHATWG mode, also an
-            # empty one: "file:///a/../b" is "file:///b".
-            path = normalize_path(path)
+            # empty one, and its path is absolute: "file:///a/../b" and
+            # "file:a/../b" are "file:///b".
+            if not netloc and path[0] != "/":
+                # As a reference the path is relative to the path of a file
+                # base, so join() takes the path as it is written.
+                cache["_join_path"] = path
+                path = f"/{path}"
+                empty |= EMPTY_AUTHORITY
+            path = _normalize_path(path, scheme, mode)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
         elif mode is not _WHATWG and "." in path:
@@ -982,6 +1071,15 @@ class URL:
                 mode,
             )
 
+        if scheme == "file" and mode is _WHATWG:
+            # As the parser does, see _whatwg_file_drive() and
+            # normalize_drive_letter().
+            if is_drive_letter(authority) and path[:1] in ("", "/"):
+                path = _whatwg_file_drive(authority, path)
+                authority = ""
+            if "|" in path:
+                path = normalize_drive_letter(path)
+
         self = object.__new__(URL)
         self._scheme = scheme
         _host: str | None = None
@@ -1032,7 +1130,7 @@ class URL:
         path = PATH_QUOTER(path) if path else path
         if path and self._netloc:
             if "." in path:
-                path = normalize_path(path)
+                path = _normalize_path(path, scheme, mode)
             if path[0] != "/":
                 msg = (
                     "Path in a URL with authority should "
@@ -1042,9 +1140,10 @@ class URL:
         elif path and scheme and mode is not _WHATWG and "." in path:
             # Without an authority, as the parser does in RFC 3986 mode.
             path = remove_dot_segments(path)
-        elif path and scheme == "file" and path[0] == "/" and "." in path:
-            # A file URL has an authority in WHATWG mode, also an empty one.
-            path = normalize_path(path)
+        elif path and scheme == "file" and "." in path:
+            # A file URL has an authority in WHATWG mode, also an empty one,
+            # and its path is absolute.
+            path = normalize_file_path(path if path[0] == "/" else f"/{path}")
 
         if path and not self._scheme and not self._netloc and ":" in path:
             path = _encode_relative_colon(path, mode)
@@ -1768,6 +1867,16 @@ class URL:
         """
         parsed: list[str] = []
         needs_normalize: bool = False
+        if (
+            self._scheme == "file"
+            and self._mode is _WHATWG
+            and self._path in ("", "/")
+            and paths
+            and not encoded
+        ):
+            # The first segment of a file URL can be a drive letter, see
+            # normalize_drive_letter().
+            paths = [normalize_drive_letter(paths[0]), *paths[1:]]
         for idx, path in enumerate(reversed(paths)):
             # empty segment of last is not removed
             last = idx == 0
@@ -1822,7 +1931,11 @@ class URL:
                 authority_empty,
             )
 
-        path = "/".join(normalize_path_segments(parsed))
+        if self._scheme == "file" and self._mode is _WHATWG:
+            # Keep the drive letter, as the parser does.
+            path = normalize_file_path("/".join(parsed))
+        else:
+            path = "/".join(normalize_path_segments(parsed))
         # If normalizing the path segments removed the leading slash, add it back.
         if path and path[0] != "/":
             path = f"/{path}"
@@ -2021,10 +2134,14 @@ class URL:
         """Return a new URL with path replaced."""
         netloc = self._netloc
         if not encoded:
+            if "|" in path and self._scheme == "file" and self._mode is _WHATWG:
+                # As the parser does, see normalize_drive_letter().
+                path = normalize_drive_letter(path)
             path = PATH_QUOTER(path)
             if netloc or (self._scheme == "file" and self._mode is _WHATWG):
                 # A file URL has an authority in WHATWG mode, also an empty one.
-                path = normalize_path(path) if "." in path else path
+                if "." in path:
+                    path = _normalize_path(path, self._scheme, self._mode)
             elif self._scheme and self._mode is not _WHATWG and "." in path:
                 # Without an authority, as the parser does in RFC 3986 mode.
                 path = remove_dot_segments(path)
@@ -2381,7 +2498,7 @@ class URL:
 
         if "_join_path" in url._cache:
             join_path = url._cache["_join_path"]
-            if url._netloc:
+            if url._netloc and url._scheme:
                 # "http:g" was parsed in WHATWG mode as "http://g/", but
                 # against an http base it is the relative reference "g".
                 url = from_parts(
@@ -2392,6 +2509,37 @@ class URL:
                     url._fragment,
                     url._mode,
                     url._empty,
+                )
+            elif url._scheme:
+                # "file:a/../b", a rootless file path with dot segments, see
+                # _encode_url().
+                url = from_parts(
+                    scheme,
+                    "",
+                    join_path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    url._empty & ~EMPTY_AUTHORITY,
+                )
+            elif scheme == "file" and self._mode is _WHATWG:
+                # WHATWG reads a reference against a file URL in the file
+                # state, as it reads one with the "file:" scheme; there "C|"
+                # is the drive letter "C:" and "//C:" is no authority.
+                ref = encode_url(f"file:{join_path}")
+                url = from_parts(
+                    scheme,
+                    ref._netloc,
+                    ref._path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    ref._empty & EMPTY_AUTHORITY | url._empty & ~EMPTY_AUTHORITY,
+                )
+            elif _is_pipe_drive_authority(join_path):
+                raise ValueError(
+                    f"Invalid URL: {join_path!r} has a drive letter for an"
+                    f" authority, which only a file URL accepts"
                 )
             elif scheme in SPECIAL_SCHEMES and self._mode is _WHATWG:
                 # A relative reference with "\\" (see _backslashes()); the
@@ -2430,17 +2578,21 @@ class URL:
 
         orig_path = self._path
         if join_path := url._path:
-            if join_path[0] == "/":
-                path = join_path
-            elif not orig_path:
-                path = f"/{join_path}" if self._netloc else join_path
-            elif orig_path[-1] == "/":
-                path = f"{orig_path}{join_path}"
+            if scheme == "file" and self._mode is _WHATWG:
+                path = _file_join_path(orig_path, join_path)
             else:
-                # Merge on the encoded base path, dropping its last segment,
-                # so percent-encoded delimiters in the base are kept as is.
-                path = orig_path[: orig_path.rfind("/") + 1] + join_path
-            path = normalize_path(path) if "." in path else path
+                if join_path[0] == "/":
+                    path = join_path
+                elif not orig_path:
+                    path = f"/{join_path}" if self._netloc else join_path
+                elif orig_path[-1] == "/":
+                    path = f"{orig_path}{join_path}"
+                else:
+                    # Merge on the encoded base path, dropping its last
+                    # segment, so percent-encoded delimiters in the base are
+                    # kept as is.
+                    path = orig_path[: orig_path.rfind("/") + 1] + join_path
+                path = normalize_path(path) if "." in path else path
         else:
             path = orig_path
 
@@ -2481,17 +2633,21 @@ class URL:
         orig_path = self._path
         has_authority = self._netloc or self._empty & EMPTY_AUTHORITY
         if join_path := url._path:
-            if join_path[0] == "/":
-                path = join_path
-            elif not orig_path:
-                path = f"/{join_path}" if has_authority else join_path
-            elif orig_path[-1] == "/":
-                path = f"{orig_path}{join_path}"
+            if scheme == "file" and self._mode is _WHATWG:
+                path = _file_join_path(orig_path, join_path)
             else:
-                # Merge on the encoded base path, dropping its last segment,
-                # so percent-encoded delimiters in the base are kept as is.
-                path = orig_path[: orig_path.rfind("/") + 1] + join_path
-            path = normalize_path(path) if "." in path else path
+                if join_path[0] == "/":
+                    path = join_path
+                elif not orig_path:
+                    path = f"/{join_path}" if has_authority else join_path
+                elif orig_path[-1] == "/":
+                    path = f"{orig_path}{join_path}"
+                else:
+                    # Merge on the encoded base path, dropping its last
+                    # segment, so percent-encoded delimiters in the base are
+                    # kept as is.
+                    path = orig_path[: orig_path.rfind("/") + 1] + join_path
+                path = normalize_path(path) if "." in path else path
         else:
             path = orig_path
 
@@ -2629,7 +2785,8 @@ def _moved_parts(
     parsed under another scheme or mode into a special-scheme WHATWG URL,
     where the host is percent-decoded and one that ends in a number is
     parsed as an IPv4 address. A file URL also loses "localhost" and must
-    not have userinfo or a port, see _check_whatwg_file_authority().
+    not have userinfo or a port, see _check_whatwg_file_authority(), and
+    reads a drive letter in the authority as the start of the path.
     """
     netloc = url._netloc
     if mode is not _WHATWG or not netloc:
@@ -2644,6 +2801,11 @@ def _moved_parts(
                 url.raw_user, url.raw_password, host, url.explicit_port
             )
     if scheme == "file":
+        if is_drive_letter(netloc):
+            path = _whatwg_file_drive(netloc, url._path)
+            if "." in path:
+                path = normalize_file_path(path)
+            return "", path, empty | EMPTY_AUTHORITY
         _check_whatwg_file_authority(netloc)
         if host == "localhost":
             return "", url._path or "/", empty | EMPTY_AUTHORITY

@@ -273,6 +273,15 @@ applies when :meth:`URL.build`, :meth:`URL.with_host`,
 Since a ``file`` URL always has an authority in WHATWG mode, the dot
 segments of its path are removed also when the host is empty:
 ``file:///a/../b`` is ``file:///b``.
+WHATWG mode also keeps a Windows drive letter in a ``file`` URL, as the
+WHATWG URL Standard does: ``C|`` as the first path segment is ``C:``, a
+drive letter in the authority starts the path (``file://C:/x`` is
+``file:///C:/x``), ``..`` does not remove it, and :meth:`URL.join` keeps the
+drive letter of the base for an absolute path (``/x`` against
+``file:///C:/a`` is ``file:///C:/x``) while a reference that starts with a
+drive letter replaces the path. :meth:`URL.build`, :meth:`URL.with_path`,
+:meth:`URL.joinpath` and ``/`` do the same. RFC 3986 mode treats ``C:`` as
+an ordinary segment and rejects ``|``.
 RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
 one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
@@ -297,6 +306,10 @@ host; the WHATWG URL Standard has no IPvFuture, so WHATWG mode rejects it.
    URL('file:///etc/hosts')
    >>> URL('file://localhost/etc/hosts', mode='rfc')
    URL('file://localhost/etc/hosts', mode='rfc')
+   >>> URL('file:///C|/a/../..')
+   URL('file:///C:/')
+   >>> URL('file:///C:/a').join(URL('/x'))
+   URL('file:///C:/x')
    >>> URL('http://[v1.x]:8080/', mode='rfc')
    URL('http://[v1.x]:8080/', mode='rfc')
 
