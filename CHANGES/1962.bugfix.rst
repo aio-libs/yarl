@@ -5,6 +5,8 @@ letter in the authority starts the path (``file://C:/x`` is
 the drive letter of the base, and a reference that starts with a drive
 letter replaces the path of a file base. :meth:`~yarl.URL.join`,
 :meth:`~yarl.URL.build`, :meth:`~yarl.URL.with_path`,
-:meth:`~yarl.URL.joinpath` and ``/`` follow the parser. RFC 3986 mode is
-unchanged
+:meth:`~yarl.URL.joinpath` and ``/`` follow the parser. A rootless
+``file`` path with dot segments is made absolute before they are removed,
+so ``file:a/../b`` is ``file:///b`` and survives a round trip through
+:class:`str`. RFC 3986 mode is unchanged
 -- by :user:`asvetlov`.

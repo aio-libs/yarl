@@ -690,11 +690,13 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
 
     if path:
         path = PATH_REQUOTER(path)
-        if "." in path and (
-            netloc or (mode is _WHATWG and scheme == "file" and path[0] == "/")
-        ):
+        if "." in path and (netloc or (mode is _WHATWG and scheme == "file")):
             # A file URL always has an authority in WHATWG mode, also an
-            # empty one: "file:///a/../b" is "file:///b".
+            # empty one, and its path is absolute: "file:///a/../b" and
+            # "file:a/../b" are "file:///b".
+            if not netloc and path[0] != "/":
+                path = f"/{path}"
+                empty |= EMPTY_AUTHORITY
             path = _normalize_path(path, scheme, mode)
         elif not scheme and not netloc:
             path = _encode_relative_scheme_colon(path)
@@ -1135,9 +1137,10 @@ class URL:
         elif path and scheme and mode is not _WHATWG and "." in path:
             # Without an authority, as the parser does in RFC 3986 mode.
             path = remove_dot_segments(path)
-        elif path and scheme == "file" and path[0] == "/" and "." in path:
-            # A file URL has an authority in WHATWG mode, also an empty one.
-            path = normalize_file_path(path)
+        elif path and scheme == "file" and "." in path:
+            # A file URL has an authority in WHATWG mode, also an empty one,
+            # and its path is absolute.
+            path = normalize_file_path(path if path[0] == "/" else f"/{path}")
 
         if path and not self._scheme and not self._netloc and ":" in path:
             path = _encode_relative_colon(path, mode)

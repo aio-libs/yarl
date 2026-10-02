@@ -363,15 +363,15 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | `http:@:www.example.com` | *none* | *failure* | *failure* | `http:@:www.example.com` | `http:@:www.example.com` |
 | special scheme without an authority | `http:/@:www.example.com` | *none* | *failure* | *failure* | `http:/@:www.example.com` | `http:/@:www.example.com` |
 | special scheme without an authority | `file:...` | `http://www.example.com/test` | `file:///...` | `file:///...` | `file:...` | `file:...` |
-| special scheme without an authority | `file:..` | `http://www.example.com/test` | `file:///..` | `file:///` | `file:` | `file:` |
+| special scheme without an authority | `file:..` | `http://www.example.com/test` | `file:///` | `file:///` | `file:` | `file:` |
 | special scheme without an authority | `file:a` | `http://www.example.com/test` | `file:///a` | `file:///a` | `file:a` | `file:a` |
-| special scheme without an authority | `file:.` | *none* | `file:///.` | `file:///` | `file:` | `file:` |
-| special scheme without an authority | `file:.` | `http://www.example.com/test` | `file:///.` | `file:///` | `file:` | `file:` |
+| special scheme without an authority | `file:.` | *none* | `file:///` | `file:///` | `file:` | `file:` |
+| special scheme without an authority | `file:.` | `http://www.example.com/test` | `file:///` | `file:///` | `file:` | `file:` |
 | special scheme without an authority | `http:` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http:` | `http:` |
 | special scheme without an authority | `file:` | `file:///test?test#test` | `file:///test?test` | `file:///test?test` | `file:` | `file:` |
 | special scheme without an authority | `file:?x` | `file:///test?test#test` | `file:///test?x` | `file:///test?x` | `file:?x` | `file:?x` |
 | special scheme without an authority | `file:#x` | `file:///test?test#test` | `file:///test?test#x` | `file:///test?test#x` | `file:#x` | `file:#x` |
-| special scheme without an authority | `file:.//p` | *none* | `file:///.//p` | `file:////p` | `file:/p` | `file:/p` |
+| special scheme without an authority | `file:.//p` | *none* | `file:////p` | `file:////p` | `file:/p` | `file:/p` |
 | special scheme without an authority | `file:/.//p` | *none* | `file:////p` | `file:////p` | `file:/.//p` | `file://p` |
 | characters outside the RFC 3986+3987 grammar | `:foo.com/` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com/` | `http://example.org/foo/:foo.com/` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `:foo.com\` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com/` | `http://example.org/foo/:foo.com/` | *failure* | *failure* |

@@ -64,6 +64,25 @@ def test_parse_rootless() -> None:
     assert str(URL("file:C||/m/")) == "file:///C%7C%7C/m/"
 
 
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("file:C|/a/../..", "file:///C:/"),
+        ("file:C:/a/./b", "file:///C:/a/b"),
+        ("file:a/../b", "file:///b"),
+        ("file:.", "file:///"),
+        ("file:.//p", "file:////p"),
+    ],
+)
+def test_parse_rootless_dot_segments(url: str, expected: str) -> None:
+    # The path of a file URL is absolute in WHATWG mode, so dot segments are
+    # removed as they are from "file:///...", and the URL survives str().
+    parsed = URL(url)
+    assert str(parsed) == expected
+    assert URL(expected) == parsed
+    assert URL(str(parsed)) == parsed
+
+
 def test_parse_parts() -> None:
     url = URL("file://C|/a")
     assert url.raw_host is None
@@ -178,6 +197,8 @@ def test_reference_keeps_drive_letter() -> None:
         ({"authority": "c:"}, "file:///c:", "file://c"),
         ({"path": "/C|/x/../.."}, "file:///C:/", None),
         ({"path": "/C:/a/../.."}, "file:///C:/", "file:/"),
+        ({"path": "C|/a/../.."}, "file:///C:/", None),
+        ({"path": ".//p"}, "file:////p", "file:/p"),
         ({"host": "h", "path": "/C:/.."}, "file://h/C:/", "file://h/"),
         ({"host": "h", "path": "/C|/x"}, "file://h/C:/x", None),
         ({"host": "h", "path": "/a/C|"}, "file://h/a/C%7C", None),
