@@ -272,7 +272,13 @@ applies when :meth:`URL.build`, :meth:`URL.with_host`,
 :meth:`URL.with_scheme` or :meth:`URL.join` makes a ``file`` URL.
 Since a ``file`` URL always has an authority in WHATWG mode, the dot
 segments of its path are removed also when the host is empty:
-``file:///a/../b`` is ``file:///b``.
+``file:///a/../b`` is ``file:///b``. Its path is never empty either, so
+``file:`` is ``file:///`` and ``file://host`` is ``file://host/``, also when
+:meth:`URL.build`, :meth:`URL.with_path`, :attr:`URL.parent` or another
+method makes the URL; as a reference ``file:`` and ``file:?q`` still keep
+the path of a ``file`` base in :meth:`URL.join`. A URL parsed or built with
+``encoded=True`` is kept as it is, so ``URL('file:', encoded=True)`` stays
+``file://``.
 WHATWG mode also keeps a Windows drive letter in a ``file`` URL, as the
 WHATWG URL Standard does: ``C|`` as the first path segment is ``C:``, a
 drive letter in the authority starts the path (``file://C:/x`` is
@@ -306,6 +312,10 @@ host; the WHATWG URL Standard has no IPvFuture, so WHATWG mode rejects it.
    URL('file:///etc/hosts')
    >>> URL('file://localhost/etc/hosts', mode='rfc')
    URL('file://localhost/etc/hosts', mode='rfc')
+   >>> URL('file:?q')
+   URL('file:///?q')
+   >>> URL('file:?q', mode='rfc')
+   URL('file:?q', mode='rfc')
    >>> URL('file:///C|/a/../..')
    URL('file:///C:/')
    >>> URL('file:///C:/a').join(URL('/x'))
@@ -327,6 +337,7 @@ host; the WHATWG URL Standard has no IPvFuture, so WHATWG mode rejects it.
    rejected in WHATWG mode; previously the brackets were dropped.
    In WHATWG mode the ``localhost`` host of a ``file`` URL is dropped and
    a ``file`` URL with userinfo or a port is rejected.
+   An empty path of a ``file`` URL is ``/`` in WHATWG mode.
 
 
 .. note::

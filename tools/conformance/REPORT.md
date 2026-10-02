@@ -39,16 +39,16 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 463 |
-| yarl follows each standard in its mode | 300 |
+| yarl follows each standard in its mode | 306 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
-| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 95 |
+| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 89 |
 | RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 29 |
 | Both modes differ from their standard | 9 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 104 |
+| yarl WHATWG mode vs WHATWG | 98 |
 | yarl RFC mode vs RFC 3986+3987 | 38 |
 | WHATWG vs RFC 3986+3987 | 433 |
 
@@ -59,17 +59,16 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|
 
-## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (95)
+## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (89)
 
 | Category | Cases |
 |---|---|
 | characters outside the RFC 3986+3987 grammar | 43 |
 | other | 15 |
-| empty host | 8 |
 | non-ASCII or percent-encoded host | 8 |
 | tab or newline inside the input | 6 |
+| empty host | 6 |
 | special scheme without an authority | 4 |
-| empty file path | 4 |
 | non-special scheme | 2 |
 | Windows drive letter | 2 |
 | IP-literal host | 2 |
@@ -135,14 +134,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | other | `x` | `sc://ñ` | `sc://xn--ida/x` | `sc://%C3%B1/x` | `sc://xn--ida/x` | `sc://xn--ida/x` |
 | other | `test-a-colon.html` | `a:` | `a:test-a-colon.html` | *failure* | `a:test-a-colon.html` | `a:test-a-colon.html` |
 | other | `test-a-colon-b.html` | `a:b` | `a:test-a-colon-b.html` | *failure* | `a:test-a-colon-b.html` | `a:test-a-colon-b.html` |
-| empty host | `//` | `file:///tmp/mock/path` | `file://` | `file:///` | `file://` | `file://` |
-| empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | `file:///w\|m` | *failure* | *failure* |
-| empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | `file:///w\|\|m` | *failure* | *failure* |
-| empty host | `file://` | `file://ape/` | `file://` | `file:///` | `file://` | `file://` |
-| empty host | `http://?` | *none* | `http://?` | *failure* | `http://?` | `http://?` |
-| empty host | `http://#` | *none* | `http://#` | *failure* | `http://#` | `http://#` |
-| empty host | `///\//\//test` | `http://example.org/` | `http://example.org///////test` | `http://test/` | *failure* | *failure* |
-| empty host | `/\/\//example.org/../path` | `http://example.org/` | `http://example.org////path` | `http://example.org/path` | *failure* | *failure* |
 | non-ASCII or percent-encoded host | `sc://faß.ExAmPlE/` | *none* | `sc://xn--fa-hia.example/` | `sc://fa%C3%9F.ExAmPlE/` | `sc://xn--fa-hia.example/` | `sc://xn--fa-hia.example/` |
 | non-ASCII or percent-encoded host | `sc://ñ.test/` | *none* | `sc://xn--ida.test/` | `sc://%C3%B1.test/` | `sc://xn--ida.test/` | `sc://xn--ida.test/` |
 | non-ASCII or percent-encoded host | `sc://%/` | *none* | *failure* | `sc://%/` | *failure* | *failure* |
@@ -157,14 +148,16 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | tab or newline inside the input | `'non-special:opaque\t\t  \r #hi'` | *none* | `non-special:opaque%20%20%20#hi` | `non-special:opaque  %20#hi` | *failure* | *failure* |
 | tab or newline inside the input | `` 'data:text/plain,test#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `data:text/plain,test#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `data:text/plain,test#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
 | tab or newline inside the input | `` 'about:blank#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `about:blank#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `about:blank#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
+| empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | `file:///w\|m` | *failure* | *failure* |
+| empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | `file:///w\|\|m` | *failure* | *failure* |
+| empty host | `http://?` | *none* | `http://?` | *failure* | `http://?` | `http://?` |
+| empty host | `http://#` | *none* | `http://#` | *failure* | `http://#` | `http://#` |
+| empty host | `///\//\//test` | `http://example.org/` | `http://example.org///////test` | `http://test/` | *failure* | *failure* |
+| empty host | `/\/\//example.org/../path` | `http://example.org/` | `http://example.org////path` | `http://example.org/path` | *failure* | *failure* |
 | special scheme without an authority | `http:[61:27]/:foo` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/[61:27]/:foo` | *failure* | *failure* |
 | special scheme without an authority | `http:a:@www.example.com` | *none* | `http://a:@www.example.com` | `http://a@www.example.com/` | `http:a:@www.example.com` | `http:a:@www.example.com` |
 | special scheme without an authority | `http:/a:@www.example.com` | *none* | `http://a:@www.example.com` | `http://a@www.example.com/` | `http:/a:@www.example.com` | `http:/a:@www.example.com` |
 | special scheme without an authority | `http:` | `https://example.org/foo/bar` | `http://` | *failure* | `http:` | `http:` |
-| empty file path | `file://test` | `file:///tmp/mock/path` | `file://test` | `file://test/` | `file://test` | `file://test` |
-| empty file path | `file:` | *none* | `file://` | `file:///` | `file:` | `file:` |
-| empty file path | `file:?q=v` | *none* | `file://?q=v` | `file:///?q=v` | `file:?q=v` | `file:?q=v` |
-| empty file path | `file:#frag` | *none* | `file://#frag` | `file:///#frag` | `file:#frag` | `file:#frag` |
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test:@test/x` | `non-special://test@test/x` | `non-special://test:@test/x` | `non-special://test:@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://:@test/x` | `non-special://test/x` | `non-special://:@test/x` | `non-special://:@test/x` |
 | Windows drive letter | `file:C\|\|/m/` | *none* | `file:///C%7C%7C/m/` | `file:///C\|\|/m/` | *failure* | *failure* |
@@ -236,7 +229,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `///test` | `http://example.org/` | `http://example.org/test` | `http://test/` | `http://example.org/test` | `http:///test` |
 | empty host | `///example.org/path` | `http://example.org/` | `http://example.org/example.org/path` | `http://example.org/path` | `http://example.org/example.org/path` | `http:///example.org/path` |
 
-## yarl follows each standard in its mode (300)
+## yarl follows each standard in its mode (306)
 
 | Category | Cases |
 |---|---|
@@ -245,12 +238,13 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | 48 |
 | numeric host that is not a dotted quad | 36 |
 | Windows drive letter | 26 |
-| empty host | 16 |
+| empty host | 18 |
 | other | 16 |
 | tab or newline inside the input | 12 |
 | backslash read as a slash | 11 |
 | file host that WHATWG rewrites | 10 |
 | leading or trailing C0 control or space | 6 |
+| empty file path | 4 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
@@ -483,6 +477,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Windows drive letter | `file://C:/` | `file://host/` | `file:///C:/` | `file:///C:/` | `file://c/` | `file://C:/` |
 | Windows drive letter | `file:/C\|/` | *none* | `file:///C:/` | `file:///C:/` | *failure* | *failure* |
 | Windows drive letter | `file://C\|/` | *none* | `file:///C:/` | `file:///C:/` | *failure* | *failure* |
+| empty host | `//` | `file:///tmp/mock/path` | `file:///` | `file:///` | `file://` | `file://` |
 | empty host | `file:///w\|/m` | *none* | `file:///w:/m` | `file:///w:/m` | *failure* | *failure* |
 | empty host | `sc://:12/` | *none* | *failure* | *failure* | `sc://:12/` | `sc://:12/` |
 | empty host | `file:\\//` | *none* | `file:////` | `file:////` | *failure* | *failure* |
@@ -491,6 +486,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `file:\\\\#guppy` | *none* | `file:////#guppy` | `file:////#guppy` | *failure* | *failure* |
 | empty host | `file://\/localhost//cat` | *none* | `file:////localhost//cat` | `file:////localhost//cat` | *failure* | *failure* |
 | empty host | `\//pig` | `file://lion/` | `file:///pig` | `file:///pig` | *failure* | *failure* |
+| empty host | `file://` | `file://ape/` | `file:///` | `file:///` | `file://` | `file://` |
 | empty host | `data://:443` | *none* | *failure* | *failure* | `data://:443` | `data://:443` |
 | empty host | `javascript://:443` | *none* | *failure* | *failure* | `javascript://:443` | `javascript://:443` |
 | empty host | `mailto://:443` | *none* | *failure* | *failure* | `mailto://:443` | `mailto://:443` |
@@ -554,6 +550,10 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | leading or trailing C0 control or space | `  File:c\|////foo\bar.html` | `file:///tmp/mock/path` | `file:///c:////foo/bar.html` | `file:///c:////foo/bar.html` | *failure* | *failure* |
 | leading or trailing C0 control or space | `'\x00\x1b\x04\x12 http://example.com/\x1f \r '` | *none* | `http://example.com/` | `http://example.com/` | *failure* | *failure* |
 | leading or trailing C0 control or space | `non-special:opaque  ` | *none* | `non-special:opaque` | `non-special:opaque` | *failure* | *failure* |
+| empty file path | `file://test` | `file:///tmp/mock/path` | `file://test/` | `file://test/` | `file://test` | `file://test` |
+| empty file path | `file:` | *none* | `file:///` | `file:///` | `file:` | `file:` |
+| empty file path | `file:?q=v` | *none* | `file:///?q=v` | `file:///?q=v` | `file:?q=v` | `file:?q=v` |
+| empty file path | `file:#frag` | *none* | `file:///#frag` | `file:///#frag` | `file:#frag` | `file:#frag` |
 
 ## IDNA: WHATWG toascii.json
 
