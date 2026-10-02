@@ -141,6 +141,44 @@ def test_mode_change(url: str, expected: str) -> None:
 
 
 @pytest.mark.parametrize(
+    ("url", "joined"),
+    [
+        ("file:", "file://host/dir/page?bq"),
+        ("file:?q", "file://host/dir/page?q"),
+        ("file:#f", "file://host/dir/page?bq#f"),
+        ("file:///?q", "file:///?q"),
+        ("file://localhost?q", "file:///?q"),
+        ("file://test", "file://test/"),
+    ],
+)
+def test_mode_change_join(url: str, joined: str) -> None:
+    moved = URL(URL(url, mode="rfc"), mode="whatwg")
+    base = URL("file://host/dir/page?bq#bf")
+    assert str(base.join(moved)) == joined
+    assert base.join(moved) == base.join(URL(url))
+    assert pickle.loads(pickle.dumps(moved)) == moved
+    assert str(base.join(pickle.loads(pickle.dumps(moved)))) == joined
+
+
+def test_mode_change_keeps_shared_url() -> None:
+    # The URL a mode change makes for "file:?q" is its own, the parsed
+    # "file:///?q" is still no reference to the path of a base.
+    URL(URL("file:?q", mode="rfc"))
+    joined = URL("file://host/dir/page").join(URL("file:///?q"))
+    assert str(joined) == "file:///?q"
+
+
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [("a", "file:///a"), ("/a", "file:///a"), ("?q", "file://?q")],
+)
+def test_join_encoded_base(reference: str, expected: str) -> None:
+    # encoded=True keeps the empty path of the base.
+    base = URL("file:", encoded=True)
+    assert str(base.join(URL(reference))) == expected
+
+
+@pytest.mark.parametrize(
     ("url", "expected"),
     [
         ("http://h", "file://h/"),
@@ -153,6 +191,26 @@ def test_with_scheme(url: str, expected: str) -> None:
     moved = URL(url).with_scheme("file")
     assert str(moved) == expected
     assert moved == URL(expected)
+
+
+@pytest.mark.parametrize(
+    ("url", "expected", "joined"),
+    [
+        ("sc:", "file:///", "file://host/dir/page?bq"),
+        ("sc:?q", "file:///?q", "file://host/dir/page?q"),
+        ("sc:#f", "file:///#f", "file://host/dir/page?bq#f"),
+        ("sc:/?q", "file:///?q", "file://host/?q"),
+        ("sc:///", "file:///", "file:///"),
+    ],
+)
+def test_with_scheme_without_authority(url: str, expected: str, joined: str) -> None:
+    moved = URL(url).with_scheme("file")
+    assert str(moved) == expected
+    assert moved == URL(expected)
+    # As a reference it means what its string does.
+    base = URL("file://host/dir/page?bq#bf")
+    assert str(base.join(moved)) == joined
+    assert base.join(URL(expected[:5] + url[3:])) == base.join(moved)
 
 
 def test_with_scheme_rfc() -> None:

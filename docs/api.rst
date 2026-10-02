@@ -276,7 +276,9 @@ segments of its path are removed also when the host is empty:
 ``file:`` is ``file:///`` and ``file://host`` is ``file://host/``, also when
 :meth:`URL.build`, :meth:`URL.with_path`, :attr:`URL.parent` or another
 method makes the URL; as a reference ``file:`` and ``file:?q`` still keep
-the path of a ``file`` base in :meth:`URL.join`.
+the path of a ``file`` base in :meth:`URL.join`. A URL parsed or built with
+``encoded=True`` is kept as it is, so ``URL('file:', encoded=True)`` stays
+``file://``.
 WHATWG mode also keeps a Windows drive letter in a ``file`` URL, as the
 WHATWG URL Standard does: ``C|`` as the first path segment is ``C:``, a
 drive letter in the authority starts the path (``file://C:/x`` is

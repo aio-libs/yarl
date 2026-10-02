@@ -374,10 +374,10 @@ def _file_join_path(base: str, path: str) -> str:
             path = f"/{drive}{path}"
     elif starts_with_drive_letter(path):
         path = f"/{path}"
-    elif not base:
-        path = f"/{path}"
     else:
-        if base[0] != "/":
+        if base[:1] != "/":
+            # A rootless base, or an empty one, which only encoded=True
+            # leaves in a file URL.
             base = f"/{base}"
         if len(base) == 3 and drive_letter(base):
             path = f"{base}/{path}"
@@ -1001,9 +1001,7 @@ class URL:
         if type(val) is cls:
             if val._mode is mode:
                 return val
-            scheme, _, _, query, fragment = val._val
-            netloc, path, empty = _moved_parts(val, scheme, mode, val._empty)
-            return from_parts(scheme, netloc, path, query, fragment, mode, empty)
+            return _moved_url(val, val._scheme, mode)
         if type(val) is SplitResult:
             if not encoded:
                 raise ValueError("Cannot apply decoding to SplitResult")
@@ -1978,21 +1976,11 @@ class URL:
                 f"relative URLs for the {lower_scheme} scheme"
             )
             raise ValueError(msg)
-        if (self._scheme not in SPECIAL_SCHEMES or lower_scheme == "file") and netloc:
+        if lower_scheme == "file" or (self._scheme not in SPECIAL_SCHEMES and netloc):
             # A special scheme in WHATWG mode had its host parsed already, but
-            # only for a file URL is "localhost" dropped.
-            netloc, path, empty = _moved_parts(
-                self, lower_scheme, self._mode, self._empty
-            )
-            return from_parts(
-                lower_scheme,
-                netloc,
-                path,
-                self._query,
-                self._fragment,
-                self._mode,
-                empty,
-            )
+            # only for a file URL is "localhost" dropped, and the path of a
+            # file URL is not empty.
+            return _moved_url(self, lower_scheme, self._mode)
         return from_parts(
             lower_scheme,
             netloc,
@@ -2798,6 +2786,22 @@ def _idna_encode(host: str) -> tuple[str, bool]:
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 # A host that ends in a number ends in one of these; most hosts do not.
 _NUMERIC_HOST_TAIL = frozenset("0123456789abcdefxABCDEFX.")
+
+
+def _moved_url(url: "URL", scheme: str, mode: Mode) -> "URL":
+    """Return url moved under scheme and mode, see _moved_parts()."""
+    netloc, path, empty = _moved_parts(url, scheme, mode, url._empty)
+    if path and not url._path and not (url._netloc or url._empty & EMPTY_AUTHORITY):
+        # "file:" and "file:?q" became "file:///" and "file:///?q" in WHATWG
+        # mode, but as a reference they keep the path of a file base, as
+        # the parsed ones do, see _encode_url(). The cache of a from_parts()
+        # URL is shared, so this one gets its own.
+        moved = from_parts_uncached(
+            scheme, netloc, path, url._query, url._fragment, mode, empty
+        )
+        moved._cache["_join_path"] = ""
+        return moved
+    return from_parts(scheme, netloc, path, url._query, url._fragment, mode, empty)
 
 
 def _moved_parts(
