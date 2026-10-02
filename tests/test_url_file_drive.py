@@ -106,6 +106,12 @@ def test_parse_parts() -> None:
         ("file://host/dir/file", "C|\\", "file://host/C:/"),
         ("file://host/dir/file", "C|\n/", "file://host/C:/"),
         ("file://host/", "file:C:/", "file://host/C:/"),
+        ("file://host/dir/page", "file:C|/x/..", "file://host/C:/"),
+        # A rootless path with dot segments is relative to the base path.
+        ("file://host/dir/page", "file:foo.bar", "file://host/dir/foo.bar"),
+        ("file://host/dir/page", "file:a/../b", "file://host/dir/b"),
+        ("file://host/dir/page", "file:..", "file://host/"),
+        ("file://host/dir/page", "file:.?q#f", "file://host/dir/?q#f"),
         ("file://host/", "file:/C:/", "file://host/C:/"),
         ("file:///c:/baz/qux", "/c|/foo/bar", "file:///c:/foo/bar"),
         ("file:///c:/baz/qux", "file:\\c:\\foo\\bar", "file:///c:/foo/bar"),
@@ -187,6 +193,8 @@ def test_reference_keeps_drive_letter() -> None:
     assert str(base.join(reference)) == "file://host/C:?q#f"
     unpickled = pickle.loads(pickle.dumps(URL("//C|/x")))
     assert str(base.join(unpickled)) == "file:///C:/x"
+    rootless = pickle.loads(pickle.dumps(URL("file:a/./b").with_query("q")))
+    assert str(base.join(rootless)) == "file://host/dir/a/b?q"
 
 
 @pytest.mark.parametrize(

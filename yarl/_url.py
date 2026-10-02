@@ -695,6 +695,9 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             # empty one, and its path is absolute: "file:///a/../b" and
             # "file:a/../b" are "file:///b".
             if not netloc and path[0] != "/":
+                # As a reference the path is relative to the path of a file
+                # base, so join() takes the path as it is written.
+                cache["_join_path"] = path
                 path = f"/{path}"
                 empty |= EMPTY_AUTHORITY
             path = _normalize_path(path, scheme, mode)
@@ -2506,6 +2509,18 @@ class URL:
                     url._fragment,
                     url._mode,
                     url._empty,
+                )
+            elif url._scheme:
+                # "file:a/../b", a rootless file path with dot segments, see
+                # _encode_url().
+                url = from_parts(
+                    scheme,
+                    "",
+                    join_path,
+                    url._query,
+                    url._fragment,
+                    url._mode,
+                    url._empty & ~EMPTY_AUTHORITY,
                 )
             elif scheme == "file" and self._mode is _WHATWG:
                 # WHATWG reads a reference against a file URL in the file
