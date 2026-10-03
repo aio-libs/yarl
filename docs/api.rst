@@ -1611,7 +1611,8 @@ Default port substitution
     Return ``True`` if URL's :attr:`~URL.port` is *default* for used
     :attr:`~URL.scheme`, ``False`` otherwise.
 
-    Relative URLs have no default port.
+    Relative URLs and URLs whose scheme has no known default port return
+    ``False``.
 
    .. doctest::
 
@@ -1622,6 +1623,8 @@ Default port substitution
       >>> URL('http://example.com:8080').is_default_port()
       False
       >>> URL('/path/to').is_default_port()
+      False
+      >>> URL('unknown://example.com').is_default_port()
       False
 
 

@@ -2019,6 +2019,16 @@ def test_is_default_port_for_unknown_scheme() -> None:
     assert not url.is_default_port()
 
 
+@pytest.mark.parametrize(
+    "value", ["unknown://example.com", "//example.com", "file://server/path"]
+)
+@pytest.mark.parametrize("mode", list(Mode))
+def test_is_default_port_without_scheme_default(value: str, mode: Mode) -> None:
+    url = URL(value, mode=mode)
+    assert url.port is None
+    assert not url.is_default_port()
+
+
 def test_handling_port_zero() -> None:
     url = URL("http://example.com:0")
     assert url.explicit_port == 0

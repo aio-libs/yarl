@@ -1423,10 +1423,9 @@ class URL:
 
         """
         if (explicit := self.explicit_port) is None:
-            # If the explicit port is None, then the URL must be
-            # using the default port unless its a relative URL
-            # which does not have an implicit port / default port
-            return self._netloc != ""
+            # A URL without an explicit port only has a default port if
+            # it has an authority and its scheme defines one.
+            return self._netloc != "" and self._scheme in DEFAULT_PORTS
         return explicit == DEFAULT_PORTS.get(self._scheme)
 
     def origin(self) -> "URL":
