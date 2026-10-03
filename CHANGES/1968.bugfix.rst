@@ -1,0 +1,3 @@
+Fixed :py:meth:`~yarl.URL.is_default_port` returning ``True`` for URLs
+without a known default port, such as URLs without a scheme and file URLs
+-- by :user:`kokotatan`.
