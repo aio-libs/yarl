@@ -149,7 +149,8 @@ authority: ``http://``, ``http:///`` and ``http://?q`` are invalid, as they
 are for the WHATWG URL Standard, and so is a change into WHATWG mode of such
 a URL parsed in RFC 3986 mode. A URL without an authority, such as ``http:``
 or ``http:?q``, is kept as a reference to a base for :meth:`URL.join` and is
-printed without ``//``. RFC 3986 mode keeps all of them.
+printed without ``//``. RFC 3986 mode keeps all of them, and so does
+``encoded=True``, which does not check the host.
 
 .. doctest::
 
