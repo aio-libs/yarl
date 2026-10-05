@@ -638,14 +638,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             netloc = ""
             empty |= EMPTY_AUTHORITY
     if not netloc:  # netloc
-        if (
-            empty & EMPTY_AUTHORITY
-            and mode is _WHATWG
-            and scheme in SCHEME_REQUIRES_HOST
-        ):
-            # The WHATWG host parser fails on the empty host: "http://",
-            # "http:///" and "http://?q" are invalid. "http:" and "http:?q"
-            # have no authority, they are references to a base.
+        if empty & EMPTY_AUTHORITY and scheme in SCHEME_REQUIRES_HOST:
+            # The WHATWG host parser fails on the empty host, and RFC 9110
+            # section 4.2.1 rejects it: "http://", "http:///" and "http://?q"
+            # are invalid. "http:" and "http:?q" have no authority, they are
+            # references to a base.
             _check_missing_host(scheme, mode)
         host = ""
     else:
@@ -2866,8 +2863,7 @@ def _moved_parts(
     also loses an empty password and an empty userinfo, see
     _drop_empty_password(). A file URL also loses "localhost" and must not
     have userinfo or a port, see _check_whatwg_file_authority(), and reads a
-    drive letter in the authority as the start of the path. An empty
-    authority is rejected for the schemes that need a host.
+    drive letter in the authority as the start of the path.
     """
     netloc = url._netloc
     if mode is not _WHATWG:
@@ -2876,9 +2872,6 @@ def _moved_parts(
         if not url._path and scheme == "file":
             # A file URL has an authority and a path, "/" at least.
             return "", "/", empty | EMPTY_AUTHORITY
-        if empty & EMPTY_AUTHORITY and scheme in SCHEME_REQUIRES_HOST:
-            # As the parser does: "http://" is invalid in WHATWG mode.
-            _check_missing_host(scheme, mode)
         return netloc, url._path, empty
     host = url.raw_host
     if (scheme in SPECIAL_SCHEMES or "[" in netloc) and host:

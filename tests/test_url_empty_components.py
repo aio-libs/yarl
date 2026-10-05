@@ -318,7 +318,6 @@ def test_build_special_scheme_by_mode() -> None:
         (URL("file:/p"), URL("file:///p"), True),
         (URL("http:/"), URL("http:/", mode="rfc"), True),
         (URL("file:/p", mode="rfc"), URL("file:///p", mode="rfc"), False),
-        (URL("http:/x", mode="rfc"), URL("http:///x", mode="rfc"), False),
         (URL("file:/p"), URL("file:///p", mode="rfc"), True),
         (URL("http:/x"), URL("http:/x", mode="rfc"), False),
         (URL("http://h/p?"), URL("http://h/p?", mode="rfc"), True),

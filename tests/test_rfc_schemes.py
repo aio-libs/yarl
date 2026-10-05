@@ -75,6 +75,15 @@ def test_http_empty_host_rejected(url: str) -> None:
         URL(url)
 
 
+@pytest.mark.parametrize(
+    "url",
+    ["http://user@/", "http:///path", "https:///path", "http://?", "http://#"],
+)
+def test_http_empty_host_rejected_rfc_mode(url: str) -> None:
+    with pytest.raises(ValueError):
+        URL(url, mode="rfc")
+
+
 # RFC 8089 appendix B: forms of a local file URI.
 @pytest.mark.parametrize(
     ("url", "host", "path"),

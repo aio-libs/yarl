@@ -1,13 +1,15 @@
-"""WHATWG mode rejects an empty host for the special schemes that need one.
+"""An empty host is rejected for the special schemes that need one.
 
 The WHATWG host parser fails on an empty host for every special scheme but
-file, so "http://", "http:///" and "http://?q" are invalid. "http:" and
+file, and RFC 9110 section 4.2.1 rejects an http URI with an empty host, so
+"http://", "http:///" and "http://?q" are invalid in both modes. "http:" and
 "http:?q" have no authority: they are references to a base, and are written
-out without "//". RFC 3986 mode keeps all of them.
+out without "//".
 """
 
 import pickle
 from collections.abc import Callable
+from typing import Literal
 
 import pytest
 
@@ -32,10 +34,17 @@ from yarl import URL
         "ftp://#f",
     ],
 )
-def test_rejected(url: str) -> None:
+@pytest.mark.parametrize("mode", ["whatwg", "rfc"])
+def test_rejected(url: str, mode: Literal["whatwg", "rfc"]) -> None:
     with pytest.raises(ValueError, match="host is required"):
-        URL(url)
-    assert str(URL(url, mode="rfc")) == url.replace("HTTP", "http")
+        URL(url, mode=mode)
+
+
+def test_path_after_empty_authority() -> None:
+    # WHATWG mode skips the slashes and reads "p" as the host.
+    assert str(URL("http:///p")) == "http://p"
+    with pytest.raises(ValueError, match="host is required"):
+        URL("http:///p", mode="rfc")
 
 
 @pytest.mark.parametrize("url", ["file://", "sc://", "sc://?q"])
@@ -88,12 +97,6 @@ def test_derived(make: Callable[[], URL], expected: str) -> None:
 def test_join(reference: str, expected: str) -> None:
     # Against a base with the same scheme it is a relative reference.
     assert str(URL("http://h/a?x").join(URL(reference))) == expected
-
-
-@pytest.mark.parametrize("url", ["http://", "http:///p", "http://?q", "ws://#f"])
-def test_mode_change_rejected(url: str) -> None:
-    with pytest.raises(ValueError, match="host is required"):
-        URL(URL(url, mode="rfc"))
 
 
 @pytest.mark.parametrize(
