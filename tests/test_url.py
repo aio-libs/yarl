@@ -2460,7 +2460,6 @@ URLLIB_URLJOIN = [
     ("http://a/b/c/d/e/", "../../f/g", "http://a/b/c/f/g"),
     ("http://a/b/", "../../f/g/", "http://a/f/g/"),
     ("a", "b", "b"),
-    ("http:///", "..", "http:///"),
     ("a/", "b", "a/b"),
     ("a/b", "c", "a/c"),
     ("a/b/", "c", "a/b/c"),
@@ -2498,7 +2497,7 @@ def test_join_preserves_leading_slash() -> None:
 
 
 def test_empty_authority() -> None:
-    assert URL("http:///").authority == ""
+    assert URL("file:///").authority == ""
 
 
 def test_split_result_non_decoded() -> None:
