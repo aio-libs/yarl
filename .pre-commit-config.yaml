@@ -9,7 +9,7 @@ repos:
   hooks:
   - id: check-merge-conflict
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
-  rev: v0.15.20
+  rev: v0.16.10
   hooks:
   - id: ruff-check
     name: ruff check | PEP 517 backend
@@ -21,7 +21,7 @@ repos:
     files: ^packaging/pep517_backend/.+$
 
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
-  rev: v0.15.20
+  rev: v0.16.10
   hooks:
   - id: ruff-check
     name: ruff check | yarl & tests
@@ -42,7 +42,7 @@ repos:
     exclude: ^packaging/pep517_backend/.+$
 
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
-  rev: v0.15.20
+  rev: v0.16.10
   hooks:
   - id: ruff-format
     alias: ruff-format-first-pass
@@ -57,7 +57,7 @@ repos:
     files: ^packaging/pep517_backend/.+$
 
 - repo: https://github.com/astral-sh/ruff-pre-commit.git
-  rev: v0.15.20
+  rev: v0.16.10
   hooks:
   - id: ruff-format
     alias: ruff-format-second-pass
@@ -65,7 +65,7 @@ repos:
     files: ^packaging/pep517_backend/.+$
 
 - repo: https://github.com/python-jsonschema/check-jsonschema.git
-  rev: 0.37.4
+  rev: 0.38.2
   hooks:
   - id: check-github-workflows
     files: ^\.github/workflows/[^/]+$
@@ -115,13 +115,13 @@ repos:
     args: ['--py310-plus']
     exclude: ^packaging/pep517_backend/.+$
 - repo: https://github.com/PyCQA/flake8
-  rev: '7.3.0'
+  rev: '7.4.1'
   hooks:
   - id: flake8
     exclude: "^docs/"
 
 - repo: https://github.com/codespell-project/codespell.git
-  rev: v2.4.2
+  rev: v2.4.3
   hooks:
   - id: codespell
     # web-platform-tests data, and the report quoting it, are full of
@@ -136,7 +136,7 @@ repos:
     - --strict
 
 - repo: https://github.com/MarcoGorelli/cython-lint.git
-  rev: v0.21.0
+  rev: v0.21.1
   hooks:
   - id: cython-lint
 
@@ -149,7 +149,7 @@ repos:
       ^[^/]+[.]rst$
 
 - repo: https://github.com/pre-commit/mirrors-mypy.git
-  rev: v2.1.0
+  rev: v2.4.0
   hooks:
   - id: mypy
     alias: mypy-py311
