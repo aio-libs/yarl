@@ -39,16 +39,16 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 463 |
-| yarl follows each standard in its mode | 318 |
+| yarl follows each standard in its mode | 320 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
-| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 81 |
+| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 79 |
 | RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 25 |
 | Both modes differ from their standard | 9 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 90 |
+| yarl WHATWG mode vs WHATWG | 88 |
 | yarl RFC mode vs RFC 3986+3987 | 34 |
 | WHATWG vs RFC 3986+3987 | 433 |
 
@@ -59,7 +59,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|
 
-## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (81)
+## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (79)
 
 | Category | Cases |
 |---|---|
@@ -67,7 +67,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | other | 11 |
 | non-ASCII or percent-encoded host | 8 |
 | tab or newline inside the input | 6 |
-| empty host | 6 |
+| empty host | 4 |
 | special scheme without an authority | 2 |
 | Windows drive letter | 2 |
 | IP-literal host | 2 |
@@ -145,12 +145,10 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | tab or newline inside the input | `` 'about:blank#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `about:blank#%00%01%1F%20!%22%23$%25&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `about:blank#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
 | empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | `file:///w\|m` | *failure* | *failure* |
 | empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | `file:///w\|\|m` | *failure* | *failure* |
-| empty host | `http://?` | *none* | `http://?` | *failure* | `http://?` | `http://?` |
-| empty host | `http://#` | *none* | `http://#` | *failure* | `http://#` | `http://#` |
 | empty host | `///\//\//test` | `http://example.org/` | `http://example.org///////test` | `http://test/` | *failure* | *failure* |
 | empty host | `/\/\//example.org/../path` | `http://example.org/` | `http://example.org////path` | `http://example.org/path` | *failure* | *failure* |
 | special scheme without an authority | `http:[61:27]/:foo` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/[61:27]/:foo` | *failure* | *failure* |
-| special scheme without an authority | `http:` | `https://example.org/foo/bar` | `http://` | *failure* | `http:` | `http:` |
+| special scheme without an authority | `http:` | `https://example.org/foo/bar` | `http:` | *failure* | `http:` | `http:` |
 | Windows drive letter | `file:C\|\|/m/` | *none* | `file:///C%7C%7C/m/` | `file:///C\|\|/m/` | *failure* | *failure* |
 | Windows drive letter | `C\|a` | `file://host/dir/file` | `file://host/dir/C%7Ca` | `file://host/dir/C\|a` | *failure* | *failure* |
 | IP-literal host | `` foo:// !"$%&'()*+,-.;<=>@[\]^_`{\|}~@host/ `` | *none* | *failure* | `foo://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
@@ -216,7 +214,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `///test` | `http://example.org/` | `http://example.org/test` | `http://test/` | `http://example.org/test` | `http:///test` |
 | empty host | `///example.org/path` | `http://example.org/` | `http://example.org/example.org/path` | `http://example.org/path` | `http://example.org/example.org/path` | `http:///example.org/path` |
 
-## yarl follows each standard in its mode (318)
+## yarl follows each standard in its mode (320)
 
 | Category | Cases |
 |---|---|
@@ -226,7 +224,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | numeric host that is not a dotted quad | 36 |
 | Windows drive letter | 26 |
 | other | 22 |
-| empty host | 20 |
+| empty host | 22 |
 | tab or newline inside the input | 12 |
 | backslash read as a slash | 11 |
 | file host that WHATWG rewrites | 10 |
@@ -501,6 +499,8 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty host | `file://\/localhost//cat` | *none* | `file:////localhost//cat` | `file:////localhost//cat` | *failure* | *failure* |
 | empty host | `\//pig` | `file://lion/` | `file:///pig` | `file:///pig` | *failure* | *failure* |
 | empty host | `file://` | `file://ape/` | `file:///` | `file:///` | `file://` | `file://` |
+| empty host | `http://?` | *none* | *failure* | *failure* | `http://?` | `http://?` |
+| empty host | `http://#` | *none* | *failure* | *failure* | `http://#` | `http://#` |
 | empty host | `data://:443` | *none* | *failure* | *failure* | `data://:443` | `data://:443` |
 | empty host | `javascript://:443` | *none* | *failure* | *failure* | `javascript://:443` | `javascript://:443` |
 | empty host | `mailto://:443` | *none* | *failure* | *failure* | `mailto://:443` | `mailto://:443` |

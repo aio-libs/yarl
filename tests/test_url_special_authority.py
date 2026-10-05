@@ -68,12 +68,9 @@ def test_rejected(url: str) -> None:
     ("url", "whatwg", "rfc"),
     [
         # Nothing to read as a host: kept as a reference to a base.
-        ("http:", "http://", "http:"),
-        ("http:/", "http:///", "http:/"),
-        ("http:?q", "http://?q", "http:?q"),
-        ("http://", "http://", "http://"),
-        ("http:///", "http:///", "http:///"),
-        ("http:///?q", "http:///?q", "http:///?q"),
+        ("http:", "http:", "http:"),
+        ("http:/", "http:/", "http:/"),
+        ("http:?q", "http:?q", "http:?q"),
         # file and non-special schemes are not affected.
         ("file:p", "file:///p", "file:p"),
         ("sc:example.com/", "sc:example.com/", "sc:example.com/"),

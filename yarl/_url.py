@@ -638,6 +638,15 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             netloc = ""
             empty |= EMPTY_AUTHORITY
     if not netloc:  # netloc
+        if (
+            empty & EMPTY_AUTHORITY
+            and mode is _WHATWG
+            and scheme in SCHEME_REQUIRES_HOST
+        ):
+            # The WHATWG host parser fails on the empty host: "http://",
+            # "http:///" and "http://?q" are invalid. "http:" and "http:?q"
+            # have no authority, they are references to a base.
+            _check_missing_host(scheme, mode)
         host = ""
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
@@ -1442,15 +1451,11 @@ class URL:
     def _cmp_empty(self) -> int:
         """The mask of empty components that matters for comparisons.
 
-        It follows what str() writes out: in WHATWG mode a special scheme
-        always prints "//", so "file:/p" and "file:///p" are the same URL
-        there, while RFC mode prints and compares them differently.
+        It follows what str() writes out: in WHATWG mode a file URL always
+        prints "//", so "file:/p" and "file:///p" are the same URL there,
+        while RFC mode prints and compares them differently.
         """
-        if (
-            not self._netloc
-            and self._mode is _WHATWG
-            and self._scheme in SPECIAL_SCHEMES
-        ):
+        if not self._netloc and self._mode is _WHATWG and self._scheme == "file":
             return self._empty | EMPTY_AUTHORITY
         return self._empty
 
@@ -1458,10 +1463,11 @@ class URL:
     def _str_empty(self) -> int:
         """The mask of empty components that str() writes out.
 
-        In WHATWG mode a URL with a special scheme always has an authority,
-        so "//" is written even when it is missing.
+        In WHATWG mode a file URL always has an authority, so "//" is
+        written even when it is missing. Other special schemes need a host;
+        without one the URL is a reference to a base, such as "http:?q".
         """
-        if self._mode is _WHATWG and self._scheme in SPECIAL_SCHEMES:
+        if self._mode is _WHATWG and self._scheme == "file":
             return self._empty | EMPTY_AUTHORITY
         return self._empty
 
@@ -2860,7 +2866,8 @@ def _moved_parts(
     also loses an empty password and an empty userinfo, see
     _drop_empty_password(). A file URL also loses "localhost" and must not
     have userinfo or a port, see _check_whatwg_file_authority(), and reads a
-    drive letter in the authority as the start of the path.
+    drive letter in the authority as the start of the path. An empty
+    authority is rejected for the schemes that need a host.
     """
     netloc = url._netloc
     if mode is not _WHATWG:
@@ -2869,6 +2876,9 @@ def _moved_parts(
         if not url._path and scheme == "file":
             # A file URL has an authority and a path, "/" at least.
             return "", "/", empty | EMPTY_AUTHORITY
+        if empty & EMPTY_AUTHORITY and scheme in SCHEME_REQUIRES_HOST:
+            # As the parser does: "http://" is invalid in WHATWG mode.
+            _check_missing_host(scheme, mode)
         return netloc, url._path, empty
     host = url.raw_host
     if (scheme in SPECIAL_SCHEMES or "[" in netloc) and host:

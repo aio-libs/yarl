@@ -288,12 +288,12 @@ def test_mode_change_keeps_empty_components() -> None:
     assert str(base.join(URL("b?"))) == "sc:///b?"
 
 
-# WHATWG always writes "//" for a special scheme; RFC 3986 only when the
-# URL has an authority.
+# WHATWG always writes "//" for a file URL; RFC 3986 only when the URL has
+# an authority. Other special schemes need a host, "http:/" has none.
 @pytest.mark.parametrize(
     ("url", "whatwg", "rfc"),
     [
-        ("http:/", "http:///", "http:/"),
+        ("http:/", "http:/", "http:/"),
         ("file:/p", "file:///p", "file:/p"),
         ("file:///p", "file:///p", "file:///p"),
         ("gopher:/x", "gopher:/x", "gopher:/x"),
@@ -311,12 +311,12 @@ def test_build_special_scheme_by_mode() -> None:
 
 
 # URLs are equal exactly when they print the same: RFC mode prints the
-# empty authority of a special scheme, WHATWG mode always prints "//".
+# empty authority of a file URL, WHATWG mode always prints "//".
 @pytest.mark.parametrize(
     ("first", "second", "equal"),
     [
         (URL("file:/p"), URL("file:///p"), True),
-        (URL("http:/"), URL("http:///"), True),
+        (URL("http:/"), URL("http:/", mode="rfc"), True),
         (URL("file:/p", mode="rfc"), URL("file:///p", mode="rfc"), False),
         (URL("http:/x", mode="rfc"), URL("http:///x", mode="rfc"), False),
         (URL("file:/p"), URL("file:///p", mode="rfc"), True),

@@ -78,11 +78,9 @@ one, as :rfc:`3986#section-5.3` requires: ``http://example.com/p?`` and
 ``http://example.com/p`` are different URLs, and so are ``sc:///p`` and
 ``sc:/p``. The ``raw_``/decoded properties return ``''`` for both an empty
 and a missing component; ``str()`` and comparisons tell them apart.
-In the default WHATWG mode, URLs with one of the *special* schemes of the
-WHATWG URL Standard (``http``, ``https``, ``ws``, ``wss``, ``ftp`` and
-``file``) always have an authority and print ``//``; in RFC 3986 mode
-``//`` is only printed when the URL has one, so ``URL('file:/p',
-mode='rfc')`` stays ``file:/p``. Whether an empty authority, query or
+In the default WHATWG mode, ``file`` URLs always have an authority and
+print ``//``; in RFC 3986 mode ``//`` is only printed when the URL has one,
+so ``URL('file:/p', mode='rfc')`` stays ``file:/p``. Whether an empty authority, query or
 fragment makes two URLs different follows the same rule, so ``file:/p``
 and ``file:///p`` are equal in WHATWG mode but not in RFC 3986 mode.
 
@@ -144,6 +142,34 @@ same scheme, see there.
 
    ``http:example.com/`` and ``http:///example.com/`` were URLs without a
    host in WHATWG mode, printed as ``http:///example.com/``.
+
+The other special schemes of the WHATWG URL Standard (``http``, ``https``,
+``ws``, ``wss`` and ``ftp``) need a host, so WHATWG mode rejects an empty
+authority: ``http://``, ``http:///`` and ``http://?q`` are invalid, as they
+are for the WHATWG URL Standard, and so is a change into WHATWG mode of such
+a URL parsed in RFC 3986 mode. A URL without an authority, such as ``http:``
+or ``http:?q``, is kept as a reference to a base for :meth:`URL.join` and is
+printed without ``//``. RFC 3986 mode keeps all of them.
+
+.. doctest::
+
+   >>> URL('http://?q')
+   Traceback (most recent call last):
+     ...
+   ValueError: Invalid URL: host is required for absolute urls with the http scheme
+   >>> URL('http:?q')
+   URL('http:?q')
+   >>> URL('http://example.com/path').join(URL('http:?q'))
+   URL('http://example.com/path?q')
+   >>> URL('http://?q', mode='rfc')
+   URL('http://?q', mode='rfc')
+
+.. versionchanged:: 1.26
+
+   WHATWG mode rejects an empty authority for ``http``, ``https``, ``ws``,
+   ``wss`` and ``ftp``, and prints a URL of these schemes without an
+   authority without ``//``; previously ``http://?q`` was accepted, and
+   ``http:?q`` was printed as ``http://?q``.
 
 In WHATWG mode, leading and trailing C0 control characters and spaces are
 stripped, and tabs and newlines are removed, as the WHATWG URL Standard does
