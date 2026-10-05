@@ -1,0 +1,4 @@
+Ran the conformance report in ``tools/conformance/`` for both the WHATWG
+and the RFC 3986 mode, and added a section for the cases where each mode
+follows its own standard
+-- by :user:`asvetlov`.

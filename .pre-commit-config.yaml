@@ -124,6 +124,9 @@ repos:
   rev: v2.4.2
   hooks:
   - id: codespell
+    # web-platform-tests data, and the report quoting it, are full of
+    # deliberately malformed input:
+    exclude: ^tools/conformance/(REPORT\.md|wpt/.+)$
 
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.38.0
@@ -153,7 +156,6 @@ repos:
     name: MyPy, for Python 3.11
     additional_dependencies:
     - Cython
-    - expandvars
     - idna
     - hypothesis
     - lxml  # dep of `--txt-report`, `--cobertura-xml-report` & `--html-report`

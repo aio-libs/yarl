@@ -1,0 +1,4 @@
+Named the RFC side of the conformance report in ``tools/conformance/``
+RFC 3986+3987, the baseline of the RFC mode, in its section names and
+table columns and in the contributor rules that quote them
+-- by :user:`asvetlov`.

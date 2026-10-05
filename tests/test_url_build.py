@@ -72,24 +72,26 @@ def test_url_build_ipv6_zone_id_empty() -> None:
     ids=("iface-name", "numeric", "spaces", "parens", "unicode"),
 )
 def test_url_build_ipv6_zone_id_valid(zone: str) -> None:
-    """Zone IDs accept any non-CTL text per RFC 4007 §11.2."""
+    """Zone IDs accept any non-CTL text per RFC 4007 section 11.2."""
     u = URL.build(scheme="http", host=f"::1%{zone}", path="/")
     assert u.host == f"::1%{zone}"
     assert URL(str(u)).host == f"::1%{zone}"
 
 
 def test_url_build_ipv6_zone_id_bare_percent_round_trip() -> None:
-    """Programmatic hosts keep the bare ``%`` zone separator.
+    """Programmatic hosts take a bare ``%`` zone separator.
 
     ``_encode_host`` falls back to partitioning on ``%`` when no
     ``%25`` is present so that hosts constructed from RFC 4007 scoped
-    literals keep working; this pins that fallback (#998).
+    literals keep working (#998); the URL spells the separator ``%25``
+    as RFC 6874 does.
     """
     u = URL.build(scheme="http", host="fe80::1%eth0")
-    assert str(u) == "http://[fe80::1%eth0]"
-    assert u.raw_host == "fe80::1%eth0"
+    assert str(u) == "http://[fe80::1%25eth0]"
+    assert u.raw_host == "fe80::1%25eth0"
     assert u.host == "fe80::1%eth0"
     assert URL(str(u)) == u
+    assert u == URL.build(scheme="http", host="fe80::1%25eth0")
 
 
 def test_url_build_ipv6_zone_id_numeric_scope_percent25() -> None:
@@ -111,33 +113,40 @@ def test_url_build_ipv6_zone_id_numeric_scope_percent25() -> None:
 
 
 @pytest.mark.parametrize(
-    "zone",
+    ("zone", "encoded", "host_zone"),
     (
-        "e/h",
-        "a?b",
-        "a#c",
+        ("e/h", "e%2Fh", "e%2Fh"),
+        ("a?b", "a%3Fb", "a%3Fb"),
+        ("a#c", "a%23c", "a%23c"),
+        ("a%b", "a%25b", "a%25b"),
+        ("a%2Fb", "a%2Fb", "a%2Fb"),
+        ("\u65e5\u672c", "%E6%97%A5%E6%9C%AC", "\u65e5\u672c"),
     ),
-    ids=("slash", "question", "hash"),
+    ids=("slash", "question", "hash", "percent", "pct-encoded", "non-ascii"),
 )
-def test_url_build_ipv6_zone_id_reserved_chars_break_round_trip(zone: str) -> None:
-    """Reserved characters in a zone produce URLs yarl cannot re-parse.
+def test_url_build_ipv6_zone_id_percent_encoded(
+    zone: str, encoded: str, host_zone: str
+) -> None:
+    """A zone identifier given after a bare ``%`` is percent-encoded.
 
-    RFC 6874 §2 requires non-unreserved zone characters to be
-    percent-encoded; the liberal RFC 4007 policy emits them raw, so
-    the serialized URL fails yarl's own parser. Documents current
-    behavior (#998).
+    RFC 6874 section 2 requires non-unreserved zone characters to be
+    percent-encoded, so the URL can be parsed back and serialized as
+    ASCII. Percent-encoded octets are kept, and ``.host`` keeps ``%``
+    and delimiters encoded.
     """
     u = URL.build(scheme="http", host=f"fe80::1%{zone}", path="/x")
-    assert str(u) == f"http://[fe80::1%{zone}]/x"
-    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
-        URL(str(u))
+    assert str(u) == f"http://[fe80::1%25{encoded}]/x"
+    assert u.host == f"fe80::1%{host_zone}"
+    assert URL(str(u)) == u
+    assert bytes(u) == str(u).encode()
+    assert URL.build(scheme="http", host=u.host, path="/x") == u
 
 
-def test_url_build_ipv6_zone_id_non_ascii_not_ascii_encodable() -> None:
-    """Non-ASCII zone identifiers make the URL non-ASCII-serializable."""
-    u = URL.build(scheme="http", host="fe80::1%日本語", path="/")
-    with pytest.raises(UnicodeEncodeError):
-        bytes(u)
+@pytest.mark.parametrize("zone", ("e/h", "a b", "\u65e5", "a%2"))
+def test_url_build_ipv6_zone_id_after_percent25_invalid(zone: str) -> None:
+    """A zone identifier after ``%25`` must already be percent-encoded."""
+    with pytest.raises(ValueError, match="Invalid characters in zone identifier"):
+        URL.build(scheme="http", host=f"fe80::1%25{zone}")
 
 
 def test_url_build_ipv6_zone_id_empty_authority_not_validated() -> None:
@@ -334,8 +343,13 @@ def test_build_with_authority_empty_host_no_scheme() -> None:
 
 
 def test_build_with_authority_and_only_user() -> None:
-    url = URL.build(scheme="https", authority="user:@foo.com", path="/path")
+    url = URL.build(scheme="https", authority="user:@foo.com", path="/path", mode="rfc")
     assert str(url) == "https://user:@foo.com/path"
+
+
+def test_build_with_authority_and_only_user_whatwg() -> None:
+    url = URL.build(scheme="https", authority="user:@foo.com", path="/path")
+    assert str(url) == "https://user@foo.com/path"
 
 
 def test_build_with_authority_with_port() -> None:
@@ -473,6 +487,7 @@ def test_build_percent_encoded() -> None:
         path="/%2d",
         query_string="k%2d=v%2d",
         fragment="f%2d",
+        mode="rfc",
     )
     assert str(u) == "http://u%252d:p%252d@%2d.org/%252d?k%252d=v%252d#f%252d"
     assert u.raw_host == "%2d.org"
@@ -492,8 +507,17 @@ def test_build_percent_encoded() -> None:
     assert u.fragment == "f%2d"
 
 
+def test_build_percent_encoded_host_whatwg() -> None:
+    # The WHATWG host parser percent-decodes the host of a special URL.
+    u = URL.build(scheme="http", host="%2d.org", user="u%2d")
+    assert str(u) == "http://u%252d@-.org"
+    assert u.raw_host == "-.org"
+    u = URL.build(scheme="sc", host="%2d.org")
+    assert u.raw_host == "%2d.org"
+
+
 def test_build_with_authority_percent_encoded() -> None:
-    u = URL.build(scheme="http", authority="u%2d:p%2d@%2d.org")
+    u = URL.build(scheme="http", authority="u%2d:p%2d@%2d.org", mode="rfc")
     assert str(u) == "http://u%252d:p%252d@%2d.org"
     assert u.raw_host == "%2d.org"
     assert u.host == "%2d.org"
@@ -503,6 +527,12 @@ def test_build_with_authority_percent_encoded() -> None:
     assert u.password == "p%2d"
     assert u.raw_authority == "u%252d:p%252d@%2d.org"
     assert u.authority == "u%2d:p%2d@%2d.org:80"
+
+
+def test_build_with_authority_percent_encoded_host_whatwg() -> None:
+    u = URL.build(scheme="http", authority="u%2d:p%2d@%2d.org")
+    assert str(u) == "http://u%252d:p%252d@-.org"
+    assert u.raw_host == "-.org"
 
 
 def test_build_with_authority_percent_encoded_already_encoded() -> None:
@@ -559,3 +589,14 @@ def test_build_uppercase_host() -> None:
         encoded=False,
     )
     assert u.host == "upper.case"
+
+
+@pytest.mark.parametrize(
+    ("port", "expected"),
+    [(8080, "http://example.com:8080/p"), (80, "http://example.com/p")],
+)
+def test_build_already_encoded_port(port: int, expected: str) -> None:
+    url = URL.build(
+        scheme="http", host="example.com", port=port, path="/p", encoded=True
+    )
+    assert str(url) == expected

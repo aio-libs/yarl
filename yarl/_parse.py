@@ -1,9 +1,10 @@
 """URL parsing utilities."""
 
+import codecs
 import re
 import unicodedata
 from functools import lru_cache
-from urllib.parse import scheme_chars, uses_netloc
+from urllib.parse import parse_qsl, scheme_chars
 
 from ._quoters import QUOTER, UNQUOTER_PLUS
 
@@ -16,22 +17,57 @@ WHATWG_C0_CONTROL_OR_SPACE = (
 
 # Unsafe bytes to be removed per WHATWG spec
 UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
-USES_AUTHORITY = frozenset(uses_netloc)
+# The WHATWG "special" schemes: their URLs always have an authority, so in
+# WHATWG mode "//" is written out even when the authority is missing.
+SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp", "file"})
+
+# IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" ), RFC 3986
+# section 3.2.2; the "v" is case-insensitive.
+IP_FUTURE_RE = re.compile(r"[vV][0-9A-Fa-f]+\.[A-Za-z0-9\-._~!$&'()*+,;=:]+")
+
+# Bits of the "empty" mask: the component is present but empty, as in
+# "sc://", "http://h/?" or "http://h/#". An absent and an empty component
+# are different per RFC 3986 section 5.3, but both are stored as "".
+EMPTY_AUTHORITY = 1
+EMPTY_QUERY = 2
+EMPTY_FRAGMENT = 4
 
 SplitURLType = tuple[str, str, str, str, str]
 
+# The ZoneID of RFC 6874; in a URL it follows the address as "%25" <ZoneID>.
+# RFC 6874 requires at least one character, yarl also accepts an empty zone
+# identifier (#998).
+ZONE_ID_RE = re.compile(r"(?:[0-9A-Za-z._~-]|%[0-9A-Fa-f]{2})*")
 
-def split_url(url: str) -> SplitURLType:
-    """Split URL into parts."""
+
+def check_zone_id(ip_literal: str) -> None:
+    """Reject an IPv6 zone identifier not written as RFC 6874 says.
+
+    The zone identifier follows the address as "%25" and the ZoneID, whose
+    characters other than unreserved ones are percent-encoded. A bare "%",
+    as in "fe80::1%eth0" (the user interface form of RFC 9844), or another
+    percent-encoded octet, as in "::%31", is not URI syntax.
+    """
+    pct = ip_literal.index("%")
+    if ip_literal[pct : pct + 3] != "%25" or not ZONE_ID_RE.fullmatch(
+        ip_literal, pct + 3
+    ):
+        raise ValueError(f"Invalid IPv6 zone identifier in {ip_literal!r}")
+
+
+def split_url(url: str) -> tuple[str, str, str, str, str, int]:
+    """Split URL into parts and the mask of present but empty parts."""
     # Adapted from urllib.parse.urlsplit
-    # Only lstrip url as some applications rely on preserving trailing space.
-    # (https://url.spec.whatwg.org/#concept-basic-url-parser would strip both)
-    url = url.lstrip(WHATWG_C0_CONTROL_OR_SPACE)
+    # Strip leading and trailing C0 control or space in both modes, as the
+    # WHATWG basic URL parser does; RFC 3986 appendix C asks the same of
+    # software that accepts user-typed URIs.
+    url = url.strip(WHATWG_C0_CONTROL_OR_SPACE)
     for b in UNSAFE_URL_BYTES_TO_REMOVE:
         if b in url:
             url = url.replace(b, "")
 
     scheme = netloc = query = fragment = ""
+    empty = 0
     i = url.find(":")
     if i > 0 and url[0] in scheme_chars:
         for c in url[1:i]:
@@ -42,6 +78,7 @@ def split_url(url: str) -> SplitURLType:
     has_hash = "#" in url
     has_question_mark = "?" in url
     if url[:2] == "//":
+        empty = EMPTY_AUTHORITY
         delim = len(url)  # position of end of domain part of url, default is end
         if has_hash and has_question_mark:
             delim_chars = "/?#"
@@ -91,18 +128,28 @@ def split_url(url: str) -> SplitURLType:
             # Valid bracketed hosts are defined in
             # https://www.rfc-editor.org/rfc/rfc3986#page-49
             # https://url.spec.whatwg.org/
-            if bracketed_host and bracketed_host[0] == "v":
-                if not re.match(r"\Av[a-fA-F0-9]+\..+\Z", bracketed_host):
+            if bracketed_host and bracketed_host[0] in "vV":
+                if not IP_FUTURE_RE.fullmatch(bracketed_host):
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
+            elif "%" in bracketed_host:
+                check_zone_id(bracketed_host)
     if has_hash:
         url, _, fragment = url.partition("#")
-    if has_question_mark:
+        empty |= EMPTY_FRAGMENT
+    if has_question_mark and "?" in url:
         url, _, query = url.partition("?")
-    if netloc and not netloc.isascii():
-        _check_netloc(netloc)
-    return scheme, netloc, url, query, fragment
+        empty |= EMPTY_QUERY
+    if netloc:
+        if not netloc.isascii():
+            _check_netloc(netloc)
+        empty &= ~EMPTY_AUTHORITY
+    if query:
+        empty &= ~EMPTY_QUERY
+    if fragment:
+        empty &= ~EMPTY_FRAGMENT
+    return scheme, netloc, url, query, fragment, empty
 
 
 def _check_netloc(netloc: str) -> None:
@@ -131,7 +178,10 @@ def _check_netloc(netloc: str) -> None:
 def split_netloc(
     netloc: str,
 ) -> tuple[str | None, str | None, str | None, int | None]:
-    """Split netloc into username, password, host and port."""
+    """Split netloc into username, password, host and port.
+
+    An empty username is None, see split_netloc_rfc() for RFC 3986 mode.
+    """
     if "@" not in netloc:
         username: str | None = None
         password: str | None = None
@@ -153,35 +203,107 @@ def split_netloc(
         if port_str and port_str[0] != ":":
             raise ValueError("Invalid IPv6 URL")
         _, _, port_str = port_str.partition(":")
+        if hostname[:1] in ("v", "V"):
+            # An IPvFuture address keeps its brackets: without them it would
+            # read as a reg-name. IPv6 addresses never start with "v".
+            hostname = f"[{hostname}]"
     else:
         hostname, _, port_str = hostinfo.partition(":")
 
     if not port_str:
         return username or None, password, hostname or None, None
 
-    try:
-        port = int(port_str)
-    except ValueError:
+    # RFC 3986 section 3.2.3 defines the port as *DIGIT, i.e. ASCII digits
+    # only. int() is more permissive and would accept a leading '+',
+    # surrounding whitespace, underscore digit separators and non-ASCII
+    # decimal digits, so reject those before converting.
+    if not (port_str.isascii() and port_str.isdigit()):
         raise ValueError("Invalid URL: port can't be converted to integer")
+    port = int(port_str)
     if not (0 <= port <= 65535):
         raise ValueError("Port out of range 0-65535")
     return username or None, password, hostname or None, port
+
+
+@lru_cache
+def split_netloc_rfc(
+    netloc: str,
+) -> tuple[str | None, str | None, str | None, int | None]:
+    """Split netloc into username, password, host and port in RFC 3986 mode.
+
+    As split_netloc(), but an empty username is "" when the netloc has
+    userinfo, as RFC 3986 keeps an empty userinfo: "@h" and ":p@h" have the
+    username "". A separate cache keeps the single string key, which a mode
+    argument would turn into a tuple.
+    """
+    username, password, host, port = split_netloc(netloc)
+    if username is None and "@" in netloc:
+        username = ""
+    return username, password, host, port
+
+
+# "//" behind any number of "/." segments, see needs_dot_prefix().
+_DOT_PREFIXED_AUTHORITY_RE = re.compile(r"(?:/\.)*//")
+
+
+def needs_dot_prefix(path: str) -> bool:
+    """Tell if an authority-less path needs "/." in front when written out.
+
+    A path starting with "//" would read as an authority, so str() writes
+    "/." before it and the parsers drop that "/." again. To keep a literal
+    "/." segment in such a place, a path that is "//..." behind any number
+    of "/." segments gets the prefix too, e.g. "/.//a" is written "/././/a".
+    """
+    return _DOT_PREFIXED_AUTHORITY_RE.match(path) is not None
+
+
+def has_dot_prefix(path: str) -> bool:
+    """Tell if an authority-less path starts with the "/." str() adds."""
+    return path[:3] == "/./" and _DOT_PREFIXED_AUTHORITY_RE.match(path, 2) is not None
 
 
 def unsplit_result(
     scheme: str, netloc: str, url: str, query: str, fragment: str
 ) -> str:
     """Unsplit a URL without any normalization."""
-    if netloc or (scheme and scheme in USES_AUTHORITY) or url[:2] == "//":
+    if netloc:
         if url and url[:1] != "/":
             url = f"{scheme}://{netloc}/{url}" if scheme else f"{scheme}:{url}"
         else:
             url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
-    elif scheme:
-        url = f"{scheme}:{url}"
+    else:
+        if url[:2] == "//" or (url[:3] == "/./" and needs_dot_prefix(url)):
+            # Without an authority a path cannot start with "//", which
+            # would read as one; "/." keeps it a path, as WHATWG does.
+            url = f"/.{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
     if query:
         url = f"{url}?{query}"
     return f"{url}#{fragment}" if fragment else url
+
+
+def unsplit_result_empty(
+    scheme: str, netloc: str, url: str, query: str, fragment: str, empty: int
+) -> str:
+    """Unsplit a URL that has present but empty components.
+
+    *empty* is a mask of EMPTY_AUTHORITY, EMPTY_QUERY and EMPTY_FRAGMENT
+    telling which empty components are present.
+    """
+    if netloc or empty & EMPTY_AUTHORITY:
+        if url and url[:1] != "/":
+            url = f"{scheme}://{netloc}/{url}" if scheme else f"{scheme}:{url}"
+        else:
+            url = f"{scheme}://{netloc}{url}" if scheme else f"//{netloc}{url}"
+    else:
+        if url[:2] == "//" or (url[:3] == "/./" and needs_dot_prefix(url)):
+            url = f"/.{url}"
+        if scheme:
+            url = f"{scheme}:{url}"
+    if query or empty & EMPTY_QUERY:
+        url = f"{url}?{query}"
+    return f"{url}#{fragment}" if fragment or empty & EMPTY_FRAGMENT else url
 
 
 @lru_cache  # match the same size as urlsplit
@@ -194,7 +316,9 @@ def make_netloc(
 ) -> str:
     """Make netloc from parts.
 
-    The user and password are encoded if encode is True.
+    The user and password are encoded if encode is True. A user that is
+    not None is written with "@" even when it is empty, as RFC 3986 mode
+    keeps an empty userinfo; WHATWG mode passes None for an empty user.
 
     The host must already be encoded with _encode_host.
     """
@@ -215,18 +339,39 @@ def make_netloc(
         user = f"{user}:{password}"
     elif user and encode:
         user = QUOTER(user)
-    return f"{user}@{ret}" if user else ret
+    return f"{user}@{ret}"
 
 
-def query_to_pairs(query_string: str) -> list[tuple[str, str]]:
-    """Parse a query given as a string argument.
+def query_to_pairs(
+    query_string: str, *, max_fields: int | None = None, encoding: str = "utf-8"
+) -> list[tuple[str, str]]:
+    """Parse a query string into a list of decoded name, value pairs.
 
-    Works like urllib.parse.parse_qsl with keep empty values.
+    The result is the same as
+    ``urllib.parse.parse_qsl(query_string, keep_blank_values=True,
+    encoding=encoding, max_num_fields=max_fields)``.
+
+    Raises :exc:`ValueError` if *max_fields* is not ``None`` and the
+    query string has more than *max_fields* fields. An empty query string
+    returns an empty list on every Python version, even when *max_fields*
+    is ``0``, where ``parse_qsl`` on Python 3.10 raises instead.
     """
-    pairs: list[tuple[str, str]] = []
     if not query_string:
+        return []
+    if max_fields is not None and query_string.count("&") >= max_fields:
+        raise ValueError("Max number of fields exceeded")
+    pairs: list[tuple[str, str]] = []
+    if "%" not in query_string:
+        # Nothing to decode except '+', which is the same in every encoding
+        for name_value in query_string.replace("+", " ").split("&"):
+            if name_value:
+                name, _, value = name_value.partition("=")
+                pairs.append((name, value))
         return pairs
-    for k_v in query_string.split("&"):
-        k, _, v = k_v.partition("=")
-        pairs.append((UNQUOTER_PLUS(k), UNQUOTER_PLUS(v)))
+    if encoding != "utf-8" and codecs.lookup(encoding).name != "utf-8":
+        return parse_qsl(query_string, keep_blank_values=True, encoding=encoding)
+    for name_value in query_string.split("&"):
+        if name_value:
+            name, _, value = name_value.partition("=")
+            pairs.append((UNQUOTER_PLUS(name), UNQUOTER_PLUS(value)))
     return pairs

@@ -5,7 +5,7 @@ from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
-from yarl import URL
+from yarl import URL, Mode
 from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
@@ -180,17 +180,33 @@ def test_password_without_user() -> None:
 
 
 def test_empty_password_without_user() -> None:
-    url = URL("http://:@example.com")
-    assert url.user is None
+    url = URL("http://:@example.com", mode="rfc")
+    # RFC 3986 keeps the userinfo, so the username is empty, not missing.
+    assert url.user == ""
     assert url.password == ""
     assert url.raw_password == ""
     assert url.raw_password == SplitResult(*url._val).password
 
 
+def test_empty_password_without_user_whatwg() -> None:
+    # WHATWG drops an empty password, and "@" with it.
+    url = URL("http://:@example.com")
+    assert url.user is None
+    assert url.password is None
+    assert url.raw_password is None
+    assert str(url) == "http://example.com"
+
+
 def test_user_empty_password() -> None:
-    url = URL("http://user:@example.com")
+    url = URL("http://user:@example.com", mode="rfc")
     assert "user" == url.user
     assert "" == url.password
+
+
+def test_user_empty_password_whatwg() -> None:
+    url = URL("http://user:@example.com")
+    assert "user" == url.user
+    assert url.password is None
 
 
 def test_raw_host() -> None:
@@ -229,6 +245,11 @@ def test_host_subcomponent(host: str) -> None:
 def test_host_port_subcomponent(input: str, result: str) -> None:
     url = URL(input)
     assert url.host_port_subcomponent == result
+
+
+@pytest.mark.parametrize("input", ["//user@", "//user@:8080"])
+def test_host_port_subcomponent_empty_host_rfc(input: str) -> None:
+    assert URL(input, mode="rfc").host_port_subcomponent is None
 
 
 def test_host_subcomponent_return_idna_encoded_host() -> None:
@@ -473,20 +494,22 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
 
 
 def test_ipv4_zone() -> None:
-    # I'm unsure if it is correct.
-    url = URL("http://1.2.3.4%тест%42:123")
-    assert url.raw_host == "1.2.3.4%тест%42"
-    assert url.host == url.raw_host
-    assert url.raw_host == SplitResult(*url._val).hostname
+    # WHATWG mode decodes the host; in RFC 3986 mode "%" must start a
+    # percent-encoded octet.
+    with pytest.raises(ValueError, match="once percent-decoded"):
+        URL("http://1.2.3.4%тест%42:123")
+    with pytest.raises(ValueError, match="hexadecimal digits in the host"):
+        URL("http://1.2.3.4%тест%42:123", mode="rfc")
 
 
 def test_ipv4_zone_percent25() -> None:
     """The ``%25`` decode in ``URL.host`` also covers IPv4 hosts.
 
     Zone identifiers on IPv4 addresses are outside any RFC; this pins
-    the digit-branch behavior of the ``%25`` handling (#998).
+    the digit-branch behavior of the ``%25`` handling (#998) in RFC 3986
+    mode; WHATWG mode decodes the host and rejects the "%".
     """
-    url = URL("http://1.2.3.4%25eth0:123/")
+    url = URL("http://1.2.3.4%25eth0:123/", mode="rfc")
     assert url.raw_host == "1.2.3.4%25eth0"
     assert url.host == "1.2.3.4%eth0"
     assert url.port == 123
@@ -499,7 +522,7 @@ def test_ipv6_zone_rfc6874() -> None:
     assert url.host_subcomponent == "[fe80::1%251]"
     assert url.host_port_subcomponent == "[fe80::1%251]"
     assert url.authority == "fe80::1%1:80"
-    assert url.human_repr() == "http://[fe80::1%1]/"
+    assert url.human_repr() == "http://[fe80::1%251]/"
     assert str(url) == "http://[fe80::1%251]/"
     assert URL(str(url)) == url
 
@@ -510,7 +533,7 @@ def test_ipv6_zone_rfc6874_named_zone() -> None:
     assert url.host == "fe80::1%eth0"
     assert url.host_subcomponent == "[fe80::1%25eth0]"
     assert url.authority == "fe80::1%eth0:80"
-    assert url.human_repr() == "http://[fe80::1%eth0]/"
+    assert url.human_repr() == "http://[fe80::1%25eth0]/"
     assert str(url) == "http://[fe80::1%25eth0]/"
     assert URL(str(url)) == url
 
@@ -527,59 +550,24 @@ def test_ipv6_zone_rfc6874_with_port() -> None:
 
 def test_ipv6_zone_rfc6874_pct_encoded_inside_zone() -> None:
     # Multiple ``%25`` sequences: ``_encode_host`` partitions on the
-    # first one (the RFC 6874 separator); ``.host`` then decodes every
-    # ``%25`` in the result, including the one that originally encoded
-    # a ``%`` inside the zone identifier.
+    # first one (the RFC 6874 separator); ``.host`` decodes it to ``%``
+    # and keeps a ``%25`` inside the zone identifier encoded.
     url = URL("http://[fe80::1%25foo%252fbar]/")
     assert url.raw_host == "fe80::1%25foo%252fbar"
-    assert url.host == "fe80::1%foo%2fbar"
+    assert url.host == "fe80::1%foo%252fbar"
     assert url.host_subcomponent == "[fe80::1%25foo%252fbar]"
     assert str(url) == "http://[fe80::1%25foo%252fbar]/"
     assert URL(str(url)) == url
 
 
-def test_ipv6_zone_bare_percent_parse() -> None:
-    """A bare ``%`` zone separator is accepted and preserved verbatim.
-
-    This is the pre-RFC 6874 de-facto form; RFC 6874 §3 suggests
-    (non-normatively) accepting it, and curl/wget/urllib3 all do.
-    yarl does not re-encode it to ``%25``.
-    """
-    url = URL("http://[fe80::1%eth0]:8080/")
-    assert url.raw_host == "fe80::1%eth0"
-    assert url.host == "fe80::1%eth0"
-    assert url.host_subcomponent == "[fe80::1%eth0]"
-    assert url.host_port_subcomponent == "[fe80::1%eth0]:8080"
-    assert url.authority == "fe80::1%eth0:8080"
-    assert url.human_repr() == "http://[fe80::1%eth0]:8080/"
-    assert str(url) == "http://[fe80::1%eth0]:8080/"
-    assert URL(str(url)) == url
-
-
-def test_ipv6_zone_bare_percent_hex_ambiguous() -> None:
-    """A bare ``%`` is accepted even when followed by two hex digits.
-
-    RFC 6874 §3 (non-normative) suggests accepting a bare ``%`` only
-    when it is not followed by two valid hexadecimal characters; like
-    the rest of the ecosystem, yarl accepts it unconditionally, so
-    ``%ee1`` is zone ``ee1`` rather than an error (#998).
-    """
-    url = URL("http://[fe80::a%ee1]/")
-    assert url.raw_host == "fe80::a%ee1"
-    assert url.host == "fe80::a%ee1"
-
-
 def test_ipv6_zone_empty_zone_parse() -> None:
-    """The string-parse path accepts empty zone identifiers.
+    """The string-parse path accepts an empty zone identifier.
 
-    ``URL.build(host=...)`` rejects them (RFC 9844 §6.3), but parsing
-    uses ``validate_host=False``; this documents the asymmetry (#998).
+    ``URL.build(host=...)`` rejects it (RFC 9844 section 6.3), but parsing
+    has always accepted it (#998).
     """
     url = URL("http://[fe80::1%25]/")
     assert url.raw_host == "fe80::1%25"
-    assert url.host == "fe80::1%"
-    url = URL("http://[fe80::1%]/")
-    assert url.raw_host == "fe80::1%"
     assert url.host == "fe80::1%"
 
 
@@ -587,9 +575,31 @@ def test_ipv6_zone_rfc6874_multiple_percent25() -> None:
     """Only the first ``%25`` is the separator; later ones are zone text."""
     url = URL("http://[fe80::1%25a%25b]/")
     assert url.raw_host == "fe80::1%25a%25b"
-    assert url.host == "fe80::1%a%b"
+    assert url.host == "fe80::1%a%25b"
     assert str(url) == "http://[fe80::1%25a%25b]/"
     assert URL(str(url)) == url
+
+
+@pytest.mark.parametrize(
+    ("url", "host"),
+    [
+        ("http://[fe80::1%25eth0]:8080/p", "fe80::1%eth0"),
+        ("http://[fe80::1%25e%20th]/", "fe80::1%e th"),
+        ("http://[fe80::1%25%C3%B1]/", "fe80::1%\xf1"),
+        # Delimiters and "%" stay encoded, so human_repr() can be parsed.
+        ("http://[fe80::1%25a%2Fb]/", "fe80::1%a%2Fb"),
+        ("http://[fe80::1%25a%25b]/", "fe80::1%a%25b"),
+        # An octet that is not UTF-8 is kept, not replaced with U+FFFD.
+        ("http://[fe80::1%25e%FF]/", "fe80::1%e%FF"),
+    ],
+)
+def test_ipv6_zone_host_round_trip(url: str, host: str) -> None:
+    """``.host`` can be passed back to the builders unchanged."""
+    u = URL(url)
+    assert u.host == host
+    assert u.with_host(host) == u
+    assert URL.build(scheme="http", host=host, port=u.explicit_port, path=u.path) == u
+    assert URL(u.human_repr()) == u
 
 
 def test_ipv6_zone_rfc6874_encoded_url() -> None:
@@ -598,19 +608,6 @@ def test_ipv6_zone_rfc6874_encoded_url() -> None:
     assert url.raw_host == "fe80::1%25eth0"
     assert url.host == "fe80::1%eth0"
     assert str(url) == "http://[fe80::1%25eth0]/"
-
-
-def test_ipv6_zone_separator_spellings_not_equal() -> None:
-    """The two zone separator spellings are distinct URLs.
-
-    yarl performs no normalization between ``%25`` and bare ``%``, so
-    URLs denoting the same scoped address compare unequal even though
-    ``.host`` decodes both to the same value (#998).
-    """
-    encoded = URL("http://[fe80::1%25eth0]/")
-    bare = URL("http://[fe80::1%eth0]/")
-    assert encoded != bare
-    assert encoded.host == bare.host
 
 
 def test_ipv6_zone_rfc6874_global_address() -> None:
@@ -2289,6 +2286,65 @@ def test_join_absolute() -> None:
     assert str(url2) == "http://www.python.org/~guido"
 
 
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        ("", "http://example.com/path?arg"),
+        ("?other", "http://example.com/path?other"),
+        ("#new", "http://example.com/path?arg#new"),
+    ],
+)
+def test_join_drops_base_fragment(reference: str, expected: str) -> None:
+    base = URL("http://example.com/path?arg#frag")
+    assert str(base.join(URL(reference))) == expected
+
+
+@pytest.mark.parametrize(
+    ("base", "reference", "expected"),
+    [
+        ("mailto:user@example.com", "#frag", "mailto:user@example.com#frag"),
+        ("urn:isbn:0451450523", "?q", "urn:isbn:0451450523?q"),
+        ("foo://host/a/b", "c", "foo://host/a/c"),
+        ("foo://host/a/b", "//other/c", "foo://other/c"),
+        ("foo:a/b", "../c", "foo:c"),
+        ("foo:", "c", "foo:c"),
+        ("foo://host/a", "foo:b", "foo:b"),
+        ("foo://host/a", "bar:b", "bar:b"),
+    ],
+)
+def test_join_scheme_outside_uses_relative(
+    base: str, reference: str, expected: str
+) -> None:
+    assert str(URL(base).join(URL(reference))) == expected
+
+
+@pytest.mark.parametrize(
+    ("url", "raw_path", "path"),
+    [
+        ("http://example.com/a%3Ab", "/a%3Ab", "/a:b"),
+        ("http://example.com/a%3ab%40c", "/a%3Ab%40c", "/a:b@c"),
+        ("http://example.com/k%3Dv%3Bp", "/k%3Dv%3Bp", "/k=v;p"),
+        ("http://example.com/%28x%29", "/%28x%29", "/(x)"),
+    ],
+)
+def test_path_reserved_percent_encoding_kept(
+    url: str, raw_path: str, path: str
+) -> None:
+    parsed = URL(url)
+    assert parsed.raw_path == raw_path
+    assert parsed.path == path
+    assert parsed != URL(f"http://example.com{path}")
+
+
+def test_path_unreserved_percent_encoding_decoded() -> None:
+    assert URL("http://example.com/%7Ex%2Dy") == URL("http://example.com/~x-y")
+
+
+def test_join_keeps_reserved_percent_encoding_in_base() -> None:
+    base = URL("http://example.com/a%3Ab/c%2Fd/e")
+    assert str(base.join(URL("f"))) == "http://example.com/a%3Ab/c%2Fd/f"
+
+
 def test_join_non_url() -> None:
     base = URL("http://example.com")
     with pytest.raises(TypeError):
@@ -2404,7 +2460,6 @@ URLLIB_URLJOIN = [
     ("http://a/b/c/d/e/", "../../f/g", "http://a/b/c/f/g"),
     ("http://a/b/", "../../f/g/", "http://a/f/g/"),
     ("a", "b", "b"),
-    ("http:///", "..", "http:///"),
     ("a/", "b", "a/b"),
     ("a/b", "c", "a/c"),
     ("a/b/", "c", "a/b/c"),
@@ -2442,7 +2497,7 @@ def test_join_preserves_leading_slash() -> None:
 
 
 def test_empty_authority() -> None:
-    assert URL("http:///").authority == ""
+    assert URL("file:///").authority == ""
 
 
 def test_split_result_non_decoded() -> None:
@@ -2516,7 +2571,7 @@ def test_human_repr_delimiters() -> None:
         s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         "@хост.домен:8080"
-        "/ !\"%23$%25&'()*+,-./:;<=>%3F@[\\]^_`{|}~"
+        "/ !\"%23$%25&'()*+,-./:;<=>%3F@[%5C]^_`{|}~"
         "? !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
         "= !\"%23$%25%26'()*%2B,-./:%3B<%3D>?@[\\]^_`{|}~"
         "# !\"#$%25&'()*+,-./:;<=>?@[\\]^_`{|}~"
@@ -2708,18 +2763,23 @@ def test_build_with_invalid_ipv6_host(host: str, is_authority: bool) -> None:
     ],
 )
 def test_url_with_backslash_in_netloc(url: str) -> None:
+    # WHATWG mode reads "\\" as "/" in a special URL, as browsers do, so the
+    # host ends before it.
+    assert URL(url) == URL(url.replace("\\", "/"))
+    with pytest.raises(ValueError, match=r"RFC 3986 does not allow '\\'"):
+        URL(url, mode="rfc")
     with pytest.raises(
         ValueError, match=r"backslash \('\\'\) is not allowed in the authority"
     ):
-        URL(url)
+        URL(url, encoded=True)
 
 
 def test_url_with_backslash_in_path_after_ipv6_host() -> None:
     url = URL(r"http://[::1]/\path")
 
-    assert str(url) == r"http://[::1]/%5Cpath"
+    assert str(url) == "http://[::1]//path"
     assert url.host == "::1"
-    assert url.path == r"/\path"
+    assert url.path == "//path"
 
 
 @pytest.mark.parametrize("byte", ["\r", "\n", "\t"])
@@ -2732,6 +2792,27 @@ def test_unsafe_url_bytes_are_removed(byte: str) -> None:
 def test_control_chars_are_removed(byte: str) -> None:
     url = URL(f"{byte}http://example.com/")
     assert str(url) == "http://example.com/"
+
+
+# RFC 3986 mode rejects them when it parses an unencoded string, see
+# tests/test_url_rfc_grammar.py.
+@pytest.mark.parametrize(
+    ("mode", "encoded"),
+    [(Mode.WHATWG, False), (Mode.WHATWG, True), (Mode.RFC, True)],
+)
+@pytest.mark.parametrize("byte", tuple(_WHATWG_C0_CONTROL_OR_SPACE))
+def test_trailing_control_chars_are_removed(
+    byte: str, mode: Mode, encoded: bool
+) -> None:
+    url = URL(f"http://example.com/path{byte}", mode=mode, encoded=encoded)
+    assert str(url) == "http://example.com/path"
+    url = URL(f"{byte}http://example.com/?q{byte}{byte}", mode=mode, encoded=encoded)
+    assert str(url) == "http://example.com/?q"
+
+
+def test_join_strips_surrounding_spaces() -> None:
+    base = URL("http://example.org/foo/bar")
+    assert str(base.join(URL(" foo.com  "))) == "http://example.org/foo/foo.com"
 
 
 @pytest.mark.parametrize(
@@ -2792,10 +2873,26 @@ def test_url_host_with_default_ignorable_rejected(ignorable: str) -> None:
         URL(f"http://e{ignorable}vil.com/")
 
 
+@pytest.mark.parametrize(
+    "delimiter",
+    ["［", "］", "＼"],
+    ids=["fullwidth-left-bracket", "fullwidth-right-bracket", "fullwidth-backslash"],
+)
+def test_url_host_idna_normalizes_to_delimiter_rejected(delimiter: str) -> None:
+    """Reject a parsed host that IDNA-normalizes to a URL delimiter.
+
+    ``_check_netloc`` only screens ``/?#@:%``, so ``[``, ``]`` and ``\\``
+    reach ``_idna_encode`` unchecked. Left unrejected, ``URL("http://exa［mple/")``
+    renders as ``http://exa[mple/``, which yarl itself rejects on re-parse.
+    """
+    with pytest.raises(ValueError, match="after IDNA normalization"):
+        URL(f"http://exa{delimiter}mple/p")
+
+
 def _idna_collapses(code_point: int) -> bool:
     """True if IDNA encoding silently deletes ``code_point`` from a host."""
     try:
-        return _idna_encode(f"ab{chr(code_point)}cd.com") == "abcd.com"
+        return _idna_encode(f"ab{chr(code_point)}cd.com")[0] == "abcd.com"
     except UnicodeError:
         return False
 
@@ -2829,3 +2926,53 @@ def test_default_ignorable_covers_idna_stripped() -> None:
         hex(cp) for cp in stripped if not _DEFAULT_IGNORABLE_RE.search(chr(cp))
     )
     assert not uncovered, f"IDNA strips these but the regex misses them: {uncovered}"
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "a\x00b",  # NUL
+        "a\x01b",  # C0 control
+        "a\x1fb",  # unit separator
+        "a\x7fb",  # DEL
+    ],
+    ids=("nul", "c0", "unit-separator", "del"),
+)
+def test_url_parse_rejects_control_characters_in_host(host: str) -> None:
+    """The string parser must reject control characters in a reg-name host.
+
+    Before #1829 the parser encoded with ``validate_host=False``, so a NUL
+    or other C0 control survived into ``.host`` and ``str(url)`` even though
+    ``URL.build(host=...)`` rejected the same value.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(f"http://{host}/")
+
+
+def test_url_parse_rejects_control_characters_in_ipv6_zone() -> None:
+    """Control characters in an IPv6 zone identifier are rejected on parse.
+
+    ``URL.build(host="fe80::1%\x00")`` already rejected them; the parser
+    previously accepted ``[fe80::1%25\x00evil]`` (#1829).
+    """
+    with pytest.raises(ValueError, match="Invalid IPv6 zone identifier"):
+        URL("http://[fe80::1%25\x00evil]/")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "//\uff3b",  # fullwidth [ -> [
+        "//\uff3d",  # fullwidth ] -> ]
+        "//\uff3c",  # fullwidth \\ -> \\
+    ],
+    ids=("fullwidth-lbracket", "fullwidth-rbracket", "fullwidth-reverse-solidus"),
+)
+def test_url_parse_rejects_idna_normalized_host_delimiters(url: str) -> None:
+    """NFKC/IDNA must not map a host to a URL delimiter.
+
+    Before #1829 the parser accepted e.g. ``//\uff3b`` and serialized it as
+    ``//[``, which yarl itself could not re-parse.
+    """
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL(url)

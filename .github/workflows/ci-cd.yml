@@ -249,7 +249,7 @@ jobs:
         - runner-vm-os: ubuntu-latest
           tag: >-
            ${{
-           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           (github.event_name != 'push' || github.ref_type != 'tag')
            && 'musllinux' || 'none'
            }}
         # On PRs and non-tag pushes, skip the native windows-on-arm runner —
@@ -258,7 +258,7 @@ jobs:
         # and are on the critical path. Tag releases still build them.
         - runner-vm-os: >-
            ${{
-           (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+           (github.event_name != 'push' || github.ref_type != 'tag')
            && 'windows-11-arm' || 'none'
            }}
           tag: ''
@@ -281,9 +281,12 @@ jobs:
       # with identically-named wheels but different bytes, which the Deploy
       # job's `download-artifact ... merge-multiple: true` step then tore
       # together, yielding a wheel PyPI rejected with `Mis-matched data size`.
+      # CIBW_TEST_SKIP: on PR/non-tag, skip the in-build test run; the `test`
+      # job installs and tests these same wheels in parallel. Tag releases
+      # build arches the `test` job never installs, so they still test here.
       environment-variables: |-
         CIBW_ARCHS_MACOS=${{
-          (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'x86_64 arm64 universal2'
           || 'arm64'
         }}
@@ -295,10 +298,7 @@ jobs:
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
         with-cython-tracing=${{
-          (
-            github.event_name == 'push'
-            && contains(github.ref, 'refs/tags/')
-          )
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'false'
           || 'true'
         }}
@@ -306,13 +306,21 @@ jobs:
 
         CIBW_SKIP<<EOF
         ${{
-          (github.event_name != 'push' || !contains(github.ref, 'refs/tags/'))
+          (github.event_name != 'push' || github.ref_type != 'tag')
           && '*_i686
           *-macosx_universal2
           *-musllinux_*
           *-win32'
           || (matrix.tag == 'musllinux') && '*-manylinux_*'
         || '*-musllinux_*'
+        }}
+        EOF
+
+        CIBW_TEST_SKIP<<EOF
+        ${{
+          (github.event_name != 'push' || github.ref_type != 'tag')
+          && '*'
+          || ''
         }}
         EOF
 
@@ -349,6 +357,8 @@ jobs:
     strategy:
       matrix:
         pyver:
+        - 3.15t
+        - 3.15
         - 3.14t
         - 3.14
         - 3.13
@@ -398,7 +408,7 @@ jobs:
       # important: do not use system python
       env:
         UV_PYTHON_PREFERENCE: only-managed
-      uses: astral-sh/setup-uv@v10.1.0
+      uses: astral-sh/setup-uv@v10.2.0
       with:
         python-version: ${{ matrix.pyver }}
         activate-environment: true
@@ -429,27 +439,21 @@ jobs:
         --only-binary=:all:
         '${{ env.PROJECT_NAME }}'
     - name: Produce the C-files for the Coverage.py Cython plugin
+      id: translate-cython  # consumed by the measurement check below
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
-        && (
-          github.event_name != 'push'
-          || !contains(github.ref, 'refs/tags/')
-        )
+        && (github.event_name != 'push' || github.ref_type != 'tag')
       env:
         PYTHONPATH: packaging/
       run: |
         set -eEuo pipefail
 
-        uv pip install expandvars
         python -m pep517_backend.cli translate-cython
       shell: bash
     - name: Disable the Cython.Coverage Produce plugin
       if: >-  # Only works if the dists were built with line tracing
         matrix.no-extensions
-        || (
-          github.event_name == 'push'
-          && contains(github.ref, 'refs/tags/')
-        )
+        || (github.event_name == 'push' && github.ref_type == 'tag')
       run: |
         set -eEuo pipefail
         sed -i.bak 's/^\s\{2\}Cython\.Coverage$//g' .coveragerc
@@ -488,6 +492,31 @@ jobs:
         pytest --no-cov -vvvvv --lf -rA
         && exit 1
       shell: bash
+    # `!cancelled()` keeps a coverage drop from muting this check, since
+    # `Run unittests` enforces `fail_under` and would fail first.
+    # Windows gets no CYTHON_TRACE: the defines ride on CFLAGS, and
+    # setuptools forwards those only to the Unix compiler -- MSVCCompiler
+    # never reads them. Not a platform limitation, just unwired.
+    - name: Check that the Cython modules were measured
+      if: >-
+        !cancelled()
+        && steps.translate-cython.outcome == 'success'
+        && runner.os != 'Windows'
+      # `--fail-under=0`: the floor is already enforced by the test run, and
+      # here it would only print a failure line after the JSON.
+      run: |  # A `.pyx` with nothing recorded is how #1581 went unnoticed
+        python -Im coverage json --fail-under=0 -o - | python -c '
+        import json, sys
+        pyx = {
+            path: info["summary"]["covered_lines"]
+            for path, info in json.load(sys.stdin)["files"].items()
+            if path.endswith(".pyx")
+        }
+        if not pyx or not all(pyx.values()):
+            sys.exit(f"Cython modules with no measured lines: {pyx}")
+        print(f"Measured lines: {pyx}")
+        '
+      shell: bash
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
@@ -502,6 +531,47 @@ jobs:
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: true
+
+  conformance:
+    name: Conformance report is current
+    needs:
+    - build  # transitive, ensures dists are built
+    - build-wheels-for-tested-arches
+    - pre-setup  # transitive, for accessing settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v7
+    - name: Download distributions
+      uses: actions/download-artifact@v8
+      with:
+        path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
+    - name: Setup Python ${{ env.PYTHON_LATEST }}
+      uses: astral-sh/setup-uv@v10.2.0
+      with:
+        python-version: ${{ env.PYTHON_LATEST }}
+        activate-environment: true
+    - name: Install dependencies
+      run: uv pip install -r requirements/test-cibuildwheel.txt
+    - name: Install ${{ env.PROJECT_NAME }} from a pre-built wheel
+      run: >-
+        uv pip install
+        --find-links=./dist
+        --no-index
+        --no-deps
+        --force-reinstall
+        --only-binary=:all:
+        '${{ env.PROJECT_NAME }}'
+    - name: Check that tools/conformance/REPORT.md matches the code
+      run: python tools/conformance/compare.py --check
+    - name: Show the difference
+      if: failure()
+      run: |
+        python tools/conformance/compare.py
+        git diff --exit-code -- tools/conformance/REPORT.md
 
   benchmark-src:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
@@ -564,6 +634,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     needs:
+    - conformance
     - lint
     - metadata-validation
     - test
@@ -579,7 +650,7 @@ jobs:
     timeout-minutes: 1
     needs: test-summary
     # Run only on pushing a tag
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     steps:
     - name: Dummy
       run: |
@@ -644,6 +715,10 @@ jobs:
       # the pypa odd-arch containers do not ship `uv` preinstalled
       # CIBW_CONFIG_SETTINGS: `with-cython-tracing` — for coverage collection
       # CIBW_CONFIG_SETTINGS: `pure-python` — force C-extensions
+      # CIBW_TEST_SKIP: riscv64 has no native runner, so every wheel is built
+      # and tested under QEMU; installing the test dependencies and running
+      # the suite takes longer than building, and six Python versions do not
+      # fit in the job timeout. The other emulated arches still run the suite.
       environment-variables: |-
         CIBW_ARCHS_LINUX=${{ matrix.qemu }}
 
@@ -654,10 +729,7 @@ jobs:
         CIBW_CONFIG_SETTINGS<<EOF
         pure-python=false
         with-cython-tracing=${{
-          (
-            github.event_name == 'push'
-            && contains(github.ref, 'refs/tags/')
-          )
+          (github.event_name == 'push' && github.ref_type == 'tag')
           && 'false'
           || 'true'
         }}
@@ -668,6 +740,10 @@ jobs:
           && '*-manylinux_*'
           || '*-musllinux_*'
         }}
+
+        CIBW_TEST_SKIP<<EOF
+        ${{ matrix.qemu == 'riscv64' && '*' || '' }}
+        EOF
 
   deploy:
     name: Deploy

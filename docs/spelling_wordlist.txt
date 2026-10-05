@@ -9,6 +9,7 @@ GPG
 IPv
 PRs
 PYX
+Pydantic
 Towncrier
 Twitter
 UTF
@@ -19,6 +20,8 @@ armv
 ascii
 backend
 backends
+backtick
+bidi
 boolean
 booleans
 bools
@@ -76,5 +79,6 @@ uncompiled
 unencoded
 unobvious
 unquoter
+userinfo
 v1
 yarl

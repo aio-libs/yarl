@@ -198,10 +198,13 @@ def test_with_host() -> None:
 
 
 def test_with_host_ipv6_zone_id_bare_percent() -> None:
-    """RFC 4007 scoped literals with a bare ``%`` work in with_host()."""
+    """RFC 4007 scoped literals with a bare ``%`` work in with_host().
+
+    The zone separator is written as ``%25`` (RFC 6874).
+    """
     url = URL("http://example.com/x")
     url2 = url.with_host("fe80::1%1")
-    assert str(url2) == "http://[fe80::1%1]/x"
+    assert str(url2) == "http://[fe80::1%251]/x"
     assert url2.host == "fe80::1%1"
 
 
@@ -272,12 +275,22 @@ def test_with_host_default_ignorable(ignorable: str) -> None:
 
 
 def test_with_host_percent_encoded() -> None:
-    url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123")
+    url = URL("http://%25cf%2580%cf%80:%25cf%2580%cf%80@example.com:123", mode="rfc")
     url2 = url.with_host("%cf%80.org")
     assert url2.raw_host == "%cf%80.org"
     assert url2.host == "%cf%80.org"
     assert url2.raw_authority == "%25cf%2580%CF%80:%25cf%2580%CF%80@%cf%80.org:123"
     assert url2.authority == "%cf%80π:%cf%80π@%cf%80.org:123"
+
+
+def test_with_host_percent_encoded_whatwg() -> None:
+    # The WHATWG host parser percent-decodes the host of a special URL.
+    url = URL("http://example.com:123").with_host("%cf%80.org")
+    assert url.raw_host == "xn--1xa.org"
+    assert url.host == "π.org"
+    with pytest.raises(ValueError, match="once percent-decoded"):
+        URL("http://example.com").with_host("a%2fb")
+    assert URL("sc://example.com").with_host("a%2fb").raw_host == "a%2fb"
 
 
 def test_with_host_for_relative_url() -> None:

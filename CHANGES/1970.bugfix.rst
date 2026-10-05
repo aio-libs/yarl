@@ -1,0 +1,8 @@
+Rejected an empty authority for the ``http``, ``https``, ``ws``, ``wss`` and
+``ftp`` schemes in WHATWG mode, as the WHATWG URL Standard does:
+``http://``, ``http:///`` and ``http://?q`` were accepted. A URL of these
+schemes without an authority, such as ``http:?q``, is still a reference to
+a base and is now printed without ``//``, as ``http:?q`` instead of
+``http://?q``. A change into WHATWG mode of such a URL parsed in RFC 3986 mode
+is rejected the same way; RFC 3986 mode is unchanged
+-- by :user:`asvetlov`.

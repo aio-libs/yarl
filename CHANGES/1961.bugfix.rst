@@ -1,0 +1,9 @@
+Dropped the ``localhost`` host of a ``file`` URL in WHATWG mode, so
+``file://localhost/p`` is ``file:///p``, and rejected a ``file`` URL with
+userinfo or a port there, as the WHATWG URL Standard does. Parsing,
+:meth:`~yarl.URL.build`, :meth:`~yarl.URL.join`,
+:meth:`~yarl.URL.with_host`, :meth:`~yarl.URL.with_scheme` and the other
+builders follow the same rule. RFC 3986 mode keeps both. A ``file`` URL
+with an empty host now also loses the dot segments of its path in WHATWG
+mode, so ``file:///a/../b`` is ``file:///b``, as with any other host
+-- by :user:`asvetlov`.
