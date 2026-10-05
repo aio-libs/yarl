@@ -151,6 +151,7 @@ they are for the WHATWG URL Standard and, for ``http`` and ``https``, for
 same reason, where WHATWG mode reads ``path`` as the host, see above. A URL
 without an authority, such as ``http:`` or ``http:?q``, is kept as a
 reference to a base for :meth:`URL.join` and is printed without ``//``.
+``encoded=True`` keeps all of them, as it does not check the host.
 
 .. doctest::
 
