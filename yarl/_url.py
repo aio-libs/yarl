@@ -300,6 +300,19 @@ def _validate_scheme(scheme: str) -> None:
         )
 
 
+@lru_cache
+def _lower_scheme(scheme: str) -> str:
+    """Lowercase a scheme for with_scheme() and check it against the grammar.
+
+    The single ``str`` argument is the cache key, so a repeated scheme costs
+    one lookup and skips both the lowercasing and the grammar check.
+    """
+    lower_scheme = scheme.lower()
+    if lower_scheme and lower_scheme not in SCHEME_REQUIRES_HOST:
+        _validate_scheme(lower_scheme)
+    return lower_scheme
+
+
 def _encode_relative_scheme_colon(path: str) -> str:
     """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``."""
     colon_pos = path.find(":")
@@ -2029,9 +2042,7 @@ class URL:
         # N.B. doesn't cleanup query/fragment
         if not isinstance(scheme, str):
             raise TypeError("Invalid scheme type")
-        lower_scheme = scheme.lower()
-        if lower_scheme and lower_scheme not in SCHEME_REQUIRES_HOST:
-            _validate_scheme(lower_scheme)
+        lower_scheme = _lower_scheme(scheme)
         netloc = self._netloc
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (
