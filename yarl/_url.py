@@ -1141,7 +1141,9 @@ class URL:
                 mode,
             )
 
-        if scheme and scheme not in SCHEME_REQUIRES_HOST:
+        # A ``str`` subclass need not be hashable, so the well-known scheme
+        # lookup is skipped for one and the grammar is checked directly.
+        if scheme and (type(scheme) is not str or scheme not in SCHEME_REQUIRES_HOST):
             _validate_scheme(scheme)
         if scheme == "file" and mode is _WHATWG:
             # As the parser does, see _whatwg_file_drive() and
@@ -2040,8 +2042,13 @@ class URL:
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(scheme, str):
-            raise TypeError("Invalid scheme type")
+        if type(scheme) is not str:
+            if not isinstance(scheme, str):
+                raise TypeError("Invalid scheme type")
+            # ``_lower_scheme()`` caches on its argument, and a ``str``
+            # subclass need not be hashable, so narrow it to an exact ``str``
+            # first, as ``URL()`` does for a subclassed URL string.
+            scheme = str(scheme)
         lower_scheme = _lower_scheme(scheme)
         netloc = self._netloc
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:

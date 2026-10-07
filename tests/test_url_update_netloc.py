@@ -66,6 +66,18 @@ def test_with_scheme_valid_uncommon_scheme(scheme: str) -> None:
     assert URL("//good.example/p").with_scheme(scheme).scheme == scheme
 
 
+def test_with_scheme_unhashable_subclass() -> None:
+    """A ``str`` subclass need not be hashable, so it is narrowed first."""
+
+    class S(str):
+        __hash__ = None  # type: ignore[assignment]
+
+    url = URL("http://example.com/p")
+    assert str(url.with_scheme(S("HTTPS"))) == "https://example.com/p"
+    with pytest.raises(ValueError, match="cannot contain"):
+        url.with_scheme(S("http://evil.example"))
+
+
 def test_with_scheme_invalid_type() -> None:
     url = URL("http://example.com")
     with pytest.raises(TypeError):

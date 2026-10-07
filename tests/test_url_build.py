@@ -190,6 +190,18 @@ def test_build_with_valid_uncommon_scheme(scheme: str) -> None:
     assert str(URL.build(scheme=scheme, host="example.com")).startswith(f"{scheme}://")
 
 
+def test_build_with_unhashable_scheme_subclass() -> None:
+    """A ``str`` subclass need not be hashable, so it skips the set lookup."""
+
+    class S(str):
+        __hash__ = None  # type: ignore[assignment]
+
+    u = URL.build(scheme=S("https"), host="example.com")
+    assert str(u) == "https://example.com"
+    with pytest.raises(ValueError, match="cannot contain"):
+        URL.build(scheme=S("//evil.example"), host="good.example", path="/p")
+
+
 def test_build_with_host() -> None:
     u = URL.build(host="127.0.0.1")
     assert str(u) == "//127.0.0.1"
