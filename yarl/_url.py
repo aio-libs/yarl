@@ -1702,12 +1702,11 @@ class URL:
             # To avoid string manipulation we only call rstrip if
             # the last character is a dot.
             raw = raw.rstrip(".")
-        # RFC 6874 §4: strip a zone id from the value sent as Host.
-        # The separator is the encoded "%25" and only applies to IPv6.
-        zone_at = raw.find("%25")
-        if zone_at != -1 and ":" in raw[:zone_at]:
-            raw = raw[:zone_at]
         if ":" in raw and raw[-1] != "]":
+            # RFC 6874 §4: strip the zone id (after the encoded "%25") from
+            # the value sent as Host. Only IPv6 hosts reach this branch.
+            if (zone_at := raw.find("%25")) != -1:
+                raw = raw[:zone_at]
             raw = f"[{raw}]"
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
