@@ -2047,8 +2047,10 @@ class URL:
                 raise TypeError("Invalid scheme type")
             # ``_lower_scheme()`` caches on its argument, and a ``str``
             # subclass need not be hashable, so narrow it to an exact ``str``
-            # first, as ``URL()`` does for a subclassed URL string.
-            scheme = str(scheme)
+            # first, as ``URL()`` does for a subclassed URL string. Use
+            # ``str.__str__`` so a ``str``-valued Enum keeps its value rather
+            # than its ``__str__`` display text.
+            scheme = str.__str__(scheme)
         lower_scheme = _lower_scheme(scheme)
         netloc = self._netloc
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:

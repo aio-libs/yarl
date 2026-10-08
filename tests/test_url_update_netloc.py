@@ -78,6 +78,17 @@ def test_with_scheme_unhashable_subclass() -> None:
         url.with_scheme(S("http://evil.example"))
 
 
+def test_with_scheme_str_enum() -> None:
+    """A ``str``-valued Enum keeps its value, not its ``__str__`` text."""
+    from enum import Enum
+
+    class Scheme(str, Enum):
+        HTTPS = "https"
+
+    url = URL("http://example.com/p")
+    assert str(url.with_scheme(Scheme.HTTPS)) == "https://example.com/p"
+
+
 def test_with_scheme_invalid_type() -> None:
     url = URL("http://example.com")
     with pytest.raises(TypeError):
