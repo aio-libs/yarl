@@ -1,0 +1,2 @@
+Added ``__slots__`` to pure python yarl quoter for enhanced speed and performance.
+-- by :user:`Vizonex`.
