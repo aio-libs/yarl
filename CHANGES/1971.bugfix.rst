@@ -1,0 +1,7 @@
+Rejected an empty authority for the ``http``, ``https``, ``ws``, ``wss`` and
+``ftp`` schemes in RFC 3986 mode as well, as :rfc:`9110#section-4.2.1` does
+for ``http`` and ``https``: ``http://``, ``http:///path`` and ``http://?q``
+were accepted there, while an empty host was rejected only next to userinfo
+or a port. The RFC 3986 oracle of the conformance report applies the same
+rule, so ``http://user@/`` and the like count as agreeing with yarl
+-- by :user:`asvetlov`.
