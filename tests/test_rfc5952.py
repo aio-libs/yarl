@@ -7,8 +7,11 @@ section 6.2.2.1 allows normalizing them; yarl emits the canonical text
 form recommended by RFC 5952 section 4.
 """
 
+import ipaddress
+
 import pytest
 
+import yarl
 from yarl import URL
 
 CANONICAL = [
@@ -64,6 +67,27 @@ def test_canonical_text_form(address: str, canonical: str) -> None:
     assert url.raw_host == canonical
     assert url.host == canonical
     assert str(url) == f"http://[{canonical}]/"
+
+
+def test_ipv4_mapped_does_not_depend_on_stdlib_format(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Older patch releases of ``ipaddress``, including 3.10.11, 3.11.9 and
+    # 3.12.10 (the last Windows and macOS binary releases), print an
+    # IPv4-mapped address in hex; emulate that and check that yarl still
+    # keeps the dotted quad of RFC 5952 section 5.
+    monkeypatch.setattr(
+        ipaddress.IPv6Address,
+        "__str__",
+        lambda self: self._string_from_ip_int(self._ip),
+    )
+    assert str(ipaddress.IPv6Address("::ffff:c000:201")) == "::ffff:c000:201"
+    yarl.cache_clear()
+    try:
+        url = URL("http://[::ffff:c000:201]/")
+    finally:
+        yarl.cache_clear()
+    assert url.raw_host == "::ffff:192.0.2.1"
 
 
 @pytest.mark.parametrize(("address", "canonical"), CANONICAL)
