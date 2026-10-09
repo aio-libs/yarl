@@ -116,6 +116,13 @@ NOT_REG_NAME = re.compile(
     re.VERBOSE,
 )
 
+# scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+# https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
+# This pattern matches the first character that is *not* allowed there, so a
+# scheme carrying a delimiter (most importantly ':' or '/') can be rejected
+# before it is written into the URL.
+NOT_SCHEME = re.compile(r"\A[^a-zA-Z]|[^a-zA-Z0-9+\-.]")
+
 # Invisible default-ignorable / format code points that must not appear in a
 # host (soft hyphen, zero-width space, word joiner, bidi controls, variation
 # selectors, ...). Depending on the code point IDNA either silently deletes it
@@ -277,6 +284,33 @@ class _InternalURLCache(TypedDict, total=False):
 def rewrite_module(obj: _T) -> _T:
     obj.__module__ = "yarl"
     return obj
+
+
+def _validate_scheme(scheme: str) -> None:
+    """Check a non-empty scheme against the RFC 3986 grammar.
+
+    Callers skip the well-known schemes and the empty scheme (a relative URL)
+    before calling this, so neither the regex nor this call runs on the hot
+    paths that pass those.
+    """
+    if invalid := NOT_SCHEME.search(scheme):
+        raise ValueError(
+            f"Scheme {scheme!r} cannot contain {invalid.group()!r} "
+            f"(at position {invalid.start()})"
+        )
+
+
+@lru_cache
+def _lower_scheme(scheme: str) -> str:
+    """Lowercase a scheme for with_scheme() and check it against the grammar.
+
+    The single ``str`` argument is the cache key, so a repeated scheme costs
+    one lookup and skips both the lowercasing and the grammar check.
+    """
+    lower_scheme = scheme.lower()
+    if lower_scheme and lower_scheme not in SCHEME_REQUIRES_HOST:
+        _validate_scheme(lower_scheme)
+    return lower_scheme
 
 
 def _encode_relative_scheme_colon(path: str) -> str:
@@ -1104,6 +1138,10 @@ class URL:
                 mode,
             )
 
+        # A ``str`` subclass need not be hashable, so the well-known scheme
+        # lookup is skipped for one and the grammar is checked directly.
+        if scheme and (type(scheme) is not str or scheme not in SCHEME_REQUIRES_HOST):
+            _validate_scheme(scheme)
         if scheme == "file" and mode is _WHATWG:
             # As the parser does, see _whatwg_file_drive() and
             # normalize_drive_letter().
@@ -2001,9 +2039,16 @@ class URL:
     def with_scheme(self, scheme: str) -> "URL":
         """Return a new URL with scheme replaced."""
         # N.B. doesn't cleanup query/fragment
-        if not isinstance(scheme, str):
-            raise TypeError("Invalid scheme type")
-        lower_scheme = scheme.lower()
+        if type(scheme) is not str:
+            if not isinstance(scheme, str):
+                raise TypeError("Invalid scheme type")
+            # ``_lower_scheme()`` caches on its argument, and a ``str``
+            # subclass need not be hashable, so narrow it to an exact ``str``
+            # first, as ``URL()`` does for a subclassed URL string. Use
+            # ``str.__str__`` so a ``str``-valued Enum keeps its value rather
+            # than its ``__str__`` display text.
+            scheme = str.__str__(scheme)
+        lower_scheme = _lower_scheme(scheme)
         netloc = self._netloc
         if not netloc and lower_scheme in SCHEME_REQUIRES_HOST:
             msg = (

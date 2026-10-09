@@ -1080,6 +1080,13 @@ section generates a new :class:`URL` instance.
       Only one of ``query`` or ``query_string`` should be passed then ValueError
       will be raised.
 
+   .. note::
+
+      Unless ``encoded=True`` is passed, a non-empty *scheme* must match the
+      :rfc:`3986#section-3.1` grammar (an ASCII letter followed by letters,
+      digits, ``+``, ``-`` or ``.``); ``ValueError`` is raised otherwise. An
+      empty string produces a relative URL.
+
 .. method:: URL.with_scheme(scheme)
 
    Return a new URL with *scheme* replaced:
@@ -1088,6 +1095,9 @@ section generates a new :class:`URL` instance.
 
       >>> URL('http://example.com').with_scheme('https')
       URL('https://example.com')
+
+   A non-empty *scheme* must match the :rfc:`3986#section-3.1` grammar;
+   ``ValueError`` is raised otherwise. An empty string removes the scheme.
 
    Returned URL may have a *different* ``port``
    (:ref:`default port substitution <yarl-api-default-ports>`).

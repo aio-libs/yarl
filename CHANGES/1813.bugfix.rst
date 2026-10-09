@@ -1,0 +1,5 @@
+Validated the scheme passed to :meth:`yarl.URL.build` and
+:meth:`yarl.URL.with_scheme` against the :rfc:`3986#section-3.1` grammar.
+A scheme containing a delimiter (e.g. ``http://evil.example``) was written
+into the URL verbatim, so the rendered string parsed back to a different
+host than :attr:`yarl.URL.host` reported -- by :user:`Samin061`.
