@@ -3079,8 +3079,18 @@ def _encode_host(
                 host = f"[{host}{sep}{zone}]" if sep else f"[{host}]"
             elif sep:
                 # WHATWG has no zone identifiers: "%" after an IPv4 address
-                # is percent-encoding in the host.
+                # is percent-encoding in the host, so the suffix has to be
+                # valid reg-name text. Validate it like the ASCII reg-name
+                # branch below (case-insensitively, so valid percent-encoding
+                # such as "%2F" is kept), otherwise a host like "1.2.3.4%::"
+                # slips past validate_host into a netloc that split_netloc()
+                # cannot parse back.
                 host = f"{host}{sep}{zone}"
+                if validate_host and (invalid := NOT_REG_NAME.search(host.lower())):
+                    raise ValueError(
+                        f"Host {host!r} cannot contain {invalid.group()!r} "
+                        f"(at position {invalid.start()})"
+                    ) from None
                 return host, _whatwg_decoded_host(host), False
             return host, host, False
 
