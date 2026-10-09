@@ -493,6 +493,66 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
     assert url.port == 8080
 
 
+@pytest.mark.parametrize(
+    "url",
+    (
+        "http://[::1]@",
+        "//[]@",
+        "//a[b]c@",
+    ),
+    ids=(
+        "ipv6-addr-ending-at",
+        "empty-brackets-ending-at",
+        "mixed-brackets-ending-at",
+    ),
+)
+def test_bracketed_authority_ending_at_rejected(url: str) -> None:
+    """Reject malformed bracketed authority ending in @ (GH #1822)."""
+    with pytest.raises(ValueError):
+        URL(url)
+
+
+def test_host_port_subcomponent_empty_host() -> None:
+    """host_port_subcomponent handles empty raw_host (GH #1821)."""
+    url = URL("//user@")
+    assert url.raw_host == ""
+    assert url.host_port_subcomponent == ""
+
+
+@pytest.mark.parametrize(
+    "authority",
+    (
+        "a[b]c@",
+        "[]@",
+        "[::1]@",
+    ),
+    ids=(
+        "mixed-brackets-in-userinfo",
+        "empty-brackets-ending-at",
+        "ipv6-addr-ending-at",
+    ),
+)
+def test_build_malformed_bracketed_authority_rejected(authority: str) -> None:
+    """URL.build(authority=...) must reject the same malformed authorities as
+    the string constructor.
+
+    The string constructor validates the authority in split_url(), but
+    URL.build(authority=...) passes it straight to split_netloc(). Without a
+    check there, a bracketed authority ending in '@' was accepted and produced
+    a hostless URL that still carried userinfo.
+    """
+    with pytest.raises(ValueError):
+        URL.build(scheme="http", authority=authority, path="/")
+
+
+def test_build_valid_bracketed_authority_accepted() -> None:
+    """A well-formed bracketed authority is still accepted by URL.build()."""
+    url = URL.build(scheme="http", authority="user@[::1]:8080", path="/")
+    assert url.raw_user == "user"
+    assert url.raw_host == "::1"
+    assert url.port == 8080
+
+
 def test_ipv4_zone() -> None:
     # WHATWG mode decodes the host; in RFC 3986 mode "%" must start a
     # percent-encoded octet.

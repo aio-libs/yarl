@@ -116,6 +116,8 @@ def split_url(url: str) -> tuple[str, str, str, str, str, int]:
             # host subcomponent (e.g. 'http://[:localhost[]].google:80'),
             # which would otherwise resolve to an unintended host.
             hostinfo = netloc.rpartition("@")[2]
+            if not hostinfo:
+                raise ValueError("Invalid IPv6 URL")
             if hostinfo[0] != "[" or hostinfo.count("[") > 1 or hostinfo.count("]") > 1:
                 raise ValueError("Invalid IPv6 URL")
             bracketed_host, _, after_bracket = hostinfo[1:].partition("]")
@@ -188,11 +190,19 @@ def split_netloc(
         hostinfo = netloc
     else:
         userinfo, _, hostinfo = netloc.rpartition("@")
+        # userinfo may not contain the IP-literal delimiters; a '[' or ']' there
+        # is never valid and would otherwise be percent-encoded into a
+        # username while the host subcomponent ends up empty.
+        if "[" in userinfo or "]" in userinfo:
+            raise ValueError("Invalid IPv6 URL")
         username, have_password, password = userinfo.partition(":")
         if not have_password:
             password = None
 
-    if "[" in hostinfo:
+    # '[' and ']' are only valid in the host subcomponent, as the delimiters of
+    # an IP-literal. Checking both characters also rejects an unbalanced ']',
+    # which would otherwise be taken as part of the host.
+    if "[" in hostinfo or "]" in hostinfo:
         if hostinfo[0] != "[" or hostinfo.count("[") > 1 or hostinfo.count("]") > 1:
             raise ValueError("Invalid IPv6 URL")
         _, _, bracketed = hostinfo.partition("[")
