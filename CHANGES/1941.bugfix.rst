@@ -1,0 +1,7 @@
+Fixed IPv4-mapped IPv6 hosts such as ``[::ffff:192.0.2.1]`` being
+normalized to the hexadecimal form ``[::ffff:c000:201]`` on Python
+releases whose :mod:`ipaddress` prints them that way, including the
+last Windows and macOS binary releases of Python 3.10, 3.11 and 3.12;
+the dotted quad recommended by :rfc:`5952#section-5` is now kept on
+every Python version
+-- by :user:`asvetlov`.
