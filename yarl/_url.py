@@ -1682,6 +1682,12 @@ class URL:
         - `https://127.0.0.1:8443` -> `127.0.0.1:8443`
         - `https://[::1]:8443` -> `[::1]:8443`
         - `http://[::1]` -> `[::1]`
+        - `http://[fe80::1%25eth0]` -> `[fe80::1]`
+
+        An :rfc:`6874` zone identifier is omitted. It has only local
+        significance and must not appear in the Host header. The zone
+        remains available on :attr:`raw_host` and :attr:`host_subcomponent`
+        for opening the connection.
 
         """
         if (raw := self.raw_host) is None:
@@ -1694,6 +1700,10 @@ class URL:
             # the last character is a dot.
             raw = raw.rstrip(".")
         if ":" in raw and raw[-1] != "]":
+            # RFC 6874 §4: strip the zone id (after the encoded "%25") from
+            # the value sent as Host. Only IPv6 hosts reach this branch.
+            if (zone_at := raw.find("%25")) != -1:
+                raw = raw[:zone_at]
             raw = f"[{raw}]"
         port = self.explicit_port
         if port is None or port == DEFAULT_PORTS.get(self._scheme):
