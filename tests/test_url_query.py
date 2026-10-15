@@ -271,9 +271,6 @@ def test_update_query_str_encodes_reserved_chars() -> None:
 def test_extend_query_encodes_reserved_chars() -> None:
     url = URL("http://example.com/?a=1/2")
     extended_dict = url.extend_query({"b": "x:y@z", "c": "!?$,()'*"})
-    assert (
-        extended_dict.raw_query_string
-        == "a=1/2&b=x%3Ay%40z&c=!?%24%2C%28%29%27%2A"
-    )
+    assert extended_dict.raw_query_string == "a=1/2&b=x%3Ay%40z&c=!?%24%2C%28%29%27%2A"
     extended_str = url.extend_query("b=x:y@z")
     assert extended_str.raw_query_string == "a=1/2&b=x:y@z"
