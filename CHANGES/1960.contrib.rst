@@ -1,0 +1,5 @@
+Split the file scheme category of the conformance report in
+``tools/conformance/`` into Windows drive letters, file hosts that WHATWG
+rewrites and empty file paths, and filed the remaining file inputs under
+the backslash or no-authority categories that explain them
+-- by :user:`asvetlov`.

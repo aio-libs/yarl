@@ -1,0 +1,5 @@
+Added a generated conformance report comparing yarl with RFC 3986
+and the WHATWG URL Standard over the web-platform-tests URL corpus,
+together with contributor rules to keep it current and to reject
+changes where yarl would differ from a result both standards agree on
+-- by :user:`asvetlov`.

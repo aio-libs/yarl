@@ -1,0 +1,6 @@
+Narrowed the backslash category of the conformance report in
+``tools/conformance/`` to inputs whose backslashes a special scheme reads
+as slashes and which are otherwise within the RFC 3986+3987 grammar, so
+that drive letters, quoting and non-special schemes are filed under the
+category that explains them
+-- by :user:`asvetlov`.

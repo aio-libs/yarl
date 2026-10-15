@@ -1,0 +1,9 @@
+Kept a special-scheme URL written without ``//``, such as ``http:g``,
+a relative reference for :meth:`~yarl.URL.join` after
+:meth:`~yarl.URL.with_query`, :meth:`~yarl.URL.update_query`,
+:meth:`~yarl.URL.extend_query`, :meth:`~yarl.URL.without_query_params`,
+``%`` or :meth:`~yarl.URL.with_fragment`, as the WHATWG URL Standard
+does: ``URL("http://h/a").join(URL("http:g").with_query("q=1"))`` is now
+``http://h/g?q=1`` instead of ``http://g/?q=1``, which moved the request
+to host ``g``
+-- by :user:`asvetlov`.

@@ -1,0 +1,8 @@
+Dropped an empty password from a URL in WHATWG mode, as the WHATWG URL
+Standard does: ``http://a:@h`` is now ``http://a@h`` and ``http://:@h`` is
+``http://h``, and :attr:`~yarl.URL.password` and
+:attr:`~yarl.URL.raw_password` are ``None`` for them. Parsing,
+:meth:`~yarl.URL.build`, :meth:`~yarl.URL.with_password`,
+:meth:`~yarl.URL.join` and a change of mode follow the same rule. RFC 3986
+mode and URLs parsed or built with ``encoded=True`` keep the empty password
+-- by :user:`asvetlov`.

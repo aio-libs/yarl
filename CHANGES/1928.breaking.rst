@@ -1,0 +1,9 @@
+Stopped decoding percent-encoded reserved characters, such as ``%3A``,
+``%40``, ``%3D`` or ``%28``, when parsing the path of a URL, and stopped
+decoding them when :meth:`URL.join() <yarl.URL.join>` merges the base
+path; only unreserved characters are decoded now, as
+:rfc:`3986#section-6.2.2.2` requires. ``URL("http://h/a%3Ab")`` is no
+longer equal to ``URL("http://h/a:b")``, and its ``str()`` and
+:attr:`~yarl.URL.raw_path` keep the escape, while :attr:`~yarl.URL.path`
+is unchanged
+-- by :user:`asvetlov`.

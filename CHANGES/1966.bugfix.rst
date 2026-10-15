@@ -1,0 +1,9 @@
+Kept an empty userinfo in RFC 3986 mode, as RFC 3986 does:
+``http://@h`` is now ``http://@h`` there instead of ``http://h``, and the two
+are different URLs. :attr:`~yarl.URL.user` and :attr:`~yarl.URL.raw_user` are
+``''`` in RFC 3986 mode when the URL has a userinfo with an empty username,
+also for ``http://:@h`` and ``http://:p@h``, and ``None`` only when it has no
+userinfo. Parsing, :meth:`~yarl.URL.build`, :meth:`~yarl.URL.with_user` and the
+other ``with_*()`` methods, :meth:`~yarl.URL.join` and a change of mode follow
+the same rule; WHATWG mode still drops an empty userinfo
+-- by :user:`asvetlov`.

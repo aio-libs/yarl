@@ -1,0 +1,10 @@
+Parsed ``http:example.com/``, ``http:/example.com/`` and
+``http:///example.com/`` as ``http://example.com/`` in the default WHATWG
+mode, as the WHATWG URL Standard does for the ``http``, ``https``, ``ws``,
+``wss`` and ``ftp`` schemes; previously the text was kept as the path of a
+URL without a host, printed as ``http:///example.com/``. Such a URL with
+userinfo or a port but no host, like ``http:@/example.com``, is rejected.
+:meth:`URL.join() <yarl.URL.join>` still resolves a URL written without
+``//`` as a relative reference against a base with the same scheme, and
+RFC 3986 mode is not affected
+-- by :user:`asvetlov`.

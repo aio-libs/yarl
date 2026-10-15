@@ -7,7 +7,7 @@ from ._quoting import _Quoter, _Unquoter
 QUOTER = _Quoter(requote=False)
 REQUOTER = _Quoter()
 PATH_QUOTER = _Quoter(safe="@:", protected="/+", requote=False)
-PATH_REQUOTER = _Quoter(safe="@:", protected="/+")
+PATH_REQUOTER = _Quoter(safe="@:", protected=":/@!$&'()*+,;=")
 QUERY_QUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True, requote=False)
 QUERY_REQUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
 QUERY_PART_QUOTER = _Quoter(safe="?", qs=True, requote=False, unsafe="$'()*,/:@")
@@ -16,6 +16,8 @@ FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
 
 UNQUOTER = _Unquoter()
 PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")
+# Keeps "%" and the delimiters of an authority encoded in a zone identifier.
+ZONE_ID_UNQUOTER = _Unquoter(ignore="%/:?#[]@")
 QS_UNQUOTER = _Unquoter(qs=True)
 # to match urllib.parse.unquote_plus
 UNQUOTER_PLUS = _Unquoter(plus=True, replace_invalid=True)

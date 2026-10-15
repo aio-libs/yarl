@@ -408,7 +408,7 @@ jobs:
       # important: do not use system python
       env:
         UV_PYTHON_PREFERENCE: only-managed
-      uses: astral-sh/setup-uv@v10.2.0
+      uses: astral-sh/setup-uv@v10.3.0
       with:
         python-version: ${{ matrix.pyver }}
         activate-environment: true
@@ -439,6 +439,7 @@ jobs:
         --only-binary=:all:
         '${{ env.PROJECT_NAME }}'
     - name: Produce the C-files for the Coverage.py Cython plugin
+      id: translate-cython  # consumed by the measurement check below
       if: >-  # Only works if the dists were built with line tracing
         !matrix.no-extensions
         && (github.event_name != 'push' || github.ref_type != 'tag')
@@ -491,6 +492,31 @@ jobs:
         pytest --no-cov -vvvvv --lf -rA
         && exit 1
       shell: bash
+    # `!cancelled()` keeps a coverage drop from muting this check, since
+    # `Run unittests` enforces `fail_under` and would fail first.
+    # Windows gets no CYTHON_TRACE: the defines ride on CFLAGS, and
+    # setuptools forwards those only to the Unix compiler -- MSVCCompiler
+    # never reads them. Not a platform limitation, just unwired.
+    - name: Check that the Cython modules were measured
+      if: >-
+        !cancelled()
+        && steps.translate-cython.outcome == 'success'
+        && runner.os != 'Windows'
+      # `--fail-under=0`: the floor is already enforced by the test run, and
+      # here it would only print a failure line after the JSON.
+      run: |  # A `.pyx` with nothing recorded is how #1581 went unnoticed
+        python -Im coverage json --fail-under=0 -o - | python -c '
+        import json, sys
+        pyx = {
+            path: info["summary"]["covered_lines"]
+            for path, info in json.load(sys.stdin)["files"].items()
+            if path.endswith(".pyx")
+        }
+        if not pyx or not all(pyx.values()):
+            sys.exit(f"Cython modules with no measured lines: {pyx}")
+        print(f"Measured lines: {pyx}")
+        '
+      shell: bash
     - name: Send coverage data to Codecov
       if: >-
         !cancelled()
@@ -505,6 +531,47 @@ jobs:
           VM-${{ matrix.os }},
           Py-${{ steps.python-install.outputs.python-version }}
         fail_ci_if_error: true
+
+  conformance:
+    name: Conformance report is current
+    needs:
+    - build  # transitive, ensures dists are built
+    - build-wheels-for-tested-arches
+    - pre-setup  # transitive, for accessing settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v7
+    - name: Download distributions
+      uses: actions/download-artifact@v8
+      with:
+        path: dist
+        pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
+        merge-multiple: true
+    - name: Setup Python ${{ env.PYTHON_LATEST }}
+      uses: astral-sh/setup-uv@v10.3.0
+      with:
+        python-version: ${{ env.PYTHON_LATEST }}
+        activate-environment: true
+    - name: Install dependencies
+      run: uv pip install -r requirements/test-cibuildwheel.txt
+    - name: Install ${{ env.PROJECT_NAME }} from a pre-built wheel
+      run: >-
+        uv pip install
+        --find-links=./dist
+        --no-index
+        --no-deps
+        --force-reinstall
+        --only-binary=:all:
+        '${{ env.PROJECT_NAME }}'
+    - name: Check that tools/conformance/REPORT.md matches the code
+      run: python tools/conformance/compare.py --check
+    - name: Show the difference
+      if: failure()
+      run: |
+        python tools/conformance/compare.py
+        git diff --exit-code -- tools/conformance/REPORT.md
 
   benchmark-src:
     name: >-  # ${{ '' } is a hack to nest jobs under the same sidebar category
@@ -567,6 +634,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     needs:
+    - conformance
     - lint
     - metadata-validation
     - test

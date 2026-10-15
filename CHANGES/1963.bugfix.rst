@@ -1,0 +1,10 @@
+Gave a ``file`` URL the path ``/`` in WHATWG mode when its path is empty,
+as the WHATWG URL Standard does: ``file:`` and ``file:?q`` are now
+``file:///`` and ``file:///?q`` instead of ``file://`` and ``file://?q``,
+and ``file://host`` is ``file://host/``. :meth:`~yarl.URL.build`,
+:meth:`~yarl.URL.with_path`, :meth:`~yarl.URL.with_scheme`,
+:attr:`~yarl.URL.parent`, :meth:`~yarl.URL.join` and a change of mode
+follow the parser, so ``URL('file:///a').parent`` is ``file:///``.
+Against a ``file`` base, ``file:`` and ``file:?q`` still keep the path of
+the base. RFC 3986 mode is unchanged
+-- by :user:`asvetlov`.

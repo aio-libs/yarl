@@ -11,10 +11,12 @@ xfails whose reason starts with ``yarl:``, so the suite documents each
 divergence and flags it once the behaviour changes.
 """
 
+from collections.abc import Callable
+
 import pytest
 
 from yarl import URL
-from yarl._path import normalize_path
+from yarl._path import normalize_path, remove_dot_segments
 
 
 def diverges(reason: str) -> pytest.MarkDecorator:
@@ -117,10 +119,6 @@ VALID = [
     pytest.param("http://example.com/?a/b?c", id="3.4-query-slash-question"),
     pytest.param("http://example.com/#a/b?c", id="3.5-fragment-slash-question"),
     pytest.param("http://!$&'()*+,;=@example.com/", id="3.2.1-userinfo-sub-delims"),
-    pytest.param("http://256.1.1.1/", id="3.2.2-reg-name-not-ipv4"),
-    pytest.param("http://1.2.3.04/", id="3.2.2-reg-name-leading-zero"),
-    pytest.param("http://0x7f.1/", id="3.2.2-reg-name-hex"),
-    pytest.param("http://127.1/", id="3.2.2-reg-name-short"),
     pytest.param(
         "http://%C3%A9.example/",
         id="3.2.2-reg-name-pct",
@@ -131,24 +129,16 @@ VALID = [
     pytest.param("?q", id="4.2-query-only"),
     pytest.param("#f", id="4.2-fragment-only"),
     pytest.param(
-        "http://[v1.fe]/",
-        id="3.2.2-ipvfuture",
-        marks=diverges("IPvFuture literal loses its brackets"),
-    ),
-    pytest.param(
         "foo:///a",
         id="3.2-empty-authority",
-        marks=diverges("empty authority dropped for schemes outside uses_netloc"),
     ),
     pytest.param(
         "http://example.com/p?",
         id="6.2.3-empty-query-kept",
-        marks=diverges("empty query delimiter dropped"),
     ),
     pytest.param(
         "http://example.com/p#",
         id="6.2.3-empty-fragment-kept",
-        marks=diverges("empty fragment delimiter dropped"),
     ),
     pytest.param(
         "http://u:p:q@example.com/",
@@ -168,22 +158,35 @@ def test_valid_reference_round_trips(url: str) -> None:
     assert str(URL(url)) == url
 
 
+# Hosts that are a reg-name for RFC 3986 but an IPv4 address for WHATWG,
+# which yarl follows for special schemes in its default mode.
+NUMERIC_REG_NAME = [
+    pytest.param("http://256.1.1.1/", id="3.2.2-reg-name-not-ipv4"),
+    pytest.param("http://1.2.3.04/", id="3.2.2-reg-name-leading-zero"),
+    pytest.param("http://0x7f.1/", id="3.2.2-reg-name-hex"),
+    pytest.param("http://127.1/", id="3.2.2-reg-name-short"),
+]
+
+
+@pytest.mark.parametrize("url", NUMERIC_REG_NAME)
+def test_numeric_reg_name_round_trips(url: str) -> None:
+    assert str(URL(url, mode="rfc")) == url
+
+
+# Section 3.2.2: an IPvFuture literal, which WHATWG does not have, keeps its
+# brackets; without them it would be a reg-name.
+def test_ipvfuture_round_trips_rfc_mode() -> None:
+    assert str(URL("http://[v1.fe]/", mode="rfc")) == "http://[v1.fe]/"
+
+
 # Strings that do not match URI-reference in Appendix A.
 INVALID = [
     pytest.param("http://[::1/", id="3.2.2-unclosed-ip-literal"),
     pytest.param("http://::1/", id="3.2.2-ipv6-without-brackets"),
     pytest.param("http://example.com:8a/", id="3.2.3-port-not-digits"),
     pytest.param("http://example.com:-1/", id="3.2.3-port-negative"),
-    pytest.param(
-        "https://[0::0::0]/",
-        id="3.2.2-two-double-colons",
-        marks=diverges("malformed IP-literal accepted without brackets"),
-    ),
-    pytest.param(
-        "http://[:]/",
-        id="3.2.2-lone-colon",
-        marks=diverges("malformed IP-literal accepted without brackets"),
-    ),
+    pytest.param("https://[0::0::0]/", id="3.2.2-two-double-colons"),
+    pytest.param("http://[:]/", id="3.2.2-lone-colon"),
     pytest.param(
         "1abc://example.com/",
         id="3.1-scheme-starts-with-digit",
@@ -194,26 +197,10 @@ INVALID = [
         id="4.2-colon-in-first-segment",
         marks=diverges("relative path with ':' in the first segment is accepted"),
     ),
-    pytest.param(
-        "http://exa mple.com/",
-        id="3.2.2-space-in-host",
-        marks=diverges("space in reg-name is accepted"),
-    ),
-    pytest.param(
-        "http://exa<mple.com/",
-        id="3.2.2-lt-in-host",
-        marks=diverges("'<' in reg-name is accepted"),
-    ),
-    pytest.param(
-        "http://example.com:+80/",
-        id="3.2.3-port-plus-sign",
-        marks=diverges("port is parsed with int(), '+' is accepted"),
-    ),
-    pytest.param(
-        "http://example.com: 80/",
-        id="3.2.3-port-space",
-        marks=diverges("port is parsed with int(), whitespace is accepted"),
-    ),
+    pytest.param("http://exa mple.com/", id="3.2.2-space-in-host"),
+    pytest.param("http://exa<mple.com/", id="3.2.2-lt-in-host"),
+    pytest.param("http://example.com:+80/", id="3.2.3-port-plus-sign"),
+    pytest.param("http://example.com: 80/", id="3.2.3-port-space"),
 ]
 
 
@@ -223,14 +210,16 @@ def test_invalid_reference_rejected(url: str) -> None:
         URL(url)
 
 
-# Section 2.1: characters outside the URI grammar must be percent-encoded.
+# Section 2.1: WHATWG mode percent-encodes characters outside the URI
+# grammar; RFC 3986 mode rejects them, see tests/test_url_rfc_grammar.py.
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
         ("http://example.com/a b", "http://example.com/a%20b"),
+        # No "\\" in the path: WHATWG mode reads it as "/".
         (
-            'http://example.com/"<>\\^`{|}[]',
-            "http://example.com/%22%3C%3E%5C%5E%60%7B%7C%7D%5B%5D",
+            'http://example.com/"<>^`{|}[]',
+            "http://example.com/%22%3C%3E%5E%60%7B%7C%7D%5B%5D",
         ),
         (
             'http://example.com/?"<>\\^`{|}[]',
@@ -245,6 +234,22 @@ def test_invalid_reference_rejected(url: str) -> None:
 )
 def test_disallowed_characters_encoded(url: str, expected: str) -> None:
     assert str(URL(url)) == expected
+
+
+# Section 2: "\\" is not in the grammar at all; RFC 3986 mode rejects it.
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://example.com/a\\b",
+        "http://example.com/?a\\b",
+        "http://example.com/#a\\b",
+        "sc://example.com/a\\b",
+        "a\\b",
+    ],
+)
+def test_backslash_rejected(url: str) -> None:
+    with pytest.raises(ValueError, match="does not allow"):
+        URL(url, mode="rfc")
 
 
 PCT_TEMPLATES = {
@@ -279,7 +284,7 @@ RESERVED = ":/?#[]@!$&'()*+,;="
 # Reserved characters that yarl decodes in each component.
 RESERVED_DECODED = {
     "user": "!$&'()*+,;=",
-    "path": ":@!$&'()*,;=",
+    "path": "",
     "query": ":/?@!$'()*,",
     "fragment": ":/?@!$&'()*+,;=",
 }
@@ -313,20 +318,32 @@ def test_reserved_percent_encoding_preserved(component: str, char: str) -> None:
         ("http://ExAmPlE.CoM/", "example.com"),
         ("http://1.2.3.4/", "1.2.3.4"),
         ("http://[2001:DB8::7]/", "2001:db8::7"),
+        # WHATWG mode decodes the host.
+        ("http://ex%41mple.com/", "example.com"),
+        ("http://EX%41mple.com/", "example.com"),
+    ],
+)
+def test_host_normalization(url: str, host: str) -> None:
+    assert URL(url).raw_host == host
+
+
+@pytest.mark.parametrize(
+    ("url", "host"),
+    [
         pytest.param(
             "http://ex%41mple.com/",
             "example.com",
             marks=diverges("percent-encoded unreserved octets in host kept"),
         ),
         pytest.param(
-            "http://EX%4Ample.com/",
-            "example.com",
+            "http://EX%2Fmple.com/",
+            "ex%2Fmple.com",
             marks=diverges("host lowercasing also lowercases percent-encodings"),
         ),
     ],
 )
-def test_host_normalization(url: str, host: str) -> None:
-    assert URL(url).raw_host == host
+def test_host_normalization_rfc_mode(url: str, host: str) -> None:
+    assert URL(url, mode="rfc").raw_host == host
 
 
 # Section 3.2.3: the port may be empty and may carry leading zeros.
@@ -370,10 +387,103 @@ def test_remove_dot_segments(path: str, expected: str) -> None:
     assert normalize_path(path) == expected
 
 
-# Section 5.4.2: "http:g" resolves to "http:g" in strict parsers; the
-# backward-compatible variant yarl implements is explicitly permitted.
+# Section 5.4.2: "http:g" resolves to "http:g" in strict parsers; WHATWG
+# mode implements the backward-compatible variant, which is permitted.
 def test_join_same_scheme_backward_compatible() -> None:
     assert str(URL("http://a/b/c/d;p?q").join(URL("http:g"))) == "http://a/b/c/g"
+
+
+# Section 5.2.2: RFC 3986 mode is a strict parser, a reference with a
+# scheme is used as is, also with the scheme of the base.
+@pytest.mark.parametrize(
+    ("base", "reference"),
+    [
+        ("http://a/b/c/d;p?q", "http:g"),
+        ("http://a/b/c/d;p?q", "http:"),
+        ("file:///tmp/mock/path", "file:test"),
+        ("file:///test?test#test", "file:?x"),
+        ("file:///test?test#test", "file:#x"),
+        ("file://host/", "file:/C:/"),
+    ],
+)
+def test_join_same_scheme_strict(base: str, reference: str) -> None:
+    joined = URL(base, mode="rfc").join(URL(reference, mode="rfc"))
+    assert str(joined) == reference
+    assert joined.mode == "rfc"
+
+
+# Section 5.2.2: the dot segments of a URI with a scheme are removed, also
+# from a path without an authority.
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("file:..", "file:"),
+        ("file:.", "file:"),
+        ("file:.//p", "file:/p"),
+        ("file:/a/./b/../c", "file:/a/c"),
+        ("urn:a/../b", "urn:/b"),
+        ("urn:a/./b", "urn:a/b"),
+        ("mailto:a.b@example.com", "mailto:a.b@example.com"),
+    ],
+)
+def test_dot_segments_without_authority(url: str, expected: str) -> None:
+    assert str(URL(url, mode="rfc")) == expected
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda: URL.build(scheme="urn", path="a/../b", mode="rfc"),
+        lambda: URL("urn:x", mode="rfc").with_path("a/../b"),
+        lambda: URL("urn:x", mode="rfc").joinpath("..", "b"),
+        lambda: URL("urn:x/", mode="rfc") / ".." / "b",
+    ],
+    ids=["build", "with_path", "joinpath", "truediv"],
+)
+def test_dot_segments_without_authority_built(make: Callable[[], URL]) -> None:
+    url = make()
+    assert str(url) == "urn:/b"
+    assert URL(str(url), mode="rfc") == url
+
+
+def test_dot_segments_without_authority_join() -> None:
+    base = URL("http://www.example.com/test", mode="rfc")
+    assert str(base.join(URL("file:..", mode="rfc"))) == "file:"
+
+
+# WHATWG mode keeps the opaque path of a non-special URL as is.
+def test_dot_segments_opaque_path_whatwg() -> None:
+    assert str(URL("urn:a/../b")) == "urn:a/../b"
+    assert str(URL("urn:x").joinpath("..", "b")) == "urn:x/../b"
+
+
+# A relative reference keeps its dot segments until it is resolved.
+def test_dot_segments_relative_reference_kept() -> None:
+    assert str(URL("x", mode="rfc").joinpath("..", "b")) == "x/../b"
+
+
+# Section 5.2.4, step by step; a ".." that climbs above the first segment
+# of a path without a leading "/" leaves one.
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("/a/b/c/./../../g", "/a/g"),
+        ("mid/content=5/../6", "mid/6"),
+        ("a/../b", "/b"),
+        ("a/..", "/"),
+        ("../a", "a"),
+        ("./a", "a"),
+        ("/../a", "/a"),
+        ("/..", "/"),
+        ("/.", "/"),
+        ("a/.", "a/"),
+        ("..", ""),
+        (".", ""),
+        (".//p", "/p"),
+    ],
+)
+def test_remove_dot_segments_literal(path: str, expected: str) -> None:
+    assert remove_dot_segments(path) == expected
 
 
 # Section 5.2.2: components of the target URI.
@@ -387,35 +497,30 @@ def test_join_same_scheme_backward_compatible() -> None:
             "?y",
             "http://a/b?y",
             id="query-drops-base-fragment",
-            marks=diverges("base fragment kept"),
         ),
         pytest.param(
             "http://a/b?q#f",
             "",
             "http://a/b?q",
             id="empty-drops-base-fragment",
-            marks=diverges("base fragment kept"),
         ),
         pytest.param(
             "file://host/",
             "file:///C:/",
             "file:///C:/",
             id="empty-authority-defined",
-            marks=diverges("empty reference authority replaced by the base host"),
         ),
         pytest.param(
             "http://a/b/c/%2F/d",
             "x",
             "http://a/b/c/%2F/x",
             id="merge-keeps-encoded-slash",
-            marks=diverges("merge uses decoded base segments"),
         ),
         pytest.param(
             "http://a/b%2Fc/d",
             "e",
             "http://a/b%2Fc/e",
             id="merge-keeps-encoded-slash-in-segment",
-            marks=diverges("merge uses decoded base segments"),
         ),
     ],
 )
@@ -428,30 +533,10 @@ def test_join_target_components(base: str, reference: str, expected: str) -> Non
     ("base", "reference", "expected"),
     [
         ("ws://a/b/c", "d", "ws://a/b/d"),
-        pytest.param(
-            "foo://a/b/c",
-            "../d",
-            "foo://a/d",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
-        pytest.param(
-            "foo:/a/b",
-            "c",
-            "foo:/a/c",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
-        pytest.param(
-            "foo:a/b",
-            "c",
-            "foo:a/c",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
-        pytest.param(
-            "urn:example:a",
-            "#f",
-            "urn:example:a#f",
-            marks=diverges("join only resolves schemes listed in uses_relative"),
-        ),
+        ("foo://a/b/c", "../d", "foo://a/d"),
+        ("foo:/a/b", "c", "foo:/a/c"),
+        ("foo:a/b", "c", "foo:a/c"),
+        ("urn:example:a", "#f", "urn:example:a#f"),
     ],
 )
 def test_join_scheme_independent(base: str, reference: str, expected: str) -> None:
@@ -483,16 +568,19 @@ def test_join_scheme_independent(base: str, reference: str, expected: str) -> No
             id="6.2.3-default-port",
             marks=diverges("explicit default port makes URLs compare unequal"),
         ),
-        pytest.param(
-            "http://ex%41mple.com/",
-            "http://example.com/",
-            id="6.2.2.2-host",
-            marks=diverges("percent-encoded unreserved octets in host kept"),
-        ),
+        pytest.param("http://ex%41mple.com/", "http://example.com/", id="6.2.2.2-host"),
     ],
 )
 def test_equivalent(first: str, second: str) -> None:
     assert URL(first) == URL(second)
+
+
+@diverges("percent-encoded unreserved octets in host kept")
+def test_equivalent_host_rfc_mode() -> None:
+    # Section 6.2.2.2; WHATWG mode decodes the host, see test_equivalent.
+    assert URL("http://ex%41mple.com/", mode="rfc") == URL(
+        "http://example.com/", mode="rfc"
+    )
 
 
 # Section 2.2: replacing a reserved character by its percent-encoding
@@ -502,11 +590,7 @@ def test_equivalent(first: str, second: str) -> None:
     [
         ("http://example.com/a%2Fb", "http://example.com/a/b"),
         ("http://example.com/?a%26b", "http://example.com/?a&b"),
-        pytest.param(
-            "http://example.com/a%3Bb",
-            "http://example.com/a;b",
-            marks=diverges("%3B is decoded in the path"),
-        ),
+        ("http://example.com/a%3Bb", "http://example.com/a;b"),
     ],
 )
 def test_not_equivalent(first: str, second: str) -> None:

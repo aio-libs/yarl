@@ -1,0 +1,2 @@
+Fixed ``URL.host_port_subcomponent`` so URLs with an empty host no longer raise
+``IndexError`` when the property is accessed -- by :user:`iamzayn19`.

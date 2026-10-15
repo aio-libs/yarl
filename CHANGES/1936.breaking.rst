@@ -1,0 +1,6 @@
+Stripped trailing C0 control characters and spaces from parsed URLs in
+both modes, as the WHATWG URL Standard does and as :rfc:`3986#appendix-C`
+recommends for user-typed URIs; previously only leading ones were
+stripped and trailing ones were percent-encoded, so ``URL('http://h/p ')``
+printed as ``http://h/p%20``
+-- by :user:`asvetlov`.

@@ -124,6 +124,9 @@ repos:
   rev: v2.4.2
   hooks:
   - id: codespell
+    # web-platform-tests data, and the report quoting it, are full of
+    # deliberately malformed input:
+    exclude: ^tools/conformance/(REPORT\.md|wpt/.+)$
 
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.38.0

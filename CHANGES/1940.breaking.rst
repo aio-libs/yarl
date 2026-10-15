@@ -1,0 +1,7 @@
+Parsed hosts of the ``http``, ``https``, ``ws``, ``wss``, ``ftp`` and
+``file`` schemes that are made only of numbers as IPv4 addresses in the
+default WHATWG mode, following the WHATWG URL Standard: ``0x7f.1`` now
+becomes ``127.0.0.1`` and ``256`` becomes ``0.0.1.0``, and hosts like
+``256.0.0.1``, ``1.2.3.4.5`` or a number above ``4294967295`` are rejected.
+Other schemes and RFC 3986 mode keep such hosts as written
+-- by :user:`asvetlov`.

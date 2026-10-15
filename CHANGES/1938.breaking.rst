@@ -1,0 +1,6 @@
+Rejected, in RFC 3986 mode only, an authority with more than one ``@``,
+such as ``http://a@b@example.com/``, since RFC 3986 userinfo cannot
+contain ``@``, and a non-ASCII host that IDNA2008 cannot encode, such as
+one with an emoji, instead of falling back to IDNA2003; WHATWG mode is
+not affected
+-- by :user:`asvetlov`.

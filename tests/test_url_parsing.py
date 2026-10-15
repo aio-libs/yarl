@@ -1,3 +1,4 @@
+from typing import Literal
 from urllib.parse import SplitResult
 
 import pytest
@@ -177,9 +178,9 @@ class TestHost:
         assert u.fragment == ""
 
     def test_ipvfuture_address(self) -> None:
-        u = URL("//[v1.-1]/")
+        u = URL("//[v1.-1]/", mode="rfc")
         assert u.scheme == ""
-        assert u.host == "v1.-1"
+        assert u.host == "[v1.-1]"
         assert u.path == "/"
         assert u.query_string == ""
         assert u.fragment == ""
@@ -204,14 +205,17 @@ class TestPort:
         assert u.query_string == ""
         assert u.fragment == ""
 
-    def test_no_host(self) -> None:
-        u = URL("//:77")
+    @pytest.mark.parametrize("url", ["//:77", "sc://:77/", "sc://:/"])
+    def test_no_host(self, url: str) -> None:
+        with pytest.raises(ValueError, match="host is required"):
+            URL(url)
+
+    def test_no_host_rfc(self) -> None:
+        u = URL("//:77", mode="rfc")
         assert u.scheme == ""
-        assert u.host == ""
+        assert u.host is None
         assert u.port == 77
         assert u.path == "/"
-        assert u.query_string == ""
-        assert u.fragment == ""
 
     def test_double_port(self) -> None:
         with pytest.raises(ValueError):
@@ -228,6 +232,21 @@ class TestPort:
     def test_bad_port_again(self) -> None:
         with pytest.raises(ValueError):
             URL("//h:-80/path")
+
+    @pytest.mark.parametrize(
+        "port",
+        [
+            "+80",  # leading sign
+            " 80",  # leading whitespace
+            "80 ",  # trailing whitespace
+            "8_0",  # underscore digit separator
+            "８０",  # fullwidth digits
+            "٨٠",  # arabic-indic digits
+        ],
+    )
+    def test_non_ascii_digit_port(self, port: str) -> None:
+        with pytest.raises(ValueError):
+            URL(f"//h:{port}/path")
 
 
 class TestUserInfo:
@@ -445,18 +464,87 @@ class TestFragment:
         assert u.fragment == "a://b:c@d.e/f?g#h"
 
 
+@pytest.mark.parametrize(
+    "url", ["//user@", "sc://user@/", "sc://a@b:c@/", "sc://user:pw@:1/", "sc://@/"]
+)
+def test_userinfo_without_host_rejected(url: str) -> None:
+    with pytest.raises(ValueError, match="host is required with userinfo"):
+        URL(url)
+
+
+@pytest.mark.parametrize("authority", ["user@", ":77", "u:p@:1"])
+def test_build_authority_without_host_rejected(authority: str) -> None:
+    # URL.build() must not produce a string that URL() rejects.
+    with pytest.raises(ValueError, match="host is required with userinfo"):
+        URL.build(scheme="sc", authority=authority)
+
+
+@pytest.mark.parametrize("url", ["//user@", "sc://user@/", "sc://user:pw@:1/"])
+def test_userinfo_without_host_rfc(url: str) -> None:
+    # RFC 3986 allows an empty reg-name host next to userinfo or a port.
+    parsed = URL(url, mode="rfc")
+    assert parsed.host is None
+    assert URL(str(parsed), mode="rfc") == parsed
+    built = URL.build(scheme="sc", authority=parsed.raw_authority, mode="rfc")
+    assert built.raw_authority == parsed.raw_authority
+
+
+@pytest.mark.parametrize("authority", ["user@:8080", "user@", ":8080"])
+def test_parsed_and_built_empty_host_agree(authority: str) -> None:
+    # An empty host is None however the URL was made; aiohttp relies on
+    # raw_host being None to reject such authorities.
+    parsed = URL(f"sc://{authority}/path", mode="rfc")
+    built = URL.build(scheme="sc", authority=authority, path="/path", mode="rfc")
+    encoded = URL(f"sc://{authority}/path", encoded=True)
+    assert parsed.raw_host is built.raw_host is encoded.raw_host is None
+    assert parsed.port == built.port == encoded.port
+    assert parsed.host_port_subcomponent is built.host_port_subcomponent is None
+    assert parsed.origin() == built.origin()
+    assert str(parsed.origin()) == str(built.origin())
+
+
+@pytest.mark.parametrize(
+    ("authority", "origin"),
+    [("user@:8080", "sc://:8080"), ("user:pw@:1", "sc://:1"), (":8080", "sc://:8080")],
+)
+def test_empty_host_keeps_authority(authority: str, origin: str) -> None:
+    # A missing host must not drop the userinfo or the port around it.
+    for url in (
+        URL(f"sc://{authority}/path", mode="rfc"),
+        URL.build(scheme="sc", authority=authority, path="/path", mode="rfc"),
+    ):
+        assert url.authority == url.raw_authority == authority
+        assert url.human_repr() == f"sc://{authority}/path"
+        assert str(url.origin()) == origin
+    assert URL("/path").authority == ""
+
+
+@pytest.mark.parametrize("mode", ["rfc", "whatwg"])
+def test_build_http_authority_without_host(mode: Literal["rfc", "whatwg"]) -> None:
+    with pytest.raises(ValueError, match="host is required for absolute urls"):
+        URL.build(scheme="http", authority="user@", mode=mode)
+
+
 class TestStripEmptyParts:
     def test_all_empty_http(self) -> None:
         with pytest.raises(ValueError):
             URL("http://@:?#")
 
     def test_all_empty(self) -> None:
-        u = URL("//@:?#")
+        # Userinfo and a port need a host, as in the WHATWG URL Standard.
+        with pytest.raises(ValueError, match="host is required"):
+            URL("//@:?#")
+
+    def test_all_empty_rfc(self) -> None:
+        # RFC 3986 keeps the empty userinfo, so the authority is "@" and
+        # the path is "/", as with any other authority.
+        u = URL("//@:?#", mode="rfc")
+        assert str(u) == "//@/?#"
         assert u.scheme == ""
-        assert u.user is None
+        assert u.user == ""
         assert u.password is None
-        assert u.host == ""
-        assert u.path == ""
+        assert u.host is None
+        assert u.path == "/"
         assert u.query_string == ""
         assert u.fragment == ""
 

@@ -1,0 +1,5 @@
+Fixed :meth:`URL.join() <yarl.URL.join>` keeping the fragment of the base
+URL when the reference has an empty path, as in ``URL("http://a/b#f").join(URL("?q"))``;
+the fragment of the result now always comes from the reference, as
+required by :rfc:`3986#section-5.2.2`
+-- by :user:`asvetlov`.

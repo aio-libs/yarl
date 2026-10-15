@@ -1,0 +1,3 @@
+Enabled the CI job that fails when ``tools/conformance/REPORT.md``
+does not match the code
+-- by :user:`asvetlov`.
