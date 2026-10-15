@@ -643,6 +643,11 @@ def test_quote_protected(quoter: type[_Quoter]) -> None:
     assert s == "/path%2Fto/three"
 
 
+def test_quote_protected_and_unsafe(quoter: type[_Quoter]) -> None:
+    s = quoter(protected="/", unsafe="/")("/path%2fto/three")
+    assert s == "%2Fpath%2Fto%2Fthree"
+
+
 def test_quote_fastpath_safe(quoter: type[_Quoter]) -> None:
     s1 = "/path/to"
     s2 = quoter(safe="/")(s1)
@@ -701,6 +706,29 @@ def test_quoter_conflicting_safe(
 ) -> None:
     with pytest.raises(ValueError, match=match):
         quoter(safe=safe, protected=protected, qs=qs, requote=requote)
+
+
+@pytest.mark.parametrize(
+    ("safe", "protected", "unsafe", "qs", "requote", "value", "expected"),
+    [
+        ("%", "", "%", False, True, "%41 %", "A%20%25"),
+        ("", "%", "%", False, True, "%41 %", "A%20%25"),
+        (" ", "", " ", True, False, "a b", "a+b"),
+        ("", " ", " ", True, False, "a b", "a+b"),
+    ],
+)
+def test_quoter_unsafe_cancels_conflicting_safe(
+    quoter: type[_Quoter],
+    safe: str,
+    protected: str,
+    unsafe: str,
+    qs: bool,
+    requote: bool,
+    value: str,
+    expected: str,
+) -> None:
+    q = quoter(safe=safe, protected=protected, unsafe=unsafe, qs=qs, requote=requote)
+    assert q(value) == expected
 
 
 @pytest.mark.parametrize(

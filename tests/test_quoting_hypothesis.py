@@ -55,8 +55,8 @@ def test_fuzz__PyQuoter(  # type: ignore[misc]
     safe: str, protected: str, unsafe: str, qs: bool, requote: bool
 ) -> None:
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
-    assume(not (requote and ("%" in safe or "%" in protected)))
-    assume(not (qs and (" " in safe or " " in protected)))
+    assume(not (requote and ("%" in safe or "%" in protected) and "%" not in unsafe))
+    assume(not (qs and (" " in safe or " " in protected) and " " not in unsafe))
     _PyQuoter(safe=safe, protected=protected, unsafe=unsafe, qs=qs, requote=requote)
 
 
