@@ -137,6 +137,10 @@ cdef inline void set_bit(uint8_t array[], uint64_t ch) noexcept:
     array[ch >> BYTE_BITS_SHIFT] |= (1 << (ch & BYTE_BIT_MASK))
 
 
+cdef inline void clear_bit(uint8_t array[], uint64_t ch) noexcept:
+    array[ch >> BYTE_BITS_SHIFT] &= ~(1 << (ch & BYTE_BIT_MASK))
+
+
 memset(ALLOWED_TABLE, 0, sizeof(ALLOWED_TABLE))
 memset(ALLOWED_NOTQS_TABLE, 0, sizeof(ALLOWED_NOTQS_TABLE))
 
@@ -276,7 +280,8 @@ cdef class _Quoter:
     cdef uint8_t _protected_table[ASCII_TABLE_SIZE]
 
     def __init__(
-            self, *, str safe='', str protected='', bint qs=False, bint requote=True,
+            self, *, str safe='', str protected='', str unsafe='',
+            bint qs=False, bint requote=True,
     ):
         cdef Py_UCS4 ch
 
@@ -302,6 +307,12 @@ cdef class _Quoter:
                 raise ValueError("Only safe symbols with ORD < 128 are allowed")
             set_bit(self._safe_table, ch)
             set_bit(self._protected_table, ch)
+
+        for ch in unsafe:
+            if ord(ch) >= ASCII_LIMIT:
+                raise ValueError("Only safe symbols with ORD < 128 are allowed")
+            clear_bit(self._safe_table, ch)
+            clear_bit(self._protected_table, ch)
 
         # Protected characters are in the safe table too. A safe '%' would be
         # left alone while requoting decodes '%XX', and a safe ' ' would be
