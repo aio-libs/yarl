@@ -1,0 +1,8 @@
+Rejected a host that is an IPv4 address followed by a ``%`` suffix which is
+not valid reg-name text, such as ``127.0.0.1%::``. The suffix after the ``%``
+is percent-encoding in the host, so a ``:`` or a bare ``%`` in it produced an
+authority that ``split_netloc`` could not parse back; ``URL.build(host=...)``,
+:meth:`~yarl.URL.with_host` and the ``URL(str)`` constructor in RFC 3986 mode
+or with a non-special scheme built the URL anyway and then raised when its
+host was read. The reg-name check that already guards the other host paths now
+runs here too -- by :user:`Samin061`.
