@@ -152,7 +152,7 @@ def _configure_cython_line_tracing(
     # If line tracing is requested, add it to the directives
     if cython_line_tracing_requested:
         directives = config_kwargs.setdefault('directive', {})
-        assert isinstance(directives, dict)  # noqa: S101  # typing
+        assert isinstance(directives, dict)  # ruff: ignore[assert]  # typing
         directives['linetrace'] = 'True'
         directives['profile'] = 'True'
 
