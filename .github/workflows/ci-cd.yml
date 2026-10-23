@@ -408,7 +408,7 @@ jobs:
       # important: do not use system python
       env:
         UV_PYTHON_PREFERENCE: only-managed
-      uses: astral-sh/setup-uv@v10.2.0
+      uses: astral-sh/setup-uv@v10.3.0
       with:
         python-version: ${{ matrix.pyver }}
         activate-environment: true
@@ -550,7 +550,7 @@ jobs:
         pattern: ${{ needs.pre-setup.outputs.dists-artifact-name }}*
         merge-multiple: true
     - name: Setup Python ${{ env.PYTHON_LATEST }}
-      uses: astral-sh/setup-uv@v10.2.0
+      uses: astral-sh/setup-uv@v10.3.0
       with:
         python-version: ${{ env.PYTHON_LATEST }}
         activate-environment: true

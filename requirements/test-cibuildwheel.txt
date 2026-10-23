@@ -5,10 +5,10 @@ covdefaults
 # it is pinned like the rest.
 expandvars==1.1.2
 idna==3.20
-multidict==6.9.1
+multidict==7.1.0
 propcache==0.5.4
 pytest==9.1.1
 pytest-cov>=7.1.0
 pytest-xdist
-setuptools==84.0.0
-tomli==2.4.1; python_version < "3.11"
+setuptools==84.2.0
+tomli==2.5.0; python_version < "3.11"

@@ -68,12 +68,9 @@ def test_rejected(url: str) -> None:
     ("url", "whatwg", "rfc"),
     [
         # Nothing to read as a host: kept as a reference to a base.
-        ("http:", "http://", "http:"),
-        ("http:/", "http:///", "http:/"),
-        ("http:?q", "http://?q", "http:?q"),
-        ("http://", "http://", "http://"),
-        ("http:///", "http:///", "http:///"),
-        ("http:///?q", "http:///?q", "http:///?q"),
+        ("http:", "http:", "http:"),
+        ("http:/", "http:/", "http:/"),
+        ("http:?q", "http:?q", "http:?q"),
         # file and non-special schemes are not affected.
         ("file:p", "file:///p", "file:p"),
         ("sc:example.com/", "sc:example.com/", "sc:example.com/"),
@@ -91,7 +88,6 @@ def test_kept_without_authority(url: str, whatwg: str, rfc: str) -> None:
         "http:example.com/",
         "http:/example.com/",
         "http:@/www.example.com",
-        "http:///example.com/",
     ],
 )
 def test_rfc_mode_keeps_path(url: str) -> None:
@@ -124,10 +120,11 @@ def test_join(base: str, reference: str, expected: str) -> None:
 
 
 def test_join_rfc_base() -> None:
-    # RFC 3986 section 5.4.2 lets "http:g" resolve against an http base too.
+    # An RFC mode base is a strict parser (RFC 3986 section 5.2.2): the
+    # reference, "http://example.com/" in WHATWG mode, is used as is.
     base = URL("http://h/foo/bar", mode="rfc")
     joined = base.join(URL("http:example.com/"))
-    assert str(joined) == "http://h/foo/example.com/"
+    assert str(joined) == "http://example.com/"
     assert joined.mode == "rfc"
 
 

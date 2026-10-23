@@ -21,6 +21,10 @@ UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
 # WHATWG mode "//" is written out even when the authority is missing.
 SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp", "file"})
 
+# IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" ), RFC 3986
+# section 3.2.2; the "v" is case-insensitive.
+IP_FUTURE_RE = re.compile(r"[vV][0-9A-Fa-f]+\.[A-Za-z0-9\-._~!$&'()*+,;=:]+")
+
 # Bits of the "empty" mask: the component is present but empty, as in
 # "sc://", "http://h/?" or "http://h/#". An absent and an empty component
 # are different per RFC 3986 section 5.3, but both are stored as "".
@@ -29,6 +33,26 @@ EMPTY_QUERY = 2
 EMPTY_FRAGMENT = 4
 
 SplitURLType = tuple[str, str, str, str, str]
+
+# The ZoneID of RFC 6874; in a URL it follows the address as "%25" <ZoneID>.
+# RFC 6874 requires at least one character, yarl also accepts an empty zone
+# identifier (#998).
+ZONE_ID_RE = re.compile(r"(?:[0-9A-Za-z._~-]|%[0-9A-Fa-f]{2})*")
+
+
+def check_zone_id(ip_literal: str) -> None:
+    """Reject an IPv6 zone identifier not written as RFC 6874 says.
+
+    The zone identifier follows the address as "%25" and the ZoneID, whose
+    characters other than unreserved ones are percent-encoded. A bare "%",
+    as in "fe80::1%eth0" (the user interface form of RFC 9844), or another
+    percent-encoded octet, as in "::%31", is not URI syntax.
+    """
+    pct = ip_literal.index("%")
+    if ip_literal[pct : pct + 3] != "%25" or not ZONE_ID_RE.fullmatch(
+        ip_literal, pct + 3
+    ):
+        raise ValueError(f"Invalid IPv6 zone identifier in {ip_literal!r}")
 
 
 def split_url(url: str) -> tuple[str, str, str, str, str, int]:
@@ -104,11 +128,13 @@ def split_url(url: str) -> tuple[str, str, str, str, str, int]:
             # Valid bracketed hosts are defined in
             # https://www.rfc-editor.org/rfc/rfc3986#page-49
             # https://url.spec.whatwg.org/
-            if bracketed_host and bracketed_host[0] == "v":
-                if not re.match(r"\Av[a-fA-F0-9]+\..+\Z", bracketed_host):
+            if bracketed_host and bracketed_host[0] in "vV":
+                if not IP_FUTURE_RE.fullmatch(bracketed_host):
                     raise ValueError("IPvFuture address is invalid")
             elif ":" not in bracketed_host:
                 raise ValueError("The IPv6 content between brackets is not valid")
+            elif "%" in bracketed_host:
+                check_zone_id(bracketed_host)
     if has_hash:
         url, _, fragment = url.partition("#")
         empty |= EMPTY_FRAGMENT
@@ -152,7 +178,10 @@ def _check_netloc(netloc: str) -> None:
 def split_netloc(
     netloc: str,
 ) -> tuple[str | None, str | None, str | None, int | None]:
-    """Split netloc into username, password, host and port."""
+    """Split netloc into username, password, host and port.
+
+    An empty username is None, see split_netloc_rfc() for RFC 3986 mode.
+    """
     if "@" not in netloc:
         username: str | None = None
         password: str | None = None
@@ -174,6 +203,10 @@ def split_netloc(
         if port_str and port_str[0] != ":":
             raise ValueError("Invalid IPv6 URL")
         _, _, port_str = port_str.partition(":")
+        if hostname[:1] in ("v", "V"):
+            # An IPvFuture address keeps its brackets: without them it would
+            # read as a reg-name. IPv6 addresses never start with "v".
+            hostname = f"[{hostname}]"
     else:
         hostname, _, port_str = hostinfo.partition(":")
 
@@ -190,6 +223,23 @@ def split_netloc(
     if not (0 <= port <= 65535):
         raise ValueError("Port out of range 0-65535")
     return username or None, password, hostname or None, port
+
+
+@lru_cache
+def split_netloc_rfc(
+    netloc: str,
+) -> tuple[str | None, str | None, str | None, int | None]:
+    """Split netloc into username, password, host and port in RFC 3986 mode.
+
+    As split_netloc(), but an empty username is "" when the netloc has
+    userinfo, as RFC 3986 keeps an empty userinfo: "@h" and ":p@h" have the
+    username "". A separate cache keeps the single string key, which a mode
+    argument would turn into a tuple.
+    """
+    username, password, host, port = split_netloc(netloc)
+    if username is None and "@" in netloc:
+        username = ""
+    return username, password, host, port
 
 
 # "//" behind any number of "/." segments, see needs_dot_prefix().
@@ -266,7 +316,9 @@ def make_netloc(
 ) -> str:
     """Make netloc from parts.
 
-    The user and password are encoded if encode is True.
+    The user and password are encoded if encode is True. A user that is
+    not None is written with "@" even when it is empty, as RFC 3986 mode
+    keeps an empty userinfo; WHATWG mode passes None for an empty user.
 
     The host must already be encoded with _encode_host.
     """
@@ -287,7 +339,7 @@ def make_netloc(
         user = f"{user}:{password}"
     elif user and encode:
         user = QUOTER(user)
-    return f"{user}@{ret}" if user else ret
+    return f"{user}@{ret}"
 
 
 def query_to_pairs(

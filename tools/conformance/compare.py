@@ -1,9 +1,9 @@
-"""Compare yarl with RFC 3986 and the WHATWG URL Standard.
+"""Compare yarl with RFC 3986+3987 and the WHATWG URL Standard.
 
 The WHATWG side comes from the web-platform-tests corpus, pinned to one
-commit and verified by checksum; the RFC 3986 side comes from the strict
-oracle in rfc3986_oracle.py.  The result is written to REPORT.md next to
-this file.  The WPT files are vendored under wpt/, so regenerating and
+commit and verified by checksum; the RFC 3986+3987 side comes from the strict
+oracle in rfc3986_oracle.py: RFC 3986 for URIs, extended to IRIs by
+RFC 3987.  The result is written to REPORT.md next to this file.  The WPT files are vendored under wpt/, so regenerating and
 checking the report never touches the network.
 
 Usage::
@@ -91,7 +91,7 @@ class Case:
     reference: str
     base: str | None
     yarl: str | None  # WHATWG mode, the default
-    yarl_rfc: str | None  # RFC 3986 mode
+    yarl_rfc: str | None  # RFC mode
     rfc: str | None
     wpt: str | None
 
@@ -111,11 +111,11 @@ class Case:
 
 
 BUCKETS = {
-    "agree": "RFC 3986, WHATWG and yarl in both modes agree",
+    "agree": "RFC 3986+3987, WHATWG and yarl in both modes agree",
     "both": "yarl follows each standard in its mode",
-    "yarl": "yarl differs, RFC 3986 and WHATWG agree",
-    "whatwg_mode": "WHATWG mode differs from WHATWG, RFC mode follows RFC 3986",
-    "rfc_mode": "RFC mode differs from RFC 3986, WHATWG mode follows WHATWG",
+    "yarl": "yarl differs, RFC 3986+3987 and WHATWG agree",
+    "whatwg_mode": "WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987",
+    "rfc_mode": "RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG",
     "none": "Both modes differ from their standard",
 }
 
@@ -132,13 +132,102 @@ def _host(authority: str) -> str:
     return host if host.startswith("[") else host.partition(":")[0]
 
 
+def _scheme(reference: str, base: str | None) -> str | None:
+    """Return the scheme the reference resolves under, lowercased."""
+    for url in (reference, base or ""):
+        if m := re.match(r"([A-Za-z][A-Za-z0-9+.\-]*):", url):
+            return m.group(1).lower()
+    return None
+
+
+def _file_parts(reference: str) -> tuple[str | None, str]:
+    """Split a file reference into its authority and path.
+
+    WHATWG reads a backslash as a slash in a file URL, so it is one here.
+    """
+    rest = re.sub(r"^[A-Za-z][A-Za-z0-9+.\-]*:", "", reference).replace("\\", "/")
+    rest = re.split(r"[?#]", rest, maxsplit=1)[0]
+    if not rest.startswith("//"):
+        return None, rest
+    authority, slash, path = rest[2:].partition("/")
+    return authority, slash + path
+
+
+def _drive_letter(reference: str, base: str | None) -> bool:
+    """Tell whether a Windows drive letter takes part in a file URL.
+
+    WHATWG keeps a drive letter such as ``C:`` or ``C|`` as the first path
+    segment and never climbs above it, where RFC 8089 leaves it to the
+    application. A reference that starts like one, as ``C|a`` does, is
+    counted too, since WHATWG has to decide it is not a drive letter. A
+    reference without an authority inherits the drive letter of its base.
+    """
+    if _scheme(reference, base) != "file":
+        return False
+    drive = re.compile(r"/*[A-Za-z][:|](?:/|$)")
+    authority, path = _file_parts(reference)
+    lookalike = re.compile(r"/*[A-Za-z][:|]")
+    if authority is not None and lookalike.match(authority + path):
+        return True
+    if lookalike.match(path):
+        return True
+    return (
+        authority is None
+        and not re.match(r"[A-Za-z][A-Za-z0-9+.\-]*:", reference)
+        and base is not None
+        and drive.match(_file_parts(base)[1]) is not None
+    )
+
+
+def _file_host(reference: str, base: str | None) -> bool:
+    """Tell whether WHATWG rewrites or rejects the host of a file URL.
+
+    WHATWG turns ``localhost`` into an empty host and allows no port.
+    """
+    if _scheme(reference, base) != "file":
+        return False
+    authority, _ = _file_parts(reference)
+    return authority is not None and (
+        _host(authority).lower() == "localhost" or ":" in authority
+    )
+
+
+def _empty_file_path(reference: str, base: str | None) -> bool:
+    """Tell whether WHATWG fills the empty path of a file URL with ``/``.
+
+    A reference without an authority against a file base is resolved
+    relative to it instead, so it does not count.
+    """
+    if _scheme(reference, base) != "file":
+        return False
+    authority, path = _file_parts(reference)
+    if path:
+        return False
+    return authority is not None or not (base or "").lower().startswith("file:")
+
+
+def _backslash_separator(reference: str, base: str | None) -> bool:
+    """Tell whether WHATWG reads a backslash as a slash and nothing else is odd.
+
+    Only special schemes read a backslash before the query as a slash;
+    elsewhere it is an ordinary character outside the RFC 3986+3987 grammar.
+    The input must be within that grammar once those backslashes are slashes,
+    so that an unrelated difference is not filed under the backslash.
+    """
+    if _scheme(reference, base) not in SPECIAL_SCHEMES:
+        return False
+    head = re.split(r"[?#]", reference, maxsplit=1)[0]
+    return "\\" in head and rfc.is_iri_reference(
+        head.replace("\\", "/") + reference[len(head) :]
+    )
+
+
 CATEGORIES: list[tuple[str, Callable[[str, str | None], bool]]] = [
     (
         "leading or trailing C0 control or space",
         lambda r, b: r != r.strip(C0_OR_SPACE),
     ),
     ("tab or newline inside the input", lambda r, b: any(c in r for c in "\t\n\r")),
-    ("backslash", lambda r, b: "\\" in r),
     (
         "IP-literal host",
         lambda r, b: (a := _authority(r)) is not None and _host(a).startswith("["),
@@ -160,7 +249,10 @@ CATEGORIES: list[tuple[str, Callable[[str, str | None], bool]]] = [
         ),
     ),
     ("empty host", lambda r, b: (a := _authority(r)) is not None and not _host(a)),
-    ("file scheme", lambda r, b: (r if ":" in r else b or "").startswith("file:")),
+    ("Windows drive letter", _drive_letter),
+    ("file host that WHATWG rewrites", _file_host),
+    ("empty file path", _empty_file_path),
+    ("backslash read as a slash", _backslash_separator),
     (
         "special scheme without an authority",
         lambda r, b: (
@@ -169,8 +261,8 @@ CATEGORIES: list[tuple[str, Callable[[str, str | None], bool]]] = [
         ),
     ),
     (
-        "characters outside the RFC 3986 grammar",
-        lambda r, b: not rfc.is_uri_reference(r),
+        "characters outside the RFC 3986+3987 grammar",
+        lambda r, b: not rfc.is_iri_reference(r),
     ),
     (
         "non-special scheme",
@@ -221,7 +313,7 @@ CASE_HEADER = [
     "yarl WHATWG mode",
     "WHATWG",
     "yarl RFC mode",
-    "RFC 3986",
+    "RFC 3986+3987",
 ]
 
 
@@ -274,6 +366,7 @@ STANDARDS = """\
 | RFC 9110 section 4.2 | http and https schemes | Internet Standard (STD 97) |
 | RFC 3987 | Internationalized Resource Identifiers | Proposed Standard |
 | RFC 5891, RFC 5892 | IDNA2008 | Proposed Standard |
+| RFC 5895 | Mapping characters for IDNA2008 | Informational |
 | RFC 3492 | Punycode | Proposed Standard |
 | RFC 5952 | IPv6 address text representation | Proposed Standard |
 | RFC 8089 | file scheme | Proposed Standard |
@@ -307,25 +400,29 @@ def render() -> str:
     pairs = Counter[str]()
     for case in cases:
         pairs["yarl WHATWG mode vs WHATWG"] += not same(case.yarl, case.wpt)
-        pairs["yarl RFC mode vs RFC 3986"] += not same(case.yarl_rfc, case.rfc)
-        pairs["WHATWG vs RFC 3986"] += not same(case.wpt, case.rfc)
+        pairs["yarl RFC mode vs RFC 3986+3987"] += not same(case.yarl_rfc, case.rfc)
+        pairs["WHATWG vs RFC 3986+3987"] += not same(case.wpt, case.rfc)
 
     lines = [
         "# yarl conformance report",
         "",
         "<!-- Generated by tools/conformance/compare.py; do not edit by hand. -->",
         "",
-        "How yarl compares with RFC 3986 and with the WHATWG URL Standard, "
+        "How yarl compares with RFC 3986+3987 and with the WHATWG URL Standard, "
         "over the web-platform-tests URL corpus "
         f"([`{WPT_COMMIT[:12]}`](https://github.com/web-platform-tests/wpt/tree/"
         f"{WPT_COMMIT}/url/resources), {WPT_DATE}).",
         "",
         "* **yarl**: `URL(input, mode=mode)`, or `URL(base, mode=mode)"
         ".join(URL(input, mode=mode))` when the case has a base, once in the "
-        "default WHATWG mode and once in RFC 3986 mode; a result without a "
+        "default WHATWG mode and once in RFC mode; a result without a "
         "scheme counts as a failure.",
-        "* **RFC 3986**: the strict oracle in `rfc3986_oracle.py`, with no "
-        "input preprocessing.",
+        "* **RFC 3986+3987**: the strict oracle in `rfc3986_oracle.py`, with no "
+        "input preprocessing: RFC 3986 for URIs, and RFC 3987 for IRIs, "
+        "which it maps to URIs as section 3.1 does (a non-ASCII host with "
+        "the RFC 5895 mapping and IDNA2008 when it is a valid IDNA2008 name, "
+        "other non-ASCII characters percent-encoded), and with RFC 9110 "
+        "section 4.2 rejecting an http or https URI with an empty host.",
         "* **WHATWG**: the expected `href` from `urltestdata.json`.",
         "",
         "Outcomes that are equal after RFC 3986 section 6.2 normalization "
@@ -334,8 +431,8 @@ def render() -> str:
         "",
         "The goal is that every case is in one of the first two sections: "
         "where the standards agree, yarl agrees with them in both modes; "
-        "where they differ, WHATWG mode follows WHATWG and RFC 3986 mode "
-        "follows RFC 3986.",
+        "where they differ, WHATWG mode follows WHATWG and RFC mode "
+        "follows RFC 3986+3987.",
         "",
         "## Standards",
         "",
@@ -350,7 +447,7 @@ def render() -> str:
         "",
         *table(["Pair", "Disagreements"], ([k, str(v)] for k, v in pairs.items())),
         "",
-        f"## yarl differs, RFC 3986 and WHATWG agree ({len(by_bucket['yarl'])})",
+        f"## yarl differs, RFC 3986+3987 and WHATWG agree ({len(by_bucket['yarl'])})",
         "",
         "Every case where the standards agree and yarl, in either mode, does "
         "not. A change must not add rows here; see AGENTS.md.",
@@ -368,6 +465,40 @@ def render() -> str:
     return "\n".join(lines)
 
 
+# The oracle's answers for inputs the WPT corpus does not cover well,
+# checked on every run: (reference, base, target URI or None).
+ORACLE_CASES: list[tuple[str, str | None, str | None]] = [
+    ("a b", "http://x/", None),
+    ("http://example.com/\u4f60\u597d", None, "http://example.com/%E4%BD%A0%E5%A5%BD"),
+    ("http://\u00e9@example.com:8080/", None, "http://%C3%A9@example.com:8080/"),
+    ("\u4e2d/x", "http://\u4f8b\u3048.jp/a/b", "http://xn--r8jz45g.jp/a/%E4%B8%AD/x"),
+    # Private use only in the query; no noncharacters or bidi formatting.
+    ("https://localhost?q=\ue000", None, "https://localhost?q=%EE%80%80"),
+    ("https://localhost/\ue000", None, None),
+    ("https://x/\uffffy", None, None),
+    ("http://a/\u202e", None, None),
+    # Hosts: RFC 5895 and IDNA2008, else percent-encoded.
+    ("http://\uff27\uff4f.com", None, "http://go.com"),
+    ("http://www.foo\u3002bar.com", None, "http://www.foo.bar.com"),
+    ("https://fa\u00df.example/", None, "https://xn--fa-hia.example/"),
+    ("sc://\u00f1_foo/", None, "sc://%C3%B1_foo/"),
+    ("http://GOO\u200bgoo.com", None, "http://GOO%E2%80%8Bgoo.com"),
+    # RFC 9110 section 4.2: no empty host for http and https.
+    ("http://user@/", None, None),
+    ("HTTPS://:443?q", None, None),
+    ("///p", "http://h/", None),
+    ("http:/p", None, "http:/p"),
+    ("sc://@/", None, "sc://@/"),
+]
+
+
+def check_oracle() -> None:
+    for reference, base, expected in ORACLE_CASES:
+        got = rfc.outcome(reference, base)
+        if got != expected:
+            sys.exit(f"oracle: {reference!r} on {base!r} is {got!r}, not {expected!r}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = parser.add_mutually_exclusive_group()
@@ -381,6 +512,7 @@ def main() -> None:
     if args.fetch:
         fetch_wpt()
         return
+    check_oracle()
     text = render()
     if not args.check:
         REPORT.write_text(text, encoding="utf-8")

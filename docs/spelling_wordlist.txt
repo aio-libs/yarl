@@ -20,6 +20,8 @@ armv
 ascii
 backend
 backends
+backtick
+bidi
 boolean
 booleans
 bools

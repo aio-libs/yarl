@@ -233,9 +233,21 @@ def test_idna2008_host_in_whatwg_mode() -> None:
 def test_idna2008_host_accepted(mode: Mode) -> None:
     url = URL("http://ñ.example/", mode=mode)
     assert url.raw_host == "xn--ida.example"
+
+
+def test_zone_identifier_not_idna_encoded() -> None:
     # A zone identifier is not a host name, so IDNA does not apply to it.
-    ipv6 = URL("http://[fe80::1%25ñ]/", mode=mode)
-    assert ipv6.raw_host == "fe80::1%25ñ"
+    # Parsing rejects it: an IP-literal is ASCII in RFC 3987 too, and RFC
+    # 6874 percent-encodes the zone identifier.
+    with pytest.raises(ValueError, match="Invalid IPv6 zone identifier"):
+        URL("http://[fe80::1%25\xf1]/")
+    with pytest.raises(ValueError, match="'\xf1' in the host"):
+        URL("http://[fe80::1%25\xf1]/", mode=RFC)
+    # The builders percent-encode it in both modes.
+    for mode in (RFC, WHATWG):
+        url = URL.build(scheme="http", host="fe80::1%\xf1", mode=mode)
+        assert url.raw_host == "fe80::1%25%C3%B1"
+        assert url.host == "fe80::1%\xf1"
 
 
 @pytest.mark.parametrize("first", [RFC, WHATWG])
