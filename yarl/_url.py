@@ -2762,7 +2762,8 @@ class URL:
             )
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
 
-    if HAS_PYDANTIC:
+    # pydantic is installed on every CI test leg, so the other arm never runs.
+    if HAS_PYDANTIC:  # pragma: no branch
         # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
         @classmethod
         def __get_pydantic_json_schema__(
@@ -3074,7 +3075,14 @@ def _encode_host(
                     raise ValueError("Invalid characters in zone identifier")
             # These checks should not happen in the
             # LRU to keep the cache size small
-            host = ip.compressed
+            if ip.version == 6 and (mapped := ip.ipv4_mapped) is not None:
+                # RFC 5952 section 5 keeps the dotted quad. ``ipaddress``
+                # prints it in hex before 3.13 in the last Windows and macOS
+                # binary releases (3.10.11, 3.11.9, 3.12.10), so do not rely
+                # on ``compressed`` for these.
+                host = f"::ffff:{mapped}"
+            else:
+                host = ip.compressed
             if ip.version == 6:
                 host = f"[{host}{sep}{zone}]" if sep else f"[{host}]"
             elif sep:
