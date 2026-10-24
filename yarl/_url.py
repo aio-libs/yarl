@@ -34,6 +34,7 @@ from ._parse import (
     EMPTY_FRAGMENT,
     EMPTY_QUERY,
     IP_FUTURE_RE,
+    SCHEME_START_CHARS,
     SPECIAL_SCHEMES,
     UNSAFE_URL_BYTES_TO_REMOVE,
     WHATWG_C0_CONTROL_OR_SPACE,
@@ -280,11 +281,15 @@ def rewrite_module(obj: _T) -> _T:
 
 
 def _encode_relative_scheme_colon(path: str) -> str:
-    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``."""
+    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``.
+
+    The shape is the one the parser reads as a scheme, see split_url(); a
+    path such as ``1a:b`` is no scheme, so it is written as it is.
+    """
     colon_pos = path.find(":")
-    if colon_pos <= 0:
+    if colon_pos <= 0 or path[0] not in SCHEME_START_CHARS:
         return path
-    for c in path[:colon_pos]:
+    for c in path[1:colon_pos]:
         if c not in _SCHEME_CHARS:
             return path
     return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
@@ -581,7 +586,11 @@ def _backslashes(url_str: str) -> tuple[str, bool]:
         url = url.replace(b, "")
     i = url.find(":")
     relative = True
-    if i > 0 and all(c in _SCHEME_CHARS for c in url[:i]):
+    if (
+        i > 0
+        and url[0] in SCHEME_START_CHARS
+        and all(c in _SCHEME_CHARS for c in url[:i])
+    ):
         if url[:i].lower() not in SPECIAL_SCHEMES:
             return url_str, False
         relative = False

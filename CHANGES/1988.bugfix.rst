@@ -1,0 +1,11 @@
+Read a scheme that does not start with a letter as part of the relative
+path, as :rfc:`3986#section-3.1` and the WHATWG URL Standard both require
+the first character of a scheme to be an ASCII letter:
+``10.0.0.7:8080/foo.html`` was a URL with the scheme ``10.0.0.7``, and
+resolving it against a base dropped the base, where ``127.0.0.1:8080/x``
+and ``1abc://example.com/`` were absolute URLs too. Such a string is now a
+relative reference, so joining ``10.0.0.7:8080/foo.html`` with
+``http://example.com/a/b`` keeps the base:
+``http://example.com/a/10.0.0.7:8080/foo.html``. RFC 3986 mode is
+unchanged: it rejects the string for the ``:`` in the first segment
+-- by :user:`simpleqt`.

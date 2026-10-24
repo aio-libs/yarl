@@ -4,6 +4,7 @@ import codecs
 import re
 import unicodedata
 from functools import lru_cache
+from string import ascii_letters
 from urllib.parse import parse_qsl, scheme_chars
 
 from ._quoters import QUOTER, UNQUOTER_PLUS
@@ -17,6 +18,12 @@ WHATWG_C0_CONTROL_OR_SPACE = (
 
 # Unsafe bytes to be removed per WHATWG spec
 UNSAFE_URL_BYTES_TO_REMOVE = ["\t", "\r", "\n"]
+# A scheme starts with an ASCII letter: RFC 3986 section 3.1 writes
+# ``scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )`` and the WHATWG
+# "scheme start state" takes an ASCII alpha too. urllib's scheme_chars holds
+# the digits and the signs as well, so it is the set for the rest of a
+# scheme, not for its first character.
+SCHEME_START_CHARS = frozenset(ascii_letters)
 # The WHATWG "special" schemes: their URLs always have an authority, so in
 # WHATWG mode "//" is written out even when the authority is missing.
 SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp", "file"})
@@ -69,7 +76,7 @@ def split_url(url: str) -> tuple[str, str, str, str, str, int]:
     scheme = netloc = query = fragment = ""
     empty = 0
     i = url.find(":")
-    if i > 0 and url[0] in scheme_chars:
+    if i > 0 and url[0] in SCHEME_START_CHARS:
         for c in url[1:i]:
             if c not in scheme_chars:
                 break

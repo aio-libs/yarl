@@ -108,6 +108,24 @@ def test_scheme(url: str, scheme: str) -> None:
     assert URL(url).scheme == scheme
 
 
+# Section 3.1: a scheme starts with a letter, so a prefix such as "1abc" or
+# "10.0.0.7" is no scheme; the string is a relative reference, whose first
+# segment may not carry the ":" of section 4.2, see INVALID below.
+@pytest.mark.parametrize(
+    "url",
+    [
+        "1abc://example.com/",
+        "1abc:path",
+        "10.0.0.7:8080/foo.html",
+    ],
+)
+def test_scheme_without_a_leading_letter(url: str) -> None:
+    parsed = URL(url)
+    assert parsed.scheme == ""
+    assert parsed.raw_host is None
+    assert str(parsed) == url
+
+
 # URI references that must round-trip unchanged: each is valid under the
 # ABNF of Appendix A and already in normal form.
 VALID = [
@@ -190,7 +208,9 @@ INVALID = [
     pytest.param(
         "1abc://example.com/",
         id="3.1-scheme-starts-with-digit",
-        marks=diverges("scheme starting with a digit is accepted"),
+        # "1abc" is no scheme, the string is read as a relative path, which
+        # section 4.2 rejects for the ":" in the first segment.
+        marks=diverges("relative path with ':' in the first segment is accepted"),
     ),
     pytest.param(
         "://example.com",
