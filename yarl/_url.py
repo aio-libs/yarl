@@ -644,6 +644,17 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             # are invalid. "http:" and "http:?q" have no authority, they are
             # references to a base.
             _check_missing_host(scheme, mode)
+        elif (
+            empty & EMPTY_AUTHORITY
+            and not scheme
+            and mode is _WHATWG
+            and ("%" in path or "[" in path)
+            and "_join_path" not in cache
+        ):
+            # Against an http base join() reads the path of "///h/p" as an
+            # authority, where "%38" and "[" must stay as written; the path
+            # quoter would decode the first and encode the second.
+            cache["_join_path"] = path
         host = ""
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
@@ -2613,10 +2624,18 @@ class URL:
                     f"Invalid URL: {join_path!r} has a drive letter for an"
                     f" authority, which only a file URL accepts"
                 )
+            elif url._empty & EMPTY_AUTHORITY and scheme in SCHEME_REQUIRES_HOST:
+                # "///h/p" with "%" or "[" in it, see _encode_url().
+                return self._join_empty_host(url, scheme, join_path)
             elif scheme in SPECIAL_SCHEMES and self._mode is _WHATWG:
                 # A relative reference with "\\" (see _backslashes()); the
                 # query and the fragment may have changed since it was parsed.
                 ref = encode_url(join_path)
+                if not ref._netloc and ref._empty & EMPTY_AUTHORITY:
+                    # "/\\/h/p" is "///h/p", see _join_empty_host().
+                    return self._join_empty_host(
+                        url, scheme, ref._cache.get("_join_path", ref._path)
+                    )
                 url = from_parts(
                     ref._scheme,
                     ref._netloc,
@@ -2683,7 +2702,7 @@ class URL:
         join_empty = url._empty
         if url._netloc or join_empty & EMPTY_AUTHORITY:
             if not url._netloc and scheme in SCHEME_REQUIRES_HOST:
-                return self._join_empty_host(url, scheme)
+                return self._join_empty_host(url, scheme, url._path)
             join_netloc = url._netloc
             join_path = url._path
             if not url._scheme or url._mode is not _WHATWG:
@@ -2739,7 +2758,7 @@ class URL:
             self._empty & EMPTY_AUTHORITY | query_empty | join_empty & EMPTY_FRAGMENT,
         )
 
-    def _join_empty_host(self, url: "URL", scheme: str) -> "URL":
+    def _join_empty_host(self, url: "URL", scheme: str, path: str) -> "URL":
         """join() for a reference with an empty authority, such as "///a",
         against a base whose scheme needs a host.
 
@@ -2748,17 +2767,15 @@ class URL:
         fails as it does on "http:///a". The WHATWG parser reads such a
         reference in the special authority ignore slashes state, where the
         host follows the slashes: "///a/b" is "http://a/b" and "//" fails.
+        path is the path of the reference, as written when the path quoter
+        would have changed its authority part, see _encode_url().
         """
         if self._mode is not _WHATWG:
             raise ValueError(
                 f"Invalid URL: joining {str(url)!r} gives an empty host,"
                 f" which the {scheme} scheme does not allow"
             )
-        authority, slash, path = url._path.lstrip("/").partition("/")
-        if "%5" in authority:
-            # The path quoter encoded the brackets of an IP literal.
-            authority = authority.replace("%5B", "[").replace("%5D", "]")
-        joined = URL(f"{scheme}://{authority}{slash}{path}")
+        joined = URL(f"{scheme}://{path.lstrip('/')}")
         return from_parts(
             scheme,
             joined._netloc,

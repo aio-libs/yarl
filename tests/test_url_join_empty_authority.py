@@ -7,6 +7,8 @@ special scheme other than file and reads the host after them, so in WHATWG
 mode "///a/b" against an http base is "http://a/b".
 """
 
+import pickle
+
 import pytest
 
 from yarl import URL
@@ -29,6 +31,9 @@ from yarl import URL
         ("http://example.org/", "///a?", "http://a/?"),
         ("http://example.org/", "///u:p@h:81/x", "http://u:p@h:81/x"),
         ("http://example.org/", "///[::1]/x", "http://[::1]/x"),
+        ("http://example.org/", "/\\/\\/[::1]/x", "http://[::1]/x"),
+        ("http://example.org/", "///%5Bu%5D@h/x", "http://%5Bu%5D@h/x"),
+        ("http://example.org/", "///%41/x", "http://a/x"),
         ("http://example.org/", "///%C3%B1/x", "http://xn--ida/x"),
         ("http://example.org/", "///0x7f.1/", "http://127.0.0.1/"),
         ("https://example.org/a", "///b", "https://b"),
@@ -43,10 +48,32 @@ def test_join_whatwg(base: str, reference: str, expected: str) -> None:
     assert str(URL(base).join(URL(reference))) == expected
 
 
-@pytest.mark.parametrize("reference", ["//", "///", "//?q", "///#f", "///a%2Fb"])
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "//",
+        "///",
+        "//?q",
+        "///#f",
+        "///a%2Fb",
+        # The port and the brackets of the host are read as written.
+        "///h:%38%30/x",
+        "/\\/\\/h:%38%30/x",
+        "///%5B::1%5D/x",
+        "///C|/x",
+    ],
+)
 def test_join_whatwg_empty_host_rejected(reference: str) -> None:
     with pytest.raises(ValueError):
         URL("http://example.org/").join(URL(reference))
+
+
+def test_join_whatwg_written_path_kept() -> None:
+    # The path as written survives a new query and pickling.
+    url = URL("///[::1]/x").with_query(a="1")
+    base = URL("http://example.org/")
+    assert str(base.join(url)) == "http://[::1]/x?a=1"
+    assert str(base.join(pickle.loads(pickle.dumps(url)))) == "http://[::1]/x?a=1"
 
 
 @pytest.mark.parametrize(
