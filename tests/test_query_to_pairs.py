@@ -124,7 +124,6 @@ def test_max_fields_exceeded(query_string: str, max_fields: int) -> None:
 
 
 def test_max_fields_empty_query_string() -> None:
-    # parse_qsl on Python 3.10 raises here, later versions have no fields to count
     assert query_to_pairs("", max_fields=0) == []
 
 

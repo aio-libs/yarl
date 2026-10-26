@@ -1,8 +1,7 @@
 import re
-import sys
 import warnings
 from collections.abc import Mapping, Sequence
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import _CacheInfo, lru_cache
 from importlib.util import find_spec
 from ipaddress import ip_address
@@ -11,6 +10,7 @@ from typing import (
     Any,
     Literal,
     NoReturn,
+    Self,
     TypedDict,
     TypeVar,
     Union,
@@ -175,17 +175,6 @@ def _quote_match(match: re.Match[str]) -> str:
 
 
 _T = TypeVar("_T")
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-    from typing import Self
-else:
-    Self = Any
-
-    class StrEnum(str, Enum):
-        """Backport of :class:`enum.StrEnum` for Python 3.10."""
-
-        __str__ = str.__str__
 
 
 class UndefinedType(Enum):

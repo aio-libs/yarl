@@ -1,6 +1,6 @@
 -r cython.txt
 covdefaults
-# expandvars, setuptools and tomli are dependencies of the in-tree PEP 517
+# expandvars and setuptools are dependencies of the in-tree PEP 517
 # build backend under test; the tests use setuptools' private distutils, so
 # it is pinned like the rest.
 expandvars==1.1.2
@@ -11,4 +11,3 @@ pytest==9.1.1
 pytest-cov>=7.1.0
 pytest-xdist
 setuptools==84.2.0
-tomli==2.5.0; python_version < "3.11"

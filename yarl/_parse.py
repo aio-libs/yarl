@@ -352,9 +352,7 @@ def query_to_pairs(
     encoding=encoding, max_num_fields=max_fields)``.
 
     Raises :exc:`ValueError` if *max_fields* is not ``None`` and the
-    query string has more than *max_fields* fields. An empty query string
-    returns an empty list on every Python version, even when *max_fields*
-    is ``0``, where ``parse_qsl`` on Python 3.10 raises instead.
+    query string has more than *max_fields* fields.
     """
     if not query_string:
         return []
