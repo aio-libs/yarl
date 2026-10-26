@@ -670,18 +670,25 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
         # the host, producing a ``str(url)`` that yarl cannot re-parse
         # (#1829). Validate like the builder APIs do, but keep accepting an
         # empty IPv6 zone identifier, which parsing has always allowed (#998).
-        encoded, whatwg_host, idna2003 = _encode_host(
-            host, validate_host=True, reject_empty_zone=False
-        )
-        if idna2003 and mode is not _WHATWG:
-            raise ValueError(_idna2003_host_error(host))
-        host = encoded
         if (
-            whatwg_host is not host
+            scheme not in SPECIAL_SCHEMES
             and mode is _WHATWG
-            and (scheme in SPECIAL_SCHEMES or host[0] == "[")
+            and _is_opaque_host(scheme, host)
         ):
-            host = _whatwg_special_host(host, whatwg_host)
+            host = _encode_opaque_host(host)
+        else:
+            encoded, whatwg_host, idna2003 = _encode_host(
+                host, validate_host=True, reject_empty_zone=False
+            )
+            if idna2003 and mode is not _WHATWG:
+                raise ValueError(_idna2003_host_error(host))
+            host = encoded
+            if (
+                whatwg_host is not host
+                and mode is _WHATWG
+                and (scheme in SPECIAL_SCHEMES or host[0] == "[")
+            ):
+                host = _whatwg_special_host(host, whatwg_host)
         if mode is _WHATWG and scheme == "file":
             _check_whatwg_file_authority(netloc)
             if host == "localhost":
@@ -1127,7 +1134,14 @@ class URL:
                 user, password, _host, port = split_netloc_rfc(authority)
             if not _host:
                 _check_missing_host(scheme, mode)
-            if _host:
+            if (
+                _host
+                and scheme not in SPECIAL_SCHEMES
+                and mode is _WHATWG
+                and _is_opaque_host(scheme, _host)
+            ):
+                _host = _encode_opaque_host(_host)
+            elif _host:
                 if "%" in _host and ":" in _host and _host[0] != "[":
                     check_zone_id(_host)
                 encoded_host, whatwg_host, idna2003 = _encode_host(
@@ -1147,6 +1161,13 @@ class URL:
                 if port is None and user is None:
                     # As the parser does, see _encode_url().
                     self._empty = EMPTY_AUTHORITY
+        elif (
+            host
+            and scheme not in SPECIAL_SCHEMES
+            and mode is _WHATWG
+            and _is_opaque_host(scheme, host)
+        ):
+            _host = _encode_opaque_host(host)
         elif host:
             _host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
             if idna2003 and mode is not _WHATWG:
@@ -1226,7 +1247,15 @@ class URL:
             # Rare: empty components, or no authority, which a special
             # scheme in WHATWG mode still prints as "//".
             return self._str_with_empty()
-        if not self._path and (self._query or self._fragment):
+        if (
+            not self._path
+            and (self._query or self._fragment)
+            and (self._scheme in SPECIAL_SCHEMES or not self._scheme)
+        ):
+            # A special scheme has the path "/" at least, so "http://h?q" is
+            # "http://h/?q". A non-special URL keeps its empty path, as
+            # RFC 3986 and WHATWG write it: "sc://h?q". A relative reference
+            # has no scheme to tell, and keeps the "/".
             path = "/"
         else:
             path = self._path
@@ -1243,7 +1272,12 @@ class URL:
 
     def _str_with_empty(self) -> str:
         """Render a URL with empty components or without an authority."""
-        if not self._path and self._netloc:
+        if (
+            not self._path
+            and self._netloc
+            and (self._scheme in SPECIAL_SCHEMES or not self._scheme)
+        ):
+            # As in __str__(), "sc://h?" keeps its empty path.
             path = "/"
         else:
             path = self._path
@@ -1622,9 +1656,18 @@ class URL:
         identifier is percent-decoded; the encoded form is still
         available via :attr:`raw_host` and :attr:`host_subcomponent`.
 
+        The opaque host of a non-special URL in WHATWG mode has its
+        non-ASCII characters percent-decoded, the rest stays as it is.
+
         """
         if (raw := self.raw_host) is None:
             return None
+        if (
+            self._scheme not in SPECIAL_SCHEMES
+            and self._mode is _WHATWG
+            and _is_opaque_host(self._scheme, raw)
+        ):
+            return _decode_opaque_host(raw)
         if raw and (raw[-1].isdigit() or raw[-1] == "]") or ":" in raw:
             # IP addresses are never IDNA encoded. The RFC 6874 zone
             # separator "%25" of an IPv6 address decodes to "%"; the zone
@@ -2120,15 +2163,22 @@ class URL:
             raise ValueError("host replacement is not allowed for relative URLs")
         if not host:
             raise ValueError("host removing is not allowed")
-        encoded_host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
-        if idna2003 and self._mode is not _WHATWG:
-            raise ValueError(_idna2003_host_error(host))
         if (
-            whatwg_host is not encoded_host
+            self._scheme not in SPECIAL_SCHEMES
             and self._mode is _WHATWG
-            and (self._scheme in SPECIAL_SCHEMES or encoded_host[0] == "[")
+            and _is_opaque_host(self._scheme, host)
         ):
-            encoded_host = _whatwg_special_host(encoded_host, whatwg_host)
+            encoded_host = _encode_opaque_host(host)
+        else:
+            encoded_host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
+            if idna2003 and self._mode is not _WHATWG:
+                raise ValueError(_idna2003_host_error(host))
+            if (
+                whatwg_host is not encoded_host
+                and self._mode is _WHATWG
+                and (self._scheme in SPECIAL_SCHEMES or encoded_host[0] == "[")
+            ):
+                encoded_host = _whatwg_special_host(encoded_host, whatwg_host)
         port = self.explicit_port
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         if self._scheme == "file" and self._mode is _WHATWG:
@@ -2793,7 +2843,13 @@ class URL:
             # only form the parser accepts.
             host = f"[{self.raw_host}]" if "%" in host else f"[{host}]"
         # WHATWG mode reads "\\" in the path as "/", so it stays encoded.
-        path = human_quote(self.path, "#?\\")
+        # An empty path stays empty where str() keeps it so, see __str__().
+        path = human_quote(
+            self.path
+            if self._path or self._scheme in SPECIAL_SCHEMES or not self._scheme
+            else "",
+            "#?\\",
+        )
         if TYPE_CHECKING:
             assert path is not None
         if not self._scheme and not self._netloc:
@@ -2910,8 +2966,9 @@ def _moved_parts(
 
     with_scheme(), join() and a change of mode can move a host that was
     parsed under another scheme or mode into a special-scheme WHATWG URL,
-    where the host is percent-decoded and one that ends in a number is
-    parsed as an IPv4 address. An RFC 3986 mode URL moved into WHATWG mode
+    where the host is percent-decoded and lowercased and one that ends in a
+    number is parsed as an IPv4 address. The opaque host of a non-special
+    WHATWG URL is kept under another non-special scheme. An RFC 3986 mode URL moved into WHATWG mode
     also loses an empty password and an empty userinfo, see
     _drop_empty_password(). A file URL also loses "localhost" and must not
     have userinfo or a port, see _check_whatwg_file_authority(), and reads a
@@ -2934,11 +2991,18 @@ def _moved_parts(
             netloc = make_netloc(
                 url.raw_user, url.raw_password, host, url.explicit_port
             )
+        elif encoded != host and "[" not in netloc:
+            # An opaque host is not lowercased, see _encode_opaque_host().
+            host = encoded
+            netloc = make_netloc(
+                url.raw_user, url.raw_password, host, url.explicit_port
+            )
     if ":@" in netloc or netloc[0] == "@":
         netloc = _drop_empty_password(netloc)
     if scheme == "file":
-        if is_drive_letter(netloc):
-            path = _whatwg_file_drive(netloc, url._path)
+        # The netloc as written: the host above is lowercased.
+        if is_drive_letter(url._netloc):
+            path = _whatwg_file_drive(url._netloc, url._path)
             if "." in path:
                 path = normalize_file_path(path)
             return "", path, empty | EMPTY_AUTHORITY
@@ -2982,6 +3046,60 @@ def _whatwg_special_host(host: str, whatwg_host: str | None) -> str:
             raise ValueError(f"Host {host!r} is not a valid host once percent-decoded")
         raise ValueError(f"Host {host!r} ends in a number but is not an IPv4 address")
     return whatwg_host
+
+
+# The forbidden host code points of the WHATWG URL Standard; the opaque-host
+# parser rejects them, also "%", which a domain cannot have.
+_FORBIDDEN_HOST_RE = re.compile(r"[\x00\t\n\r #/:<>?@\[\\\]^|]")
+# The C0 control percent-encode set, which the opaque-host parser encodes.
+_C0_CONTROL_PERCENT_ENCODE_RE = re.compile(r"[^\x20-\x7e]+")
+# The percent-encoded octets of a non-ASCII host, see _decode_opaque_host().
+_NON_ASCII_ESCAPES_RE = re.compile(r"(?:%[89A-Fa-f][0-9A-Fa-f])+")
+
+
+def _is_opaque_host(scheme: str, host: str) -> bool:
+    """Tell if the WHATWG mode host of a URL whose scheme is not special is
+    an opaque host.
+
+    The WHATWG URL Standard parses the host of a non-special URL as an opaque
+    host, unless it is an IPv6 address in brackets. A relative reference has
+    no scheme yet, its host is encoded as a domain. The callers check that
+    the scheme is not special first, which keeps the call off the hot path.
+    """
+    return scheme != "" and ":" not in host and host[:1] != "["
+
+
+def _encode_opaque_host(host: str) -> str:
+    """Encode a host with the WHATWG opaque-host parser.
+
+    The host is neither lowercased nor encoded with IDNA: it is rejected if
+    it has a forbidden host code point and its C0 controls and non-ASCII
+    code points are percent-encoded, so "sc://Ñ" is "sc://%C3%91". A "%"
+    that does not start a percent-encoded octet is kept. RFC 3986 mode and
+    special schemes encode a domain instead, see _encode_host().
+    """
+    if invalid := _FORBIDDEN_HOST_RE.search(host):
+        raise ValueError(
+            f"Host {host!r} cannot contain {invalid.group()!r}"
+            f" (at position {invalid.start()})"
+        )
+    if host.isascii() and host.isprintable():
+        return host
+    return _C0_CONTROL_PERCENT_ENCODE_RE.sub(
+        lambda match: quote(match.group(), safe=""), host
+    )
+
+
+def _decode_opaque_host(raw: str) -> str:
+    """Decode the non-ASCII code points of an opaque host.
+
+    The percent-encoded ASCII characters stay encoded, as does an octet that
+    is not UTF-8, so that passing the result to with_host() gives the same
+    host back.
+    """
+    if "%" not in raw:
+        return raw
+    return _NON_ASCII_ESCAPES_RE.sub(lambda match: UNQUOTER(match.group()), raw)
 
 
 # A number with more significant digits than this in its base is at least
