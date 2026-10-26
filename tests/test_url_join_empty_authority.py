@@ -91,6 +91,9 @@ def test_join_whatwg_space_in_host_rejected() -> None:
         ("///a/%41", "file:///a/A"),
         ("////server/%41", "file:////server/A"),
         ("///[::1]/x", "file:///%5B::1%5D/x"),
+        # A space before the query is part of the file name.
+        ("///a/%41 ?q", "file:///a/A%20?q"),
+        ("///C|/a ?q", "file:///C:/a%20?q"),
     ],
 )
 def test_join_file_base_keeps_empty_authority(reference: str, expected: str) -> None:
@@ -100,17 +103,22 @@ def test_join_file_base_keeps_empty_authority(reference: str, expected: str) -> 
 @pytest.mark.parametrize(
     ("reference", "expected"),
     [
-        ("///[::1]/old", "http://[::1]/new"),
-        ("///u%40v@[::1]:81/old", "http://u%40v@[::1]:81/new"),
         ("///%5Bu%5D@h/old", "http://%5Bu%5D@h/new"),
         ("///h/old", "http://h/new"),
     ],
 )
 def test_join_whatwg_edited_reference(reference: str, expected: str) -> None:
-    # with_name() drops the path as written; the host is read from the
-    # quoted path then.
     url = URL(reference).with_name("new")
     assert str(URL("http://example.org/").join(url)) == expected
+
+
+@pytest.mark.parametrize("reference", ["///[::1]/old", "///%5B::1%5D/old"])
+def test_join_whatwg_edited_reference_ip_literal_rejected(reference: str) -> None:
+    # with_name() drops the path as written, so the host is read from the
+    # quoted path, where "[" and "%5B" look the same; both are rejected.
+    url = URL(reference).with_name("new")
+    with pytest.raises(ValueError):
+        URL("http://example.org/").join(url)
 
 
 def test_join_whatwg_written_path_kept() -> None:
@@ -128,6 +136,11 @@ def test_join_whatwg_written_path_kept() -> None:
 def test_join_rfc_empty_host_rejected(base: str, reference: str) -> None:
     with pytest.raises(ValueError, match="empty host"):
         URL(base, mode="rfc").join(URL(reference, mode="rfc"))
+
+
+def test_join_rfc_reference_escaped_brackets_rejected() -> None:
+    with pytest.raises(ValueError):
+        URL("http://example.org/").join(URL("///%5B::1%5D/x", mode="rfc"))
 
 
 def test_join_rfc_other_scheme_keeps_empty_authority() -> None:

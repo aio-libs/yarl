@@ -631,7 +631,9 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
     ):
         # A drive letter means something else when the reference is joined
         # with a file URL, see join(); it is kept for that.
-        cache["_join_path"] = f"//{netloc}{path}" if netloc else path
+        cache["_join_path"] = (
+            f"//{netloc}{path}" if netloc or empty & EMPTY_AUTHORITY else path
+        )
         if netloc[1:] == "|":
             # Not a host, so the file URL is the only meaning it has.
             path = _whatwg_file_drive(netloc, path)
@@ -2610,7 +2612,8 @@ class URL:
                 # WHATWG reads a reference against a file URL in the file
                 # state, as it reads one with the "file:" scheme; there "C|"
                 # is the drive letter "C:" and "//C:" is no authority.
-                ref = encode_url(f"file:{join_path}")
+                # "#" keeps a space before the query, which URL() would strip.
+                ref = encode_url(f"file:{join_path}#")
                 url = from_parts(
                     scheme,
                     ref._netloc,
@@ -2703,9 +2706,10 @@ class URL:
         join_empty = url._empty
         if url._netloc or join_empty & EMPTY_AUTHORITY:
             if not url._netloc and scheme in SCHEME_REQUIRES_HOST:
-                return self._join_empty_host(
-                    url, scheme, _ip_literal_brackets(url._path)
-                )
+                # A path edited after parsing, such as by with_name(), has
+                # lost the authority as written, see _encode_url(); its "["
+                # stays "%5B", which the host parser rejects.
+                return self._join_empty_host(url, scheme, url._path)
             join_netloc = url._netloc
             join_path = url._path
             if not url._scheme or url._mode is not _WHATWG:
@@ -2957,21 +2961,6 @@ def _moved_parts(
             return "", url._path or "/", empty | EMPTY_AUTHORITY
         return netloc, url._path or "/", empty
     return netloc, url._path, empty
-
-
-def _ip_literal_brackets(path: str) -> str:
-    """Restore the brackets of an IP literal at the start of a path.
-
-    The path quoter encodes "[" and "]", so a reference like "///[::1]/a"
-    whose path was edited after parsing, losing the path as written (see
-    _encode_url()), has "%5B::1%5D" where join() reads the host.
-    """
-    authority, slash, rest = path.lstrip("/").partition("/")
-    userinfo, at, host = authority.rpartition("@")
-    if host[:3] != "%5B" or "%5D" not in host:
-        return path
-    host = "[" + host[3:].replace("%5D", "]", 1)
-    return f"//{userinfo}{at}{host}{slash}{rest}"
 
 
 def _drop_empty_password(netloc: str) -> str:
