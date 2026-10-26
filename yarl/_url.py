@@ -1185,10 +1185,13 @@ class URL:
         elif path and scheme and mode is not _WHATWG and "." in path:
             # Without an authority, as the parser does in RFC 3986 mode.
             path = remove_dot_segments(path)
-        elif path and scheme == "file" and "." in path:
+        elif path and scheme == "file" and mode is _WHATWG:
             # A file URL has an authority in WHATWG mode, also an empty one,
-            # and its path is absolute.
-            path = normalize_file_path(path if path[0] == "/" else f"/{path}")
+            # and its path is absolute, with or without dot segments.
+            if path[0] != "/":
+                path = f"/{path}"
+                self._empty |= EMPTY_AUTHORITY
+            path = normalize_file_path(path)
 
         if path and not self._scheme and not self._netloc and ":" in path:
             path = _encode_relative_colon(path, mode)
