@@ -1698,11 +1698,7 @@ Query parsing
    :param max_fields: the maximum number of fields to accept, or ``None``
                       for no limit. Fields are counted the same way as
                       the *max_num_fields* argument of
-                      :func:`urllib.parse.parse_qsl`. An empty query
-                      string returns an empty list on every Python
-                      version, even when *max_fields* is ``0``;
-                      :func:`urllib.parse.parse_qsl` raises
-                      :exc:`ValueError` for that case on Python 3.10 only.
+                      :func:`urllib.parse.parse_qsl`.
 
    :param str encoding: the encoding used to decode percent-encoded
                         sequences.

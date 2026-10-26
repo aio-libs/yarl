@@ -1,8 +1,7 @@
 import re
-import sys
 import warnings
 from collections.abc import Mapping, Sequence
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import _CacheInfo, lru_cache
 from importlib.util import find_spec
 from ipaddress import ip_address
@@ -11,9 +10,9 @@ from typing import (
     Any,
     Literal,
     NoReturn,
+    Self,
     TypedDict,
     TypeVar,
-    Union,
     cast,
     overload,
 )
@@ -175,17 +174,6 @@ def _quote_match(match: re.Match[str]) -> str:
 
 
 _T = TypeVar("_T")
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-    from typing import Self
-else:
-    Self = Any
-
-    class StrEnum(str, Enum):
-        """Backport of :class:`enum.StrEnum` for Python 3.10."""
-
-        __str__ = str.__str__
 
 
 class UndefinedType(Enum):
@@ -1013,7 +1001,7 @@ class URL:
 
     def __new__(
         cls,
-        val: Union[str, SplitResult, "URL", UndefinedType] = UNDEFINED,
+        val: "str | SplitResult | URL | UndefinedType" = UNDEFINED,
         *,
         encoded: bool = False,
         strict: bool | None = None,
@@ -2353,9 +2341,7 @@ class URL:
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
             if TYPE_CHECKING:
-                in_query = cast(
-                    Sequence[tuple[Union[str, istr], SimpleQuery]], in_query
-                )
+                in_query = cast(Sequence[tuple[str | istr, SimpleQuery]], in_query)
             qs: MultiDict[SimpleQuery] = MultiDict(self._parsed_query)
             qs.update(in_query)
             query = get_str_query_from_iterable(qs.items())
