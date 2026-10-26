@@ -2,8 +2,9 @@ Percent-encoded reserved characters (``$``, ``'``, ``(``, ``)``, ``*``,
 ``,``, ``/``, ``:``, ``@``) in query keys and values passed as a mapping,
 sequence of pairs, or keyword arguments to :meth:`URL.build() <yarl.URL.build>`,
 :meth:`~yarl.URL.with_query`, and :meth:`~yarl.URL.extend_query`, and in
-queries produced by :meth:`~yarl.URL.update_query` (which re-encodes the
-entire query string, including untouched parameters and :class:`str`
-arguments); ``!`` and ``?`` are still left unencoded, as are literal query
-strings passed to ``URL.build(query_string=...)``, ``URL.with_query(str)``,
-and ``URL.extend_query(str)`` -- by :user:`pctablet505`.
+queries rebuilt by :meth:`~yarl.URL.update_query` and
+:meth:`~yarl.URL.without_query_params` (which re-encode retained parameters,
+and :class:`str` arguments for ``update_query``); ``!`` and ``?`` are still
+left unencoded, as are literal query strings passed to
+``URL.build(query_string=...)``, ``URL.with_query(str)``, and
+``URL.extend_query(str)`` -- by :user:`pctablet505`.

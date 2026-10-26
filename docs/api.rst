@@ -1406,6 +1406,12 @@ section generates a new :class:`URL` instance.
 
    .. versionadded:: 1.10.0
 
+   .. versionchanged:: 1.26
+
+      When parameters are removed, reserved characters ``$'()*,/:@`` in the
+      retained query parameters are now percent-encoded, leaving ``!`` and
+      ``?`` unencoded.
+
 .. method:: URL.with_fragment(fragment)
 
    Return a new URL with *fragment* replaced, auto-encode *fragment* if needed.
