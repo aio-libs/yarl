@@ -13,7 +13,6 @@ from typing import (
     Self,
     TypedDict,
     TypeVar,
-    Union,
     cast,
     overload,
 )
@@ -988,7 +987,7 @@ class URL:
 
     def __new__(
         cls,
-        val: Union[str, SplitResult, "URL", UndefinedType] = UNDEFINED,
+        val: "str | SplitResult | URL | UndefinedType" = UNDEFINED,
         *,
         encoded: bool = False,
         strict: bool | None = None,
@@ -2328,9 +2327,7 @@ class URL:
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
             if TYPE_CHECKING:
-                in_query = cast(
-                    Sequence[tuple[Union[str, istr], SimpleQuery]], in_query
-                )
+                in_query = cast(Sequence[tuple[str | istr, SimpleQuery]], in_query)
             qs: MultiDict[SimpleQuery] = MultiDict(self._parsed_query)
             qs.update(in_query)
             query = get_str_query_from_iterable(qs.items())

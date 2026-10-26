@@ -2,17 +2,15 @@
 
 import math
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, SupportsInt, Union, cast
+from typing import TYPE_CHECKING, Any, SupportsInt, cast
 
 from multidict import istr
 
 from ._quoters import QUERY_PART_QUOTER, QUERY_QUOTER
 
-SimpleQuery = Union[str, SupportsInt, float]
-QueryVariable = Union[SimpleQuery, Sequence[SimpleQuery]]
-Query = Union[
-    None, str, Mapping[str, QueryVariable], Sequence[tuple[str, QueryVariable]]
-]
+SimpleQuery = str | SupportsInt | float
+QueryVariable = SimpleQuery | Sequence[SimpleQuery]
+Query = str | Mapping[str, QueryVariable] | Sequence[tuple[str, QueryVariable]] | None
 
 
 def query_var(v: SimpleQuery) -> str:
@@ -119,7 +117,7 @@ def get_str_query(*args: Any, **kwargs: Any) -> str | None:
         # same key pointing to multiple values are allowed to use
         # `_query_seq_pairs`.
         if TYPE_CHECKING:
-            query = cast(Sequence[tuple[Union[str, istr], SimpleQuery]], query)
+            query = cast(Sequence[tuple[str | istr, SimpleQuery]], query)
         return get_str_query_from_iterable(query)
     raise TypeError(
         "Invalid query type: only str, mapping or "
