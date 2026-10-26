@@ -653,8 +653,9 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
         ):
             # Against an http base join() reads the path of "///h/p" as an
             # authority, where "%38" and "[" must stay as written; the path
-            # quoter would decode the first and encode the second.
-            cache["_join_path"] = path
+            # quoter would decode the first and encode the second. "//" keeps
+            # the empty authority for a file base.
+            cache["_join_path"] = f"//{path}"
         host = ""
     else:
         if ":" in netloc or "@" in netloc or "[" in netloc:
@@ -2702,7 +2703,9 @@ class URL:
         join_empty = url._empty
         if url._netloc or join_empty & EMPTY_AUTHORITY:
             if not url._netloc and scheme in SCHEME_REQUIRES_HOST:
-                return self._join_empty_host(url, scheme, url._path)
+                return self._join_empty_host(
+                    url, scheme, _ip_literal_brackets(url._path)
+                )
             join_netloc = url._netloc
             join_path = url._path
             if not url._scheme or url._mode is not _WHATWG:
@@ -2775,7 +2778,8 @@ class URL:
                 f"Invalid URL: joining {str(url)!r} gives an empty host,"
                 f" which the {scheme} scheme does not allow"
             )
-        joined = URL(f"{scheme}://{path.lstrip('/')}")
+        # "#" keeps a space before the query, which URL() would strip.
+        joined = URL(f"{scheme}://{path.lstrip('/')}#")
         return from_parts(
             scheme,
             joined._netloc,
@@ -2953,6 +2957,21 @@ def _moved_parts(
             return "", url._path or "/", empty | EMPTY_AUTHORITY
         return netloc, url._path or "/", empty
     return netloc, url._path, empty
+
+
+def _ip_literal_brackets(path: str) -> str:
+    """Restore the brackets of an IP literal at the start of a path.
+
+    The path quoter encodes "[" and "]", so a reference like "///[::1]/a"
+    whose path was edited after parsing, losing the path as written (see
+    _encode_url()), has "%5B::1%5D" where join() reads the host.
+    """
+    authority, slash, rest = path.lstrip("/").partition("/")
+    userinfo, at, host = authority.rpartition("@")
+    if host[:3] != "%5B" or "%5D" not in host:
+        return path
+    host = "[" + host[3:].replace("%5D", "]", 1)
+    return f"//{userinfo}{at}{host}{slash}{rest}"
 
 
 def _drop_empty_password(netloc: str) -> str:

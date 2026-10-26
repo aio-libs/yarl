@@ -68,6 +68,51 @@ def test_join_whatwg_empty_host_rejected(reference: str) -> None:
         URL("http://example.org/").join(URL(reference))
 
 
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        # A space before the query is part of the path, not trailing space.
+        ("///h/a%41 ?q", "http://h/aA%20?q"),
+        ("///h/a ?q", "http://h/a%20?q"),
+    ],
+)
+def test_join_whatwg_space_before_query(reference: str, expected: str) -> None:
+    assert str(URL("http://example.org/").join(URL(reference))) == expected
+
+
+def test_join_whatwg_space_in_host_rejected() -> None:
+    with pytest.raises(ValueError):
+        URL("http://example.org/").join(URL("///%41 ?q"))
+
+
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        ("///a/%41", "file:///a/A"),
+        ("////server/%41", "file:////server/A"),
+        ("///[::1]/x", "file:///%5B::1%5D/x"),
+    ],
+)
+def test_join_file_base_keeps_empty_authority(reference: str, expected: str) -> None:
+    assert str(URL("file://server/dir/page").join(URL(reference))) == expected
+
+
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        ("///[::1]/old", "http://[::1]/new"),
+        ("///u%40v@[::1]:81/old", "http://u%40v@[::1]:81/new"),
+        ("///%5Bu%5D@h/old", "http://%5Bu%5D@h/new"),
+        ("///h/old", "http://h/new"),
+    ],
+)
+def test_join_whatwg_edited_reference(reference: str, expected: str) -> None:
+    # with_name() drops the path as written; the host is read from the
+    # quoted path then.
+    url = URL(reference).with_name("new")
+    assert str(URL("http://example.org/").join(url)) == expected
+
+
 def test_join_whatwg_written_path_kept() -> None:
     # The path as written survives a new query and pickling.
     url = URL("///[::1]/x").with_query(a="1")
