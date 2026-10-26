@@ -2552,6 +2552,19 @@ class URL:
         if scheme != self._scheme or (
             url._scheme and (scheme not in USES_RELATIVE or self._mode is not _WHATWG)
         ):
+            if (
+                not url._netloc
+                and self._mode is _WHATWG
+                and scheme != self._scheme
+                and scheme in SCHEME_REQUIRES_HOST
+            ):
+                # "http:" and "http:?q" are references to an http base only;
+                # against any other base WHATWG reads them as absolute URLs
+                # without a host and fails.
+                raise ValueError(
+                    f"Invalid URL: host is required for absolute urls"
+                    f" with the {scheme} scheme"
+                )
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
@@ -2668,11 +2681,9 @@ class URL:
         """join() for URLs with empty components; the same algorithm as
         join() takes for other URLs, plus the empty component rules."""
         join_empty = url._empty
-        # An empty authority in the reference wins only where a URL may have
-        # an empty host; for http and friends "///a" keeps the base host.
-        if url._netloc or (
-            join_empty & EMPTY_AUTHORITY and scheme not in SCHEME_REQUIRES_HOST
-        ):
+        if url._netloc or join_empty & EMPTY_AUTHORITY:
+            if not url._netloc and scheme in SCHEME_REQUIRES_HOST:
+                return self._join_empty_host(url, scheme)
             join_netloc = url._netloc
             join_path = url._path
             if not url._scheme or url._mode is not _WHATWG:
@@ -2726,6 +2737,36 @@ class URL:
             url._fragment,
             self._mode,
             self._empty & EMPTY_AUTHORITY | query_empty | join_empty & EMPTY_FRAGMENT,
+        )
+
+    def _join_empty_host(self, url: "URL", scheme: str) -> "URL":
+        """join() for a reference with an empty authority, such as "///a",
+        against a base whose scheme needs a host.
+
+        RFC 3986 section 5.2.2 takes the empty authority of the reference,
+        which RFC 9110 section 4.2.1 rejects for http, so RFC 3986 mode
+        fails as it does on "http:///a". The WHATWG parser reads such a
+        reference in the special authority ignore slashes state, where the
+        host follows the slashes: "///a/b" is "http://a/b" and "//" fails.
+        """
+        if self._mode is not _WHATWG:
+            raise ValueError(
+                f"Invalid URL: joining {str(url)!r} gives an empty host,"
+                f" which the {scheme} scheme does not allow"
+            )
+        authority, slash, path = url._path.lstrip("/").partition("/")
+        if "%5" in authority:
+            # The path quoter encoded the brackets of an IP literal.
+            authority = authority.replace("%5B", "[").replace("%5D", "]")
+        joined = URL(f"{scheme}://{authority}{slash}{path}")
+        return from_parts(
+            scheme,
+            joined._netloc,
+            joined._path,
+            url._query,
+            url._fragment,
+            self._mode,
+            url._empty & ~EMPTY_AUTHORITY,
         )
 
     def joinpath(self, *other: str, encoded: bool = False) -> "URL":

@@ -177,6 +177,28 @@ reference to a base for :meth:`URL.join` and is printed without ``//``.
    authority for these schemes too; previously it rejected an empty host
    only next to userinfo or a port.
 
+The same applies to :meth:`URL.join`. A reference with an empty authority,
+such as ``///a/b``, against a base with one of these schemes takes the host
+after the slashes in WHATWG mode, as the WHATWG URL Standard does, and is
+rejected in RFC 3986 mode, where the result would have an empty host. A
+reference without an authority, such as ``http:``, is rejected in WHATWG mode
+against a base with another scheme.
+
+.. doctest::
+
+   >>> URL('http://example.com/x').join(URL('///a/b'))
+   URL('http://a/b')
+   >>> URL('http://example.com/x', mode='rfc').join(URL('///a/b', mode='rfc'))
+   Traceback (most recent call last):
+     ...
+   ValueError: Invalid URL: joining '///a/b' gives an empty host, which the http scheme does not allow
+
+.. versionchanged:: 1.26
+
+   ``URL('http://example.com/x').join(URL('///a/b'))`` kept the host of the
+   base in both modes, giving ``http://example.com/a/b``, and
+   ``URL('https://example.com/').join(URL('http:'))`` gave ``http:``.
+
 In WHATWG mode, leading and trailing C0 control characters and spaces are
 stripped, and tabs and newlines are removed, as the WHATWG URL Standard does
 and as :rfc:`3986#appendix-C` recommends for user-typed URIs; RFC 3986 mode

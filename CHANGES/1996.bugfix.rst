@@ -1,0 +1,9 @@
+Fixed :meth:`URL.join` for a reference with an empty authority, such as
+``///a/b``, against a base whose scheme needs a host (``http``, ``https``,
+``ws``, ``wss`` and ``ftp``): the host of the base was kept in both modes.
+WHATWG mode now reads the host after the slashes, as the WHATWG URL Standard
+does, so the result is ``http://a/b``, and RFC 3986 mode rejects the
+reference, since the result would have an empty host. WHATWG mode also
+rejects a reference of these schemes without an authority, such as
+``http:``, against a base with another scheme
+-- by :user:`asvetlov`.
