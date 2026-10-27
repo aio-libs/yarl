@@ -1,0 +1,6 @@
+Kept an IPv6 address in the host as written, only lowercased, in RFC 3986
+mode, since RFC 3986 does not compress it: ``http://[1:0::]`` and
+``http://[::127.0.0.1]`` are no longer written as ``http://[1::]`` and
+``http://[::7f00:1]``. WHATWG mode still writes the compressed form, as the
+WHATWG URL Standard does, and a change to WHATWG mode compresses the address
+-- by :user:`asvetlov`.
