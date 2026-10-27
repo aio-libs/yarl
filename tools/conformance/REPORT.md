@@ -39,17 +39,17 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 469 |
-| yarl follows each standard in its mode | 354 |
+| yarl follows each standard in its mode | 359 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
 | WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 54 |
-| RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 17 |
+| RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 12 |
 | Both modes differ from their standard | 2 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
 | yarl WHATWG mode vs WHATWG | 56 |
-| yarl RFC mode vs RFC 3986+3987 | 19 |
+| yarl RFC mode vs RFC 3986+3987 | 14 |
 | WHATWG vs RFC 3986+3987 | 427 |
 
 ## yarl differs, RFC 3986+3987 and WHATWG agree (0)
@@ -129,12 +129,11 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | `http:[61:27]/:foo` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/[61:27]/:foo` | *failure* | *failure* |
 | other | `http://host/?'` | *none* | `http://host/?'` | `http://host/?%27` | `http://host/?'` | `http://host/?'` |
 
-## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (17)
+## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (12)
 
 | Category | Cases |
 |---|---|
 | non-ASCII or percent-encoded host | 6 |
-| IP-literal host | 5 |
 | other | 4 |
 | non-special scheme | 1 |
 | numeric host that is not a dotted quad | 1 |
@@ -147,11 +146,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | non-ASCII or percent-encoded host | `file://loC𝐀𝐋𝐇𝐨𝐬𝐭/usr/bin` | *none* | `file:///usr/bin` | `file:///usr/bin` | `file://localhost/usr/bin` | `file://loC%F0%9D%90%80%F0%9D%90%8B%F0%9D%90%87%F0%9D%90%A8%F0%9D%90%AC%F0%9D%90%AD/usr/bin` |
 | non-ASCII or percent-encoded host | `'file://\xad/p'` | *none* | *failure* | *failure* | *failure* | `file://%C2%AD/p` |
 | non-ASCII or percent-encoded host | `'https://\xad/'` | *none* | *failure* | *failure* | *failure* | `https://%C2%AD/` |
-| IP-literal host | `http://[::127.0.0.1]` | `http://example.org/foo/bar` | `http://[::7f00:1]` | `http://[::7f00:1]/` | `http://[::7f00:1]` | `http://[::127.0.0.1]` |
-| IP-literal host | `http://[0:0:0:0:0:0:13.1.68.3]` | `http://example.org/foo/bar` | `http://[::d01:4403]` | `http://[::d01:4403]/` | `http://[::d01:4403]` | `http://[0:0:0:0:0:0:13.1.68.3]` |
-| IP-literal host | `http://[1:0::]` | `http://example.net/` | `http://[1::]` | `http://[1::]/` | `http://[1::]` | `http://[1:0::]` |
-| IP-literal host | `non-special://[1:2:0:0:5:0:0:0]/` | *none* | `non-special://[1:2:0:0:5::]/` | `non-special://[1:2:0:0:5::]/` | `non-special://[1:2:0:0:5::]/` | `non-special://[1:2:0:0:5:0:0:0]/` |
-| IP-literal host | `non-special://[1:2:0:0:0:0:0:3]/` | *none* | `non-special://[1:2::3]/` | `non-special://[1:2::3]/` | `non-special://[1:2::3]/` | `non-special://[1:2:0:0:0:0:0:3]/` |
 | other | `http://f:999999/c` | `http://example.org/foo/bar` | *failure* | *failure* | *failure* | `http://f:999999/c` |
 | other | `http://f:4294967377/c` | `http://example.org/` | *failure* | *failure* | *failure* | `http://f:4294967377/c` |
 | other | `http://f:18446744073709551697/c` | `http://example.org/` | *failure* | *failure* | *failure* | `http://f:18446744073709551697/c` |
@@ -170,7 +164,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | non-ASCII or percent-encoded host | `'http://GOO\u200b\u2060\ufeffgoo.com'` | `http://other.com/` | *failure* | `http://googoo.com/` | *failure* | `http://GOO%E2%80%8B%E2%81%A0%EF%BB%BFgoo.com` |
 | non-ASCII or percent-encoded host | `'file://a\xadb/p'` | *none* | *failure* | `file://ab/p` | *failure* | `file://a%C2%ADb/p` |
 
-## yarl follows each standard in its mode (354)
+## yarl follows each standard in its mode (359)
 
 | Category | Cases |
 |---|---|
@@ -184,10 +178,10 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | tab or newline inside the input | 12 |
 | backslash read as a slash | 11 |
 | file host that WHATWG rewrites | 10 |
+| IP-literal host | 7 |
 | leading or trailing C0 control or space | 6 |
 | empty file path | 4 |
 | non-special scheme | 2 |
-| IP-literal host | 2 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
@@ -531,6 +525,13 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | file host that WHATWG rewrites | `//localhost//pig` | `file://lion/` | `file:////pig` | `file:////pig` | `file://localhost//pig` | `file://localhost//pig` |
 | file host that WHATWG rewrites | `file://localhost//a//../..//foo` | *none* | `file://///foo` | `file://///foo` | `file://localhost///foo` | `file://localhost///foo` |
 | file host that WHATWG rewrites | `file://localhost////foo` | *none* | `file://////foo` | `file://////foo` | `file://localhost////foo` | `file://localhost////foo` |
+| IP-literal host | `http://[::127.0.0.1]` | `http://example.org/foo/bar` | `http://[::7f00:1]` | `http://[::7f00:1]/` | `http://[::127.0.0.1]` | `http://[::127.0.0.1]` |
+| IP-literal host | `http://[0:0:0:0:0:0:13.1.68.3]` | `http://example.org/foo/bar` | `http://[::d01:4403]` | `http://[::d01:4403]/` | `http://[0:0:0:0:0:0:13.1.68.3]` | `http://[0:0:0:0:0:0:13.1.68.3]` |
+| IP-literal host | `http://[1:0::]` | `http://example.net/` | `http://[1::]` | `http://[1::]/` | `http://[1:0::]` | `http://[1:0::]` |
+| IP-literal host | `non-special://[1:2:0:0:5:0:0:0]/` | *none* | `non-special://[1:2:0:0:5::]/` | `non-special://[1:2:0:0:5::]/` | `non-special://[1:2:0:0:5:0:0:0]/` | `non-special://[1:2:0:0:5:0:0:0]/` |
+| IP-literal host | `non-special://[1:2:0:0:0:0:0:3]/` | *none* | `non-special://[1:2::3]/` | `non-special://[1:2::3]/` | `non-special://[1:2:0:0:0:0:0:3]/` | `non-special://[1:2:0:0:0:0:0:3]/` |
+| IP-literal host | `` foo:// !"$%&'()*+,-.;<=>@[\]^_`{\|}~@host/ `` | *none* | `foo://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | `foo://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
+| IP-literal host | `` foo://joe: !"$%&'()*+,-.:;<=>@[\]^_`{\|}~@host/ `` | *none* | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
 | leading or trailing C0 control or space | `'\t   :foo.com   \n'` | `http://example.org/foo/bar` | `http://example.org/foo/:foo.com` | `http://example.org/foo/:foo.com` | *failure* | *failure* |
 | leading or trailing C0 control or space | ` foo.com  ` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | *failure* | *failure* |
 | leading or trailing C0 control or space | `'  \t'` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | `http://example.org/foo/bar` | *failure* | *failure* |
@@ -543,8 +544,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | empty file path | `file:#frag` | *none* | `file:///#frag` | `file:///#frag` | `file:#frag` | `file:#frag` |
 | non-special scheme | `non-special://test:@test/x` | *none* | `non-special://test@test/x` | `non-special://test@test/x` | `non-special://test:@test/x` | `non-special://test:@test/x` |
 | non-special scheme | `non-special://:@test/x` | *none* | `non-special://test/x` | `non-special://test/x` | `non-special://:@test/x` | `non-special://:@test/x` |
-| IP-literal host | `` foo:// !"$%&'()*+,-.;<=>@[\]^_`{\|}~@host/ `` | *none* | `foo://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | `foo://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
-| IP-literal host | `` foo://joe: !"$%&'()*+,-.:;<=>@[\]^_`{\|}~@host/ `` | *none* | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
 
 ## IDNA: WHATWG toascii.json
 

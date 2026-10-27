@@ -3311,8 +3311,9 @@ def _encode_host(
 
     Next to the encoded host, return the host WHATWG sees for a special
     scheme, which is the encoded host itself unless the host is
-    percent-encoded (see _whatwg_decoded_host) or ends in a number (see
-    _whatwg_numeric_host), and a flag that tells if IDNA2008
+    percent-encoded (see _whatwg_decoded_host), ends in a number (see
+    _whatwg_numeric_host) or is an IPv6 address not written compressed, and
+    a flag that tells if IDNA2008
     could not encode the host, which RFC 3986 mode rejects. Both are
     computed here so that the checks are cached with the encoding.
     """
@@ -3365,7 +3366,12 @@ def _encode_host(
             # LRU to keep the cache size small
             host = ip.compressed
             if ip.version == 6:
+                # RFC 3986 keeps an IPv6 address as written, lowercased per
+                # section 6.2.2.1; WHATWG serializes it compressed, which is
+                # the WHATWG host here, see _whatwg_special_host().
                 host = f"[{host}{sep}{zone}]" if sep else f"[{host}]"
+                if (written := raw_ip.lower()) != ip.compressed:
+                    return f"[{written}{sep}{zone}]", host, False
             elif sep:
                 # WHATWG has no zone identifiers: "%" after an IPv4 address
                 # is percent-encoding in the host.
