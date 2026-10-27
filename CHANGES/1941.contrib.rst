@@ -1,0 +1,6 @@
+Stopped running the test suite twice on macOS and Windows wheels in CI:
+``cibuildwheel`` now tests those wheels itself and the ``test`` matrix
+runs on Linux only, starting as soon as the Linux wheels are built
+instead of waiting for every platform. The ``test`` and conformance
+jobs now run from the source distribution, which includes ``tools/``
+-- by :user:`asvetlov`.
