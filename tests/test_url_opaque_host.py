@@ -65,6 +65,19 @@ def test_host(raw_host: str, host: str) -> None:
     assert url.with_host(host).host == host
 
 
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("sc://%C3%B1/", "sc://ñ/"),
+        # The NFKC form of U+FF0F is "/", which URL() rejects in a host.
+        ("sc://a%EF%BC%8Fb/", "sc://a%EF%BC%8Fb/"),
+    ],
+)
+def test_human_repr_host(url: str, expected: str) -> None:
+    assert URL(url).human_repr() == expected
+    assert URL(expected) == URL(url)
+
+
 def test_host_ipv6() -> None:
     assert URL("sc://[fe80::1%25eth0]/").host == "fe80::1%eth0"
 
@@ -98,6 +111,15 @@ def test_build_authority() -> None:
     assert str(url) == "sc://u@[::1]:1"
 
 
+def test_build_uppercase_scheme() -> None:
+    # URL.build() keeps the scheme as given; "HTTP" is still special.
+    assert str(URL.build(scheme="HTTP", host="Ñ")) == "HTTP://xn--ida"
+    url = URL.build(scheme="HTTP", host="h", query_string="q")
+    assert str(url) == "HTTP://h/?q"
+    assert url.human_repr() == "HTTP://h/?q="
+    assert url.with_host("Ñ").host == "ñ"
+
+
 def test_build_encoded() -> None:
     assert str(URL.build(scheme="sc", host="Ñ", encoded=True)) == "sc://Ñ"
 
@@ -122,6 +144,21 @@ def test_with_host() -> None:
 )
 def test_with_scheme(url: str, scheme: str, expected: str) -> None:
     assert str(URL(url).with_scheme(scheme)) == expected
+
+
+@pytest.mark.parametrize("host", ["A{b", "%", "%01"])
+def test_with_scheme_invalid_domain(host: str) -> None:
+    # As URL(f"http://{host}/") does.
+    with pytest.raises(ValueError):
+        URL(f"sc://{host}/").with_scheme("http")
+
+
+def test_with_scheme_encoded() -> None:
+    # The URL does not remember that it was built from encoded parts.
+    url = URL("sc://A{b/", encoded=True)
+    assert str(url) == "sc://A{b/"
+    with pytest.raises(ValueError):
+        url.with_scheme("http")
 
 
 def test_mode_change() -> None:

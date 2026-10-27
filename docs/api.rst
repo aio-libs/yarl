@@ -240,12 +240,14 @@ string that contains one:
 In WHATWG mode the host of a URL whose scheme is not special is an *opaque
 host*, as the WHATWG URL Standard parses it: it is neither lowercased nor
 encoded with IDNA, its control and non-ASCII characters are percent-encoded
-as UTF-8, and only a space and ``#/:<>?@[\]^|`` are rejected, so ``"``,
-``{`` and a ``%`` that does not start a percent-encoded octet are allowed.
+as UTF-8, and only NUL, tab, line feed, carriage return, space and
+``#/:<>?@[\]^|`` are rejected, so ``"``, ``{`` and a ``%`` that does not
+start a percent-encoded octet are allowed.
 :attr:`URL.host` decodes the non-ASCII characters. An IPv6 address in
 brackets is parsed as usual. RFC 3986 mode, the special schemes and a
 relative URL encode the host as a domain, and so does
-:meth:`URL.with_scheme` when it moves an opaque host to a special scheme.
+:meth:`URL.with_scheme` when it moves an opaque host to a special scheme,
+which raises :exc:`ValueError` for a host that is not a valid domain.
 
 .. doctest::
 

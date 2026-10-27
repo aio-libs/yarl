@@ -38,6 +38,7 @@ from ._parse import (
     WHATWG_C0_CONTROL_OR_SPACE,
     ZONE_ID_RE,
     SplitURLType,
+    _check_netloc,
     check_zone_id,
     has_dot_prefix,
     make_netloc,
@@ -1250,12 +1251,17 @@ class URL:
         if (
             not self._path
             and (self._query or self._fragment)
-            and (self._scheme in SPECIAL_SCHEMES or not self._scheme)
+            and (
+                self._scheme in SPECIAL_SCHEMES
+                or not self._scheme
+                or self._scheme.lower() in SPECIAL_SCHEMES
+            )
         ):
             # A special scheme has the path "/" at least, so "http://h?q" is
             # "http://h/?q". A non-special URL keeps its empty path, as
             # RFC 3986 and WHATWG write it: "sc://h?q". A relative reference
-            # has no scheme to tell, and keeps the "/".
+            # has no scheme to tell, and keeps the "/". URL.build() keeps
+            # the scheme as given, hence lower().
             path = "/"
         else:
             path = self._path
@@ -1275,7 +1281,11 @@ class URL:
         if (
             not self._path
             and self._netloc
-            and (self._scheme in SPECIAL_SCHEMES or not self._scheme)
+            and (
+                self._scheme in SPECIAL_SCHEMES
+                or not self._scheme
+                or self._scheme.lower() in SPECIAL_SCHEMES
+            )
         ):
             # As in __str__(), "sc://h?" keeps its empty path.
             path = "/"
@@ -2842,14 +2852,28 @@ class URL:
             # An IPv6 zone identifier stays percent-encoded, which is the
             # only form the parser accepts.
             host = f"[{self.raw_host}]" if "%" in host else f"[{host}]"
+        elif (
+            self._scheme not in SPECIAL_SCHEMES
+            and host
+            and host is not (raw_host := self.raw_host)
+        ):
+            # A decoded opaque host that the parser would reject, such as
+            # "a\uff0fb", whose NFKC form has a "/", stays percent-encoded.
+            try:
+                _check_netloc(host)
+            except ValueError:
+                host = raw_host
         # WHATWG mode reads "\\" in the path as "/", so it stays encoded.
         # An empty path stays empty where str() keeps it so, see __str__().
-        path = human_quote(
-            self.path
-            if self._path or self._scheme in SPECIAL_SCHEMES or not self._scheme
-            else "",
-            "#?\\",
-        )
+        if (
+            self._path
+            or self._scheme in SPECIAL_SCHEMES
+            or not self._scheme
+            or self._scheme.lower() in SPECIAL_SCHEMES
+        ):
+            path = human_quote(self.path, "#?\\")
+        else:
+            path = ""
         if TYPE_CHECKING:
             assert path is not None
         if not self._scheme and not self._netloc:
@@ -2968,7 +2992,8 @@ def _moved_parts(
     parsed under another scheme or mode into a special-scheme WHATWG URL,
     where the host is percent-decoded and lowercased and one that ends in a
     number is parsed as an IPv4 address. The opaque host of a non-special
-    WHATWG URL is kept under another non-special scheme. An RFC 3986 mode URL moved into WHATWG mode
+    WHATWG URL is kept under another non-special scheme, and validated as a
+    domain under a special one. An RFC 3986 mode URL moved into WHATWG mode
     also loses an empty password and an empty userinfo, see
     _drop_empty_password(). A file URL also loses "localhost" and must not
     have userinfo or a port, see _check_whatwg_file_authority(), and reads a
@@ -2984,8 +3009,14 @@ def _moved_parts(
         return netloc, url._path, empty
     host = url.raw_host
     if (scheme in SPECIAL_SCHEMES or "[" in netloc) and host:
-        # The WHATWG host is cached with the encoding of the host.
-        encoded, whatwg_host, _ = _encode_host(host, False)
+        # The WHATWG host is cached with the encoding of the host. An opaque
+        # host was not checked as a domain, see _encode_opaque_host().
+        encoded, whatwg_host, _ = _encode_host(
+            host,
+            url._mode is _WHATWG
+            and url._scheme not in SPECIAL_SCHEMES
+            and _is_opaque_host(url._scheme, host),
+        )
         if whatwg_host is not encoded:
             host = _whatwg_special_host(encoded, whatwg_host)
             netloc = make_netloc(
@@ -3048,8 +3079,8 @@ def _whatwg_special_host(host: str, whatwg_host: str | None) -> str:
     return whatwg_host
 
 
-# The forbidden host code points of the WHATWG URL Standard; the opaque-host
-# parser rejects them, also "%", which a domain cannot have.
+# The forbidden host code points of the WHATWG URL Standard, which the
+# opaque-host parser rejects.
 _FORBIDDEN_HOST_RE = re.compile(r"[\x00\t\n\r #/:<>?@\[\\\]^|]")
 # The C0 control percent-encode set, which the opaque-host parser encodes.
 _C0_CONTROL_PERCENT_ENCODE_RE = re.compile(r"[^\x20-\x7e]+")
@@ -3064,9 +3095,15 @@ def _is_opaque_host(scheme: str, host: str) -> bool:
     The WHATWG URL Standard parses the host of a non-special URL as an opaque
     host, unless it is an IPv6 address in brackets. A relative reference has
     no scheme yet, its host is encoded as a domain. The callers check that
-    the scheme is not special first, which keeps the call off the hot path.
+    the scheme is not special first, which keeps the call off the hot path;
+    URL.build() keeps the scheme as given, so "HTTP" is checked here.
     """
-    return scheme != "" and ":" not in host and host[:1] != "["
+    return (
+        scheme != ""
+        and ":" not in host
+        and host[:1] != "["
+        and scheme.lower() not in SPECIAL_SCHEMES
+    )
 
 
 def _encode_opaque_host(host: str) -> str:
