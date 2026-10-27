@@ -241,8 +241,8 @@ def test_human_repr() -> None:
         ("http://example.org/foo/bar?", "#f", "http://example.org/foo/bar?#f"),
         ("http://example.org/foo/bar", "foo://", "foo://"),
         ("file://host/", "///C:/", "file:///C:/"),
-        # http needs a host, so an empty reference authority is not taken.
-        ("http://example.com/x", "///a", "http://example.com/a"),
+        # http needs a host, so WHATWG reads it after the slashes.
+        ("http://example.com/x", "///a", "http://a"),
         ("file://host/", "file:///C:/", "file:///C:/"),
         ("sc:///pa/pa", "i", "sc:///pa/i"),
         ("sc:///pa/pa", "?i", "sc:///pa/pa?i"),

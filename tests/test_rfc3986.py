@@ -537,10 +537,13 @@ def test_join_target_components(base: str, reference: str, expected: str) -> Non
         ("foo:/a/b", "c", "foo:/a/c"),
         ("foo:a/b", "c", "foo:a/c"),
         ("urn:example:a", "#f", "urn:example:a#f"),
+        ("sc:sd/sd", "../i", "sc:/i"),
+        ("sc:sd/sd?", "../i", "sc:/i"),
     ],
 )
 def test_join_scheme_independent(base: str, reference: str, expected: str) -> None:
-    assert str(URL(base).join(URL(reference))) == expected
+    joined = URL(base, mode="rfc").join(URL(reference, mode="rfc"))
+    assert str(joined) == expected
 
 
 # Section 6.2: equivalent URIs after syntax-based and scheme-based

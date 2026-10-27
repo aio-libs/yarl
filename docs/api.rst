@@ -177,6 +177,28 @@ reference to a base for :meth:`URL.join` and is printed without ``//``.
    authority for these schemes too; previously it rejected an empty host
    only next to userinfo or a port.
 
+The same applies to :meth:`URL.join`. A reference with an empty authority,
+such as ``///a/b``, against a base with one of these schemes takes the host
+after the slashes in WHATWG mode, as the WHATWG URL Standard does, and is
+rejected in RFC 3986 mode, where the result would have an empty host. A
+reference without an authority, such as ``http:``, is rejected in WHATWG mode
+against a base with another scheme.
+
+.. doctest::
+
+   >>> URL('http://example.com/x').join(URL('///a/b'))
+   URL('http://a/b')
+   >>> URL('http://example.com/x', mode='rfc').join(URL('///a/b', mode='rfc'))
+   Traceback (most recent call last):
+     ...
+   ValueError: Invalid URL: joining '///a/b' gives an empty host, which the http scheme does not allow
+
+.. versionchanged:: 1.26
+
+   ``URL('http://example.com/x').join(URL('///a/b'))`` kept the host of the
+   base in both modes, giving ``http://example.com/a/b``, and
+   ``URL('https://example.com/').join(URL('http:'))`` gave ``http:``.
+
 In WHATWG mode, leading and trailing C0 control characters and spaces are
 stripped, and tabs and newlines are removed, as the WHATWG URL Standard does
 and as :rfc:`3986#appendix-C` recommends for user-typed URIs; RFC 3986 mode
@@ -214,6 +236,47 @@ string that contains one:
 
    A backslash is read as a slash in WHATWG mode; previously it was rejected
    in the authority and percent-encoded elsewhere.
+
+In WHATWG mode the host of a URL whose scheme is not special is an *opaque
+host*, as the WHATWG URL Standard parses it: it is neither lowercased nor
+encoded with IDNA, its control and non-ASCII characters are percent-encoded
+as UTF-8, and only NUL, tab, line feed, carriage return, space and
+``#/:<>?@[\]^|`` are rejected, so ``"``, ``{`` and a ``%`` that does not
+start a percent-encoded octet are allowed.
+:attr:`URL.host` decodes the non-ASCII characters. An IPv6 address in
+brackets is parsed as usual. RFC 3986 mode, the special schemes and a
+relative URL encode the host as a domain, and so does
+:meth:`URL.with_scheme` when it moves an opaque host to a special scheme,
+which raises :exc:`ValueError` for a host that is not a valid domain.
+
+.. doctest::
+
+   >>> URL('sc://Ñ.Example/')
+   URL('sc://%C3%91.Example/')
+   >>> URL('sc://Ñ.Example/').host
+   'Ñ.Example'
+   >>> URL('sc://Ñ.Example/', mode='rfc')
+   URL('sc://xn--ida.example/', mode='rfc')
+   >>> URL('sc://Ñ.Example/').with_scheme('http')
+   URL('http://xn--ida.example/')
+
+A URL whose scheme is not special keeps an empty path in both modes, also
+before a query or a fragment, as both standards write it: ``sc://h?q`` is
+not ``sc://h/?q``. A special URL and a relative URL get the path ``/``.
+:attr:`URL.path` is ``/`` for all of them, and an empty path still compares
+equal to ``/``.
+
+.. doctest::
+
+   >>> URL('sc://h?q'), URL('http://h?q')
+   (URL('sc://h?q'), URL('http://h/?q'))
+
+.. versionchanged:: 1.26
+
+   The host of a URL whose scheme is not special is an opaque host in WHATWG
+   mode; previously it was lowercased and encoded with IDNA, and ``"`` or a
+   lone ``%`` in it were rejected. An empty path before a query or a fragment
+   was written as ``/`` for every scheme.
 
 RFC 3986 mode takes IRIs (:rfc:`3987`): non-ASCII characters are
 percent-encoded as UTF-8, and a non-ASCII host is encoded with IDNA2008.
@@ -604,6 +667,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Brackets are stripped for IPv6. Host is converted to lowercase,
    address is validated and converted to compressed form.
    An IPvFuture address (RFC 3986 mode only) keeps its brackets.
+   The opaque host of a URL whose scheme is not special keeps its case in
+   WHATWG mode, and only its non-ASCII characters are percent-decoded.
 
    For IPv6 addresses that carry an :rfc:`6874` zone identifier, the
    ``%25`` zone separator is decoded to ``%`` and the zone identifier is
@@ -1557,6 +1622,28 @@ The path is encoded if needed.
       >>> URL('urn:example:animal').join(URL('#ferret'))
       URL('urn:example:animal#ferret')
 
+   The WHATWG URL Standard resolves nothing but a fragment against a base
+   with an opaque path, that is a URL with a scheme other than ``http``,
+   ``https``, ``ws``, ``wss``, ``ftp`` and ``file``, no authority and a
+   path that does not start with ``/``, such as ``urn:example:animal``.
+   In WHATWG mode any other ``url`` without a scheme raises
+   :exc:`ValueError` against such a base, while RFC 3986 mode merges the
+   paths:
+
+   .. doctest::
+
+      >>> URL('urn:example:animal').join(URL('ferret'))
+      Traceback (most recent call last):
+        ...
+      ValueError: Invalid URL: cannot resolve 'ferret' against 'urn:example:animal', which has an opaque path
+      >>> URL('urn:example:animal', mode='rfc').join(URL('ferret', mode='rfc'))
+      URL('urn:ferret', mode='rfc')
+
+   .. versionchanged:: 1.26
+
+      In WHATWG mode, resolving a ``url`` other than a fragment against a
+      base with an opaque path raises :exc:`ValueError`.
+
    In WHATWG mode, a ``url`` with the same scheme as the base but without
    ``//``, like ``http:page.html``, is resolved as a relative reference,
    which :rfc:`3986#section-5.4.2` permits and the WHATWG URL Standard
@@ -1676,11 +1763,7 @@ Query parsing
    :param max_fields: the maximum number of fields to accept, or ``None``
                       for no limit. Fields are counted the same way as
                       the *max_num_fields* argument of
-                      :func:`urllib.parse.parse_qsl`. An empty query
-                      string returns an empty list on every Python
-                      version, even when *max_fields* is ``0``;
-                      :func:`urllib.parse.parse_qsl` raises
-                      :exc:`ValueError` for that case on Python 3.10 only.
+                      :func:`urllib.parse.parse_qsl`.
 
    :param str encoding: the encoding used to decode percent-encoded
                         sequences.

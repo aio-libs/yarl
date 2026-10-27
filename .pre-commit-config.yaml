@@ -112,7 +112,7 @@ repos:
   rev: 'v3.21.2'
   hooks:
   - id: pyupgrade
-    args: ['--py310-plus']
+    args: ['--py311-plus']
     exclude: ^packaging/pep517_backend/.+$
 - repo: https://github.com/PyCQA/flake8
   rev: '7.3.0'
@@ -162,7 +162,6 @@ repos:
     - multidict
     - propcache >= 0.3.1
     - pytest
-    - tomli  # requirement of packaging/pep517_backend/
     - types-setuptools  # requirement of packaging/pep517_backend/
     - types-Pygments
     - types-colorama
