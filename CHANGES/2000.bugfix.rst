@@ -1,0 +1,8 @@
+Rejected in the default WHATWG mode the resolution of a relative reference
+other than a fragment against a base URL with an opaque path, as the
+WHATWG URL Standard does: :meth:`~yarl.URL.join` now raises
+:exc:`ValueError` for ``i`` or ``?i`` against ``sc:sd``, while ``#i``
+still gives ``sc:sd#i``. In RFC 3986 mode such a join removes the dot
+segments of the merged path as :rfc:`3986#section-5.2.4` does, so ``../i``
+against ``sc:sd/sd`` is ``sc:/i`` instead of ``sc:i``
+-- by :user:`asvetlov`.

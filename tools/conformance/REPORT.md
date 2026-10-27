@@ -39,17 +39,17 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 469 |
-| yarl follows each standard in its mode | 338 |
+| yarl follows each standard in its mode | 348 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
-| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 69 |
+| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 60 |
 | RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 17 |
-| Both modes differ from their standard | 3 |
+| Both modes differ from their standard | 2 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 72 |
-| yarl RFC mode vs RFC 3986+3987 | 20 |
+| yarl WHATWG mode vs WHATWG | 62 |
+| yarl RFC mode vs RFC 3986+3987 | 19 |
 | WHATWG vs RFC 3986+3987 | 427 |
 
 ## yarl differs, RFC 3986+3987 and WHATWG agree (0)
@@ -59,12 +59,11 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|
 
-## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (69)
+## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (60)
 
 | Category | Cases |
 |---|---|
 | characters outside the RFC 3986+3987 grammar | 43 |
-| other | 10 |
 | tab or newline inside the input | 6 |
 | empty host | 2 |
 | Windows drive letter | 2 |
@@ -72,6 +71,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | IP-literal host | 2 |
 | leading or trailing C0 control or space | 1 |
 | special scheme without an authority | 1 |
+| other | 1 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
@@ -118,16 +118,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | `\a` | `foo://foo/a` | `foo://foo/%5Ca` | `foo://foo/\a` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `\/a` | `foo://foo/a` | `foo://foo/%5C/a` | `foo://foo/\/a` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `\\a` | `foo://foo/a` | `foo://foo/%5C%5Ca` | `foo://foo/\\a` | *failure* | *failure* |
-| other | `http://host/?'` | *none* | `http://host/?'` | `http://host/?%27` | `http://host/?'` | `http://host/?'` |
-| other | `i` | `sc:sd` | `sc:i` | *failure* | `sc:i` | `sc:i` |
-| other | `i` | `sc:sd/sd` | `sc:sd/i` | *failure* | `sc:sd/i` | `sc:sd/i` |
-| other | `../i` | `sc:sd` | `sc:i` | *failure* | `sc:i` | `sc:i` |
-| other | `/i` | `sc:sd` | `sc:/i` | *failure* | `sc:/i` | `sc:/i` |
-| other | `/i` | `sc:sd/sd` | `sc:/i` | *failure* | `sc:/i` | `sc:/i` |
-| other | `?i` | `sc:sd` | `sc:sd?i` | *failure* | `sc:sd?i` | `sc:sd?i` |
-| other | `?i` | `sc:sd/sd` | `sc:sd/sd?i` | *failure* | `sc:sd/sd?i` | `sc:sd/sd?i` |
-| other | `test-a-colon.html` | `a:` | `a:test-a-colon.html` | *failure* | `a:test-a-colon.html` | `a:test-a-colon.html` |
-| other | `test-a-colon-b.html` | `a:b` | `a:test-a-colon-b.html` | *failure* | `a:test-a-colon-b.html` | `a:test-a-colon-b.html` |
 | tab or newline inside the input | `'a:\t foo.com'` | `http://example.org/foo/bar` | `a:%20foo.com` | `a: foo.com` | *failure* | *failure* |
 | tab or newline inside the input | `'non-special:opaque \t\t  \t#hi'` | *none* | `non-special:opaque%20%20%20#hi` | `non-special:opaque  %20#hi` | *failure* | *failure* |
 | tab or newline inside the input | `'non-special:opaque \t\t  #hi'` | *none* | `non-special:opaque%20%20%20#hi` | `non-special:opaque  %20#hi` | *failure* | *failure* |
@@ -144,6 +134,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | IP-literal host | `` foo://joe: !"$%&'()*+,-.:;<=>@[\]^_`{\|}~@host/ `` | *none* | *failure* | `foo://joe:%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~@host/` | *failure* | *failure* |
 | leading or trailing C0 control or space | `http://f:21/ b ? d # e ` | `http://example.org/foo/bar` | `http://f:21/%20b%20?+d+#%20e` | `http://f:21/%20b%20?%20d%20#%20e` | *failure* | *failure* |
 | special scheme without an authority | `http:[61:27]/:foo` | `http://example.org/foo/bar` | *failure* | `http://example.org/foo/[61:27]/:foo` | *failure* | *failure* |
+| other | `http://host/?'` | *none* | `http://host/?'` | `http://host/?%27` | `http://host/?'` | `http://host/?'` |
 
 ## RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG (17)
 
@@ -175,20 +166,18 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | non-special scheme | `non-special://f:999999/c` | `http://example.org/foo/bar` | *failure* | *failure* | *failure* | `non-special://f:999999/c` |
 | numeric host that is not a dotted quad | `http://💩.123/` | *none* | *failure* | *failure* | *failure* | `http://%F0%9F%92%A9.123/` |
 
-## Both modes differ from their standard (3)
+## Both modes differ from their standard (2)
 
 | Category | Cases |
 |---|---|
 | non-ASCII or percent-encoded host | 2 |
-| other | 1 |
 
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
 | non-ASCII or percent-encoded host | `'http://GOO\u200b\u2060\ufeffgoo.com'` | `http://other.com/` | *failure* | `http://googoo.com/` | *failure* | `http://GOO%E2%80%8B%E2%81%A0%EF%BB%BFgoo.com` |
 | non-ASCII or percent-encoded host | `'file://a\xadb/p'` | *none* | *failure* | `file://ab/p` | *failure* | `file://a%C2%ADb/p` |
-| other | `../i` | `sc:sd/sd` | `sc:i` | *failure* | `sc:i` | `sc:/i` |
 
-## yarl follows each standard in its mode (338)
+## yarl follows each standard in its mode (348)
 
 | Category | Cases |
 |---|---|
@@ -196,9 +185,9 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | special scheme without an authority | 55 |
 | characters outside the RFC 3986+3987 grammar | 48 |
 | numeric host that is not a dotted quad | 36 |
+| other | 35 |
 | empty host | 28 |
 | Windows drive letter | 26 |
-| other | 25 |
 | tab or newline inside the input | 12 |
 | backslash read as a slash | 11 |
 | file host that WHATWG rewrites | 10 |
@@ -422,6 +411,41 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | numeric host that is not a dotted quad | `http://0999999999999999999/` | *none* | *failure* | *failure* | `http://0999999999999999999/` | `http://0999999999999999999/` |
 | numeric host that is not a dotted quad | `http://foo.0x` | *none* | *failure* | *failure* | `http://foo.0x` | `http://foo.0x` |
 | numeric host that is not a dotted quad | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` | *none* | *failure* | *failure* | `http://foo.0xfffffffffffffffffface123` | `http://foo.0XFfFfFfFfFfFfFfFfFfAcE123` |
+| other | `https://test:@test` | *none* | `https://test@test` | `https://test@test/` | `https://test:@test` | `https://test:@test` |
+| other | `https://:@test` | *none* | `https://test` | `https://test/` | `https://:@test` | `https://:@test` |
+| other | `http://@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http://@www.example.com` | `http://@www.example.com` |
+| other | `http://@pple.com` | *none* | `http://pple.com` | `http://pple.com/` | `http://@pple.com` | `http://@pple.com` |
+| other | `http://a:@www.example.com` | *none* | `http://a@www.example.com` | `http://a@www.example.com/` | `http://a:@www.example.com` | `http://a:@www.example.com` |
+| other | `http://:@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http://:@www.example.com` | `http://:@www.example.com` |
+| other | `i` | `sc:sd` | *failure* | *failure* | `sc:i` | `sc:i` |
+| other | `i` | `sc:sd/sd` | *failure* | *failure* | `sc:sd/i` | `sc:sd/i` |
+| other | `../i` | `sc:sd` | *failure* | *failure* | `sc:i` | `sc:i` |
+| other | `../i` | `sc:sd/sd` | *failure* | *failure* | `sc:/i` | `sc:/i` |
+| other | `/i` | `sc:sd` | *failure* | *failure* | `sc:/i` | `sc:/i` |
+| other | `/i` | `sc:sd/sd` | *failure* | *failure* | `sc:/i` | `sc:/i` |
+| other | `?i` | `sc:sd` | *failure* | *failure* | `sc:sd?i` | `sc:sd?i` |
+| other | `?i` | `sc:sd/sd` | *failure* | *failure* | `sc:sd/sd?i` | `sc:sd/sd?i` |
+| other | `x` | `sc://ñ` | `sc://%C3%B1/x` | `sc://%C3%B1/x` | `sc://xn--ida/x` | `sc://xn--ida/x` |
+| other | `http://1.2.3.4./` | `http://other.com/` | `http://1.2.3.4/` | `http://1.2.3.4/` | `http://1.2.3.4./` | `http://1.2.3.4./` |
+| other | `http://192.168.257.` | `http://other.com/` | `http://192.168.1.1` | `http://192.168.1.1/` | `http://192.168.257.` | `http://192.168.257.` |
+| other | `http://999999999.` | `http://other.com/` | `http://59.154.201.255` | `http://59.154.201.255/` | `http://999999999.` | `http://999999999.` |
+| other | `#x` | `sc://ñ` | `sc://%C3%B1#x` | `sc://%C3%B1#x` | `sc://xn--ida#x` | `sc://xn--ida#x` |
+| other | `?x` | `sc://ñ` | `sc://%C3%B1?x` | `sc://%C3%B1?x` | `sc://xn--ida?x` | `sc://xn--ida?x` |
+| other | `test-a-colon.html` | `a:` | *failure* | *failure* | `a:test-a-colon.html` | `a:test-a-colon.html` |
+| other | `test-a-colon-b.html` | `a:b` | *failure* | *failure* | `a:test-a-colon-b.html` | `a:test-a-colon-b.html` |
+| other | `#link` | `https://example.org/##link` | `https://example.org/#link` | `https://example.org/#link` | *failure* | *failure* |
+| other | `http://1.2.3.4.5.` | `http://other.com/` | *failure* | *failure* | `http://1.2.3.4.5.` | `http://1.2.3.4.5.` |
+| other | `http://0..0x300./` | *none* | *failure* | *failure* | `http://0..0x300./` | `http://0..0x300./` |
+| other | `http://256.256.256.256.256.` | `http://other.com/` | *failure* | *failure* | `http://256.256.256.256.256.` | `http://256.256.256.256.256.` |
+| other | `http://1.2.3.08.` | *none* | *failure* | *failure* | `http://1.2.3.08.` | `http://1.2.3.08.` |
+| other | `http://09.2.3.4.` | *none* | *failure* | *failure* | `http://09.2.3.4.` | `http://09.2.3.4.` |
+| other | `http://01.2.3.4.5.` | *none* | *failure* | *failure* | `http://01.2.3.4.5.` | `http://01.2.3.4.5.` |
+| other | `http://0x100.2.3.4.` | *none* | *failure* | *failure* | `http://0x100.2.3.4.` | `http://0x100.2.3.4.` |
+| other | `http://0x1.2.3.4.5.` | *none* | *failure* | *failure* | `http://0x1.2.3.4.5.` | `http://0x1.2.3.4.5.` |
+| other | `http://foo.1.2.3.4.` | *none* | *failure* | *failure* | `http://foo.1.2.3.4.` | `http://foo.1.2.3.4.` |
+| other | `http://foo.2.3.4.` | *none* | *failure* | *failure* | `http://foo.2.3.4.` | `http://foo.2.3.4.` |
+| other | `http://foo.09.` | *none* | *failure* | *failure* | `http://foo.09.` | `http://foo.09.` |
+| other | `http://foo.0x4.` | *none* | *failure* | *failure* | `http://foo.0x4.` | `http://foo.0x4.` |
 | empty host | `//` | `file:///tmp/mock/path` | `file:///` | `file:///` | `file://` | `file://` |
 | empty host | `file:///w\|/m` | *none* | `file:///w:/m` | `file:///w:/m` | *failure* | *failure* |
 | empty host | `sc://@/` | *none* | *failure* | *failure* | `sc://@/` | `sc://@/` |
@@ -476,31 +500,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Windows drive letter | `file://C:/` | `file://host/` | `file:///C:/` | `file:///C:/` | `file://c/` | `file://C:/` |
 | Windows drive letter | `file:/C\|/` | *none* | `file:///C:/` | `file:///C:/` | *failure* | *failure* |
 | Windows drive letter | `file://C\|/` | *none* | `file:///C:/` | `file:///C:/` | *failure* | *failure* |
-| other | `https://test:@test` | *none* | `https://test@test` | `https://test@test/` | `https://test:@test` | `https://test:@test` |
-| other | `https://:@test` | *none* | `https://test` | `https://test/` | `https://:@test` | `https://:@test` |
-| other | `http://@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http://@www.example.com` | `http://@www.example.com` |
-| other | `http://@pple.com` | *none* | `http://pple.com` | `http://pple.com/` | `http://@pple.com` | `http://@pple.com` |
-| other | `http://a:@www.example.com` | *none* | `http://a@www.example.com` | `http://a@www.example.com/` | `http://a:@www.example.com` | `http://a:@www.example.com` |
-| other | `http://:@www.example.com` | *none* | `http://www.example.com` | `http://www.example.com/` | `http://:@www.example.com` | `http://:@www.example.com` |
-| other | `x` | `sc://ñ` | `sc://%C3%B1/x` | `sc://%C3%B1/x` | `sc://xn--ida/x` | `sc://xn--ida/x` |
-| other | `http://1.2.3.4./` | `http://other.com/` | `http://1.2.3.4/` | `http://1.2.3.4/` | `http://1.2.3.4./` | `http://1.2.3.4./` |
-| other | `http://192.168.257.` | `http://other.com/` | `http://192.168.1.1` | `http://192.168.1.1/` | `http://192.168.257.` | `http://192.168.257.` |
-| other | `http://999999999.` | `http://other.com/` | `http://59.154.201.255` | `http://59.154.201.255/` | `http://999999999.` | `http://999999999.` |
-| other | `#x` | `sc://ñ` | `sc://%C3%B1#x` | `sc://%C3%B1#x` | `sc://xn--ida#x` | `sc://xn--ida#x` |
-| other | `?x` | `sc://ñ` | `sc://%C3%B1?x` | `sc://%C3%B1?x` | `sc://xn--ida?x` | `sc://xn--ida?x` |
-| other | `#link` | `https://example.org/##link` | `https://example.org/#link` | `https://example.org/#link` | *failure* | *failure* |
-| other | `http://1.2.3.4.5.` | `http://other.com/` | *failure* | *failure* | `http://1.2.3.4.5.` | `http://1.2.3.4.5.` |
-| other | `http://0..0x300./` | *none* | *failure* | *failure* | `http://0..0x300./` | `http://0..0x300./` |
-| other | `http://256.256.256.256.256.` | `http://other.com/` | *failure* | *failure* | `http://256.256.256.256.256.` | `http://256.256.256.256.256.` |
-| other | `http://1.2.3.08.` | *none* | *failure* | *failure* | `http://1.2.3.08.` | `http://1.2.3.08.` |
-| other | `http://09.2.3.4.` | *none* | *failure* | *failure* | `http://09.2.3.4.` | `http://09.2.3.4.` |
-| other | `http://01.2.3.4.5.` | *none* | *failure* | *failure* | `http://01.2.3.4.5.` | `http://01.2.3.4.5.` |
-| other | `http://0x100.2.3.4.` | *none* | *failure* | *failure* | `http://0x100.2.3.4.` | `http://0x100.2.3.4.` |
-| other | `http://0x1.2.3.4.5.` | *none* | *failure* | *failure* | `http://0x1.2.3.4.5.` | `http://0x1.2.3.4.5.` |
-| other | `http://foo.1.2.3.4.` | *none* | *failure* | *failure* | `http://foo.1.2.3.4.` | `http://foo.1.2.3.4.` |
-| other | `http://foo.2.3.4.` | *none* | *failure* | *failure* | `http://foo.2.3.4.` | `http://foo.2.3.4.` |
-| other | `http://foo.09.` | *none* | *failure* | *failure* | `http://foo.09.` | `http://foo.09.` |
-| other | `http://foo.0x4.` | *none* | *failure* | *failure* | `http://foo.0x4.` | `http://foo.0x4.` |
 | tab or newline inside the input | `'http://example\t.\norg'` | `http://example.org/foo/bar` | `http://example.org` | `http://example.org/` | *failure* | *failure* |
 | tab or newline inside the input | `'http://f:\n/c'` | `http://example.org/foo/bar` | `http://f/c` | `http://f/c` | *failure* | *failure* |
 | tab or newline inside the input | `'http://example.com/foo\t\x91%91'` | *none* | `http://example.com/foo%C2%91%91` | `http://example.com/foo%C2%91%91` | *failure* | *failure* |
