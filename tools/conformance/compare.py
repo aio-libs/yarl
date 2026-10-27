@@ -421,7 +421,8 @@ def render() -> str:
         "input preprocessing: RFC 3986 for URIs, and RFC 3987 for IRIs, "
         "which it maps to URIs as section 3.1 does (a non-ASCII host with "
         "the RFC 5895 mapping and IDNA2008 when it is a valid IDNA2008 name, "
-        "other non-ASCII characters percent-encoded).",
+        "other non-ASCII characters percent-encoded), and with RFC 9110 "
+        "section 4.2 rejecting an http or https URI with an empty host.",
         "* **WHATWG**: the expected `href` from `urltestdata.json`.",
         "",
         "Outcomes that are equal after RFC 3986 section 6.2 normalization "
@@ -482,6 +483,12 @@ ORACLE_CASES: list[tuple[str, str | None, str | None]] = [
     ("https://fa\u00df.example/", None, "https://xn--fa-hia.example/"),
     ("sc://\u00f1_foo/", None, "sc://%C3%B1_foo/"),
     ("http://GOO\u200bgoo.com", None, "http://GOO%E2%80%8Bgoo.com"),
+    # RFC 9110 section 4.2: no empty host for http and https.
+    ("http://user@/", None, None),
+    ("HTTPS://:443?q", None, None),
+    ("///p", "http://h/", None),
+    ("http:/p", None, "http:/p"),
+    ("sc://@/", None, "sc://@/"),
 ]
 
 

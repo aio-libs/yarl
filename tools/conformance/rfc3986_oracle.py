@@ -12,6 +12,8 @@
 * Resolution follows sections 5.2.2 (strict parser), 5.2.3, 5.2.4 and 5.3.
 * Normalization follows section 6.2.2, plus the small scheme-based layer
   of section 6.2.3 (default ports, empty port, empty http path).
+* An http or https URI with an empty host is no result, as RFC 9110
+  section 4.2 requires.
 """
 
 import re
@@ -239,21 +241,48 @@ def resolve(base: str, reference: str) -> str:
     ).recompose()
 
 
+def _host(authority: str) -> str:
+    hostport = authority.rpartition("@")[2]
+    if hostport.startswith("["):
+        return hostport[: hostport.index("]") + 1]
+    return hostport.partition(":")[0]
+
+
+def has_empty_http_host(uri: str) -> bool:
+    """Tell if an http or https URI has an authority with an empty host.
+
+    RFC 9110 section 4.2.1 makes a recipient reject an http URI with an
+    empty host, and section 4.2.2 does the same for https. A URI without
+    an authority is left to the generic syntax, other schemes as well.
+    """
+    parts = split(uri)
+    return (
+        parts.scheme is not None
+        and parts.scheme.lower() in ("http", "https")
+        and parts.authority is not None
+        and _host(parts.authority) == ""
+    )
+
+
 def outcome(reference: str, base: str | None) -> str | None:
     """Return the target URI, or None when RFC 3986 gives no result.
 
-    The reference and the base may be IRIs, mapped to URIs first.
+    The reference and the base may be IRIs, mapped to URIs first. A target
+    that RFC 9110 rejects, an http or https URI with an empty host, is no
+    result either.
     """
     uri = to_uri(reference)
     if uri is None:
         return None
     if is_uri(uri):
         parts = split(uri)
-        return replace(parts, path=remove_dot_segments(parts.path)).recompose()
-    base_uri = None if base is None else to_uri(base)
-    if base_uri is None or not is_uri(base_uri):
-        return None
-    return resolve(base_uri, uri)
+        target = replace(parts, path=remove_dot_segments(parts.path)).recompose()
+    else:
+        base_uri = None if base is None else to_uri(base)
+        if base_uri is None or not is_uri(base_uri):
+            return None
+        target = resolve(base_uri, uri)
+    return None if has_empty_http_host(target) else target
 
 
 _PCT_RE = re.compile(r"%([0-9A-Fa-f]{2})")

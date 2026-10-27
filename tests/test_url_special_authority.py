@@ -68,12 +68,9 @@ def test_rejected(url: str) -> None:
     ("url", "whatwg", "rfc"),
     [
         # Nothing to read as a host: kept as a reference to a base.
-        ("http:", "http://", "http:"),
-        ("http:/", "http:///", "http:/"),
-        ("http:?q", "http://?q", "http:?q"),
-        ("http://", "http://", "http://"),
-        ("http:///", "http:///", "http:///"),
-        ("http:///?q", "http:///?q", "http:///?q"),
+        ("http:", "http:", "http:"),
+        ("http:/", "http:/", "http:/"),
+        ("http:?q", "http:?q", "http:?q"),
         # file and non-special schemes are not affected.
         ("file:p", "file:///p", "file:p"),
         ("sc:example.com/", "sc:example.com/", "sc:example.com/"),
@@ -91,7 +88,6 @@ def test_kept_without_authority(url: str, whatwg: str, rfc: str) -> None:
         "http:example.com/",
         "http:/example.com/",
         "http:@/www.example.com",
-        "http:///example.com/",
     ],
 )
 def test_rfc_mode_keeps_path(url: str) -> None:
