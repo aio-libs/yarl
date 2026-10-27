@@ -204,6 +204,12 @@ def test_mode_change_password_with_colon() -> None:
     assert whatwg_url == URL("sc://u:p:@h/")
 
 
+def test_with_scheme_encoded_password_with_colon() -> None:
+    # encoded=True keeps ":" in the password, which is not empty.
+    url = URL("sc://u:p:@h/", encoded=True)
+    assert str(url.with_scheme("http")) == "http://u:p:@h/"
+
+
 @pytest.mark.parametrize(
     ("base", "ref", "whatwg", "rfc"),
     [

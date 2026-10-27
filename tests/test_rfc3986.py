@@ -15,7 +15,7 @@ from collections.abc import Callable
 
 import pytest
 
-from yarl import URL
+from yarl import URL, Mode
 from yarl._path import normalize_path, remove_dot_segments
 
 
@@ -270,21 +270,27 @@ PCT_TEMPLATES = {
 # Sections 2.3 and 6.2.2.2: percent-encoded unreserved characters are
 # equivalent to the characters themselves and should be decoded. WHATWG mode
 # keeps the userinfo as written, as WHATWG does, see
-# test_url_userinfo_whatwg.py.
+# test_url_userinfo_encoding.py.
+@pytest.mark.parametrize("mode", ["whatwg", "rfc"])
 @pytest.mark.parametrize("component", PCT_TEMPLATES)
-def test_unreserved_percent_encoding_decoded(component: str) -> None:
+def test_unreserved_percent_encoding_decoded(component: str, mode: Mode) -> None:
     template = PCT_TEMPLATES[component]
-    url = URL(template.format("%41%7a%30%2d%2E%5f%7E"), mode="rfc")
-    assert str(url) == template.format("Az0-._~")
+    encoded = "%41%7a%30%2d%2E%5f%7E"
+    url = URL(template.format(encoded), mode=mode)
+    kept = component == "user" and mode == "whatwg"
+    assert str(url) == template.format(encoded if kept else "Az0-._~")
 
 
 # Sections 2.1 and 6.2.2.1: hex digits of percent-encodings are
 # case-insensitive and should be normalized to uppercase.
+@pytest.mark.parametrize("mode", ["whatwg", "rfc"])
 @pytest.mark.parametrize("component", PCT_TEMPLATES)
-def test_percent_encoding_uppercased(component: str) -> None:
+def test_percent_encoding_uppercased(component: str, mode: Mode) -> None:
     template = PCT_TEMPLATES[component]
-    url = URL(template.format("%c3%a9%5b"), mode="rfc")
-    assert str(url) == template.format("%C3%A9%5B")
+    encoded = "%c3%a9%5b"
+    url = URL(template.format(encoded), mode=mode)
+    kept = component == "user" and mode == "whatwg"
+    assert str(url) == template.format(encoded if kept else "%C3%A9%5B")
 
 
 # Sections 2.2 and 6.2.2.2: a percent-encoded reserved character is not
