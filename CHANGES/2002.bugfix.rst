@@ -1,0 +1,7 @@
+Started accepting ``[``, ``]`` and, for a scheme that is not special,
+``\`` in the userinfo in WHATWG mode, and encoding the userinfo with the
+userinfo percent-encode set of the WHATWG URL Standard there: ``;`` and
+``=`` are now percent-encoded, while ``%`` and percent-encoded octets are
+kept as written, so ``http://a;b%c@h/`` is ``http://a%3Bb%c@h/``. RFC 3986
+mode still rejects these URLs
+-- by :user:`asvetlov`.

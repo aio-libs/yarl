@@ -321,6 +321,32 @@ def _check_whatwg_file_authority(authority: str) -> None:
         )
 
 
+# The characters the userinfo percent-encode set of the WHATWG URL Standard
+# leaves alone: the unreserved characters, the sub-delims other than ";" and
+# "=", and "%", which is kept as written, also when it starts no
+# percent-encoded octet.
+_WHATWG_USERINFO_UNSAFE_RE = re.compile(r"[^A-Za-z0-9\-._~!$&'()*+,%]+")
+
+
+def _quote_userinfo_match(match: "re.Match[str]") -> str:
+    return quote(match.group(), safe="", errors="ignore")
+
+
+def _whatwg_requote_userinfo(value: str) -> str:
+    """Encode a parsed username or password as WHATWG mode does.
+
+    The WHATWG URL Standard splits the userinfo at the last "@" and
+    percent-encodes the username and the password with the userinfo
+    percent-encode set, so "http://a b;@c@h" has the username "a%20b%3B%40c".
+    A "%" is kept as written, "http://a%b@h" stays as it is. RFC 3986 mode
+    accepts only a valid userinfo, which it requotes. See quote_userinfo()
+    in _parse.py for a value that is not encoded.
+    """
+    if value.isascii() and value.isalnum():
+        return value
+    return _WHATWG_USERINFO_UNSAFE_RE.sub(_quote_userinfo_match, value)
+
+
 def _empty_path(scheme: str, mode: Mode) -> str:
     """Return the path of a URL whose path became empty.
 
@@ -711,14 +737,16 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             cache["raw_user"] = None
             cache["raw_password"] = None
         else:
-            if not password and mode is _WHATWG:
+            if mode is _WHATWG:
                 # WHATWG writes ":" only before a password that is not
                 # empty: "http://a:@h" is "http://a@h", "http://:@h" is
                 # "http://h". RFC 3986 keeps the empty userinfo and an
                 # empty username is "", see split_netloc_rfc().
-                password = None
-            raw_user = REQUOTER(username) if username else username
-            raw_password = REQUOTER(password) if password else password
+                raw_user = _whatwg_requote_userinfo(username) if username else None
+                raw_password = _whatwg_requote_userinfo(password) if password else None
+            else:
+                raw_user = REQUOTER(username) if username else username
+                raw_password = REQUOTER(password) if password else password
             netloc = make_netloc(raw_user, raw_password, host, port)
             cache["raw_user"] = raw_user
             cache["raw_password"] = raw_password
@@ -1194,7 +1222,9 @@ class URL:
                 if not user and mode is _WHATWG:
                     # An empty user is None, see make_netloc().
                     user = None
-                self._netloc = make_netloc(user, password, _host, port, True)
+                self._netloc = make_netloc(
+                    user, password, _host, port, True, mode is _WHATWG
+                )
 
         path = PATH_QUOTER(path) if path else path
         if path and (self._netloc or self._empty):
@@ -2094,6 +2124,9 @@ class URL:
             if not isinstance(user, str):
                 raise TypeError("Invalid user type")
             user = QUOTER(user)
+            if (";" in user or "=" in user) and self._mode is _WHATWG:
+                # Inlined quote_userinfo(), with_user() is a benchmarked path.
+                user = user.replace(";", "%3B").replace("=", "%3D")
             password = self.raw_password
         elif user is None:
             password = None
@@ -2135,6 +2168,9 @@ class URL:
         elif isinstance(password, str):
             if password:
                 password = QUOTER(password)
+                if (";" in password or "=" in password) and self._mode is _WHATWG:
+                    # Inlined quote_userinfo(), as in with_user().
+                    password = password.replace(";", "%3B").replace("=", "%3D")
             elif self._mode is _WHATWG:
                 # WHATWG has no empty password, see _encode_url().
                 password = None
@@ -3066,6 +3102,14 @@ def _moved_parts(
             netloc = make_netloc(
                 url.raw_user, url.raw_password, host, url.explicit_port
             )
+    if url._mode is not _WHATWG and "@" in netloc:
+        # The userinfo of RFC 3986 mode can have ";" and "=", which WHATWG
+        # mode encodes, see _whatwg_requote_userinfo().
+        userinfo, _, hostport = netloc.rpartition("@")
+        user, colon, password = userinfo.partition(":")
+        user = _whatwg_requote_userinfo(user)
+        password = _whatwg_requote_userinfo(password)
+        netloc = f"{user}{colon}{password}@{hostport}"
     if ":@" in netloc or netloc[0] == "@":
         netloc = _drop_empty_password(netloc)
     if scheme == "file":

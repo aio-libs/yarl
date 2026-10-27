@@ -385,7 +385,7 @@ drive letter replaces the path. :meth:`URL.build`, :meth:`URL.with_path`,
 an ordinary segment and rejects ``|``.
 RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
-one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
+one, see :attr:`URL.raw_user`), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
 as one with an emoji, which WHATWG mode accepts as UTS #46 does.
 An IPvFuture address (:rfc:`3986#section-3.2.2`), such as ``[v1.x]``, is
 accepted in RFC 3986 mode and keeps its brackets, which are part of the
@@ -599,10 +599,28 @@ There are two kinds of properties: *decoded* and *encoded* (with
    As for :attr:`URL.user`, an empty *user* is ``''`` in RFC 3986 mode
    and ``None`` in WHATWG mode.
 
+   WHATWG mode encodes the *user* and the *password* with the userinfo
+   percent-encode set of the WHATWG URL Standard: the userinfo goes up to
+   the last ``"@"``, and ``[``, ``]``, ``;``, ``=`` and, for a scheme that
+   is not special, ``\`` in it are percent-encoded, while ``%`` and
+   percent-encoded octets are kept as written. RFC 3986 mode rejects the
+   characters its userinfo cannot have, and keeps ``;`` and ``=``:
+
+   .. doctest::
+
+      >>> URL('http://a;b@example.com').raw_user
+      'a%3Bb'
+      >>> URL('http://a;b@example.com', mode='rfc').raw_user
+      'a;b'
+      >>> URL('http://a[b]:p%c@example.com')
+      URL('http://a%5Bb%5D:p%c@example.com')
+
    .. versionchanged:: 1.26
 
       An empty *user* is ``''`` in RFC 3986 mode, which keeps an empty
       userinfo.
+
+      WHATWG mode encodes the userinfo as the WHATWG URL Standard does.
 
 
 .. attribute:: URL.password
