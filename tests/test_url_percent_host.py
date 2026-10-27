@@ -16,6 +16,9 @@ from yarl import URL
         ("file://%41/p", "file://a/p"),
         ("http://%30x7f.1/", "http://127.0.0.1/"),
         ("http://127.0.0.1%31/", "http://127.0.0.11/"),
+        # Not in the RFC 3986 reg-name, but not a forbidden domain code point.
+        ("http://ho%22st/", 'http://ho"st/'),
+        ("http://ho%7Bst/", "http://ho{st/"),
     ],
 )
 def test_decoded(url: str, expected: str) -> None:
@@ -34,8 +37,6 @@ def test_decoded(url: str, expected: str) -> None:
         "http://ho%7Cst/",
         "http://%25/",
         "http://%2541/",
-        # Not in the RFC 3986 reg-name, which yarl keeps to.
-        "http://ho%22st/",
         # Invalid UTF-8 decodes to U+FFFD, which IDNA rejects.
         "https://example.com%80/",
         # A noncharacter.

@@ -140,13 +140,14 @@ def test_with_host() -> None:
         ("sc://LocalHost/x", "file", "file:///x"),
         ("sc://ExAmPlE/", "other", "other://ExAmPlE/"),
         ("sc://[::1]/", "http", "http://[::1]/"),
+        ("sc://A{b/", "http", "http://a{b/"),
     ],
 )
 def test_with_scheme(url: str, scheme: str, expected: str) -> None:
     assert str(URL(url).with_scheme(scheme)) == expected
 
 
-@pytest.mark.parametrize("host", ["A{b", "%", "%01"])
+@pytest.mark.parametrize("host", ["A%7Cb", "%", "%01"])
 def test_with_scheme_invalid_domain(host: str) -> None:
     # As URL(f"http://{host}/") does.
     with pytest.raises(ValueError):
@@ -155,8 +156,8 @@ def test_with_scheme_invalid_domain(host: str) -> None:
 
 def test_with_scheme_encoded() -> None:
     # The URL does not remember that it was built from encoded parts.
-    url = URL("sc://A{b/", encoded=True)
-    assert str(url) == "sc://A{b/"
+    url = URL("sc://A|b/", encoded=True)
+    assert str(url) == "sc://A|b/"
     with pytest.raises(ValueError):
         url.with_scheme("http")
 
