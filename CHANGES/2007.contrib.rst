@@ -1,0 +1,4 @@
+Moved the lint and documentation CI jobs and the Read the Docs build
+from Python 3.12 to Python 3.14, since Sphinx 9.2 no longer supports
+Python 3.12
+-- by :user:`asvetlov`.

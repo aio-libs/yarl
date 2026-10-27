@@ -664,8 +664,23 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Encoded *host* part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
 
-   Brackets are stripped for IPv6. Host is converted to lowercase,
-   address is validated and converted to compressed form.
+   Brackets are stripped for IPv6. Host is converted to lowercase and an
+   IPv6 address is validated. WHATWG mode converts the address to the
+   compressed form; RFC 3986 mode keeps it as written, as
+   :rfc:`3986#section-6.2.2` does not compress it, so ``[1:0::]`` and ``[1::]`` are different hosts
+   there.
+
+   .. doctest::
+
+      >>> URL('http://[1:0::]/').host
+      '1::'
+      >>> URL('http://[1:0::]/', mode='rfc').host
+      '1:0::'
+
+   .. versionchanged:: 1.26
+
+      RFC 3986 mode keeps an IPv6 address as written.
+
    An IPvFuture address (RFC 3986 mode only) keeps its brackets.
    The opaque host of a URL whose scheme is not special keeps its case in
    WHATWG mode, and only its non-ASCII characters are percent-decoded.
