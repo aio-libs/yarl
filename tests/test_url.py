@@ -2303,19 +2303,68 @@ def test_join_drops_base_fragment(reference: str, expected: str) -> None:
     ("base", "reference", "expected"),
     [
         ("mailto:user@example.com", "#frag", "mailto:user@example.com#frag"),
-        ("urn:isbn:0451450523", "?q", "urn:isbn:0451450523?q"),
         ("foo://host/a/b", "c", "foo://host/a/c"),
         ("foo://host/a/b", "//other/c", "foo://other/c"),
-        ("foo:a/b", "../c", "foo:c"),
-        ("foo:", "c", "foo:c"),
+        ("foo:/a/b", "../c", "foo:/c"),
         ("foo://host/a", "foo:b", "foo:b"),
         ("foo://host/a", "bar:b", "bar:b"),
+        ("foo:a", "foo:b", "foo:b"),
     ],
 )
 def test_join_scheme_outside_uses_relative(
     base: str, reference: str, expected: str
 ) -> None:
     assert str(URL(base).join(URL(reference))) == expected
+
+
+OPAQUE_PATH_JOINS = [
+    ("urn:isbn:0451450523", "?q", "urn:isbn:0451450523?q"),
+    ("foo:a/b", "../c", "foo:/c"),
+    ("foo:", "c", "foo:c"),
+    ("sc:sd", "i", "sc:i"),
+    ("sc:sd/sd", "i", "sc:sd/i"),
+    ("sc:sd", "../i", "sc:i"),
+    ("sc:sd/sd", "../i", "sc:/i"),
+    ("sc:sd", "/i", "sc:/i"),
+    ("sc:sd/sd", "/i", "sc:/i"),
+    ("sc:sd", "?i", "sc:sd?i"),
+    ("sc:sd/sd", "?i", "sc:sd/sd?i"),
+    ("sc:sd", "?#x", "sc:sd?#x"),
+    ("sc:sd", "//h/p", "sc://h/p"),
+    ("sc:sd", "", "sc:sd"),
+    ("a:", "test-a-colon.html", "a:test-a-colon.html"),
+    ("a:b", "test-a-colon-b.html", "a:test-a-colon-b.html"),
+]
+
+
+@pytest.mark.parametrize(("base", "reference", "expected"), OPAQUE_PATH_JOINS)
+def test_join_opaque_path_base_rfc(base: str, reference: str, expected: str) -> None:
+    joined = URL(base, mode="rfc").join(URL(reference, mode="rfc"))
+    assert str(joined) == expected
+
+
+@pytest.mark.parametrize(("base", "reference", "expected"), OPAQUE_PATH_JOINS)
+def test_join_opaque_path_base_whatwg(base: str, reference: str, expected: str) -> None:
+    # WHATWG resolves only a fragment against a base with an opaque path.
+    with pytest.raises(ValueError, match="opaque path"):
+        URL(base).join(URL(reference))
+
+
+@pytest.mark.parametrize(
+    ("base", "reference", "expected"),
+    [
+        ("mailto:user@example.com", "#frag", "mailto:user@example.com#frag"),
+        ("sc:sd", "#x", "sc:sd#x"),
+        ("sc:sd?q", "#", "sc:sd?q#"),
+        ("a:", "#x", "a:#x"),
+    ],
+)
+@pytest.mark.parametrize("mode", [Mode.WHATWG, Mode.RFC])
+def test_join_opaque_path_base_fragment(
+    base: str, reference: str, expected: str, mode: Mode
+) -> None:
+    joined = URL(base, mode=mode).join(URL(reference, mode=mode))
+    assert str(joined) == expected
 
 
 @pytest.mark.parametrize(

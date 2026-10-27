@@ -1,0 +1,2 @@
+Dropped Python 3.10 support; Python 3.11 is the minimal supported Python version
+-- by :user:`asvetlov`.

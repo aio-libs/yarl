@@ -1,0 +1,11 @@
+Parsed the host of a URL whose scheme is not special as an opaque host in
+the default WHATWG mode, as the WHATWG URL Standard does: it is no longer
+lowercased or encoded with IDNA, its control and non-ASCII characters are
+percent-encoded, and only the forbidden host code points are rejected, so
+``sc://faß.ExAmPlE/`` is ``sc://fa%C3%9F.ExAmPlE/`` and ``sc://%/`` is
+accepted. :meth:`~yarl.URL.build`, :meth:`~yarl.URL.with_host` and
+:meth:`~yarl.URL.with_scheme` follow, and :attr:`~yarl.URL.host` decodes
+the non-ASCII characters of such a host. In both modes such a URL also
+keeps its empty path before a query or a fragment, so ``sc://h?x`` is no
+longer written as ``sc://h/?x``
+-- by :user:`asvetlov`.
