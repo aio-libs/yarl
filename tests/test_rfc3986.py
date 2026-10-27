@@ -118,7 +118,6 @@ VALID = [
     pytest.param("http://example.com/!$&'()*+,;=:@", id="3.3-pchar-sub-delims"),
     pytest.param("http://example.com/?a/b?c", id="3.4-query-slash-question"),
     pytest.param("http://example.com/#a/b?c", id="3.5-fragment-slash-question"),
-    pytest.param("http://!$&'()*+,;=@example.com/", id="3.2.1-userinfo-sub-delims"),
     pytest.param(
         "http://%C3%A9.example/",
         id="3.2.2-reg-name-pct",
@@ -171,6 +170,14 @@ NUMERIC_REG_NAME = [
 @pytest.mark.parametrize("url", NUMERIC_REG_NAME)
 def test_numeric_reg_name_round_trips(url: str) -> None:
     assert str(URL(url, mode="rfc")) == url
+
+
+# Section 3.2.1: the userinfo can have every sub-delim, WHATWG
+# percent-encodes ";" and "=" in it.
+def test_userinfo_sub_delims_round_trip_rfc_mode() -> None:
+    url = "http://!$&'()*+,;=@example.com/"
+    assert str(URL(url, mode="rfc")) == url
+    assert str(URL(url)) == "http://!$&'()*+,%3B%3D@example.com/"
 
 
 # Section 3.2.2: an IPvFuture literal, which WHATWG does not have, keeps its
@@ -261,13 +268,14 @@ PCT_TEMPLATES = {
 
 
 # Sections 2.3 and 6.2.2.2: percent-encoded unreserved characters are
-# equivalent to the characters themselves and should be decoded.
+# equivalent to the characters themselves and should be decoded. WHATWG mode
+# keeps the userinfo as written, as WHATWG does, see
+# test_url_userinfo_whatwg.py.
 @pytest.mark.parametrize("component", PCT_TEMPLATES)
 def test_unreserved_percent_encoding_decoded(component: str) -> None:
     template = PCT_TEMPLATES[component]
-    assert str(URL(template.format("%41%7a%30%2d%2E%5f%7E"))) == template.format(
-        "Az0-._~"
-    )
+    url = URL(template.format("%41%7a%30%2d%2E%5f%7E"), mode="rfc")
+    assert str(url) == template.format("Az0-._~")
 
 
 # Sections 2.1 and 6.2.2.1: hex digits of percent-encodings are
@@ -275,7 +283,8 @@ def test_unreserved_percent_encoding_decoded(component: str) -> None:
 @pytest.mark.parametrize("component", PCT_TEMPLATES)
 def test_percent_encoding_uppercased(component: str) -> None:
     template = PCT_TEMPLATES[component]
-    assert str(URL(template.format("%c3%a9%5b"))) == template.format("%C3%A9%5B")
+    url = URL(template.format("%c3%a9%5b"), mode="rfc")
+    assert str(url) == template.format("%C3%A9%5B")
 
 
 # Sections 2.2 and 6.2.2.2: a percent-encoded reserved character is not
@@ -283,7 +292,7 @@ def test_percent_encoding_uppercased(component: str) -> None:
 RESERVED = ":/?#[]@!$&'()*+,;="
 # Reserved characters that yarl decodes in each component.
 RESERVED_DECODED = {
-    "user": "!$&'()*+,;=",
+    "user": "",
     "path": "",
     "query": ":/?@!$'()*,",
     "fragment": ":/?@!$&'()*+,;=",

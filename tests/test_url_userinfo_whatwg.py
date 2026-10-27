@@ -199,8 +199,9 @@ def test_mode_change_password_with_colon() -> None:
     # The password "p:" is not empty, though the authority has ":@" in it.
     rfc_url = URL("sc://u:p:@h/", encoded=True, mode="rfc")
     whatwg_url = URL(rfc_url, mode="whatwg")
-    assert str(whatwg_url) == "sc://u:p:@h/"
-    assert whatwg_url.raw_password == "p:"
+    assert str(whatwg_url) == "sc://u:p%3A@h/"
+    assert whatwg_url.raw_password == "p%3A"
+    assert whatwg_url == URL("sc://u:p:@h/")
 
 
 @pytest.mark.parametrize(

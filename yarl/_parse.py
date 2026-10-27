@@ -97,13 +97,23 @@ def split_url(url: str) -> tuple[str, str, str, str, str, int]:
         # Backslash is not valid in the authority component per RFC 3986.
         # WHATWG parsers treat \ as a path separator for special schemes, so
         # accepting it in the authority can cause host parsing ambiguity.
-        if "\\" in netloc:
+        # Other schemes keep it, percent-encoded, in the userinfo, which goes
+        # up to the last "@" as in split_netloc().
+        if "\\" in netloc and (
+            not scheme or scheme in SPECIAL_SCHEMES or "\\" in netloc.rpartition("@")[2]
+        ):
             raise ValueError(
                 "Invalid URL: backslash ('\\') is not allowed in the authority "
                 "component per RFC 3986."
             )
         has_left_bracket = "[" in netloc
         has_right_bracket = "]" in netloc
+        if (has_left_bracket or has_right_bracket) and "@" in netloc:
+            # Brackets in the userinfo are no IP-literal, WHATWG percent-encodes
+            # them.
+            hostinfo = netloc.rpartition("@")[2]
+            has_left_bracket = "[" in hostinfo
+            has_right_bracket = "]" in hostinfo
         if (has_left_bracket and not has_right_bracket) or (
             has_right_bracket and not has_left_bracket
         ):
@@ -306,6 +316,18 @@ def unsplit_result_empty(
     return f"{url}#{fragment}" if fragment or empty & EMPTY_FRAGMENT else url
 
 
+def quote_userinfo(value: str, whatwg: bool) -> str:
+    """Encode a username or password that is not encoded.
+
+    WHATWG mode also encodes ";" and "=", which are in the userinfo
+    percent-encode set of the WHATWG URL Standard; RFC 3986 allows them.
+    """
+    value = QUOTER(value)
+    if whatwg and (";" in value or "=" in value):
+        value = value.replace(";", "%3B").replace("=", "%3D")
+    return value
+
+
 @lru_cache  # match the same size as urlsplit
 def make_netloc(
     user: str | None,
@@ -313,10 +335,12 @@ def make_netloc(
     host: str | None,
     port: int | None,
     encode: bool = False,
+    whatwg: bool = False,
 ) -> str:
     """Make netloc from parts.
 
-    The user and password are encoded if encode is True. A user that is
+    The user and password are encoded if encode is True, see
+    quote_userinfo() for whatwg. A user that is
     not None is written with "@" even when it is empty, as RFC 3986 mode
     keeps an empty userinfo; WHATWG mode passes None for an empty user.
 
@@ -333,12 +357,12 @@ def make_netloc(
         if not user:
             user = ""
         elif encode:
-            user = QUOTER(user)
+            user = quote_userinfo(user, whatwg)
         if encode:
-            password = QUOTER(password)
+            password = quote_userinfo(password, whatwg)
         user = f"{user}:{password}"
     elif user and encode:
-        user = QUOTER(user)
+        user = quote_userinfo(user, whatwg)
     return f"{user}@{ret}"
 
 
