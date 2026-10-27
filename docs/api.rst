@@ -1622,6 +1622,28 @@ The path is encoded if needed.
       >>> URL('urn:example:animal').join(URL('#ferret'))
       URL('urn:example:animal#ferret')
 
+   The WHATWG URL Standard resolves nothing but a fragment against a base
+   with an opaque path, that is a URL with a scheme other than ``http``,
+   ``https``, ``ws``, ``wss``, ``ftp`` and ``file``, no authority and a
+   path that does not start with ``/``, such as ``urn:example:animal``.
+   In WHATWG mode any other ``url`` without a scheme raises
+   :exc:`ValueError` against such a base, while RFC 3986 mode merges the
+   paths:
+
+   .. doctest::
+
+      >>> URL('urn:example:animal').join(URL('ferret'))
+      Traceback (most recent call last):
+        ...
+      ValueError: Invalid URL: cannot resolve 'ferret' against 'urn:example:animal', which has an opaque path
+      >>> URL('urn:example:animal', mode='rfc').join(URL('ferret', mode='rfc'))
+      URL('urn:ferret', mode='rfc')
+
+   .. versionchanged:: 1.26
+
+      In WHATWG mode, resolving a ``url`` other than a fragment against a
+      base with an opaque path raises :exc:`ValueError`.
+
    In WHATWG mode, a ``url`` with the same scheme as the base but without
    ``//``, like ``http:page.html``, is resolved as a relative reference,
    which :rfc:`3986#section-5.4.2` permits and the WHATWG URL Standard

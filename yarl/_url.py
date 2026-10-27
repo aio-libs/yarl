@@ -2628,6 +2628,30 @@ class URL:
             # The result follows the base URL's compatibility mode.
             return url if url._mode is self._mode else URL(url, mode=self._mode)
 
+        if (
+            not self._netloc
+            and self._mode is _WHATWG
+            and not url._scheme
+            and self._scheme
+            and self._scheme not in SPECIAL_SCHEMES
+            and not self._empty & EMPTY_AUTHORITY
+            and self._path[:1] != "/"
+            and (
+                url._netloc
+                or url._path
+                or url._query
+                or url._empty & ~EMPTY_FRAGMENT
+                or not (url._fragment or url._empty & EMPTY_FRAGMENT)
+            )
+        ):
+            # WHATWG resolves only a fragment against a base with an opaque
+            # path, such as "sc:sd" or "mailto:a@b"; RFC 3986 section 5.2.2
+            # merges the paths ("i" against "sc:sd" is "sc:i").
+            raise ValueError(
+                f"Invalid URL: cannot resolve {str(url)!r} against"
+                f" {str(self)!r}, which has an opaque path"
+            )
+
         if "_join_path" in url._cache:
             join_path = url._cache["_join_path"]
             if url._netloc and url._scheme:
@@ -2733,7 +2757,14 @@ class URL:
                     # segment, so percent-encoded delimiters in the base are
                     # kept as is.
                     path = orig_path[: orig_path.rfind("/") + 1] + join_path
-                path = normalize_path(path) if "." in path else path
+                if "." in path:
+                    path = (
+                        normalize_path(path)
+                        if self._netloc or self._mode is _WHATWG or not scheme
+                        # RFC 3986 section 5.2.4, also for a path without a
+                        # leading "/": "sd/../i" is "/i".
+                        else remove_dot_segments(path)
+                    )
         else:
             path = orig_path
 
@@ -2789,7 +2820,14 @@ class URL:
                     # segment, so percent-encoded delimiters in the base are
                     # kept as is.
                     path = orig_path[: orig_path.rfind("/") + 1] + join_path
-                path = normalize_path(path) if "." in path else path
+                if "." in path:
+                    path = (
+                        normalize_path(path)
+                        if has_authority or self._mode is _WHATWG or not scheme
+                        # RFC 3986 section 5.2.4, also for a path without a
+                        # leading "/": "sd/../i" is "/i".
+                        else remove_dot_segments(path)
+                    )
         else:
             path = orig_path
 
