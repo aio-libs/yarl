@@ -237,6 +237,47 @@ string that contains one:
    A backslash is read as a slash in WHATWG mode; previously it was rejected
    in the authority and percent-encoded elsewhere.
 
+In WHATWG mode the host of a URL whose scheme is not special is an *opaque
+host*, as the WHATWG URL Standard parses it: it is neither lowercased nor
+encoded with IDNA, its control and non-ASCII characters are percent-encoded
+as UTF-8, and only NUL, tab, line feed, carriage return, space and
+``#/:<>?@[\]^|`` are rejected, so ``"``, ``{`` and a ``%`` that does not
+start a percent-encoded octet are allowed.
+:attr:`URL.host` decodes the non-ASCII characters. An IPv6 address in
+brackets is parsed as usual. RFC 3986 mode, the special schemes and a
+relative URL encode the host as a domain, and so does
+:meth:`URL.with_scheme` when it moves an opaque host to a special scheme,
+which raises :exc:`ValueError` for a host that is not a valid domain.
+
+.. doctest::
+
+   >>> URL('sc://Ñ.Example/')
+   URL('sc://%C3%91.Example/')
+   >>> URL('sc://Ñ.Example/').host
+   'Ñ.Example'
+   >>> URL('sc://Ñ.Example/', mode='rfc')
+   URL('sc://xn--ida.example/', mode='rfc')
+   >>> URL('sc://Ñ.Example/').with_scheme('http')
+   URL('http://xn--ida.example/')
+
+A URL whose scheme is not special keeps an empty path in both modes, also
+before a query or a fragment, as both standards write it: ``sc://h?q`` is
+not ``sc://h/?q``. A special URL and a relative URL get the path ``/``.
+:attr:`URL.path` is ``/`` for all of them, and an empty path still compares
+equal to ``/``.
+
+.. doctest::
+
+   >>> URL('sc://h?q'), URL('http://h?q')
+   (URL('sc://h?q'), URL('http://h/?q'))
+
+.. versionchanged:: 1.26
+
+   The host of a URL whose scheme is not special is an opaque host in WHATWG
+   mode; previously it was lowercased and encoded with IDNA, and ``"`` or a
+   lone ``%`` in it were rejected. An empty path before a query or a fragment
+   was written as ``/`` for every scheme.
+
 RFC 3986 mode takes IRIs (:rfc:`3987`): non-ASCII characters are
 percent-encoded as UTF-8, and a non-ASCII host is encoded with IDNA2008.
 Any other character outside the grammar of the two RFCs makes the URL
@@ -626,6 +667,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Brackets are stripped for IPv6. Host is converted to lowercase,
    address is validated and converted to compressed form.
    An IPvFuture address (RFC 3986 mode only) keeps its brackets.
+   The opaque host of a URL whose scheme is not special keeps its case in
+   WHATWG mode, and only its non-ASCII characters are percent-decoded.
 
    For IPv6 addresses that carry an :rfc:`6874` zone identifier, the
    ``%25`` zone separator is decoded to ``%`` and the zone identifier is
