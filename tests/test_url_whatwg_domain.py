@@ -38,16 +38,41 @@ def test_lowercased() -> None:
         ("http://faß。a{b}.ñ/", "http://xn--fa-hia.a{b}.xn--ida/", "faß.a{b}.ñ"),
         ("http://ñ{b}/", "http://xn--{b}-6ma/", "ñ{b}"),
         ("http://a｛b/", "http://a{b/", "a{b"),
+        ("http://faß.a｛b｝/", "http://xn--fa-hia.a{b}/", "faß.a{b}"),
+        ("http://Faß{B}.example/", "http://xn--fa{b}-mqa.example/", "faß{b}.example"),
+        ("http://☃{b}.ß/", "http://xn--{b}-rm5a.xn--zca/", "☃{b}.ß"),
     ],
 )
 def test_non_ascii(url: str, expected: str, host: str) -> None:
-    # Only the non-ASCII labels go through IDNA, so "faß" is not mapped to
-    # "fass" as the IDNA2003 fallback for the whole host would do.
+    # UTS #46 maps the host and a label with "{" is encoded with Punycode,
+    # so "faß" is not mapped to "fass" as the IDNA2003 fallback for the
+    # whole host would do.
     parsed = URL(url)
     assert str(parsed) == expected
     assert parsed.host == host
     with pytest.raises(ValueError):
         URL(url, mode="rfc")
+
+
+@pytest.mark.parametrize(
+    ("url", "host"),
+    [
+        ("http://xn--fa{b}-mqa/", "faß{b}"),
+        ("http://xn--fa{b}-mqa.xn--ida/", "faß{b}.ñ"),
+        # Not Punycode, kept as written.
+        ("http://xn--{b}/", "xn--{b}"),
+    ],
+)
+def test_decoded_a_label(url: str, host: str) -> None:
+    parsed = URL(url)
+    assert str(parsed) == url
+    assert parsed.host == host
+
+
+def test_disallowed_code_point() -> None:
+    # A noncharacter, which UTS #46 and IDNA2003 reject.
+    with pytest.raises(ValueError):
+        URL("http://a\ufdd0{b}/")
 
 
 @pytest.mark.parametrize("char", "^|<> %")

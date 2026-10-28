@@ -120,8 +120,6 @@ NOT_REG_NAME = re.compile(
 _WHATWG_ONLY_HOST_RE = re.compile(r'["`{}]')
 # NOT_REG_NAME with those characters allowed.
 _NOT_WHATWG_DOMAIN_RE = re.compile(r"[^a-z0-9\-._~!$&'()*+,;=%\"`{}]|%(?![0-9a-f]{2})")
-# The label separators of UTS #46, see _idna_encode_labels().
-_IDNA_DOTS_RE = re.compile("[.\u3002\uff0e\uff61]")
 
 # Invisible default-ignorable / format code points that must not appear in a
 # host (soft hyphen, zero-width space, word joiner, bidi controls, variation
@@ -3034,11 +3032,28 @@ def _idna_decode(raw: str) -> str:
     try:
         return idna.decode(raw.encode("ascii"))
     except UnicodeError:  # e.g. '::1'
-        if "." in raw and _WHATWG_ONLY_HOST_RE.search(raw):
-            # IDNA2008 rejects the whole host for one label with "{", the
-            # other labels may need it, see _idna_encode_labels().
-            return ".".join(map(_idna_decode, raw.split(".")))
+        if _WHATWG_ONLY_HOST_RE.search(raw):
+            # IDNA2008 rejects the whole host for one label with "{", see
+            # _idna_encode_labels().
+            return ".".join(map(_idna_decode_label, raw.split(".")))
         return raw.encode("ascii").decode("idna")
+
+
+def _idna_decode_label(label: str) -> str:
+    """Decode a label of a host that has '"', "`", "{" or "}".
+
+    A label with them is decoded from Punycode without the IDNA checks, as
+    _idna_encode_labels() encodes it; IDNA2003 would map "faß{b}" to
+    "fass{b}" and fail to round-trip.
+    """
+    if not _WHATWG_ONLY_HOST_RE.search(label):
+        return _idna_decode(label)
+    if label[:4] == "xn--":
+        try:
+            return label[4:].encode("ascii").decode("punycode")
+        except UnicodeError:
+            pass
+    return label
 
 
 @lru_cache(_DEFAULT_IDNA_SIZE)
@@ -3051,22 +3066,30 @@ def _idna_encode(host: str) -> tuple[str, bool]:
     try:
         return idna.encode(host, uts46=True).decode("ascii"), False
     except UnicodeError:
-        if _WHATWG_ONLY_HOST_RE.search(host) and _IDNA_DOTS_RE.search(host):
-            return _idna_encode_labels(host), True
+        try:
+            mapped = idna.uts46_remap(host, std3_rules=False, transitional=False)
+        except UnicodeError:
+            mapped = ""
+        if _WHATWG_ONLY_HOST_RE.search(mapped):
+            return _idna_encode_labels(mapped), True
         return host.encode("idna").decode("ascii"), True
 
 
-def _idna_encode_labels(host: str) -> str:
-    """Encode the non-ASCII labels of a host one by one, see _idna_encode().
+def _idna_encode_labels(mapped: str) -> str:
+    """Encode a host mapped with UTS #46 that has '"', "`", "{" or "}".
 
-    IDNA2008 rejects a label with '"', "`", "{" or "}", which UTS #46 accepts
-    without UseSTD3ASCIIRules, as WHATWG uses it. Falling back to IDNA2003
-    for the whole host would change the other labels too: "faß" is "fass"
-    there and "xn--fa-hia" in IDNA2008.
+    IDNA2008 rejects a label with them, which UTS #46 accepts without
+    UseSTD3ASCIIRules, as WHATWG uses it. Such a label is encoded with
+    Punycode, the other labels one by one; IDNA2003, the fallback for the
+    whole host, would turn "faß" into "fass" where WHATWG has "xn--fa-hia".
     """
     return ".".join(
-        label.lower() if label.isascii() else _idna_encode(label)[0]
-        for label in _IDNA_DOTS_RE.split(host)
+        label
+        if label.isascii()
+        else _idna_encode(label)[0]
+        if not _WHATWG_ONLY_HOST_RE.search(label)
+        else "xn--" + label.encode("punycode").decode("ascii")
+        for label in mapped.split(".")
     )
 
 
