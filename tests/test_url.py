@@ -520,7 +520,8 @@ def test_ipv6_zone_rfc6874() -> None:
     assert url.raw_host == "fe80::1%251"
     assert url.host == "fe80::1%1"
     assert url.host_subcomponent == "[fe80::1%251]"
-    assert url.host_port_subcomponent == "[fe80::1%251]"
+    # RFC 6874 §4: the zone id is local and must not be sent in Host.
+    assert url.host_port_subcomponent == "[fe80::1]"
     assert url.authority == "fe80::1%1:80"
     assert url.human_repr() == "http://[fe80::1%251]/"
     assert str(url) == "http://[fe80::1%251]/"
@@ -532,6 +533,7 @@ def test_ipv6_zone_rfc6874_named_zone() -> None:
     assert url.raw_host == "fe80::1%25eth0"
     assert url.host == "fe80::1%eth0"
     assert url.host_subcomponent == "[fe80::1%25eth0]"
+    assert url.host_port_subcomponent == "[fe80::1]"
     assert url.authority == "fe80::1%eth0:80"
     assert url.human_repr() == "http://[fe80::1%25eth0]/"
     assert str(url) == "http://[fe80::1%25eth0]/"
@@ -543,7 +545,7 @@ def test_ipv6_zone_rfc6874_with_port() -> None:
     assert url.raw_host == "fe80::1%251"
     assert url.host == "fe80::1%1"
     assert url.port == 8080
-    assert url.host_port_subcomponent == "[fe80::1%251]:8080"
+    assert url.host_port_subcomponent == "[fe80::1]:8080"
     assert url.authority == "fe80::1%1:8080"
     assert str(url) == "http://[fe80::1%251]:8080/"
 
