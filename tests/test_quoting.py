@@ -86,6 +86,45 @@ def test_quote_unfinished_tail_non_ascii3_non_strict(quoter: type[_Quoter]) -> N
     assert quoter()("%🐍") == "%25%F0%9F%90%8D"
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("%", "%"),
+        ("a%", "a%"),
+        ("%2", "%2"),
+        ("%HH", "%HH"),
+        ("%2zbar", "%2zbar"),
+        ("%2e%2", ".%2"),
+        ("%%41", "%A"),
+        ("%%%%", "%%%%"),
+        ("%2\u00c2\u00a9", "%2%C3%82%C2%A9"),
+        ("%#", "%%23"),
+        ("%a\ud800", "%a"),
+        ("%\ud800", "%"),
+        ("%25%zz%7e%2f", "%25%zz~%2F"),
+    ],
+)
+def test_quote_keep_invalid_pct(
+    quoter: type[_Quoter], value: str, expected: str
+) -> None:
+    assert quoter(keep_invalid_pct=True)(value) == expected
+
+
+def test_quote_keep_invalid_pct_returns_same_object(quoter: type[_Quoter]) -> None:
+    value = "a%zz%GH%"
+    assert quoter(keep_invalid_pct=True)(value) is value
+
+
+def test_quote_keep_invalid_pct_qs(quoter: type[_Quoter]) -> None:
+    q = quoter(safe="?/:@", protected="=+&;", qs=True, keep_invalid_pct=True)
+    assert q("a b=%GH&%3D%") == "a+b=%GH&%3D%"
+
+
+def test_quote_keep_invalid_pct_requires_requote(quoter: type[_Quoter]) -> None:
+    with pytest.raises(ValueError, match="keep_invalid_pct requires requote"):
+        quoter(requote=False, keep_invalid_pct=True)
+
+
 def test_quote_from_bytes(quoter: type[_Quoter]) -> None:
     assert quoter()("archaeological arcana") == "archaeological%20arcana"
     assert quoter()("") == ""

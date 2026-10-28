@@ -94,7 +94,7 @@ def test_outside_grammar_rejected(url: str, message: str) -> None:
     [
         ("http://example.com/a b", "http://example.com/a%20b"),
         ("http://example.com/#a#b", "http://example.com/#a%23b"),
-        ("http://example.com/%zz", "http://example.com/%25zz"),
+        ("http://example.com/%zz", "http://example.com/%zz"),
         (" http://example.com/a\tb ", "http://example.com/ab"),
     ],
 )

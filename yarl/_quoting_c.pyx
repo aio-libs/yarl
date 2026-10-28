@@ -271,17 +271,24 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
 cdef class _Quoter:
     cdef bint _qs
     cdef bint _requote
+    cdef bint _keep_invalid_pct
 
     cdef uint8_t _safe_table[ASCII_TABLE_SIZE]
     cdef uint8_t _protected_table[ASCII_TABLE_SIZE]
 
     def __init__(
             self, *, str safe='', str protected='', bint qs=False, bint requote=True,
+            bint keep_invalid_pct=False,
     ):
         cdef Py_UCS4 ch
 
+        if keep_invalid_pct and not requote:
+            raise ValueError("keep_invalid_pct requires requote")
         self._qs = qs
         self._requote = requote
+        # A '%' that does not start a '%XX' escape is kept as is, as the
+        # WHATWG URL Standard does, instead of being encoded as '%25'
+        self._keep_invalid_pct = keep_invalid_pct
 
         if not self._qs:
             memcpy(self._safe_table,
@@ -374,7 +381,7 @@ cdef class _Quoter:
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
-            if ch == '%' and self._requote and idx < length:
+            if ch == '%' and self._requote:
                 # Lone surrogates are dropped (see _skip_surrogates), so look
                 # through them for the two hex digits of the "%XX" escape; this
                 # keeps the C quoter consistent with the pure-Python backend,
@@ -407,8 +414,10 @@ cdef class _Quoter:
                     if _write_pct(writer, ch, changed) < 0:
                         raise
                     continue
-                else:
-                    ch = '%'
+                if self._keep_invalid_pct:
+                    if _write_char(writer, ch, False) < 0:
+                        raise
+                    continue
 
             if self._write(writer, ch) < 0:
                 raise
