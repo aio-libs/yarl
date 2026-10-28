@@ -115,6 +115,11 @@ NOT_REG_NAME = re.compile(
     """,
     re.VERBOSE,
 )
+# The characters that a WHATWG domain can have and an RFC 3986 reg-name
+# cannot: WHATWG only rejects the forbidden domain code points.
+_WHATWG_ONLY_HOST_RE = re.compile(r'["`{}]')
+# NOT_REG_NAME with those characters allowed.
+_NOT_WHATWG_DOMAIN_RE = re.compile(r"[^a-z0-9\-._~!$&'()*+,;=%\"`{}]|%(?![0-9a-f]{2})")
 
 # Invisible default-ignorable / format code points that must not appear in a
 # host (soft hyphen, zero-width space, word joiner, bidi controls, variation
@@ -414,13 +419,20 @@ def _is_pipe_drive_authority(join_path: str) -> bool:
     )
 
 
-def _idna2003_host_error(host: str) -> str:
-    """Explain why RFC 3986 mode rejected a non-ASCII host.
+def _rfc_host_error(host: str) -> str:
+    """Explain why RFC 3986 mode rejected a host that WHATWG mode accepts.
 
-    RFC 3987 converts an internationalized host with IDNA, now IDNA2008
-    (RFC 5891), which disallows code points such as emoji. WHATWG mode keeps
-    the IDNA2003 fallback of _idna_encode(), as UTS #46 accepts them.
+    A domain can have '"', "`", "{" and "}", which an RFC 3986 reg-name
+    cannot, see _encode_host(). RFC 3987 converts an internationalized host
+    with IDNA, now IDNA2008 (RFC 5891), which disallows code points such as
+    emoji. WHATWG mode keeps the IDNA2003 fallback of _idna_encode(), as
+    UTS #46 accepts them.
     """
+    if invalid := _WHATWG_ONLY_HOST_RE.search(host):
+        return (
+            f"Host {host!r} cannot contain {invalid.group()!r}"
+            f" (at position {invalid.start()})"
+        )
     return f"Host {host!r} is not a valid IDNA2008 name"
 
 
@@ -704,11 +716,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
         ):
             host = _encode_opaque_host(host)
         else:
-            encoded, whatwg_host, idna2003 = _encode_host(
+            encoded, whatwg_host, not_rfc = _encode_host(
                 host, validate_host=True, reject_empty_zone=False
             )
-            if idna2003 and mode is not _WHATWG:
-                raise ValueError(_idna2003_host_error(host))
+            if not_rfc and mode is not _WHATWG:
+                raise ValueError(_rfc_host_error(host))
             host = encoded
             if (
                 whatwg_host is not host
@@ -1173,11 +1185,11 @@ class URL:
             elif _host:
                 if "%" in _host and ":" in _host and _host[0] != "[":
                     check_zone_id(_host)
-                encoded_host, whatwg_host, idna2003 = _encode_host(
+                encoded_host, whatwg_host, not_rfc = _encode_host(
                     _host, validate_host=False
                 )
-                if idna2003 and mode is not _WHATWG:
-                    raise ValueError(_idna2003_host_error(_host))
+                if not_rfc and mode is not _WHATWG:
+                    raise ValueError(_rfc_host_error(_host))
                 _host = encoded_host
                 if (
                     whatwg_host is not _host
@@ -1198,9 +1210,9 @@ class URL:
         ):
             _host = _encode_opaque_host(host)
         elif host:
-            _host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
-            if idna2003 and mode is not _WHATWG:
-                raise ValueError(_idna2003_host_error(host))
+            _host, whatwg_host, not_rfc = _encode_host(host, validate_host=True)
+            if not_rfc and mode is not _WHATWG:
+                raise ValueError(_rfc_host_error(host))
             if (
                 whatwg_host is not _host
                 and mode is _WHATWG
@@ -2216,9 +2228,9 @@ class URL:
         ):
             encoded_host = _encode_opaque_host(host)
         else:
-            encoded_host, whatwg_host, idna2003 = _encode_host(host, validate_host=True)
-            if idna2003 and self._mode is not _WHATWG:
-                raise ValueError(_idna2003_host_error(host))
+            encoded_host, whatwg_host, not_rfc = _encode_host(host, validate_host=True)
+            if not_rfc and self._mode is not _WHATWG:
+                raise ValueError(_rfc_host_error(host))
             if (
                 whatwg_host is not encoded_host
                 and self._mode is _WHATWG
@@ -3020,7 +3032,28 @@ def _idna_decode(raw: str) -> str:
     try:
         return idna.decode(raw.encode("ascii"))
     except UnicodeError:  # e.g. '::1'
+        if _WHATWG_ONLY_HOST_RE.search(raw):
+            # IDNA2008 rejects the whole host for one label with "{", see
+            # _idna_encode_labels().
+            return ".".join(map(_idna_decode_label, raw.split(".")))
         return raw.encode("ascii").decode("idna")
+
+
+def _idna_decode_label(label: str) -> str:
+    """Decode a label of a host that has '"', "`", "{" or "}".
+
+    A label with them is decoded from Punycode without the IDNA checks, as
+    _idna_encode_labels() encodes it; IDNA2003 would map "faß{b}" to
+    "fass{b}" and fail to round-trip.
+    """
+    if not _WHATWG_ONLY_HOST_RE.search(label):
+        return _idna_decode(label)
+    if label[:4] == "xn--":
+        try:
+            return label[4:].encode("ascii").decode("punycode")
+        except UnicodeError:
+            pass
+    return label
 
 
 @lru_cache(_DEFAULT_IDNA_SIZE)
@@ -3033,7 +3066,42 @@ def _idna_encode(host: str) -> tuple[str, bool]:
     try:
         return idna.encode(host, uts46=True).decode("ascii"), False
     except UnicodeError:
+        try:
+            mapped = idna.uts46_remap(host, std3_rules=False, transitional=False)
+        except UnicodeError:
+            mapped = ""
+        if _WHATWG_ONLY_HOST_RE.search(mapped):
+            return _idna_encode_labels(mapped), True
         return host.encode("idna").decode("ascii"), True
+
+
+def _idna_encode_labels(mapped: str) -> str:
+    """Encode a host mapped with UTS #46 that has '"', "`", "{" or "}".
+
+    IDNA2008 rejects a label with them, which UTS #46 accepts without
+    UseSTD3ASCIIRules, as WHATWG uses it. Such a label is encoded with
+    Punycode, the other labels one by one; IDNA2003, the fallback for the
+    whole host, would turn "faß" into "fass" where WHATWG has "xn--fa-hia".
+    """
+    return ".".join(
+        label
+        if label.isascii()
+        else _idna_encode(label)[0]
+        if not _WHATWG_ONLY_HOST_RE.search(label)
+        else _punycode_label(label)
+        for label in mapped.split(".")
+    )
+
+
+def _punycode_label(label: str) -> str:
+    """Encode a label with Punycode after the checks UTS #46 makes.
+
+    The label must not start with a combining mark and must follow the
+    bidi rule of RFC 5893, as WHATWG has CheckBidi set: "x{א}" fails.
+    """
+    idna.check_initial_combiner(label)
+    idna.check_bidi(label)
+    return "xn--" + label.encode("punycode").decode("ascii")
 
 
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
@@ -3286,7 +3354,7 @@ def _whatwg_decoded_host(host: str) -> str | None:
     "%e2%98%83" is "xn--n3h" and "ho%00st" fails. The result goes on to
     the IPv4 parser like any other host. None means WHATWG fails, or gives
     a host that yarl rejects anyway, like one with a default-ignorable code
-    point or a character outside the RFC 3986 reg-name.
+    point.
     """
     decoded = unquote_to_bytes(host).decode("utf-8", "replace")
     if decoded.isascii():
@@ -3298,7 +3366,7 @@ def _whatwg_decoded_host(host: str) -> str | None:
             decoded = _idna_encode(decoded)[0]
         except UnicodeError:
             return None
-    if "%" in decoded or NOT_REG_NAME.search(decoded):
+    if "%" in decoded or _NOT_WHATWG_DOMAIN_RE.search(decoded):
         return None
     return _whatwg_numeric_host(decoded)
 
@@ -3313,9 +3381,10 @@ def _encode_host(
     scheme, which is the encoded host itself unless the host is
     percent-encoded (see _whatwg_decoded_host), ends in a number (see
     _whatwg_numeric_host) or is an IPv6 address not written compressed, and
-    a flag that tells if IDNA2008
-    could not encode the host, which RFC 3986 mode rejects. Both are
-    computed here so that the checks are cached with the encoding.
+    a flag that tells if RFC 3986 mode rejects the host: IDNA2008 could not
+    encode it, or it has a character that a WHATWG domain can have and an
+    RFC 3986 reg-name cannot, like "{". Both are computed here so that the
+    checks are cached with the encoding.
     """
     # If the host ends with a digit or contains a colon, its likely
     # an IP address.
@@ -3391,20 +3460,25 @@ def _encode_host(
             if host[end] != "]" or IP_FUTURE_RE.fullmatch(host, 1, end) is None:
                 raise ValueError(f"IPvFuture address is invalid: {host!r}")
             return host, None, False
+        not_rfc = False
         if validate_host and (invalid := NOT_REG_NAME.search(host)):
-            value, pos, extra = invalid.group(), invalid.start(), ""
-            if value == "@" or (value == ":" and "@" in host[pos:]):
-                # this looks like an authority string
-                extra = (
-                    ", if the value includes a username or password, "
-                    "use 'authority' instead of 'host'"
-                )
-            raise ValueError(
-                f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
-            ) from None
+            if invalid := _NOT_WHATWG_DOMAIN_RE.search(host, invalid.start()):
+                value, pos, extra = invalid.group(), invalid.start(), ""
+                if value == "@" or (value == ":" and "@" in host[pos:]):
+                    # this looks like an authority string
+                    extra = (
+                        ", if the value includes a username or password, "
+                        "use 'authority' instead of 'host'"
+                    )
+                raise ValueError(
+                    f"Host {host!r} cannot contain {value!r} (at position {pos}){extra}"
+                ) from None
+            # The WHATWG URL Standard keeps '"', "`", "{" and "}" in a
+            # domain, RFC 3986 rejects them, see _rfc_host_error().
+            not_rfc = True
         if "%" in host:
-            return host, _whatwg_decoded_host(host), False
-        return host, host and _whatwg_numeric_host(host), False
+            return host, _whatwg_decoded_host(host), not_rfc
+        return host, host and _whatwg_numeric_host(host), not_rfc
 
     # IDNA/UTS-46 mapping silently deletes default-ignorable code points, which
     # would turn e.g. ``e<ZWSP>vil.com`` into ``evil.com``, a different host
@@ -3417,7 +3491,7 @@ def _encode_host(
             f"Host {host!r} cannot contain {invalid.group()!r} "
             f"(at position {invalid.start()})"
         ) from None
-    encoded, idna2003 = _idna_encode(host)
+    encoded, not_rfc = _idna_encode(host)
     # IDNA uses NFKC equivalence, so normalization can expand a non-ascii
     # character into an ASCII delimiter (e.g. the fullwidth solidus U+FF0F
     # becomes '/'). split_url's _check_netloc screens '/?#@:%' but not '[',
@@ -3428,16 +3502,18 @@ def _encode_host(
     # ignores validate_host) so the parsed host cannot diverge from what the
     # serialized URL means.
     if invalid := NOT_REG_NAME.search(encoded):
-        raise ValueError(
-            f"Host {host!r} cannot contain {invalid.group()!r} "
-            f"after IDNA normalization to {encoded!r}"
-        ) from None
+        if invalid := _NOT_WHATWG_DOMAIN_RE.search(encoded, invalid.start()):
+            raise ValueError(
+                f"Host {host!r} cannot contain {invalid.group()!r} "
+                f"after IDNA normalization to {encoded!r}"
+            ) from None
+        not_rfc = True
     # The host can be percent-encoded next to the non-ASCII code points, or
     # IDNA can map a code point to "%", like the fullwidth percent sign
     # U+FF05, which WHATWG then rejects.
     if "%" in encoded:
-        return encoded, _whatwg_decoded_host(host), idna2003
-    return encoded, _whatwg_numeric_host(encoded), idna2003
+        return encoded, _whatwg_decoded_host(host), not_rfc
+    return encoded, _whatwg_numeric_host(encoded), not_rfc
 
 
 @rewrite_module

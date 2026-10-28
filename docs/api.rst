@@ -330,7 +330,9 @@ The *host* is validated the same way as by :meth:`URL.build` and
 :meth:`URL.with_host`: a :exc:`ValueError` is raised for a host that is
 neither a valid IP address nor a valid *reg-name* (:rfc:`3986#section-3.2.2`),
 for example one containing a space, a control character or a character that
-turns into a URL delimiter after IDNA normalization. An IPv6 zone
+turns into a URL delimiter after IDNA normalization. The default WHATWG mode
+also accepts ``"``, a backtick, ``{`` and ``}``, which the WHATWG URL Standard
+allows in a domain, so ``http://A{b}/`` is ``http://a{b}/``. An IPv6 zone
 identifier is accepted in both modes only in the :rfc:`6874` form,
 ``%25`` followed by the percent-encoded zone identifier, as in
 ``http://[fe80::1%25eth0]/``; an empty one (``http://[fe80::1%25]/``) is
