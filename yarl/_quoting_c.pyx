@@ -1,3 +1,4 @@
+# cython: freethreading_compatible = True
 from cpython.exc cimport PyErr_NoMemory
 from cpython.mem cimport PyMem_Free, PyMem_Malloc, PyMem_Realloc
 from cpython.pyport cimport PY_SSIZE_T_MAX
