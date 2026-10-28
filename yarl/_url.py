@@ -3088,9 +3088,20 @@ def _idna_encode_labels(mapped: str) -> str:
         if label.isascii()
         else _idna_encode(label)[0]
         if not _WHATWG_ONLY_HOST_RE.search(label)
-        else "xn--" + label.encode("punycode").decode("ascii")
+        else _punycode_label(label)
         for label in mapped.split(".")
     )
+
+
+def _punycode_label(label: str) -> str:
+    """Encode a label with Punycode after the checks UTS #46 makes.
+
+    The label must not start with a combining mark and must follow the
+    bidi rule of RFC 5893, as WHATWG has CheckBidi set: "x{א}" fails.
+    """
+    idna.check_initial_combiner(label)
+    idna.check_bidi(label)
+    return "xn--" + label.encode("punycode").decode("ascii")
 
 
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")

@@ -69,10 +69,29 @@ def test_decoded_a_label(url: str, host: str) -> None:
     assert parsed.host == host
 
 
-def test_disallowed_code_point() -> None:
-    # A noncharacter, which UTS #46 and IDNA2003 reject.
+@pytest.mark.parametrize(
+    "url",
+    [
+        # A noncharacter, which UTS #46 and IDNA2003 reject.
+        "http://a\ufdd0{b}/",
+        # Left-to-right and right-to-left letters in one label.
+        "http://x{\u05d0}/",
+        "http://x{\u05d0}.com/",
+        # A right-to-left label must not end with "}".
+        "http://\u05d0{\u05d1}/",
+        # A label must not start with a combining mark.
+        "http://\u0301{b}/",
+        "http://a.\u0301{b}/",
+    ],
+)
+def test_invalid_label(url: str) -> None:
     with pytest.raises(ValueError):
-        URL("http://a\ufdd0{b}/")
+        URL(url)
+
+
+def test_bidi_label() -> None:
+    # A left-to-right label next to a right-to-left one.
+    assert str(URL("http://1{a}.\u05d0/")) == "http://1{a}.xn--4db/"
 
 
 @pytest.mark.parametrize("char", "^|<> %")
