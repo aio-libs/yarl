@@ -39,6 +39,10 @@ ignore = [
   "PLR2004",  # magic-value-comparison  # FIXME
 
   "RUF100",  # Ruff doesn't know about WPS
+  # RUF105: noqa-comments. `# noqa` must stay: flake8 lints this tree
+  # too and the WPS codes are kept for wemake-python-styleguide; neither
+  # understands `# ruff: ignore`.
+  "RUF105",
 
   "SIM117",  # multiple-with-statements  # FIXME
 
