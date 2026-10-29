@@ -6,6 +6,8 @@ rules:
   indentation:
     level: error
     indent-sequences: false
+  quoted-strings:
+    required: only-when-needed
   truthy:
     allowed-values:
     - >-
