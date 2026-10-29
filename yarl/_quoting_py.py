@@ -44,6 +44,16 @@ _UTF8_LEADS = {
 }
 
 
+def _completes_kept_pct(ret: bytearray, ch: str) -> bool:
+    # A kept '%' followed by the decoded hex digit ch would read as a
+    # '%XX' escape that was not in the input
+    if ch not in hexdigits:
+        return False
+    if ret[-1:] == b"%":
+        return True
+    return ret[-2:-1] == b"%" and chr(ret[-1]) in hexdigits
+
+
 class _Quoter:
     def __init__(
         self,
@@ -52,6 +62,7 @@ class _Quoter:
         protected: str = "",
         qs: bool = False,
         requote: bool = True,
+        keep_invalid_pct: bool = False,
     ) -> None:
         if not safe.isascii() or not protected.isascii():
             raise ValueError("Only safe symbols with ORD < 128 are allowed")
@@ -63,10 +74,15 @@ class _Quoter:
             )
         if qs and (" " in safe or " " in protected):
             raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
+        if keep_invalid_pct and not requote:
+            raise ValueError("keep_invalid_pct requires requote")
         self._safe = safe
         self._protected = protected
         self._qs = qs
         self._requote = requote
+        # A '%' that does not start a '%XX' escape is kept as is, as the
+        # WHATWG URL Standard does, instead of being encoded as '%25'
+        self._invalid_pct = b"%" if keep_invalid_pct else b"%25"
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -88,6 +104,8 @@ class _Quoter:
             safe += QS
         safe += self._protected
         bsafe = safe.encode("ascii")
+        invalid_pct = self._invalid_pct
+        keep_invalid_pct = invalid_pct == b"%"
         idx = 0
         while idx < len(bval):
             ch = bval[idx]
@@ -100,21 +118,23 @@ class _Quoter:
                 if len(pct) == 3:  # pragma: no branch   # peephole optimizer
                     buf = pct[1:]
                     if not _IS_HEX.match(buf):
-                        ret.extend(b"%25")
+                        ret.extend(invalid_pct)
                         pct.clear()
                         idx -= 2
                         continue
                     try:
                         unquoted = chr(int(pct[1:].decode("ascii"), base=16))
                     except ValueError:
-                        ret.extend(b"%25")
+                        ret.extend(invalid_pct)
                         pct.clear()
                         idx -= 2
                         continue
 
                     if unquoted in self._protected:
                         ret.extend(pct)
-                    elif unquoted in safe:
+                    elif unquoted in safe and not (
+                        keep_invalid_pct and _completes_kept_pct(ret, unquoted)
+                    ):
                         ret.append(ord(unquoted))
                     else:
                         ret.extend(pct)
@@ -122,7 +142,7 @@ class _Quoter:
 
                 # special case, if we have only one char after "%"
                 elif len(pct) == 2 and idx == len(bval):
-                    ret.extend(b"%25")
+                    ret.extend(invalid_pct)
                     pct.clear()
                     idx -= 1
 
@@ -134,7 +154,7 @@ class _Quoter:
 
                 # special case if "%" is last char
                 if idx == len(bval):
-                    ret.extend(b"%25")
+                    ret.extend(invalid_pct)
 
                 continue
 

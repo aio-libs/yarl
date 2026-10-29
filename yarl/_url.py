@@ -79,6 +79,9 @@ from ._quoters import (
     QUOTER,
     REQUOTER,
     UNQUOTER,
+    WHATWG_FRAGMENT_REQUOTER,
+    WHATWG_PATH_REQUOTER,
+    WHATWG_QUERY_REQUOTER,
     ZONE_ID_UNQUOTER,
     human_quote,
 )
@@ -572,7 +575,7 @@ def _special_authority_url(
         url = _pre_encoded_url(url_str, _WHATWG)
     else:
         url = _encode_url(url_str, _WHATWG)
-        path = PATH_REQUOTER(path)
+        path = WHATWG_PATH_REQUOTER(path)
     if not empty & EMPTY_AUTHORITY:
         url._cache["_join_path"] = path
     return url
@@ -764,7 +767,9 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             cache["raw_password"] = raw_password
 
     if path:
-        path = PATH_REQUOTER(path)
+        # WHATWG mode keeps a "%" that does not start a "%XX" escape, RFC
+        # mode encodes it as "%25"
+        path = (WHATWG_PATH_REQUOTER if mode is _WHATWG else PATH_REQUOTER)(path)
         if "." in path and (netloc or (mode is _WHATWG and scheme == "file")):
             # A file URL always has an authority in WHATWG mode, also an
             # empty one, and its path is absolute: "file:///a/../b" and
@@ -788,9 +793,11 @@ def _encode_url(url_str: str, mode: Mode, backslashes: bool = True) -> "URL":
             # with "//" when there is no authority.
             path = path[2:]
     if query:
-        query = QUERY_REQUOTER(query)
+        query = (WHATWG_QUERY_REQUOTER if mode is _WHATWG else QUERY_REQUOTER)(query)
     if fragment:
-        fragment = FRAGMENT_REQUOTER(fragment)
+        fragment = (WHATWG_FRAGMENT_REQUOTER if mode is _WHATWG else FRAGMENT_REQUOTER)(
+            fragment
+        )
 
     if not path and scheme == "file" and mode is _WHATWG:
         # A file URL has a path in WHATWG mode, "/" at least: "file:" and

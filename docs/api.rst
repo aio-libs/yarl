@@ -237,6 +237,28 @@ string that contains one:
    A backslash is read as a slash in WHATWG mode; previously it was rejected
    in the authority and percent-encoded elsewhere.
 
+In WHATWG mode a ``%`` that does not start a percent-encoded octet is kept
+as written in the path, the query and the fragment of a parsed URL string,
+as the WHATWG URL Standard does; :attr:`URL.path` and the other decoded
+attributes keep it too. :meth:`URL.build`, :meth:`URL.with_path` and the
+other methods that take decoded components still encode a ``%`` as ``%25``
+in both modes, since there it is a percent sign. RFC 3986 mode rejects such
+a URL string:
+
+.. doctest::
+
+   >>> URL('http://example.com/100%?a=%zz')
+   URL('http://example.com/100%?a=%zz')
+   >>> URL('http://example.com/100%?a=%zz').path
+   '/100%'
+   >>> URL('http://example.com/').with_path('/100%')
+   URL('http://example.com/100%25')
+
+.. versionchanged:: 1.26
+
+   A ``%`` that does not start a percent-encoded octet is kept in WHATWG
+   mode; previously it was encoded as ``%25``.
+
 In WHATWG mode the host of a URL whose scheme is not special is an *opaque
 host*, as the WHATWG URL Standard parses it: it is neither lowercased nor
 encoded with IDNA, its control and non-ASCII characters are percent-encoded
@@ -284,7 +306,8 @@ Any other character outside the grammar of the two RFCs makes the URL
 string invalid, where WHATWG mode percent-encodes or removes it: a space,
 ``"``, ``<``, ``>``, ``^``, a backtick, ``{``, ``|``, ``}``, a control
 character, ``[`` or ``]`` outside an IP-literal host, a second ``#``, a
-``%`` that does not start a percent-encoded octet, a code point that
+``%`` that does not start a percent-encoded octet (WHATWG mode keeps it as
+written, see above), a code point that
 :rfc:`3987` excludes (such as ``U+FFFF``, a C1 control, a bidi formatting
 character, or a private-use character outside the query), an invalid scheme,
 and a ``:`` in the first segment of a relative path. Only parsing a string is

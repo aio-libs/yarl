@@ -171,6 +171,20 @@ cdef inline void _release_writer(Writer* writer):
         PyMem_Free(writer.buf)
 
 
+cdef inline bint _completes_kept_pct(Writer* writer, Py_UCS4 ch) noexcept:
+    # A kept '%' followed by the decoded hex digit ch would read as a
+    # '%XX' escape that was not in the input
+    if _from_hex(ch) == -1:
+        return False
+    if writer.pos >= 1 and writer.buf[writer.pos - 1] == b'%':
+        return True
+    return (
+        writer.pos >= 2
+        and writer.buf[writer.pos - 2] == b'%'
+        and _from_hex(<Py_UCS4><uint8_t>writer.buf[writer.pos - 1]) != -1
+    )
+
+
 cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
     cdef char * buf
     cdef Py_ssize_t size
@@ -272,17 +286,24 @@ cdef inline int _write_utf8(Writer* writer, Py_UCS4 symbol):
 cdef class _Quoter:
     cdef bint _qs
     cdef bint _requote
+    cdef bint _keep_invalid_pct
 
     cdef uint8_t _safe_table[ASCII_TABLE_SIZE]
     cdef uint8_t _protected_table[ASCII_TABLE_SIZE]
 
     def __init__(
             self, *, str safe='', str protected='', bint qs=False, bint requote=True,
+            bint keep_invalid_pct=False,
     ):
         cdef Py_UCS4 ch
 
+        if keep_invalid_pct and not requote:
+            raise ValueError("keep_invalid_pct requires requote")
         self._qs = qs
         self._requote = requote
+        # A '%' that does not start a '%XX' escape is kept as is, as the
+        # WHATWG URL Standard does, instead of being encoded as '%25'
+        self._keep_invalid_pct = keep_invalid_pct
 
         if not self._qs:
             memcpy(self._safe_table,
@@ -375,7 +396,7 @@ cdef class _Quoter:
         while idx < length:
             ch = PyUnicode_READ(kind, data, idx)
             idx += 1
-            if ch == '%' and self._requote and idx < length:
+            if ch == '%' and self._requote:
                 # Lone surrogates are dropped (see _skip_surrogates), so look
                 # through them for the two hex digits of the "%XX" escape; this
                 # keeps the C quoter consistent with the pure-Python backend,
@@ -398,7 +419,10 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                        if bit_at(self._safe_table, ch):
+                        if bit_at(self._safe_table, ch) and not (
+                            self._keep_invalid_pct
+                            and _completes_kept_pct(writer, ch)
+                        ):
                             if _write_char(writer, ch, True) < 0:
                                 raise
                             continue
@@ -408,8 +432,10 @@ cdef class _Quoter:
                     if _write_pct(writer, ch, changed) < 0:
                         raise
                     continue
-                else:
-                    ch = '%'
+                if self._keep_invalid_pct:
+                    if _write_char(writer, ch, False) < 0:
+                        raise
+                    continue
 
             if self._write(writer, ch) < 0:
                 raise

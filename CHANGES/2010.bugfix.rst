@@ -1,0 +1,7 @@
+Started keeping a ``%`` that does not start a percent-encoded octet as
+written in the path, the query and the fragment of a parsed URL in WHATWG
+mode, as the WHATWG URL Standard does, so ``http://example.com/foo%2zbar``
+no longer becomes ``http://example.com/foo%252zbar``. Builder methods that
+take decoded values still encode ``%`` as ``%25``, and RFC 3986 mode still
+rejects such a URL string
+-- by :user:`asvetlov`.
