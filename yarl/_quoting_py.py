@@ -55,6 +55,8 @@ def _completes_kept_pct(ret: bytearray, ch: str) -> bool:
 
 
 class _Quoter:
+    __slots__ = ("_protected", "_qs", "_requote", "_safe")
+
     def __init__(
         self,
         *,
@@ -174,6 +176,8 @@ class _Quoter:
 
 
 class _Unquoter:
+    __slots__ = ("_ascii_output", "_invalid", "_plus_is_space")
+
     def __init__(
         self,
         *,
