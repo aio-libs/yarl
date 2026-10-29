@@ -76,6 +76,24 @@ def test_valid_escapes_unchanged() -> None:
     assert url.query == {"=%GH": ""}
 
 
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("http://h/%4%31", "http://h/%4%31"),
+        ("http://h/%%34%31", "http://h/%%341"),
+        ("http://h/?%4%31", "http://h/?%4%31"),
+        ("http://h/#%4%31", "http://h/#%4%31"),
+    ],
+)
+def test_kept_percent_does_not_combine_with_decoded_digits(
+    url: str, expected: str
+) -> None:
+    # Decoding "%31" after "%4" would make the new escape "%41"
+    parsed = URL(url)
+    assert str(parsed) == expected
+    assert URL(expected) == parsed
+
+
 def test_dot_segments() -> None:
     assert str(URL("http://example.com/a%/../b%")) == "http://example.com/b%"
 

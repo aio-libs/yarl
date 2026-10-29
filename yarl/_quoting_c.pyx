@@ -170,6 +170,20 @@ cdef inline void _release_writer(Writer* writer):
         PyMem_Free(writer.buf)
 
 
+cdef inline bint _completes_kept_pct(Writer* writer, Py_UCS4 ch) noexcept:
+    # A kept '%' followed by the decoded hex digit ch would read as a
+    # '%XX' escape that was not in the input
+    if _from_hex(ch) == -1:
+        return False
+    if writer.pos >= 1 and writer.buf[writer.pos - 1] == b'%':
+        return True
+    return (
+        writer.pos >= 2
+        and writer.buf[writer.pos - 2] == b'%'
+        and _from_hex(<Py_UCS4><uint8_t>writer.buf[writer.pos - 1]) != -1
+    )
+
+
 cdef inline int _write_char(Writer* writer, Py_UCS4 ch, bint changed):
     cdef char * buf
     cdef Py_ssize_t size
@@ -404,7 +418,10 @@ cdef class _Quoter:
                                 raise
                             continue
 
-                        if bit_at(self._safe_table, ch):
+                        if bit_at(self._safe_table, ch) and not (
+                            self._keep_invalid_pct
+                            and _completes_kept_pct(writer, ch)
+                        ):
                             if _write_char(writer, ch, True) < 0:
                                 raise
                             continue

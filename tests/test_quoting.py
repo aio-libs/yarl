@@ -95,7 +95,16 @@ def test_quote_unfinished_tail_non_ascii3_non_strict(quoter: type[_Quoter]) -> N
         ("%HH", "%HH"),
         ("%2zbar", "%2zbar"),
         ("%2e%2", ".%2"),
-        ("%%41", "%A"),
+        # A decoded hex digit right after a kept "%" stays escaped, so that
+        # it cannot complete a "%XX" escape that was not in the input
+        ("%%41", "%%41"),
+        ("%4%31", "%4%31"),
+        ("%4%61", "%4%61"),
+        ("%%31%32", "%%312"),
+        ("%%312", "%%312"),
+        ("%%7e", "%~"),
+        ("%z%31", "%z1"),
+        ("%4G%31", "%4G1"),
         ("%%%%", "%%%%"),
         ("%2\u00c2\u00a9", "%2%C3%82%C2%A9"),
         ("%#", "%%23"),
