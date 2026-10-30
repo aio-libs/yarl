@@ -2592,12 +2592,14 @@ class URL:
 
     def with_suffix(
         self,
-        suffix: str,
+        suffix: str = "",
         *,
         keep_query: bool = False,
         keep_fragment: bool = False,
     ) -> "URL":
         """Return a new URL with suffix (file extension of name) replaced.
+
+        If suffix is an empty string (the default), remove the suffix from the URL.
 
         Query and fragment parts are cleaned up.
 
@@ -2605,8 +2607,9 @@ class URL:
         """
         if not isinstance(suffix, str):
             raise TypeError("Invalid suffix type")
-        if suffix and not suffix[0] == "." or suffix == "." or "/" in suffix:
-            raise ValueError(f"Invalid suffix {suffix!r}")
+        if suffix:
+            if suffix[0] != "." or suffix == "." or "/" in suffix:
+                raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.raw_name
         if not name:
             raise ValueError(f"{self!r} has an empty name")

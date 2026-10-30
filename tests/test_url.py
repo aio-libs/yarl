@@ -1898,6 +1898,17 @@ def test_with_suffix_empty() -> None:
     url = URL("http://example.com/path/to").with_suffix("")
     assert str(url) == "http://example.com/path/to"
 
+    url_with_suffix = URL("http://example.com/path/to.html").with_suffix("")
+    assert str(url_with_suffix) == "http://example.com/path/to"
+
+
+def test_with_suffix_default_empty() -> None:
+    url = URL("http://example.com/path/to.html").with_suffix()
+    assert str(url) == "http://example.com/path/to"
+
+    url_no_suffix = URL("http://example.com/path/to").with_suffix()
+    assert str(url_no_suffix) == "http://example.com/path/to"
+
 
 def test_with_suffix_non_ascii() -> None:
     url = URL("http://example.com/path").with_suffix(".шлях")

@@ -1,0 +1,1 @@
+Clarified the :meth:`~yarl.URL.with_suffix` validation expression and documented that an empty suffix removes the existing suffix, making ``suffix`` optional with a default of ``""`` -- by :user:`Aarnav3107`.
