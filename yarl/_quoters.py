@@ -13,6 +13,14 @@ QUERY_REQUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
 QUERY_PART_QUOTER = _Quoter(safe="?", qs=True, requote=False, unsafe="$'()*,/:@")
 FRAGMENT_QUOTER = _Quoter(safe="?/:@", requote=False)
 FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
+# WHATWG mode keeps a "%" that does not start a "%XX" escape in parsed URLs
+WHATWG_PATH_REQUOTER = _Quoter(
+    safe="@:", protected=":/@!$&'()*+,;=", keep_invalid_pct=True
+)
+WHATWG_QUERY_REQUOTER = _Quoter(
+    safe="?/:@", protected="=+&;", qs=True, keep_invalid_pct=True
+)
+WHATWG_FRAGMENT_REQUOTER = _Quoter(safe="?/:@", keep_invalid_pct=True)
 
 UNQUOTER = _Unquoter()
 PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")

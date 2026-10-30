@@ -169,7 +169,7 @@ jobs:
         runner-vm-os:
         - ubuntu-latest
         python-version:
-        - 3.12
+        - 3.14
         toxenv:
         - pre-commit
         - spellcheck-docs

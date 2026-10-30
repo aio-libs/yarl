@@ -237,6 +237,28 @@ string that contains one:
    A backslash is read as a slash in WHATWG mode; previously it was rejected
    in the authority and percent-encoded elsewhere.
 
+In WHATWG mode a ``%`` that does not start a percent-encoded octet is kept
+as written in the path, the query and the fragment of a parsed URL string,
+as the WHATWG URL Standard does; :attr:`URL.path` and the other decoded
+attributes keep it too. :meth:`URL.build`, :meth:`URL.with_path` and the
+other methods that take decoded components still encode a ``%`` as ``%25``
+in both modes, since there it is a percent sign. RFC 3986 mode rejects such
+a URL string:
+
+.. doctest::
+
+   >>> URL('http://example.com/100%?a=%zz')
+   URL('http://example.com/100%?a=%zz')
+   >>> URL('http://example.com/100%?a=%zz').path
+   '/100%'
+   >>> URL('http://example.com/').with_path('/100%')
+   URL('http://example.com/100%25')
+
+.. versionchanged:: 1.26
+
+   A ``%`` that does not start a percent-encoded octet is kept in WHATWG
+   mode; previously it was encoded as ``%25``.
+
 In WHATWG mode the host of a URL whose scheme is not special is an *opaque
 host*, as the WHATWG URL Standard parses it: it is neither lowercased nor
 encoded with IDNA, its control and non-ASCII characters are percent-encoded
@@ -284,7 +306,8 @@ Any other character outside the grammar of the two RFCs makes the URL
 string invalid, where WHATWG mode percent-encodes or removes it: a space,
 ``"``, ``<``, ``>``, ``^``, a backtick, ``{``, ``|``, ``}``, a control
 character, ``[`` or ``]`` outside an IP-literal host, a second ``#``, a
-``%`` that does not start a percent-encoded octet, a code point that
+``%`` that does not start a percent-encoded octet (WHATWG mode keeps it as
+written, see above), a code point that
 :rfc:`3987` excludes (such as ``U+FFFF``, a C1 control, a bidi formatting
 character, or a private-use character outside the query), an invalid scheme,
 and a ``:`` in the first segment of a relative path. Only parsing a string is
@@ -330,7 +353,9 @@ The *host* is validated the same way as by :meth:`URL.build` and
 :meth:`URL.with_host`: a :exc:`ValueError` is raised for a host that is
 neither a valid IP address nor a valid *reg-name* (:rfc:`3986#section-3.2.2`),
 for example one containing a space, a control character or a character that
-turns into a URL delimiter after IDNA normalization. An IPv6 zone
+turns into a URL delimiter after IDNA normalization. The default WHATWG mode
+also accepts ``"``, a backtick, ``{`` and ``}``, which the WHATWG URL Standard
+allows in a domain, so ``http://A{b}/`` is ``http://a{b}/``. An IPv6 zone
 identifier is accepted in both modes only in the :rfc:`6874` form,
 ``%25`` followed by the percent-encoded zone identifier, as in
 ``http://[fe80::1%25eth0]/``; an empty one (``http://[fe80::1%25]/``) is
@@ -385,7 +410,7 @@ drive letter replaces the path. :meth:`URL.build`, :meth:`URL.with_path`,
 an ordinary segment and rejects ``|``.
 RFC 3986 mode also rejects an authority with more than one ``@``, since
 userinfo cannot contain ``@`` (WHATWG mode percent-encodes all but the last
-one), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
+one, see :attr:`URL.raw_user`), and a non-ASCII host that IDNA2008 (:rfc:`5891`) cannot encode, such
 as one with an emoji, which WHATWG mode accepts as UTS #46 does.
 An IPvFuture address (:rfc:`3986#section-3.2.2`), such as ``[v1.x]``, is
 accepted in RFC 3986 mode and keeps its brackets, which are part of the
@@ -599,10 +624,28 @@ There are two kinds of properties: *decoded* and *encoded* (with
    As for :attr:`URL.user`, an empty *user* is ``''`` in RFC 3986 mode
    and ``None`` in WHATWG mode.
 
+   WHATWG mode encodes the *user* and the *password* with the userinfo
+   percent-encode set of the WHATWG URL Standard: the userinfo goes up to
+   the last ``"@"``, and ``[``, ``]``, ``;``, ``=`` and, for a scheme that
+   is not special, ``\`` in it are percent-encoded, while ``%`` and
+   percent-encoded octets are kept as written. RFC 3986 mode rejects the
+   characters its userinfo cannot have, and keeps ``;`` and ``=``:
+
+   .. doctest::
+
+      >>> URL('http://a;b@example.com').raw_user
+      'a%3Bb'
+      >>> URL('http://a;b@example.com', mode='rfc').raw_user
+      'a;b'
+      >>> URL('http://a[b]:p%c@example.com')
+      URL('http://a%5Bb%5D:p%c@example.com')
+
    .. versionchanged:: 1.26
 
       An empty *user* is ``''`` in RFC 3986 mode, which keeps an empty
       userinfo.
+
+      WHATWG mode encodes the userinfo as the WHATWG URL Standard does.
 
 
 .. attribute:: URL.password
@@ -664,8 +707,23 @@ There are two kinds of properties: *decoded* and *encoded* (with
    Encoded *host* part of URL, ``None`` for relative URLs
    (:ref:`yarl-api-relative-urls`).
 
-   Brackets are stripped for IPv6. Host is converted to lowercase,
-   address is validated and converted to compressed form.
+   Brackets are stripped for IPv6. Host is converted to lowercase and an
+   IPv6 address is validated. WHATWG mode converts the address to the
+   compressed form; RFC 3986 mode keeps it as written, as
+   :rfc:`3986#section-6.2.2` does not compress it, so ``[1:0::]`` and ``[1::]`` are different hosts
+   there.
+
+   .. doctest::
+
+      >>> URL('http://[1:0::]/').host
+      '1::'
+      >>> URL('http://[1:0::]/', mode='rfc').host
+      '1:0::'
+
+   .. versionchanged:: 1.26
+
+      RFC 3986 mode keeps an IPv6 address as written.
+
    An IPvFuture address (RFC 3986 mode only) keeps its brackets.
    The opaque host of a URL whose scheme is not special keeps its case in
    WHATWG mode, and only its non-ASCII characters are percent-decoded.

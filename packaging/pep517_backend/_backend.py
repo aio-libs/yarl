@@ -166,7 +166,7 @@ def _build_inplace(
 
 
 @contextmanager
-def patched_distutils_cmd_install() -> _c.Iterator[None]:
+def patched_distutils_cmd_install() -> _c.Generator[None]:
     """Make `install_lib` of `install` cmd always use `platlib`.
 
     :yields: None
@@ -188,7 +188,7 @@ def patched_distutils_cmd_install() -> _c.Iterator[None]:
 
 
 @contextmanager
-def patched_dist_has_ext_modules() -> _c.Iterator[None]:
+def patched_dist_has_ext_modules() -> _c.Generator[None]:
     """Make `has_ext_modules` of `Distribution` always return `True`.
 
     :yields: None
@@ -204,7 +204,7 @@ def patched_dist_has_ext_modules() -> _c.Iterator[None]:
 
 
 @contextmanager
-def patched_dist_get_long_description() -> _c.Iterator[None]:
+def patched_dist_get_long_description() -> _c.Generator[None]:
     """Make `has_ext_modules` of `Distribution` always return `True`.
 
     :yields: None
@@ -251,7 +251,7 @@ def _exclude_dir_path(
 
 
 @contextmanager
-def _in_temporary_directory(src_dir: Path) -> _c.Iterator[Path]:
+def _in_temporary_directory(src_dir: Path) -> _c.Generator[Path]:
     with TemporaryDirectory(prefix='.tmp-yarl-pep517-') as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
         root_tmp_dir_path = tmp_dir_path.parent
@@ -275,7 +275,7 @@ def maybe_prebuild_c_extensions(
     line_trace_cython_when_unset: bool = False,
     build_inplace: bool = False,
     config_settings: _ConfigDict | None = None,
-) -> _c.Iterator[None]:
+) -> _c.Generator[None]:
     """Pre-build C-extensions in a temporary directory, when needed.
 
     This context manager also patches metadata, setuptools and distutils.

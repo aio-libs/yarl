@@ -1,0 +1,6 @@
+Started accepting ``"``, a backtick, ``{`` and ``}`` in the host of a
+special URL in WHATWG mode, as the WHATWG URL Standard only rejects its
+forbidden domain code points, so ``http://A{b}/`` is ``http://a{b}/``.
+Only the non-ASCII labels of such a host go through IDNA. RFC 3986 mode
+still rejects these hosts
+-- by :user:`asvetlov`.

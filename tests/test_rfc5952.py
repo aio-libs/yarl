@@ -4,12 +4,16 @@ https://www.rfc-editor.org/rfc/rfc5952
 
 RFC 3986 section 3.2.2 carries IPv6 addresses inside IP-literals, and
 section 6.2.2.1 allows normalizing them; yarl emits the canonical text
-form recommended by RFC 5952 section 4.
+form recommended by RFC 5952 section 4 in WHATWG mode, as the WHATWG URL
+Standard does. RFC 3986 mode keeps the address as written, only
+lowercased, since section 6.2.2 does not compress it.
 """
+
+from collections.abc import Callable
 
 import pytest
 
-from yarl import URL
+from yarl import URL, Mode
 
 CANONICAL = [
     # Section 2.1: leading zeros.
@@ -87,3 +91,38 @@ def test_build_brackets_ipv6_host() -> None:
     url = URL.build(scheme="http", host="2001:DB8::0001", port=8080)
     assert str(url) == "http://[2001:db8::1]:8080"
     assert url.host_port_subcomponent == "[2001:db8::1]:8080"
+
+
+@pytest.mark.parametrize(("address", "canonical"), CANONICAL)
+def test_rfc_mode_keeps_address_as_written(address: str, canonical: str) -> None:
+    url = URL(f"http://[{address}]/", mode="rfc")
+    assert url.raw_host == address.lower()
+    assert url.host == address.lower()
+    assert str(url) == f"http://[{address.lower()}]/"
+    assert str(URL(url, mode="whatwg")) == f"http://[{canonical}]/"
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda mode: URL("http://[1:0::]/", mode=mode),
+        lambda mode: URL.build(scheme="http", host="1:0::", mode=mode),
+        lambda mode: URL.build(scheme="http", authority="[1:0::]", mode=mode),
+        lambda mode: URL("http://h/", mode=mode).with_host("1:0::"),
+        lambda mode: URL("http://h/", mode=mode).join(URL("//[1:0::]/", mode=mode)),
+        lambda mode: URL("sc://[1:0::]/", mode=mode).with_scheme("http"),
+    ],
+)
+def test_written_address_by_mode(make: Callable[[Mode], URL]) -> None:
+    assert make(Mode.RFC).raw_host == "1:0::"
+    assert make(Mode.WHATWG).raw_host == "1::"
+
+
+def test_rfc_mode_written_forms_differ() -> None:
+    assert URL("http://[1:0::]/", mode="rfc") != URL("http://[1::]/", mode="rfc")
+
+
+def test_rfc_mode_keeps_zone_id() -> None:
+    url = URL("http://[FE80:0::1%25eth0]/", mode="rfc")
+    assert str(url) == "http://[fe80:0::1%25eth0]/"
+    assert str(URL(url, mode="whatwg")) == "http://[fe80::1%25eth0]/"
