@@ -60,29 +60,41 @@ class _Quoter:
         *,
         safe: str = "",
         protected: str = "",
+        unsafe: str = "",
         qs: bool = False,
         requote: bool = True,
         keep_invalid_pct: bool = False,
     ) -> None:
-        if not safe.isascii() or not protected.isascii():
-            raise ValueError("Only safe symbols with ORD < 128 are allowed")
-        # A safe '%' would be left alone while requoting decodes '%XX', and a
-        # safe ' ' would be left alone while qs turns it into '+'
-        if requote and ("%" in safe or "%" in protected):
-            raise ValueError(
-                "safe and protected cannot contain '%' when requote is enabled"
-            )
-        if qs and (" " in safe or " " in protected):
-            raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
         if keep_invalid_pct and not requote:
             raise ValueError("keep_invalid_pct requires requote")
+        if not safe.isascii() or not protected.isascii() or not unsafe.isascii():
+            raise ValueError("Only safe symbols with ORD < 128 are allowed")
+
         self._safe = safe
         self._protected = protected
+        self._unsafe = unsafe
         self._qs = qs
         self._requote = requote
         # A '%' that does not start a '%XX' escape is kept as is, as the
         # WHATWG URL Standard does, instead of being encoded as '%25'
         self._invalid_pct = b"%" if keep_invalid_pct else b"%25"
+
+        safe_chars = set(ALLOWED)
+        if not qs:
+            safe_chars.update(QS)
+        safe_chars.update(safe)
+        safe_chars.update(protected)
+        safe_chars.difference_update(unsafe)
+        # A safe '%' would be left alone while requoting decodes '%XX', and a
+        # safe ' ' would be left alone while qs turns it into '+'
+        if requote and "%" in safe_chars:
+            raise ValueError(
+                "safe and protected cannot contain '%' when requote is enabled"
+            )
+        if qs and " " in safe_chars:
+            raise ValueError("safe and protected cannot contain ' ' when qs is enabled")
+        self._safe_chars = safe_chars
+        self._bsafe = bytes(sorted(ord(ch) for ch in safe_chars))
 
     @overload
     def __call__(self, val: str) -> str: ...
@@ -98,12 +110,8 @@ class _Quoter:
         bval = val.encode("utf8", errors="ignore")
         ret = bytearray()
         pct = bytearray()
-        safe = self._safe
-        safe += ALLOWED
-        if not self._qs:
-            safe += QS
-        safe += self._protected
-        bsafe = safe.encode("ascii")
+        safe_chars = self._safe_chars
+        bsafe = self._bsafe
         invalid_pct = self._invalid_pct
         keep_invalid_pct = invalid_pct == b"%"
         idx = 0
@@ -132,7 +140,7 @@ class _Quoter:
 
                     if unquoted in self._protected:
                         ret.extend(pct)
-                    elif unquoted in safe and not (
+                    elif unquoted in safe_chars and not (
                         keep_invalid_pct and _completes_kept_pct(ret, unquoted)
                     ):
                         ret.append(ord(unquoted))

@@ -44,12 +44,20 @@ else:
 _ASCII_TEXT = st.text(alphabet=st.characters(max_codepoint=127))
 
 
-@given(safe=_ASCII_TEXT, protected=_ASCII_TEXT, qs=st.booleans(), requote=st.booleans())
-def test_fuzz__PyQuoter(safe: str, protected: str, qs: bool, requote: bool) -> None:  # type: ignore[misc]
+@given(
+    safe=_ASCII_TEXT,
+    protected=_ASCII_TEXT,
+    unsafe=_ASCII_TEXT,
+    qs=st.booleans(),
+    requote=st.booleans(),
+)
+def test_fuzz__PyQuoter(  # type: ignore[misc]
+    safe: str, protected: str, unsafe: str, qs: bool, requote: bool
+) -> None:
     """Verify that _PyQuoter can be instantiated with any valid arguments."""
-    assume(not (requote and ("%" in safe or "%" in protected)))
-    assume(not (qs and (" " in safe or " " in protected)))
-    _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    assume(not (requote and ("%" in safe or "%" in protected) and "%" not in unsafe))
+    assume(not (qs and (" " in safe or " " in protected) and " " not in unsafe))
+    _PyQuoter(safe=safe, protected=protected, unsafe=unsafe, qs=qs, requote=requote)
 
 
 @pytest.mark.parametrize("unquoter", unquoters, ids=unquoter_ids)
@@ -316,27 +324,55 @@ _QUOTE_PIECES = st.one_of(
 
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions not available")
-@example(pieces=["%41", " %"], safe="%", protected="", qs=False, requote=True)
-@example(pieces=["%41", " %"], safe="%", protected="", qs=False, requote=False)
+@example(
+    pieces=["%41", " %"], safe="%", protected="", unsafe="", qs=False, requote=True
+)
+@example(
+    pieces=["%41", " %"], safe="%", protected="", unsafe="", qs=False, requote=False
+)
 @given(
     pieces=st.lists(_QUOTE_PIECES),
     safe=st.text(alphabet=_QUOTER_CONFIG_CHARS, max_size=4),
     protected=st.text(alphabet=_QUOTER_CONFIG_CHARS, max_size=4),
+    unsafe=st.text(alphabet=_QUOTER_CONFIG_CHARS, max_size=4),
     qs=st.booleans(),
     requote=st.booleans(),
 )
 def test_c_and_py_quoter_match_any_config(  # type: ignore[misc]
-    pieces: list[str], safe: str, protected: str, qs: bool, requote: bool
+    pieces: list[str],
+    safe: str,
+    protected: str,
+    unsafe: str,
+    qs: bool,
+    requote: bool,
 ) -> None:
     val = "".join(pieces)
     try:
-        py_quoter = _PyQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+        py_quoter = _PyQuoter(
+            safe=safe,
+            protected=protected,
+            unsafe=unsafe,
+            qs=qs,
+            requote=requote,
+        )
     except ValueError as exc:
         # Both implementations reject the same configurations
         with pytest.raises(ValueError, match=re.escape(str(exc))):
-            _CQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+            _CQuoter(
+                safe=safe,
+                protected=protected,
+                unsafe=unsafe,
+                qs=qs,
+                requote=requote,
+            )
         return
-    c_quoter = _CQuoter(safe=safe, protected=protected, qs=qs, requote=requote)
+    c_quoter = _CQuoter(
+        safe=safe,
+        protected=protected,
+        unsafe=unsafe,
+        qs=qs,
+        requote=requote,
+    )
     assert c_quoter(val) == py_quoter(val)
 
 
