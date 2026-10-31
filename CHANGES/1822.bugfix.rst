@@ -1,0 +1,2 @@
+Rejected malformed bracketed authorities ending in ``@`` with ``ValueError``
+instead of raising ``IndexError`` -- by :user:`iamzayn19`.
