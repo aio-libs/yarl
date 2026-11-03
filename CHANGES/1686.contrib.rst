@@ -1,0 +1,3 @@
+Added Hypothesis property tests covering :py:class:`~yarl.URL`
+parse/build roundtrip and normalization idempotency invariants
+-- by :user:`bdraco`.
