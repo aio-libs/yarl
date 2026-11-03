@@ -242,6 +242,29 @@ def test_build_encoded_is_kept() -> None:
 
 
 @pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("readme", "file:///readme"),
+        ("", "file:///readme"),
+        ("read.me", "file:///read.me"),
+        ("a/../b", "file:///b"),
+        ("C:/x", "file:///C:/x"),
+    ],
+)
+def test_build_rootless_path_is_absolute(path: str, expected: str) -> None:
+    # The path of a file URL is absolute in WHATWG mode, with or without dot
+    # segments, so a rootless path gets its leading slash like with_path() does.
+    path = path or "readme"
+    url = URL.build(scheme="file", path=path)
+    assert str(url) == expected
+    assert url.raw_path == URL(expected).raw_path
+    assert url.parts == URL(expected).parts
+    # The URL survives a round trip through its own string form.
+    assert URL(str(url)) == url
+    assert hash(URL(str(url))) == hash(url)
+
+
+@pytest.mark.parametrize(
     ("url", "path", "whatwg", "rfc"),
     [
         ("file:///x", "", "file:///", "file://"),
