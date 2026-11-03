@@ -494,9 +494,10 @@ def test_userinfo_with_bracketed_host_is_valid() -> None:
 
 
 def test_ipv4_zone() -> None:
-    # WHATWG mode decodes the host; in RFC 3986 mode "%" must start a
+    # The "%" after an IPv4 address is percent-encoding in the host, so a
+    # bare "%" is not a valid reg-name; in RFC 3986 mode "%" must start a
     # percent-encoded octet.
-    with pytest.raises(ValueError, match="once percent-decoded"):
+    with pytest.raises(ValueError, match="cannot contain '%'"):
         URL("http://1.2.3.4%тест%42:123")
     with pytest.raises(ValueError, match="hexadecimal digits in the host"):
         URL("http://1.2.3.4%тест%42:123", mode="rfc")
