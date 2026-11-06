@@ -1196,7 +1196,10 @@ section generates a new :class:`URL` instance.
 
    .. versionchanged:: 1.26
 
-      Added the *mode* parameter.
+      Added the *mode* parameter. Reserved characters ``$'()*,/:@`` in
+      *query* mappings and sequences of pairs are now percent-encoded
+      (``!`` and ``?`` remain unencoded); *query_string* and ``str``
+      *query* arguments are unaffected.
 
    .. note::
 
@@ -1382,6 +1385,12 @@ section generates a new :class:`URL` instance.
       Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
       as a query parameter value.
 
+   .. versionchanged:: 1.26
+
+      Reserved characters ``$'()*,/:@`` in mappings, sequences of pairs,
+      and keyword arguments are now percent-encoded (``!`` and ``?`` remain
+      unencoded); ``str`` arguments are unaffected.
+
 .. method:: URL.extend_query(query)
             URL.extend_query(**kwargs)
 
@@ -1423,6 +1432,12 @@ section generates a new :class:`URL` instance.
       URL('http://example.com/path?a=b&c=e&c=f&c=d')
 
    .. versionadded:: 1.11.0
+
+   .. versionchanged:: 1.26
+
+      Reserved characters ``$'()*,/:@`` in mappings, sequences of pairs,
+      and keyword arguments are now percent-encoded (``!`` and ``?`` remain
+      unencoded); existing parameters and ``str`` arguments are unaffected.
 
 .. method:: URL.update_query(query)
             URL.update_query(**kwargs)
@@ -1498,6 +1513,12 @@ section generates a new :class:`URL` instance.
       Support subclasses of :class:`int` (except :class:`bool`) and :class:`float`
       as a query parameter value.
 
+   .. versionchanged:: 1.26
+
+      Reserved characters ``$'()*,/:@`` in the resulting query parameters
+      (including existing parameters and ``str`` arguments) are now
+      percent-encoded, leaving ``!`` and ``?`` unencoded.
+
 .. method:: URL.without_query_params(*query_params)
 
    Return a new URL whose *query* part does not contain specified ``query_params``.
@@ -1507,6 +1528,12 @@ section generates a new :class:`URL` instance.
    It does nothing if none of specified ``query_params`` are present in the query.
 
    .. versionadded:: 1.10.0
+
+   .. versionchanged:: 1.26
+
+      When parameters are removed, reserved characters ``$'()*,/:@`` in the
+      retained query parameters are now percent-encoded, leaving ``!`` and
+      ``?`` unencoded.
 
 .. method:: URL.with_fragment(fragment)
 

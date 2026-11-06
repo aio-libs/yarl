@@ -242,3 +242,35 @@ def test_update_query_with_sequence_of_pairs() -> None:
     new_url = url.update_query([("a", "1"), ("b", "2")])
     assert new_url.query == MultiDict([("a", "1"), ("b", "2")])
     assert new_url.query_string == "a=1&b=2"
+
+
+def test_with_query_dict_encodes_reserved_chars() -> None:
+    url = URL("http://example.com").with_query({"k:1": "$'()*,/:@!?"})
+    assert url.raw_query_string == "k%3A1=%24%27%28%29%2A%2C%2F%3A%40!?"
+    assert url.query == MultiDict([("k:1", "$'()*,/:@!?")])
+
+
+def test_with_query_str_preserves_reserved_chars() -> None:
+    url = URL("http://example.com").with_query("k:1=$'()*,/:@!?")
+    assert url.raw_query_string == "k:1=$'()*,/:@!?"
+
+
+def test_update_query_encodes_reserved_chars_and_existing_params() -> None:
+    url = URL("http://example.com/?existing=a/b:c")
+    updated = url.update_query({"new": "$(x,y)@z'*"})
+    assert updated.raw_query_string == "existing=a%2Fb%3Ac&new=%24%28x%2Cy%29%40z%27%2A"
+    assert updated.query == MultiDict([("existing", "a/b:c"), ("new", "$(x,y)@z'*")])
+
+
+def test_update_query_str_encodes_reserved_chars() -> None:
+    url = URL("http://example.com/?existing=a/b")
+    updated = url.update_query("new=c:d@e")
+    assert updated.raw_query_string == "existing=a%2Fb&new=c%3Ad%40e"
+
+
+def test_extend_query_encodes_reserved_chars() -> None:
+    url = URL("http://example.com/?a=1/2")
+    extended_dict = url.extend_query({"b": "x:y@z", "c": "!?$,()'*"})
+    assert extended_dict.raw_query_string == "a=1/2&b=x%3Ay%40z&c=!?%24%2C%28%29%27%2A"
+    extended_str = url.extend_query("b=x:y@z")
+    assert extended_str.raw_query_string == "a=1/2&b=x:y@z"
