@@ -59,19 +59,21 @@ But for *non-ascii* case *encoding* is applied.
 
 The same is true for *user*, *password*, *query* and *fragment* parts of URL.
 
-Parsing a *path* decodes percent-encoded *unreserved* characters, but a
-percent-encoded *reserved* character (``%3A``, ``%40``, ``%3D`` and so on)
-is kept encoded, since :rfc:`3986#section-2.2` treats it as different
-from the literal character. The decoded :attr:`URL.path` shows both the
-same way:
+Parsing a *path*, *query* or *fragment* decodes percent-encoded *unreserved*
+characters, but a percent-encoded *reserved* character (``%3A``, ``%40``,
+``%2F`` and so on) is kept encoded, since :rfc:`3986#section-2.2` treats it
+as different from the literal character. The decoded :attr:`URL.path`,
+:attr:`URL.query` and :attr:`URL.fragment` show both the same way:
 
 .. doctest::
 
-   >>> url = URL('http://example.com/%7Euser/a%3Ab')
+   >>> url = URL('http://example.com/%7Euser/a%3Ab?next=http%3A//example.com/')
    >>> str(url)
-   'http://example.com/~user/a%3Ab'
+   'http://example.com/~user/a%3Ab?next=http%3A//example.com/'
    >>> url.path
    '/~user/a:b'
+   >>> url.query['next']
+   'http://example.com/'
 
 An empty *authority*, *query* or *fragment* is kept apart from a missing
 one, as :rfc:`3986#section-5.3` requires: ``http://example.com/p?`` and
