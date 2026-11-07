@@ -1,0 +1,3 @@
+Raised :exc:`ValueError` instead of :exc:`IndexError` in WHATWG mode for a
+URL whose authority has brackets in the userinfo and no host after the
+``@``, such as ``http://[::1]@`` -- by :user:`Samin061`.
