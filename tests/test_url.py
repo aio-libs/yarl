@@ -462,6 +462,9 @@ def test_ipfuture_brackets_not_allowed() -> None:
         "http://[:evil.com[]].bank.com:443",
         "http://[:127.0.0.1[]]:80",
         "http://[v1.:attacker[]].bank.com:80",
+        "http://[::1]@",
+        "//[]@",
+        "//a[b]c@",
     ),
     ids=(
         "host-confusion-with-port",
@@ -470,10 +473,13 @@ def test_ipfuture_brackets_not_allowed() -> None:
         "domain-allowlist-bypass",
         "private-ip-injection",
         "ipvfuture-bracket-abuse",
+        "userinfo-empty-host-after-ipv6",
+        "userinfo-empty-host-after-empty-brackets",
+        "userinfo-empty-host-after-bracket-text",
     ),
 )
 def test_malformed_bracketed_host_rejected(url: str) -> None:
-    """Reject URLs with multiple brackets to prevent host confusion (SSRF)."""
+    """Reject malformed brackets, including empty hosts after userinfo."""
     with pytest.raises(ValueError, match="Invalid IPv6 URL"):
         URL(url)
 
