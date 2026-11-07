@@ -39,16 +39,16 @@ The goal is that every case is in one of the first two sections: where the stand
 | Outcome | Cases |
 |---|---|
 | RFC 3986+3987, WHATWG and yarl in both modes agree | 469 |
-| yarl follows each standard in its mode | 370 |
+| yarl follows each standard in its mode | 381 |
 | yarl differs, RFC 3986+3987 and WHATWG agree | 0 |
-| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 43 |
+| WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 | 32 |
 | RFC mode differs from RFC 3986+3987, WHATWG mode follows WHATWG | 12 |
 | Both modes differ from their standard | 2 |
 | Total | 896 |
 
 | Pair | Disagreements |
 |---|---|
-| yarl WHATWG mode vs WHATWG | 45 |
+| yarl WHATWG mode vs WHATWG | 34 |
 | yarl RFC mode vs RFC 3986+3987 | 14 |
 | WHATWG vs RFC 3986+3987 | 427 |
 
@@ -59,11 +59,11 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|
 
-## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (43)
+## WHATWG mode differs from WHATWG, RFC mode follows RFC 3986+3987 (32)
 
 | Category | Cases |
 |---|---|
-| characters outside the RFC 3986+3987 grammar | 28 |
+| characters outside the RFC 3986+3987 grammar | 17 |
 | tab or newline inside the input | 6 |
 | empty host | 2 |
 | Windows drive letter | 2 |
@@ -75,7 +75,6 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | Category | Input | Base | yarl WHATWG mode | WHATWG | yarl RFC mode | RFC 3986+3987 |
 |---|---|---|---|---|---|---|
 | characters outside the RFC 3986+3987 grammar | `lolscheme:x x#x x` | *none* | `lolscheme:x%20x#x%20x` | `lolscheme:x x#x%20x` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `#\` | `http://example.org/foo/bar` | `http://example.org/foo/bar#%5C` | `http://example.org/foo/bar#\` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `http://foo/path;a??e#f#g` | `http://example.org/foo/bar` | `http://foo/path;a??e#f%23g` | `http://foo/path;a??e#f#g` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `[61:24:74]:98` | `http://example.org/foo/bar` | `http://example.org/foo/%5B61:24:74%5D:98` | `http://example.org/foo/[61:24:74]:98` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `non-special:opaque  ?hi` | *none* | `non-special:opaque%20%20?hi` | `non-special:opaque %20?hi` | *failure* | *failure* |
@@ -83,31 +82,21 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | `non-special:opaque  x?hi` | *none* | `non-special:opaque%20%20x?hi` | `non-special:opaque  x?hi` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `non-special:opaque  x#hi` | *none* | `non-special:opaque%20%20x#hi` | `non-special:opaque  x#hi` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `` http://`{}:`{}@h/`{}?`{} `` | `http://doesnotmatter/` | `http://%60%7B%7D:%60%7B%7D@h/%60%7B%7D?%60%7B%7D` | `` http://%60%7B%7D:%60%7B%7D@h/%60%7B%7D?`{} `` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `sc:\../` | *none* | `sc:%5C../` | `sc:\../` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `10.0.0.7:8080/foo.html` | `file:///some/dir/bar.html` | `10.0.0.7:8080/foo.html` | `file:///some/dir/10.0.0.7:8080/foo.html` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `` non-special:cannot-be-a-base-url-!"$%&'()*+,-.;<=>@[\]^_`{\|}~@/ `` | *none* | `non-special:cannot-be-a-base-url-!%22$%&'()*+,-.;%3C=%3E@%5B%5C%5D%5E_%60%7B%7C%7D~@/` | `` non-special:cannot-be-a-base-url-!"$%&'()*+,-.;<=>@[\]^_`{\|}~@/ `` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `` non-special:cannot-be-a-base-url-!"$%&'()*+,-.;<=>@[\]^_`{\|}~@/ `` | *none* | `non-special:cannot-be-a-base-url-!%22$%&'()*+,-.;%3C=%3E@%5B\%5D%5E_%60%7B%7C%7D~@/` | `` non-special:cannot-be-a-base-url-!"$%&'()*+,-.;<=>@[\]^_`{\|}~@/ `` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `"https://www.example.com/path{\x7fpath.html?query'\x7f=query#fragment<\x7ffragment"` | *none* | `https://www.example.com/path%7B%7Fpath.html?query'%7F=query#fragment%3C%7Ffragment` | `https://www.example.com/path%7B%7Fpath.html?query%27%7F=query#fragment%3C%7Ffragment` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `` foo://host/ !"$%&'()*+,-./:;<=>@[\]^_`{\|}~ `` | *none* | `foo://host/%20!%22$%&'()*+,-./:;%3C=%3E@%5B%5C%5D%5E_%60%7B%7C%7D~` | `foo://host/%20!%22$%&'()*+,-./:;%3C=%3E@[\]%5E_%60%7B\|%7D~` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `` foo://host/ !"$%&'()*+,-./:;<=>@[\]^_`{\|}~ `` | *none* | `foo://host/%20!%22$%&'()*+,-./:;%3C=%3E@%5B\%5D%5E_%60%7B%7C%7D~` | `foo://host/%20!%22$%&'()*+,-./:;%3C=%3E@[\]%5E_%60%7B\|%7D~` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `` wss://host/ !"$%&'()*+,-./:;<=>@[\]^_`{\|}~ `` | *none* | `wss://host/%20!%22$%&'()*+,-./:;%3C=%3E@%5B/%5D%5E_%60%7B%7C%7D~` | `wss://host/%20!%22$%&'()*+,-./:;%3C=%3E@[/]%5E_%60%7B\|%7D~` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `` foo://host/dir/? !"$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `foo://host/dir/?+!%22$%&'()*+,-./:;%3C=%3E?@%5B%5C%5D%5E_%60%7B%7C%7D~` | `` foo://host/dir/?%20!%22$%&'()*+,-./:;%3C=%3E?@[\]^_`{\|}~ `` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `` wss://host/dir/? !"$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `wss://host/dir/?+!%22$%&'()*+,-./:;%3C=%3E?@%5B%5C%5D%5E_%60%7B%7C%7D~` | `` wss://host/dir/?%20!%22$%&%27()*+,-./:;%3C=%3E?@[\]^_`{\|}~ `` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `` foo://host/dir/# !"#$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `foo://host/dir/#%20!%22%23$%&'()*+,-./:;%3C=%3E?@%5B%5C%5D%5E_%60%7B%7C%7D~` | `foo://host/dir/#%20!%22#$%&'()*+,-./:;%3C=%3E?@[\]^_%60{\|}~` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `` wss://host/dir/# !"#$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `wss://host/dir/#%20!%22%23$%&'()*+,-./:;%3C=%3E?@%5B%5C%5D%5E_%60%7B%7C%7D~` | `wss://host/dir/#%20!%22#$%&'()*+,-./:;%3C=%3E?@[\]^_%60{\|}~` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `non-special:\\opaque` | *none* | `non-special:%5C%5Copaque` | `non-special:\\opaque` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `non-special:\\opaque/path` | *none* | `non-special:%5C%5Copaque/path` | `non-special:\\opaque/path` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `non-special:\\opaque\path` | *none* | `non-special:%5C%5Copaque%5Cpath` | `non-special:\\opaque\path` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `non-special:\/opaque` | *none* | `non-special:%5C/opaque` | `non-special:\/opaque` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `non-special:/\path` | *none* | `non-special:/%5Cpath` | `non-special:/\path` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `non-special://host/a\b` | *none* | `non-special://host/a%5Cb` | `non-special://host/a\b` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `\a` | `foo://foo/a` | `foo://foo/%5Ca` | `foo://foo/\a` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `\/a` | `foo://foo/a` | `foo://foo/%5C/a` | `foo://foo/\/a` | *failure* | *failure* |
-| characters outside the RFC 3986+3987 grammar | `\\a` | `foo://foo/a` | `foo://foo/%5C%5Ca` | `foo://foo/\\a` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `` foo://host/dir/? !"$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `foo://host/dir/?+!%22$%&'()*+,-./:;%3C=%3E?@%5B\%5D%5E_%60%7B%7C%7D~` | `` foo://host/dir/?%20!%22$%&'()*+,-./:;%3C=%3E?@[\]^_`{\|}~ `` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `` wss://host/dir/? !"$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `wss://host/dir/?+!%22$%&'()*+,-./:;%3C=%3E?@%5B\%5D%5E_%60%7B%7C%7D~` | `` wss://host/dir/?%20!%22$%&%27()*+,-./:;%3C=%3E?@[\]^_`{\|}~ `` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `` foo://host/dir/# !"#$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `foo://host/dir/#%20!%22%23$%&'()*+,-./:;%3C=%3E?@%5B\%5D%5E_%60%7B%7C%7D~` | `foo://host/dir/#%20!%22#$%&'()*+,-./:;%3C=%3E?@[\]^_%60{\|}~` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `` wss://host/dir/# !"#$%&'()*+,-./:;<=>?@[\]^_`{\|}~ `` | *none* | `wss://host/dir/#%20!%22%23$%&'()*+,-./:;%3C=%3E?@%5B\%5D%5E_%60%7B%7C%7D~` | `wss://host/dir/#%20!%22#$%&'()*+,-./:;%3C=%3E?@[\]^_%60{\|}~` | *failure* | *failure* |
 | tab or newline inside the input | `'a:\t foo.com'` | `http://example.org/foo/bar` | `a:%20foo.com` | `a: foo.com` | *failure* | *failure* |
 | tab or newline inside the input | `'non-special:opaque \t\t  \t#hi'` | *none* | `non-special:opaque%20%20%20#hi` | `non-special:opaque  %20#hi` | *failure* | *failure* |
 | tab or newline inside the input | `'non-special:opaque \t\t  #hi'` | *none* | `non-special:opaque%20%20%20#hi` | `non-special:opaque  %20#hi` | *failure* | *failure* |
 | tab or newline inside the input | `'non-special:opaque\t\t  \r #hi'` | *none* | `non-special:opaque%20%20%20#hi` | `non-special:opaque  %20#hi` | *failure* | *failure* |
-| tab or newline inside the input | `` 'data:text/plain,test#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `data:text/plain,test#%00%01%1F%20!%22%23$%&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `data:text/plain,test#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
-| tab or newline inside the input | `` 'about:blank#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `about:blank#%00%01%1F%20!%22%23$%&'()*+,-./09:;%3C=%3E?@AZ%5B%5C%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `about:blank#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
+| tab or newline inside the input | `` 'data:text/plain,test#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `data:text/plain,test#%00%01%1F%20!%22%23$%&'()*+,-./09:;%3C=%3E?@AZ%5B\%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `data:text/plain,test#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
+| tab or newline inside the input | `` 'about:blank#\x00\x01\t\n\r\x1f !"#$%&\'()*+,-./09:;<=>?@AZ[\\]^_`az{\|}~\x7f\x80\x81Éé' `` | *none* | `about:blank#%00%01%1F%20!%22%23$%&'()*+,-./09:;%3C=%3E?@AZ%5B\%5D%5E_%60az%7B%7C%7D~%7F%C2%80%C2%81%C3%89%C3%A9` | `about:blank#%00%01%1F%20!%22#$%&'()*+,-./09:;%3C=%3E?@AZ[\]^_%60az{\|}~%7F%C2%80%C2%81%C3%89%C3%A9` | *failure* | *failure* |
 | empty host | `file:///w\|m` | *none* | `file:///w%7Cm` | `file:///w\|m` | *failure* | *failure* |
 | empty host | `file:///w\|\|m` | *none* | `file:///w%7C%7Cm` | `file:///w\|\|m` | *failure* | *failure* |
 | Windows drive letter | `file:C\|\|/m/` | *none* | `file:///C%7C%7C/m/` | `file:///C\|\|/m/` | *failure* | *failure* |
@@ -153,12 +142,12 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | non-ASCII or percent-encoded host | `'http://GOO\u200b\u2060\ufeffgoo.com'` | `http://other.com/` | *failure* | `http://googoo.com/` | *failure* | `http://GOO%E2%80%8B%E2%81%A0%EF%BB%BFgoo.com` |
 | non-ASCII or percent-encoded host | `'file://a\xadb/p'` | *none* | *failure* | `file://ab/p` | *failure* | `file://a%C2%ADb/p` |
 
-## yarl follows each standard in its mode (370)
+## yarl follows each standard in its mode (381)
 
 | Category | Cases |
 |---|---|
 | non-ASCII or percent-encoded host | 75 |
-| characters outside the RFC 3986+3987 grammar | 63 |
+| characters outside the RFC 3986+3987 grammar | 74 |
 | special scheme without an authority | 55 |
 | numeric host that is not a dotted quad | 36 |
 | other | 35 |
@@ -256,6 +245,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | `:/` | `http://example.org/foo/bar` | `http://example.org/foo/:/` | `http://example.org/foo/:/` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `:\` | `http://example.org/foo/bar` | `http://example.org/foo/:/` | `http://example.org/foo/:/` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `:#` | `http://example.org/foo/bar` | `http://example.org/foo/:#` | `http://example.org/foo/:#` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `#\` | `http://example.org/foo/bar` | `http://example.org/foo/bar#\` | `http://example.org/foo/bar#\` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `:23` | `http://example.org/foo/bar` | `http://example.org/foo/:23` | `http://example.org/foo/:23` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `::` | `http://example.org/foo/bar` | `http://example.org/foo/::` | `http://example.org/foo/::` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `::23` | `http://example.org/foo/bar` | `http://example.org/foo/::23` | `http://example.org/foo/::23` | *failure* | *failure* |
@@ -273,6 +263,7 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | `https://x/�?�#�` | *none* | `https://x/%EF%BF%BD?%EF%BF%BD#%EF%BF%BD` | `https://x/%EF%BF%BD?%EF%BF%BD#%EF%BF%BD` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `https://@test@test@example:800/` | `http://doesnotmatter/` | `https://%40test%40test@example:800/` | `https://%40test%40test@example:800/` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `https://@@@example` | `http://doesnotmatter/` | `https://%40%40@example` | `https://%40%40@example/` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `sc:\../` | *none* | `sc:\../` | `sc:\../` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `wow:%NBD` | *none* | `wow:%NBD` | `wow:%NBD` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `wow:%1G` | *none* | `wow:%1G` | `wow:%1G` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `'wow:\uffff'` | *none* | `wow:%EF%BF%BF` | `wow:%EF%BF%BF` | *failure* | *failure* |
@@ -310,6 +301,15 @@ Every case where the standards agree and yarl, in either mode, does not. A chang
 | characters outside the RFC 3986+3987 grammar | `'non-special:x/?\uffffy'` | *none* | `non-special:x/?%EF%BF%BFy` | `non-special:x/?%EF%BF%BFy` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `'non-special:x/?#\uffffy'` | *none* | `non-special:x/?#%EF%BF%BFy` | `non-special:x/?#%EF%BF%BFy` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `https://example.com/"quoted"` | *none* | `https://example.com/%22quoted%22` | `https://example.com/%22quoted%22` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `non-special:\\opaque` | *none* | `non-special:\\opaque` | `non-special:\\opaque` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `non-special:\\opaque/path` | *none* | `non-special:\\opaque/path` | `non-special:\\opaque/path` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `non-special:\\opaque\path` | *none* | `non-special:\\opaque\path` | `non-special:\\opaque\path` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `non-special:\/opaque` | *none* | `non-special:\/opaque` | `non-special:\/opaque` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `non-special:/\path` | *none* | `non-special:/\path` | `non-special:/\path` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `non-special://host/a\b` | *none* | `non-special://host/a\b` | `non-special://host/a\b` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `\a` | `foo://foo/a` | `foo://foo/\a` | `foo://foo/\a` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `\/a` | `foo://foo/a` | `foo://foo/\/a` | `foo://foo/\/a` | *failure* | *failure* |
+| characters outside the RFC 3986+3987 grammar | `\\a` | `foo://foo/a` | `foo://foo/\\a` | `foo://foo/\\a` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `data:text/plain,test#<foo> <bar>` | *none* | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` | `data:text/plain,test#%3Cfoo%3E%20%3Cbar%3E` | *failure* | *failure* |
 | characters outside the RFC 3986+3987 grammar | `about:blank#<foo> <bar>` | *none* | `about:blank#%3Cfoo%3E%20%3Cbar%3E` | `about:blank#%3Cfoo%3E%20%3Cbar%3E` | *failure* | *failure* |
 | special scheme without an authority | `http:foo.com` | `http://example.org/foo/bar` | `http://example.org/foo/foo.com` | `http://example.org/foo/foo.com` | `http:foo.com` | `http:foo.com` |
