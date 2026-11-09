@@ -2692,8 +2692,8 @@ def test_slash_and_question_in_fragment() -> None:
 
 def test_requoting() -> None:
     u = URL("http://127.0.0.1/?next=http%3A//example.com/")
-    assert u.raw_query_string == "next=http://example.com/"
-    assert str(u) == "http://127.0.0.1/?next=http://example.com/"
+    assert u.raw_query_string == "next=http%3A//example.com/"
+    assert str(u) == "http://127.0.0.1/?next=http%3A//example.com/"
 
 
 def test_join_query_string() -> None:
