@@ -1,0 +1,7 @@
+Kept a backslash (``\``) as written in WHATWG mode outside the path of a
+special URL, as the WHATWG URL Standard does: in the path of a URL with
+another scheme, in an opaque path, in a relative URL and in every query and
+fragment. It was percent-encoded as ``%5C`` before. Methods that build a
+query or a fragment keep it too, and a path moved to a special scheme with
+:meth:`~yarl.URL.with_scheme` encodes it
+-- by :user:`asvetlov`.
