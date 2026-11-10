@@ -1,0 +1,4 @@
+Fixed :meth:`URL.build() <yarl.URL.build>` silently ignoring ``port=0``
+when no ``host`` was given, and when ``authority`` was given too; it now
+raises :exc:`ValueError` for both, as it already did for any other port
+-- by :user:`Yasser-Ameur`.

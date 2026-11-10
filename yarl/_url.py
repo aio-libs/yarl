@@ -1121,13 +1121,13 @@ class URL:
         """Creates and returns a new URL"""
         mode = _WHATWG if mode is None else _to_mode(mode)  # type: ignore[redundant-expr]
 
-        if authority and (user or password or host or port):
+        if authority and (user or password or host or port is not None):
             raise ValueError(
                 'Can\'t mix "authority" with "user", "password", "host" or "port".'
             )
         if port is not None and not isinstance(port, int):
             raise TypeError(f"The port is required to be int, got {type(port)!r}.")
-        if port and not host:
+        if port is not None and not host:
             raise ValueError('Can\'t build URL with "port" but without "host".')
         if query and query_string:
             raise ValueError('Only one of "query" or "query_string" should be passed')
