@@ -233,6 +233,7 @@ class CacheInfo(TypedDict):
 
 class _InternalURLCache(TypedDict, total=False):
     _val: SplitURLType
+    _order_key: tuple[str, str, str, str, str, int]
     _join_path: str
     _origin: "URL"
     absolute: bool
@@ -1407,22 +1408,22 @@ class URL:
     def __le__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
-        return (self._val, self._cmp_empty) <= (other._val, other._cmp_empty)
+        return self._order_key <= other._order_key
 
     def __lt__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
-        return (self._val, self._cmp_empty) < (other._val, other._cmp_empty)
+        return self._order_key < other._order_key
 
     def __ge__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
-        return (self._val, self._cmp_empty) >= (other._val, other._cmp_empty)
+        return self._order_key >= other._order_key
 
     def __gt__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
-        return (self._val, self._cmp_empty) > (other._val, other._cmp_empty)
+        return self._order_key > other._order_key
 
     def __truediv__(self, name: str) -> "URL":
         if not isinstance(name, str):
@@ -1566,6 +1567,22 @@ class URL:
     @cached_property
     def _val(self) -> SplitURLType:
         return (self._scheme, self._netloc, self._path, self._query, self._fragment)
+
+    @cached_property
+    def _order_key(self) -> tuple[str, str, str, str, str, int]:
+        """The value the ordering compares, which follows __eq__.
+
+        An empty path is "/" when there is an authority, as in __eq__ and
+        __hash__, so that equal URLs are never ordered apart.
+        """
+        return (
+            self._scheme,
+            self._netloc,
+            self.raw_path,
+            self._query,
+            self._fragment,
+            self._cmp_empty,
+        )
 
     @cached_property
     def _origin(self) -> "URL":

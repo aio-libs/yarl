@@ -1,0 +1,5 @@
+Fixed the ordering operators disagreeing with equality for an empty path:
+with an authority, ``URL("http://example.com")`` is equal to
+``URL("http://example.com/")``, so neither is now less than the other, and
+``<=`` and ``>=`` hold for the pair, as ``==`` already did
+-- by :user:`Yasser-Ameur`.
