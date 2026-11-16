@@ -71,6 +71,45 @@ def test_repr() -> None:
     assert "URL('http://example.com')" == repr(url)
 
 
+def test_repr_masks_password() -> None:
+    url = URL("https://user:secret@example.com:8443/path?q=1#frag")
+    assert repr(url) == "URL('https://user:********@example.com:8443/path?q=1#frag')"
+    assert "secret" not in repr(url)
+
+
+def test_repr_masks_password_keeps_username() -> None:
+    url = URL("https://user:secret@example.com")
+    assert repr(url) == "URL('https://user:********@example.com')"
+
+
+def test_repr_without_password_unchanged() -> None:
+    assert repr(URL("https://user@example.com")) == "URL('https://user@example.com')"
+    assert repr(URL("https://example.com")) == "URL('https://example.com')"
+
+
+def test_repr_masks_empty_password() -> None:
+    url = URL("https://user:@example.com", mode="rfc")
+    assert repr(url) == "URL('https://user:********@example.com', mode='rfc')"
+    assert str(url) == "https://user:@example.com"
+
+
+def test_repr_masks_percent_encoded_password() -> None:
+    url = URL("https://us%40er:p%40ss@example.com")
+    assert repr(url) == "URL('https://us%40er:********@example.com')"
+    assert str(url) == "https://us%40er:p%40ss@example.com"
+
+
+def test_repr_masks_password_with_empty_components() -> None:
+    url = URL("https://user:secret@example.com:443?")
+    assert repr(url) == "URL('https://user:********@example.com/?')"
+    assert str(url) == "https://user:secret@example.com/?"
+
+
+def test_str_retains_real_password() -> None:
+    url = URL("https://user:secret@example.com/path?q=1#frag")
+    assert str(url) == "https://user:secret@example.com/path?q=1#frag"
+
+
 def test_origin() -> None:
     url = URL("http://user:password@example.com:8888/path/to?a=1&b=2")
     assert URL("http://example.com:8888") == url.origin()

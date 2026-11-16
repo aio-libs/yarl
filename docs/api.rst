@@ -638,7 +638,7 @@ There are two kinds of properties: *decoded* and *encoded* (with
       >>> URL('http://a;b@example.com', mode='rfc').raw_user
       'a;b'
       >>> URL('http://a[b]:p%c@example.com')
-      URL('http://a%5Bb%5D:p%c@example.com')
+      URL('http://a%5Bb%5D:********@example.com')
 
    .. versionchanged:: 1.26
 
@@ -1224,9 +1224,9 @@ section generates a new :class:`URL` instance.
    .. doctest::
 
       >>> URL('http://user:pass@example.com').with_user('new_user')
-      URL('http://new_user:pass@example.com')
+      URL('http://new_user:********@example.com')
       >>> URL('http://user:pass@example.com').with_user('олекса')
-      URL('http://%D0%BE%D0%BB%D0%B5%D0%BA%D1%81%D0%B0:pass@example.com')
+      URL('http://%D0%BE%D0%BB%D0%B5%D0%BA%D1%81%D0%B0:********@example.com')
       >>> URL('http://user:pass@example.com').with_user(None)
       URL('http://example.com')
 
@@ -1253,7 +1253,7 @@ section generates a new :class:`URL` instance.
    .. doctest::
 
       >>> URL('http://user:pass@example.com').with_password('пароль')
-      URL('http://user:%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C@example.com')
+      URL('http://user:********@example.com')
       >>> URL('http://user:pass@example.com').with_password(None)
       URL('http://user@example.com')
 
@@ -1265,7 +1265,7 @@ section generates a new :class:`URL` instance.
       >>> URL('http://user:pass@example.com').with_password('')
       URL('http://user@example.com')
       >>> URL('http://user:pass@example.com', mode='rfc').with_password('')
-      URL('http://user:@example.com', mode='rfc')
+      URL('http://user:********@example.com', mode='rfc')
 
    .. versionchanged:: 1.26
 
