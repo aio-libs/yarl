@@ -1,3 +1,5 @@
+from typing import Literal
+
 import pytest
 
 from yarl import URL
@@ -242,6 +244,37 @@ def test_build_with_all() -> None:
 def test_build_with_authority_and_host() -> None:
     with pytest.raises(ValueError):
         URL.build(authority="host.com", host="example.com")
+
+
+@pytest.mark.parametrize("mode", ["whatwg", "rfc"])
+@pytest.mark.parametrize("encoded", [False, True])
+@pytest.mark.parametrize("scheme", ["http", "sc"])
+def test_build_with_port_zero_without_host(
+    scheme: str, encoded: bool, mode: Literal["rfc", "whatwg"]
+) -> None:
+    # Port 0 is a port like any other, so it needs a host as port=81 does.
+    with pytest.raises(
+        ValueError, match=r"^Can't build URL with \"port\" but without \"host\"\.$"
+    ):
+        URL.build(scheme=scheme, port=0, encoded=encoded, mode=mode)
+
+
+def test_build_with_authority_and_port_zero() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"^Can't mix \"authority\" with \"user\", \"password\", \"host\" or \"port\"\.$",
+    ):
+        URL.build(scheme="http", authority="example.com:81", port=0)
+
+
+def test_build_with_host_and_port_zero() -> None:
+    u = URL.build(scheme="http", host="example.com", port=0)
+    assert str(u) == "http://example.com:0"
+    assert u.port == 0
+
+
+def test_build_without_host_and_port() -> None:
+    assert str(URL.build(scheme="http", port=None)) == "http:"
 
 
 @pytest.mark.parametrize(
