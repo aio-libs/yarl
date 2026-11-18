@@ -1508,7 +1508,7 @@ class URL:
         Return True for absolute ones (having scheme or starting
         with //), False otherwise.
 
-        Is is preferred to call the .absolute property instead
+        It is preferred to call the .absolute property instead
         as it is cached.
         """
         return self.absolute

@@ -1,0 +1,1 @@
+Fixed typos in the install documentation and the ``URL.is_absolute()`` docs -- by :user:`ninglinLiu`.
