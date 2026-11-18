@@ -90,6 +90,115 @@ def test_ordering(
     ) == expected
 
 
+# Every operator, in the order (<, <=, ==, !=, >, >=).
+_OPS = (
+    operator.lt,
+    operator.le,
+    operator.eq,
+    operator.ne,
+    operator.gt,
+    operator.ge,
+)
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("http://example.com", "http://example.com/"),
+        ("http://example.com?q", "http://example.com/?q"),
+        ("http://example.com#f", "http://example.com/#f"),
+        ("http://example.com?#", "http://example.com/?#"),
+        ("sc://example.com", "sc://example.com/"),
+    ],
+)
+def test_ordering_empty_path_is_slash(first: str, second: str) -> None:
+    # With an authority an empty path compares equal to "/", so the ordering
+    # has to agree with == in both directions.
+    empty, slash = URL(first), URL(second)
+    assert empty == slash
+    assert tuple(op(empty, slash) for op in _OPS) == (
+        False,
+        True,
+        True,
+        False,
+        False,
+        True,
+    )
+    assert tuple(op(slash, empty) for op in _OPS) == (
+        False,
+        True,
+        True,
+        False,
+        False,
+        True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("?q", "/?q"),
+        ("", "/"),
+        ("a", "a/"),
+    ],
+)
+def test_ordering_relative_empty_path_unchanged(first: str, second: str) -> None:
+    # Without an authority the empty path is not "/" and the URLs differ, so
+    # the empty one sorts first.
+    lower, higher = URL(first), URL(second)
+    assert tuple(op(lower, higher) for op in _OPS) == (
+        True,
+        True,
+        False,
+        True,
+        False,
+        False,
+    )
+    assert tuple(op(higher, lower) for op in _OPS) == (
+        False,
+        False,
+        False,
+        True,
+        True,
+        True,
+    )
+
+
+@pytest.mark.parametrize(
+    "urls",
+    [
+        [
+            "http://example.com",
+            "http://example.com/",
+            "http://example.com/a",
+            "http://example.com?q",
+            "http://example.com/?q",
+            "http://example.com#f",
+            "http://example.com/#f",
+            "http://example.com/p?",
+            "http://example.org",
+            "https://example.com",
+            "sc://example.com",
+            "sc://example.com/",
+            "sc:/p",
+            "sc:///p",
+            "",
+            "/",
+            "?q",
+            "/?q",
+        ]
+    ],
+)
+def test_ordering_is_total(urls: list[str]) -> None:
+    # Exactly one of <, == and > holds, and <= is "< or ==".
+    for first in map(URL, urls):
+        for second in map(URL, urls):
+            lt, eq, gt = first < second, first == second, first > second
+            assert lt + eq + gt == 1
+            assert (first <= second) == (lt or eq)
+            assert (first >= second) == (gt or eq)
+
+
 def test_special_scheme_empty_authority_ignored() -> None:
     # "file:" URLs always print "//", so the two forms are the same URL.
     first, second = URL("file:/path"), URL("file:///path")
