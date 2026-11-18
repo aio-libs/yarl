@@ -1,1 +1,1 @@
-Fixed typos in the install documentation and the ``URL.is_absolute()`` docstring.
+Fixed typos in the install documentation and the ``URL.is_absolute()`` docstring -- by :user:`ninglinLiu`.
