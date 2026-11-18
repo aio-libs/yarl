@@ -219,7 +219,11 @@ URLs of the ``http``, ``https``, ``ws``, ``wss``, ``ftp`` and ``file``
 schemes, as the WHATWG URL Standard does for special URLs. A relative URL
 keeps it until :meth:`URL.join` joins it with such a URL, so that ``\/a``
 cannot replace the host of another base. Other schemes, the query and the
-fragment keep it, percent-encoded.
+fragment keep it as written, as the WHATWG URL Standard does, and so do
+:meth:`URL.with_query`, :meth:`URL.with_fragment` and the other methods that
+build a query or a fragment from decoded values. Methods that build a path
+from decoded values encode it as ``%5C``, which every scheme reads as a
+backslash.
 RFC 3986 has no backslash in its grammar, so RFC 3986 mode rejects a URL
 string that contains one:
 
@@ -227,6 +231,8 @@ string that contains one:
 
    >>> URL('http://example.com\\path\\file')
    URL('http://example.com/path/file')
+   >>> URL('sc://example.com/a\\b?c\\d')
+   URL('sc://example.com/a\b?c\d')
    >>> URL('http://example.com\\path', mode='rfc')
    Traceback (most recent call last):
      ...
@@ -236,6 +242,9 @@ string that contains one:
 
    A backslash is read as a slash in WHATWG mode; previously it was rejected
    in the authority and percent-encoded elsewhere.
+
+   Outside the path of a special URL a backslash is kept as written in
+   WHATWG mode; previously it was encoded as ``%5C``.
 
 In WHATWG mode a ``%`` that does not start a percent-encoded octet is kept
 as written in the path, the query and the fragment of a parsed URL string,

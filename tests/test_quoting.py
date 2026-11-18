@@ -129,6 +129,27 @@ def test_quote_keep_invalid_pct_qs(quoter: type[_Quoter]) -> None:
     assert q("a b=%GH&%3D%") == "a+b=%GH&%3D%"
 
 
+@pytest.mark.parametrize(
+    ("safe", "protected", "qs", "value", "expected"),
+    [
+        # The WHATWG requoters keep "\\" and "%5C" as written.
+        ("@:", ":/@!$&'()*+,;=\\", False, "/a\\b%5cc", "/a\\b%5Cc"),
+        ("?/:@", "=+&;\\", True, "a\\b=%5C\\ c", "a\\b=%5C\\+c"),
+        ("?/:@", "\\", False, "\\%5C%zz", "\\%5C%zz"),
+    ],
+)
+def test_quote_protected_backslash(
+    quoter: type[_Quoter],
+    safe: str,
+    protected: str,
+    qs: bool,
+    value: str,
+    expected: str,
+) -> None:
+    q = quoter(safe=safe, protected=protected, qs=qs, keep_invalid_pct=True)
+    assert q(value) == expected
+
+
 def test_quote_keep_invalid_pct_requires_requote(quoter: type[_Quoter]) -> None:
     with pytest.raises(ValueError, match="keep_invalid_pct requires requote"):
         quoter(requote=False, keep_invalid_pct=True)

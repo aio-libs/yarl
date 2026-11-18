@@ -218,7 +218,8 @@ def test_invalid_reference_rejected(url: str) -> None:
 
 
 # Section 2.1: WHATWG mode percent-encodes characters outside the URI
-# grammar; RFC 3986 mode rejects them, see tests/test_url_rfc_grammar.py.
+# grammar, but keeps "\\" in the query and the fragment, as WHATWG does; RFC
+# 3986 mode rejects them, see tests/test_url_rfc_grammar.py.
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
@@ -230,11 +231,11 @@ def test_invalid_reference_rejected(url: str) -> None:
         ),
         (
             'http://example.com/?"<>\\^`{|}[]',
-            "http://example.com/?%22%3C%3E%5C%5E%60%7B%7C%7D%5B%5D",
+            "http://example.com/?%22%3C%3E\\%5E%60%7B%7C%7D%5B%5D",
         ),
         (
             'http://example.com/#"<>\\^`{|}[]',
-            "http://example.com/#%22%3C%3E%5C%5E%60%7B%7C%7D%5B%5D",
+            "http://example.com/#%22%3C%3E\\%5E%60%7B%7C%7D%5B%5D",
         ),
         ("http://example.com/\u00e9", "http://example.com/%C3%A9"),
     ],
