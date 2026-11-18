@@ -1,8 +1,7 @@
 ---
 
-# yamllint disable rule:line-length
+# yamllint disable-line rule:line-length
 # Ref: https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
-# yamllint enable rule:line-length
 blank_issues_enabled: false  # default: true
 contact_links:
 - name: 🔐 Security bug report 🔥
@@ -17,18 +16,12 @@ contact_links:
     For more information, see
     https://github.com/aio-libs/.github/security/policy
 - name: >-
-    [🎉 NEW 🎉]
     🤷💻🤦 GitHub Discussions
   url: https://github.com/aio-libs/yarl/discussions
   about: >-
-    Please ask typical Q&A in the Discussions tab or on StackOverflow
-- name: 🤷💻🤦 StackOverflow
-  url: https://stackoverflow.com/questions/tagged/aiohttp
-  about: >-
-    Please ask typical Q&A here or in the
-    Discussions tab @ https://github.com/aio-libs/yarl/discussions
-- name: 💬 Gitter Chat
-  url: https://gitter.im/aio-libs/Lobby
+    Please ask typical Q&A in the Discussions tab
+- name: 💬 Matrix Chat
+  url: https://matrix.to/#/#aio-libs:matrix.org
   about: Chat with devs and community
 - name: 📝 Code of Conduct
   url: https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md
