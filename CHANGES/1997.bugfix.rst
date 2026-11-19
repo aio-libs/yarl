@@ -1,0 +1,5 @@
+Fixed ``URL.build()`` keeping a ``file`` URL path relative when it has no dot
+segments, which made ``str()`` write a URL whose path was not the one the URL
+held, so comparing it with the URL parsed back from that string reported them
+unequal
+-- by :user:`simpleqt`.
