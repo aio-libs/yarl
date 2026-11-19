@@ -1,0 +1,5 @@
+Stopped including an :rfc:`6874` zone identifier in
+``URL.host_port_subcomponent``, the value aiohttp sends as the
+``Host`` header. The zone stays on ``raw_host`` and
+``host_subcomponent`` so the connection can still be opened
+-- by :user:`Kayvan-Zahiri`.
