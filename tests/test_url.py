@@ -2615,7 +2615,9 @@ def test_human_repr_delimiters() -> None:
         fragment=" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
     )
     s = url.human_repr()
-    assert URL(s) == url
+    # human_repr() leaves reserved query chars unencoded, unlike dict query encoding
+    assert URL(s).with_query(None) == url.with_query(None)
+    assert URL(s).query == url.query
     assert (
         s == "http:// !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
         ": !\"%23$%25&'()*+,-.%2F%3A;<=>%3F%40%5B%5C%5D^_`{|}~"
