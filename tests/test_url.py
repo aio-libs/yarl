@@ -317,6 +317,33 @@ def test_authority_short() -> None:
     assert url.raw_authority == "host.com"
 
 
+@pytest.mark.parametrize(
+    ("implicit", "explicit"),
+    [
+        ("http://example.com/", "http://example.com:80/"),
+        ("https://example.com/", "https://example.com:443/"),
+        ("ws://example.com/", "ws://example.com:80/"),
+        ("wss://example.com/", "wss://example.com:443/"),
+        ("http://user:pass@example.com/", "http://user:pass@example.com:80/"),
+        ("http://[::1]/", "http://[::1]:80/"),
+        ("http://example.com/", "http://example.com:/"),
+        ("http://example.com/", "http://example.com:080/"),
+    ],
+)
+def test_default_port_spelling_is_not_significant(implicit: str, explicit: str) -> None:
+    plain, written = URL(implicit), URL(explicit)
+    assert plain == written
+    assert hash(plain) == hash(written)
+    assert plain.authority == written.authority
+
+
+def test_non_default_port_still_distinguishes() -> None:
+    assert URL("http://example.com/") != URL("http://example.com:8080/")
+    assert URL("http://example.com:80/") != URL("http://example.com:8080/")
+    assert URL("http://example.com:8080/").raw_authority == "example.com:8080"
+    assert URL("http://example.com:8080/").authority == "example.com:8080"
+
+
 def test_authority_full_nonasci() -> None:
     url = URL("http://степан:пароль@слава.укр:8080/path")
     assert url.raw_authority == (
