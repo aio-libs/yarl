@@ -1543,10 +1543,12 @@ section generates a new :class:`URL` instance.
       >>> URL('http://example.com/path/to').with_name("ім'я")
       URL('http://example.com/path/%D1%96%D0%BC'%D1%8F')
 
-.. method:: URL.with_suffix(suffix, *, keep_query=False, keep_fragment=False)
+.. method:: URL.with_suffix(suffix="", *, keep_query=False, keep_fragment=False)
 
    Return a new URL with *suffix* (file extension of *name*) replaced and
    cleaned up *query* and *fragment* parts.
+
+   If *suffix* is an empty string (or omitted), the suffix is removed from the URL.
 
    Name is encoded if needed.
 
