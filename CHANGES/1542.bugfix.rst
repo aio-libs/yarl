@@ -1,0 +1,4 @@
+Made an explicit default port insignificant in URL equality and hashing,
+so ``http://example.com`` and ``http://example.com:80`` now compare equal
+and hash alike, matching their serialized form
+-- by :user:`tony1233200`.

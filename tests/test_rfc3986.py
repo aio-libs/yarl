@@ -581,10 +581,7 @@ def test_join_scheme_independent(base: str, reference: str, expected: str) -> No
         pytest.param("http://example.com", "http://example.com/", id="6.2.3-path"),
         pytest.param("http://example.com:/", "http://example.com/", id="6.2.3-port"),
         pytest.param(
-            "http://example.com:80/",
-            "http://example.com/",
-            id="6.2.3-default-port",
-            marks=diverges("explicit default port makes URLs compare unequal"),
+            "http://example.com:80/", "http://example.com/", id="6.2.3-default-port"
         ),
         pytest.param("http://ex%41mple.com/", "http://example.com/", id="6.2.2.2-host"),
     ],

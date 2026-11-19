@@ -1364,6 +1364,23 @@ class URL:
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
 
+    def _netloc_without_default_port(self) -> str:
+        """The netloc with an explicit default port removed.
+
+        An explicitly written default port carries no information beyond
+        the scheme, and the serialized form already drops it, so equality
+        and hashing use this form to treat ``http://example.com`` and
+        ``http://example.com:80`` alike.
+        """
+        if (port := self.explicit_port) is not None and port == DEFAULT_PORTS.get(
+            self._scheme
+        ):
+            # The port is the last component of the netloc, so the final
+            # colon is its separator even for bracketed hosts and for
+            # userinfo containing colons.
+            return self._netloc[: self._netloc.rfind(":")]
+        return self._netloc
+
     def __eq__(self, other: object) -> bool:
         if type(other) is not URL:
             return NotImplemented
@@ -1372,7 +1389,8 @@ class URL:
         path2 = "/" if not other._path and other._netloc else other._path
         return (
             self._scheme == other._scheme
-            and self._netloc == other._netloc
+            and self._netloc_without_default_port()
+            == other._netloc_without_default_port()
             and path1 == path2
             and self._query == other._query
             and self._fragment == other._fragment
@@ -1386,11 +1404,12 @@ class URL:
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
             path = "/" if not self._path and self._netloc else self._path
+            netloc = self._netloc_without_default_port()
             if (self._empty or not self._netloc) and (cmp_empty := self._cmp_empty):
                 ret = hash(
                     (
                         self._scheme,
-                        self._netloc,
+                        netloc,
                         path,
                         self._query,
                         self._fragment,
@@ -1398,9 +1417,7 @@ class URL:
                     )
                 )
             else:
-                ret = hash(
-                    (self._scheme, self._netloc, path, self._query, self._fragment)
-                )
+                ret = hash((self._scheme, netloc, path, self._query, self._fragment))
             self._cache["hash"] = ret
         return ret
 
