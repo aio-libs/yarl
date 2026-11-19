@@ -115,6 +115,17 @@ def _mask_netloc_password(netloc: str) -> str:
     return f"{user}:{_MASKED_PASSWORD}@{host_port}"
 
 
+def _mask_url_password(url: str) -> str:
+    """Mask the password in a rendered URL that has an authority."""
+    start = url.find("//") + 2
+    end = len(url)
+    for delimiter in "/?#":
+        pos = url.find(delimiter, start)
+        if pos != -1 and pos < end:
+            end = pos
+    return url[:start] + _mask_netloc_password(url[start:end]) + url[end:]
+
+
 # reg-name: unreserved / pct-encoded / sub-delims
 # this pattern matches anything that is *not* in those classes. and is only used
 # on lower-cased ASCII values.
@@ -1304,11 +1315,11 @@ class URL:
     def __init_subclass__(cls) -> NoReturn:
         raise TypeError(f"Inheriting a class {cls!r} from URL is forbidden")
 
-    def _make_string(self, *, mask_password: bool = False) -> str:
+    def __str__(self) -> str:
         if self._empty or not self._netloc:
             # Rare: empty components, or no authority, which a special
             # scheme in WHATWG mode still prints as "//".
-            return self._str_with_empty(mask_password=mask_password)
+            return self._str_with_empty()
         if (
             not self._path
             and (self._query or self._fragment)
@@ -1335,14 +1346,9 @@ class URL:
             netloc = make_netloc(self.raw_user, self.raw_password, host, None)
         else:
             netloc = self._netloc
-        if mask_password:
-            netloc = _mask_netloc_password(netloc)
         return unsplit_result(self._scheme, netloc, path, self._query, self._fragment)
 
-    def __str__(self) -> str:
-        return self._make_string()
-
-    def _str_with_empty(self, *, mask_password: bool = False) -> str:
+    def _str_with_empty(self) -> str:
         """Render a URL with empty components or without an authority."""
         if (
             not self._path
@@ -1364,8 +1370,6 @@ class URL:
             netloc = make_netloc(self.raw_user, self.raw_password, host, None)
         else:
             netloc = self._netloc
-        if mask_password:
-            netloc = _mask_netloc_password(netloc)
         empty = self._str_empty if not netloc else self._empty
         if not empty:
             return unsplit_result(
@@ -1376,7 +1380,9 @@ class URL:
         )
 
     def __repr__(self) -> str:
-        url = self._make_string(mask_password=True)
+        url = str(self)
+        if "@" in self._netloc:
+            url = _mask_url_password(url)
         if self._mode is Mode.WHATWG:
             return f"{self.__class__.__name__}('{url}')"
         return f"{self.__class__.__name__}('{url}', mode='{self._mode}')"

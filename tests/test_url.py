@@ -105,6 +105,11 @@ def test_repr_masks_password_with_empty_components() -> None:
     assert str(url) == "https://user:secret@example.com/?"
 
 
+def test_repr_masks_only_the_authority() -> None:
+    url = URL("https://user:secret@example.com/a@b:c?x=u:p@h#f@g")
+    assert repr(url) == "URL('https://user:********@example.com/a@b:c?x=u:p@h#f@g')"
+
+
 def test_str_retains_real_password() -> None:
     url = URL("https://user:secret@example.com/path?q=1#frag")
     assert str(url) == "https://user:secret@example.com/path?q=1#frag"
