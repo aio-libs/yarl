@@ -1,0 +1,2 @@
+Masked the password in the string representation of ``URL`` to avoid leaking
+credentials in logs and debug output -- by :user:`DeviousCardi`.

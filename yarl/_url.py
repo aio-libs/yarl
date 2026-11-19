@@ -95,12 +95,35 @@ if TYPE_CHECKING:
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
+_MASKED_PASSWORD = "********"
 USES_RELATIVE = frozenset(uses_relative)
 _SCHEME_CHARS = frozenset(scheme_chars)
 
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
 SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
+
+
+def _mask_netloc_password(netloc: str) -> str:
+    """Replace the password in an already rendered netloc with a fixed mask."""
+    userinfo, at, host_port = netloc.rpartition("@")
+    if not at:
+        return netloc
+    user, colon, _password = userinfo.partition(":")
+    if not colon:
+        return netloc
+    return f"{user}:{_MASKED_PASSWORD}@{host_port}"
+
+
+def _mask_url_password(url: str) -> str:
+    """Mask the password in a rendered URL that has an authority."""
+    start = url.find("//") + 2
+    end = len(url)
+    for delimiter in "/?#":
+        pos = url.find(delimiter, start)
+        if pos != -1 and pos < end:
+            end = pos
+    return url[:start] + _mask_netloc_password(url[start:end]) + url[end:]
 
 
 # reg-name: unreserved / pct-encoded / sub-delims
@@ -1357,9 +1380,12 @@ class URL:
         )
 
     def __repr__(self) -> str:
+        url = str(self)
+        if "@" in self._netloc:
+            url = _mask_url_password(url)
         if self._mode is Mode.WHATWG:
-            return f"{self.__class__.__name__}('{str(self)}')"
-        return f"{self.__class__.__name__}('{str(self)}', mode='{self._mode}')"
+            return f"{self.__class__.__name__}('{url}')"
+        return f"{self.__class__.__name__}('{url}', mode='{self._mode}')"
 
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")
