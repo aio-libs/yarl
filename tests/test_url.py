@@ -326,6 +326,8 @@ def test_authority_short() -> None:
         ("wss://example.com/", "wss://example.com:443/"),
         ("http://user:pass@example.com/", "http://user:pass@example.com:80/"),
         ("http://[::1]/", "http://[::1]:80/"),
+        ("http://example.com/", "http://example.com:/"),
+        ("http://example.com/", "http://example.com:080/"),
     ],
 )
 def test_default_port_spelling_is_not_significant(implicit: str, explicit: str) -> None:

@@ -1371,15 +1371,36 @@ class URL:
         the scheme, and the serialized form already drops it, so equality
         and hashing use this form to treat ``http://example.com`` and
         ``http://example.com:80`` alike.
+
+        The port is read with plain string operations so that equality
+        and hashing do not pay for splitting the netloc into its parts;
+        a netloc without a port returns unchanged.
         """
-        if (port := self.explicit_port) is not None and port == DEFAULT_PORTS.get(
-            self._scheme
-        ):
+        netloc = self._netloc
+        if ":" not in netloc:
+            # No colon, so no port can be present.
+            return netloc
+        # The host part follows the last "@", so any ":" before it
+        # belongs to the userinfo. For a bracketed host the port, if
+        # any, follows the closing bracket.
+        hostinfo = netloc.rpartition("@")[2]
+        if hostinfo[:1] == "[":
+            _, _, port_str = hostinfo.partition("]")
+            _, _, port_str = port_str.partition(":")
+        else:
+            _, _, port_str = hostinfo.partition(":")
+        if not port_str:
+            return netloc
+        # The constructor already rejects a non-numeric port, so this
+        # only guards against malformed netlocs built by other means.
+        if not (port_str.isascii() and port_str.isdigit()):
+            return netloc
+        if int(port_str) == DEFAULT_PORTS.get(self._scheme):
             # The port is the last component of the netloc, so the final
             # colon is its separator even for bracketed hosts and for
             # userinfo containing colons.
-            return self._netloc[: self._netloc.rfind(":")]
-        return self._netloc
+            return netloc[: netloc.rfind(":")]
+        return netloc
 
     def __eq__(self, other: object) -> bool:
         if type(other) is not URL:
@@ -1389,8 +1410,11 @@ class URL:
         path2 = "/" if not other._path and other._netloc else other._path
         return (
             self._scheme == other._scheme
-            and self._netloc_without_default_port()
-            == other._netloc_without_default_port()
+            and (
+                self._netloc == other._netloc
+                or self._netloc_without_default_port()
+                == other._netloc_without_default_port()
+            )
             and path1 == path2
             and self._query == other._query
             and self._fragment == other._fragment
@@ -1404,7 +1428,11 @@ class URL:
     def __hash__(self) -> int:
         if (ret := self._cache.get("hash")) is None:
             path = "/" if not self._path and self._netloc else self._path
-            netloc = self._netloc_without_default_port()
+            # Only a netloc containing a colon can carry a port, so
+            # skip the helper call for the common port-less case.
+            netloc = self._netloc
+            if ":" in netloc:
+                netloc = self._netloc_without_default_port()
             if (self._empty or not self._netloc) and (cmp_empty := self._cmp_empty):
                 ret = hash(
                     (
