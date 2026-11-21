@@ -71,46 +71,90 @@ def test_repr() -> None:
     assert "URL('http://example.com')" == repr(url)
 
 
-def test_repr_masks_password() -> None:
+def test_repr_keeps_password_by_default() -> None:
+    # Backward compatibility: repr() shows the password unless opted in.
+    url = URL("https://user:secret@example.com:8443/path?q=1#frag")
+    assert repr(url) == "URL('https://user:secret@example.com:8443/path?q=1#frag')"
+    rfc_url = URL("https://user:secret@example.com", mode="rfc")
+    assert repr(rfc_url) == "URL('https://user:secret@example.com', mode='rfc')"
+
+
+def test_mask_password_in_repr_defaults_to_false() -> None:
+    assert URL.mask_password_in_repr is False
+
+
+def test_mask_password_in_repr_is_class_level_only() -> None:
+    url = URL("https://user:secret@example.com")
+    with pytest.raises(AttributeError):
+        url.mask_password_in_repr = True  # type: ignore[misc]
+
+
+def test_repr_masks_password_when_opted_in(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://user:secret@example.com:8443/path?q=1#frag")
     assert repr(url) == "URL('https://user:********@example.com:8443/path?q=1#frag')"
     assert "secret" not in repr(url)
 
 
-def test_repr_masks_password_keeps_username() -> None:
+def test_repr_masks_password_keeps_username(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://user:secret@example.com")
     assert repr(url) == "URL('https://user:********@example.com')"
 
 
-def test_repr_without_password_unchanged() -> None:
+def test_repr_opt_in_without_password_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     assert repr(URL("https://user@example.com")) == "URL('https://user@example.com')"
     assert repr(URL("https://example.com")) == "URL('https://example.com')"
 
 
-def test_repr_masks_empty_password() -> None:
+def test_repr_opt_in_masks_empty_password(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://user:@example.com", mode="rfc")
     assert repr(url) == "URL('https://user:********@example.com', mode='rfc')"
     assert str(url) == "https://user:@example.com"
 
 
-def test_repr_masks_percent_encoded_password() -> None:
+def test_repr_opt_in_masks_percent_encoded_password(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://us%40er:p%40ss@example.com")
     assert repr(url) == "URL('https://us%40er:********@example.com')"
     assert str(url) == "https://us%40er:p%40ss@example.com"
 
 
-def test_repr_masks_password_with_empty_components() -> None:
+def test_repr_opt_in_masks_password_with_empty_components(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://user:secret@example.com:443?")
     assert repr(url) == "URL('https://user:********@example.com/?')"
     assert str(url) == "https://user:secret@example.com/?"
 
 
-def test_repr_masks_only_the_authority() -> None:
+def test_repr_opt_in_masks_only_the_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://user:secret@example.com/a@b:c?x=u:p@h#f@g")
     assert repr(url) == "URL('https://user:********@example.com/a@b:c?x=u:p@h#f@g')"
 
 
-def test_str_retains_real_password() -> None:
+def test_repr_opt_in_without_authority_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("mailto:user:pass@example.com")
+    assert repr(url) == "URL('mailto:user:pass@example.com')"
+
+
+def test_str_retains_real_password_when_opted_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
     url = URL("https://user:secret@example.com/path?q=1#frag")
     assert str(url) == "https://user:secret@example.com/path?q=1#frag"
 

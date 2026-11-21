@@ -8,6 +8,7 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
+    ClassVar,
     Literal,
     NoReturn,
     Self,
@@ -104,26 +105,27 @@ _SCHEME_CHARS = frozenset(scheme_chars)
 SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 
-def _mask_netloc_password(netloc: str) -> str:
-    """Replace the password in an already rendered netloc with a fixed mask."""
-    userinfo, at, host_port = netloc.rpartition("@")
-    if not at:
-        return netloc
-    user, colon, _password = userinfo.partition(":")
-    if not colon:
-        return netloc
-    return f"{user}:{_MASKED_PASSWORD}@{host_port}"
-
-
 def _mask_url_password(url: str) -> str:
-    """Mask the password in a rendered URL that has an authority."""
-    start = url.find("//") + 2
+    """Mask the password in the authority of an already rendered URL."""
+    start = url.find("//")
+    if start == -1:
+        # No authority, e.g. "mailto:user:pass@example.com" or "path//x".
+        return url
+    start += 2
     end = len(url)
     for delimiter in "/?#":
         pos = url.find(delimiter, start)
         if pos != -1 and pos < end:
             end = pos
-    return url[:start] + _mask_netloc_password(url[start:end]) + url[end:]
+    userinfo, at, host_port = url[start:end].rpartition("@")
+    if not at:
+        # An authority without userinfo, e.g. "https://example.com/".
+        return url
+    user, colon, _password = userinfo.partition(":")
+    if not colon:
+        # A userinfo without password, e.g. "https://user@example.com".
+        return url
+    return f"{url[:start]}{user}:{_MASKED_PASSWORD}@{host_port}{url[end:]}"
 
 
 # reg-name: unreserved / pct-encoded / sub-delims
@@ -1077,6 +1079,13 @@ class URL:
     _empty: int
     _mode: Mode
 
+    # Opt-in masking of the password in __repr__(), see __repr__() below.
+    # A class attribute (not an __init__ parameter) because URL instances
+    # are cached by their string form, so a per-instance flag could not be
+    # part of the cache key. Subclassing is forbidden, so this is the only
+    # place the flag can live.
+    mask_password_in_repr: ClassVar[bool] = False
+
     def __new__(
         cls,
         val: "str | SplitResult | URL | UndefinedType" = UNDEFINED,
@@ -1381,7 +1390,7 @@ class URL:
 
     def __repr__(self) -> str:
         url = str(self)
-        if "@" in self._netloc:
+        if self.mask_password_in_repr:
             url = _mask_url_password(url)
         if self._mode is Mode.WHATWG:
             return f"{self.__class__.__name__}('{url}')"
