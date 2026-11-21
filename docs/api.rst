@@ -706,8 +706,8 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    A class attribute, ``False`` by default. When set to ``True``,
    ``repr(url)`` masks the *password* in the authority with
-   ``********``, so credentials do not leak into logs, tracebacks and
-   debug output where ``repr()`` is used implicitly:
+   ``********``, so credentials do not leak into logs and debug output
+   where ``repr()`` is used implicitly:
 
    .. doctest::
 
@@ -720,11 +720,11 @@ There are two kinds of properties: *decoded* and *encoded* (with
 
    Only the *password* is masked; the *user*, *host* and *port* are
    kept, and URLs without a password in the authority are rendered as
-   usual. :func:`str`, :meth:`URL.human_repr` and the *user*/*password*
-   accessors are not affected and keep returning the real password, so
-   the flag is safe to leave enabled for applications that log their
-   URLs. The default ``False`` keeps the historical ``repr()`` output
-   unchanged for backward compatibility.
+   usual. ``str(url)``, :meth:`URL.human_repr` and the *user* and
+   *password* attributes are not affected and keep returning the real
+   password, so the flag is safe to leave enabled for applications that
+   log their URLs. The default ``False`` keeps the historical
+   ``repr()`` output unchanged for backward compatibility.
 
    .. versionadded:: 1.26
 
