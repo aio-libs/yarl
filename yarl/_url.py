@@ -8,6 +8,7 @@ from ipaddress import ip_address
 from typing import (
     TYPE_CHECKING,
     Any,
+    ClassVar,
     Literal,
     NoReturn,
     Self,
@@ -95,12 +96,40 @@ if TYPE_CHECKING:
 
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
+_MASKED_PASSWORD = "********"
 USES_RELATIVE = frozenset(uses_relative)
 _SCHEME_CHARS = frozenset(scheme_chars)
 
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
 SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
+
+
+def _mask_url_password(url: str) -> str:
+    """Mask the password in the authority of an already rendered URL."""
+    if url.startswith("//"):
+        # Scheme-relative URL, e.g. "//user:pass@example.com/path".
+        start = 2
+    else:
+        scheme_end = url.find("://")
+        if scheme_end == -1:
+            # No authority, e.g. "mailto:user:pass@example.com" or "path//x".
+            return url
+        start = scheme_end + 3
+    end = len(url)
+    for delimiter in "/?#":
+        pos = url.find(delimiter, start)
+        if pos != -1 and pos < end:
+            end = pos
+    userinfo, at, host_port = url[start:end].rpartition("@")
+    if not at:
+        # An authority without userinfo, e.g. "https://example.com/".
+        return url
+    user, colon, _password = userinfo.partition(":")
+    if not colon:
+        # A userinfo without password, e.g. "https://user@example.com".
+        return url
+    return f"{url[:start]}{user}:{_MASKED_PASSWORD}@{host_port}{url[end:]}"
 
 
 # reg-name: unreserved / pct-encoded / sub-delims
@@ -1054,6 +1083,13 @@ class URL:
     _empty: int
     _mode: Mode
 
+    # Opt-in masking of the password in __repr__(), see __repr__() below.
+    # A class attribute (not an __init__ parameter) because URL instances
+    # are cached by their string form, so a per-instance flag could not be
+    # part of the cache key. Subclassing is forbidden, so this is the only
+    # place the flag can live.
+    mask_password_in_repr: ClassVar[bool] = False
+
     def __new__(
         cls,
         val: "str | SplitResult | URL | UndefinedType" = UNDEFINED,
@@ -1357,9 +1393,14 @@ class URL:
         )
 
     def __repr__(self) -> str:
+        url = str(self)
+        # Only mask when there is an authority with userinfo: a "//" inside
+        # a path/query/fragment must never be mistaken for a host section.
+        if self.mask_password_in_repr and "@" in self._netloc:
+            url = _mask_url_password(url)
         if self._mode is Mode.WHATWG:
-            return f"{self.__class__.__name__}('{str(self)}')"
-        return f"{self.__class__.__name__}('{str(self)}', mode='{self._mode}')"
+            return f"{self.__class__.__name__}('{url}')"
+        return f"{self.__class__.__name__}('{url}', mode='{self._mode}')"
 
     def __bytes__(self) -> bytes:
         return str(self).encode("ascii")

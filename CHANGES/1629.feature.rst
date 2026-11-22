@@ -1,0 +1,4 @@
+Added the opt-in ``URL.mask_password_in_repr`` class attribute: when set to
+``True``, ``repr(url)`` renders the password in the authority as ``********``
+so credentials do not leak into logs and debug output. The default ``False``
+keeps the previous ``repr()`` output unchanged -- by :user:`DeviousCardi`.

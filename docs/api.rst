@@ -702,6 +702,33 @@ There are two kinds of properties: *decoded* and *encoded* (with
       An empty password is dropped in WHATWG mode.
 
 
+.. attribute:: URL.mask_password_in_repr
+
+   A class attribute, ``False`` by default. When set to ``True``,
+   ``repr(url)`` masks the *password* in the authority with
+   ``********``, so credentials do not leak into logs and debug output
+   where ``repr()`` is used implicitly:
+
+   .. doctest::
+
+      >>> URL.mask_password_in_repr = True
+      >>> URL('http://user:pass@example.com')
+      URL('http://user:********@example.com')
+      >>> URL.mask_password_in_repr = False
+      >>> URL('http://user:pass@example.com')
+      URL('http://user:pass@example.com')
+
+   Only the *password* is masked; the *user*, *host* and *port* are
+   kept, and URLs without a password in the authority are rendered as
+   usual. ``str(url)``, :meth:`URL.human_repr` and the *user* and
+   *password* attributes are not affected and keep returning the real
+   password, so the flag is safe to leave enabled for applications that
+   log their URLs. The default ``False`` keeps the historical
+   ``repr()`` output unchanged for backward compatibility.
+
+   .. versionadded:: 1.26
+
+
 .. attribute:: URL.host
 
    Encoded *host* part of URL, ``None`` for relative URLs

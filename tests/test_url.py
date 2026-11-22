@@ -6,7 +6,7 @@ from urllib.parse import SplitResult, quote, unquote
 import pytest
 
 from yarl import URL, Mode
-from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode
+from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode, _mask_url_password
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -69,6 +69,136 @@ def test_str() -> None:
 def test_repr() -> None:
     url = URL("http://example.com")
     assert "URL('http://example.com')" == repr(url)
+
+
+def test_repr_keeps_password_by_default() -> None:
+    # Backward compatibility: repr() shows the password unless opted in.
+    url = URL("https://user:secret@example.com:8443/path?q=1#frag")
+    assert repr(url) == "URL('https://user:secret@example.com:8443/path?q=1#frag')"
+    rfc_url = URL("https://user:secret@example.com", mode="rfc")
+    assert repr(rfc_url) == "URL('https://user:secret@example.com', mode='rfc')"
+
+
+def test_mask_password_in_repr_defaults_to_false() -> None:
+    assert URL.mask_password_in_repr is False
+
+
+def test_mask_password_in_repr_is_class_level_only() -> None:
+    url = URL("https://user:secret@example.com")
+    with pytest.raises(AttributeError):
+        url.mask_password_in_repr = True  # type: ignore[misc]
+
+
+def test_repr_masks_password_when_opted_in(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://user:secret@example.com:8443/path?q=1#frag")
+    assert repr(url) == "URL('https://user:********@example.com:8443/path?q=1#frag')"
+    assert "secret" not in repr(url)
+
+
+def test_repr_masks_password_keeps_username(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://user:secret@example.com")
+    assert repr(url) == "URL('https://user:********@example.com')"
+
+
+def test_repr_opt_in_without_password_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    assert repr(URL("https://user@example.com")) == "URL('https://user@example.com')"
+    assert repr(URL("https://example.com")) == "URL('https://example.com')"
+
+
+def test_repr_opt_in_masks_empty_password(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://user:@example.com", mode="rfc")
+    assert repr(url) == "URL('https://user:********@example.com', mode='rfc')"
+    assert str(url) == "https://user:@example.com"
+
+
+def test_repr_opt_in_masks_percent_encoded_password(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://us%40er:p%40ss@example.com")
+    assert repr(url) == "URL('https://us%40er:********@example.com')"
+    assert str(url) == "https://us%40er:p%40ss@example.com"
+
+
+def test_repr_opt_in_masks_password_with_empty_components(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://user:secret@example.com:443?")
+    assert repr(url) == "URL('https://user:********@example.com/?')"
+    assert str(url) == "https://user:secret@example.com/?"
+
+
+def test_repr_opt_in_masks_only_the_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://user:secret@example.com/a@b:c?x=u:p@h#f@g")
+    assert repr(url) == "URL('https://user:********@example.com/a@b:c?x=u:p@h#f@g')"
+
+
+def test_repr_opt_in_without_authority_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("mailto:user:pass@example.com")
+    assert repr(url) == "URL('mailto:user:pass@example.com')"
+
+
+def test_repr_opt_in_ignores_double_slash_in_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A "//" inside a path/query/fragment is not a host section, so nothing
+    # may be masked (https://github.com/aio-libs/yarl/pull/2032#discussion_r4655401251).
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    assert repr(URL("/a//b:c@d")) == "URL('/a//b:c@d')"
+    assert repr(URL("path//x:y@z")) == "URL('path//x:y@z')"
+    assert repr(URL("/p?x=//a:b@c#f:g@h")) == "URL('/p?x=//a:b@c#f:g@h')"
+    assert str(URL("/a//b:c@d")) == "/a//b:c@d"
+
+
+def test_repr_opt_in_masks_scheme_relative_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("//user:secret@example.com/path")
+    assert repr(url) == "URL('//user:********@example.com/path')"
+    assert str(url) == "//user:secret@example.com/path"
+
+
+def test_mask_url_password_helper_defensive_branches() -> None:
+    # Direct calls to the helper: no-authority and authority-without-userinfo
+    # inputs are returned untouched (they are unreachable via __repr__, which
+    # only calls the helper when the netloc contains "@").
+    assert (
+        _mask_url_password("mailto:user:pass@example.com")
+        == "mailto:user:pass@example.com"
+    )
+    assert _mask_url_password("path//x:y@z") == "path//x:y@z"
+    assert _mask_url_password("https://example.com/path") == "https://example.com/path"
+    assert _mask_url_password("https://user@example.com") == "https://user@example.com"
+    assert (
+        _mask_url_password("//user:secret@example.com/path")
+        == "//user:********@example.com/path"
+    )
+    assert (
+        _mask_url_password("https://user:secret@example.com:8443/p?q#f")
+        == "https://user:********@example.com:8443/p?q#f"
+    )
+
+
+def test_str_retains_real_password_when_opted_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("https://user:secret@example.com/path?q=1#frag")
+    assert str(url) == "https://user:secret@example.com/path?q=1#frag"
 
 
 def test_origin() -> None:
