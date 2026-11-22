@@ -151,6 +151,27 @@ def test_repr_opt_in_without_authority_unchanged(
     assert repr(url) == "URL('mailto:user:pass@example.com')"
 
 
+def test_repr_opt_in_ignores_double_slash_in_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A "//" inside a path/query/fragment is not a host section, so nothing
+    # may be masked (https://github.com/aio-libs/yarl/pull/2032#discussion_r4655401251).
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    assert repr(URL("/a//b:c@d")) == "URL('/a//b:c@d')"
+    assert repr(URL("path//x:y@z")) == "URL('path//x:y@z')"
+    assert repr(URL("/p?x=//a:b@c#f:g@h")) == "URL('/p?x=//a:b@c#f:g@h')"
+    assert str(URL("/a//b:c@d")) == "/a//b:c@d"
+
+
+def test_repr_opt_in_masks_scheme_relative_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(URL, "mask_password_in_repr", True)
+    url = URL("//user:secret@example.com/path")
+    assert repr(url) == "URL('//user:********@example.com/path')"
+    assert str(url) == "//user:secret@example.com/path"
+
+
 def test_str_retains_real_password_when_opted_in(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

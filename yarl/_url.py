@@ -107,11 +107,15 @@ SCHEME_REQUIRES_HOST = frozenset(("http", "https", "ws", "wss", "ftp"))
 
 def _mask_url_password(url: str) -> str:
     """Mask the password in the authority of an already rendered URL."""
-    start = url.find("//")
-    if start == -1:
-        # No authority, e.g. "mailto:user:pass@example.com" or "path//x".
-        return url
-    start += 2
+    if url.startswith("//"):
+        # Scheme-relative URL, e.g. "//user:pass@example.com/path".
+        start = 2
+    else:
+        scheme_end = url.find("://")
+        if scheme_end == -1:
+            # No authority, e.g. "mailto:user:pass@example.com" or "path//x".
+            return url
+        start = scheme_end + 3
     end = len(url)
     for delimiter in "/?#":
         pos = url.find(delimiter, start)
@@ -1390,7 +1394,9 @@ class URL:
 
     def __repr__(self) -> str:
         url = str(self)
-        if self.mask_password_in_repr:
+        # Only mask when there is an authority with userinfo: a "//" inside
+        # a path/query/fragment must never be mistaken for a host section.
+        if self.mask_password_in_repr and "@" in self._netloc:
             url = _mask_url_password(url)
         if self._mode is Mode.WHATWG:
             return f"{self.__class__.__name__}('{url}')"
