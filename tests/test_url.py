@@ -6,7 +6,7 @@ from urllib.parse import SplitResult, quote, unquote
 import pytest
 
 from yarl import URL, Mode
-from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode
+from yarl._url import _DEFAULT_IGNORABLE_RE, _idna_encode, _mask_url_password
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -170,6 +170,27 @@ def test_repr_opt_in_masks_scheme_relative_authority(
     url = URL("//user:secret@example.com/path")
     assert repr(url) == "URL('//user:********@example.com/path')"
     assert str(url) == "//user:secret@example.com/path"
+
+
+def test_mask_url_password_helper_defensive_branches() -> None:
+    # Direct calls to the helper: no-authority and authority-without-userinfo
+    # inputs are returned untouched (they are unreachable via __repr__, which
+    # only calls the helper when the netloc contains "@").
+    assert (
+        _mask_url_password("mailto:user:pass@example.com")
+        == "mailto:user:pass@example.com"
+    )
+    assert _mask_url_password("path//x:y@z") == "path//x:y@z"
+    assert _mask_url_password("https://example.com/path") == "https://example.com/path"
+    assert _mask_url_password("https://user@example.com") == "https://user@example.com"
+    assert (
+        _mask_url_password("//user:secret@example.com/path")
+        == "//user:********@example.com/path"
+    )
+    assert (
+        _mask_url_password("https://user:secret@example.com:8443/p?q#f")
+        == "https://user:********@example.com:8443/p?q#f"
+    )
 
 
 def test_str_retains_real_password_when_opted_in(
