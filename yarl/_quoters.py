@@ -13,14 +13,22 @@ QUERY_REQUOTER = _Quoter(safe="?/:@", protected="=+&;", qs=True)
 QUERY_PART_QUOTER = _Quoter(safe="?/:@", qs=True, requote=False)
 FRAGMENT_QUOTER = _Quoter(safe="?/:@", requote=False)
 FRAGMENT_REQUOTER = _Quoter(safe="?/:@")
-# WHATWG mode keeps a "%" that does not start a "%XX" escape in parsed URLs
+# WHATWG mode keeps a "%" that does not start a "%XX" escape in parsed URLs,
+# and "\\" as written: _backslashes() has read it as "/" where the URL is
+# special, and "%5C" must stay encoded.
 WHATWG_PATH_REQUOTER = _Quoter(
-    safe="@:", protected=":/@!$&'()*+,;=", keep_invalid_pct=True
+    safe="@:", protected=":/@!$&'()*+,;=\\", keep_invalid_pct=True
 )
 WHATWG_QUERY_REQUOTER = _Quoter(
-    safe="?/:@", protected="=+&;", qs=True, keep_invalid_pct=True
+    safe="?/:@", protected="=+&;\\", qs=True, keep_invalid_pct=True
 )
-WHATWG_FRAGMENT_REQUOTER = _Quoter(safe="?/:@", keep_invalid_pct=True)
+WHATWG_FRAGMENT_REQUOTER = _Quoter(safe="?/:@", protected="\\", keep_invalid_pct=True)
+
+# WHATWG mode keeps "\\" in the query and the fragment when it builds them
+# from decoded values, as the parser does.
+WHATWG_QUERY_QUOTER = _Quoter(safe="?/:@\\", protected="=+&;", qs=True, requote=False)
+WHATWG_QUERY_PART_QUOTER = _Quoter(safe="?/:@\\", qs=True, requote=False)
+WHATWG_FRAGMENT_QUOTER = _Quoter(safe="?/:@\\", requote=False)
 
 UNQUOTER = _Unquoter()
 PATH_SAFE_UNQUOTER = _Unquoter(ignore="/%")

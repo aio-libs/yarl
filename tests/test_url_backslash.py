@@ -1,4 +1,7 @@
-"""WHATWG mode reads "\\" as "/" in special URLs; RFC 3986 mode rejects it."""
+"""WHATWG mode reads "\\" as "/" in special URLs and keeps it elsewhere.
+
+RFC 3986 mode rejects it.
+"""
 
 import pickle
 from collections.abc import Callable
@@ -16,10 +19,12 @@ from yarl import URL
         ("http:\\\\foo.com\\bar", "http://foo.com/bar"),
         ("HTTPS://h\\a\\b", "https://h/a/b"),
         ("file:\\\\server\\share", "file://server/share"),
-        # The query and the fragment keep it.
-        ("http://h/a\\b?c\\d#e\\f", "http://h/a/b?c%5Cd#e%5Cf"),
-        ("http://h/a\\b#e\\f?g\\h", "http://h/a/b#e%5Cf?g%5Ch"),
-        ("http://h/a\\b?c#e\\f", "http://h/a/b?c#e%5Cf"),
+        # The query and the fragment keep it as written.
+        ("http://h/a\\b?c\\d#e\\f", "http://h/a/b?c\\d#e\\f"),
+        ("http://h/a\\b#e\\f?g\\h", "http://h/a/b#e\\f?g\\h"),
+        ("http://h/a\\b?c#e\\f", "http://h/a/b?c#e\\f"),
+        # An encoded one stays encoded.
+        ("http://h/a%5cb?c%5Cd#e%5c", "http://h/a%5Cb?c%5Cd#e%5C"),
         # Leading C0 control or space, tab and newline are dropped first.
         (" \thttp://h\\a", "http://h/a"),
         ("ht\ntp://h\\a", "http://h/a"),
@@ -32,8 +37,9 @@ def test_special(url: str, expected: str) -> None:
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
-        ("sc://h/a\\b", "sc://h/a%5Cb"),
-        ("c:\\foo", "c:%5Cfoo"),
+        ("sc://h/a\\b", "sc://h/a\\b"),
+        ("c:\\foo", "c:\\foo"),
+        ("sc://h/a%5Cb\\c", "sc://h/a%5Cb\\c"),
     ],
 )
 def test_non_special(url: str, expected: str) -> None:
@@ -44,10 +50,10 @@ def test_non_special(url: str, expected: str) -> None:
     ("url", "expected"),
     [
         # The base is not known yet, so "\\" stays a character.
-        ("\\x", "%5Cx"),
-        ("\\/a", "%5C/a"),
-        ("\\\\x\\hello", "%5C%5Cx%5Chello"),
-        ("a\\b:c", "a%5Cb:c"),
+        ("\\x", "\\x"),
+        ("\\/a", "\\/a"),
+        ("\\\\x\\hello", "\\\\x\\hello"),
+        ("a\\b:c", "a\\b:c"),
         # A network-path reference has an authority either way.
         ("//h\\p", "//h/p"),
         (" //h\\p", "//h/p"),
@@ -63,7 +69,7 @@ def test_relative(url: str, expected: str) -> None:
         ("\\x", "http://example.org/x"),
         ("\\\\x\\hello", "http://x/hello"),
         (":foo.com\\", "http://example.org/foo/:foo.com/"),
-        ("x\\y?a\\b", "http://example.org/foo/x/y?a%5Cb"),
+        ("x\\y?a\\b", "http://example.org/foo/x/y?a\\b"),
         ("http:\\\\a\\b:c\\d@foo.com\\", "http://a/b:c/d@foo.com/"),
     ],
 )
@@ -76,9 +82,9 @@ def test_join(reference: str, expected: str) -> None:
     ("reference", "expected"),
     [
         # A non-special base keeps its host: "\\/a" is not "//a" there.
-        ("\\/a", "foo://foo/%5C/a"),
-        ("\\\\a", "foo://foo/%5C%5Ca"),
-        ("\\a", "foo://foo/%5Ca"),
+        ("\\/a", "foo://foo/\\/a"),
+        ("\\\\a", "foo://foo/\\\\a"),
+        ("\\a", "foo://foo/\\a"),
     ],
 )
 def test_join_non_special_base(reference: str, expected: str) -> None:
@@ -113,15 +119,16 @@ def test_join_after_modification_empty_query() -> None:
 
 
 def test_join_rfc_base() -> None:
-    # An RFC 3986 mode base does not read "\\" as "/" either.
+    # An RFC 3986 mode base does not read "\\" as "/" either; the reference
+    # keeps it as written, as other characters that only WHATWG mode allows.
     url = URL("http://example.org/foo/bar", mode="rfc").join(URL("\\\\x"))
-    assert str(url) == "http://example.org/foo/%5C%5Cx"
+    assert str(url) == "http://example.org/foo/\\\\x"
 
 
 def test_pickle() -> None:
     url = pickle.loads(pickle.dumps(URL("\\\\x\\hello")))
     assert str(URL("http://example.org/").join(url)) == "http://x/hello"
-    assert str(URL("foo://foo/").join(url)) == "foo://foo/%5C%5Cx%5Chello"
+    assert str(URL("foo://foo/").join(url)) == "foo://foo/\\\\x\\hello"
 
 
 @pytest.mark.parametrize(

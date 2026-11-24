@@ -66,6 +66,7 @@ from ._query import (
     get_str_query,
     get_str_query_from_iterable,
     get_str_query_from_sequence_iterable,
+    get_str_query_whatwg,
 )
 from ._quoters import (
     FRAGMENT_QUOTER,
@@ -74,13 +75,17 @@ from ._quoters import (
     PATH_REQUOTER,
     PATH_SAFE_UNQUOTER,
     QS_UNQUOTER,
+    QUERY_PART_QUOTER,
     QUERY_QUOTER,
     QUERY_REQUOTER,
     QUOTER,
     REQUOTER,
     UNQUOTER,
+    WHATWG_FRAGMENT_QUOTER,
     WHATWG_FRAGMENT_REQUOTER,
     WHATWG_PATH_REQUOTER,
+    WHATWG_QUERY_PART_QUOTER,
+    WHATWG_QUERY_QUOTER,
     WHATWG_QUERY_REQUOTER,
     ZONE_ID_UNQUOTER,
     human_quote,
@@ -598,7 +603,7 @@ def _backslashes(url_str: str) -> tuple[str, bool]:
     RFC 3986 has no "\\" in its grammar, so RFC 3986 mode rejects it (see
     _check_rfc_url()). The WHATWG URL Standard reads it as "/" in the
     authority and the path of a special URL, and so does WHATWG mode; other
-    schemes keep it, percent-encoded, as do the query and the fragment.
+    schemes keep it as written, as do the query and the fragment.
 
     Return the string with "\\" read as "/" and whether it is a relative
     reference, whose "\\" is read as "/" only when it is joined with a
@@ -1145,7 +1150,11 @@ class URL:
             )
 
         if query:
-            query_string = get_str_query(query) or ""
+            # WHATWG mode keeps "\\" in the query and the fragment, as the
+            # parser does.
+            query_string = (get_str_query_whatwg if mode is _WHATWG else get_str_query)(
+                query
+            ) or ""
 
         if encoded:
             return build_pre_encoded_url(
@@ -1267,9 +1276,15 @@ class URL:
             path = _encode_relative_colon(path, mode)
         self._path = path
         if not query and query_string:
-            query_string = QUERY_QUOTER(query_string)
+            query_string = (WHATWG_QUERY_QUOTER if mode is _WHATWG else QUERY_QUOTER)(
+                query_string
+            )
         self._query = query_string
-        self._fragment = FRAGMENT_QUOTER(fragment) if fragment else fragment
+        if fragment:
+            fragment = (WHATWG_FRAGMENT_QUOTER if mode is _WHATWG else FRAGMENT_QUOTER)(
+                fragment
+            )
+        self._fragment = fragment
         self._cache = {}
         self._mode = mode
         if scheme == "file" and mode is _WHATWG:
@@ -2352,7 +2367,9 @@ class URL:
 
         """
         # N.B. doesn't cleanup query/fragment
-        query = get_str_query(*args, **kwargs) or ""
+        query = (get_str_query_whatwg if self._mode is _WHATWG else get_str_query)(
+            *args, **kwargs
+        ) or ""
         url = from_parts_uncached(
             self._scheme,
             self._netloc,
@@ -2382,7 +2399,11 @@ class URL:
         >>> url.extend_query(a=3, c=4)
         URL('http://example.com/?a=1&b=2&a=3&c=4')
         """
-        if not (new_query := get_str_query(*args, **kwargs)):
+        if not (
+            new_query := (
+                get_str_query_whatwg if self._mode is _WHATWG else get_str_query
+            )(*args, **kwargs)
+        ):
             return self
         if query := self._query:
             # both strings are already encoded so we can use a simple
@@ -2442,11 +2463,25 @@ class URL:
         elif isinstance(in_query, Mapping):
             qm: MultiDict[QueryVariable] = MultiDict(self._parsed_query)
             qm.update(in_query)
-            query = get_str_query_from_sequence_iterable(qm.items())
+            query = get_str_query_from_sequence_iterable(
+                qm.items(),
+                (
+                    WHATWG_QUERY_PART_QUOTER
+                    if self._mode is _WHATWG
+                    else QUERY_PART_QUOTER
+                ),
+            )
         elif isinstance(in_query, str):
             qstr: MultiDict[str] = MultiDict(self._parsed_query)
             qstr.update(query_to_pairs(in_query))
-            query = get_str_query_from_iterable(qstr.items())
+            query = get_str_query_from_iterable(
+                qstr.items(),
+                (
+                    WHATWG_QUERY_PART_QUOTER
+                    if self._mode is _WHATWG
+                    else QUERY_PART_QUOTER
+                ),
+            )
         elif isinstance(in_query, (bytes, bytearray, memoryview)):
             msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
             raise TypeError(msg)
@@ -2459,7 +2494,14 @@ class URL:
                 in_query = cast(Sequence[tuple[str | istr, SimpleQuery]], in_query)
             qs: MultiDict[SimpleQuery] = MultiDict(self._parsed_query)
             qs.update(in_query)
-            query = get_str_query_from_iterable(qs.items())
+            query = get_str_query_from_iterable(
+                qs.items(),
+                (
+                    WHATWG_QUERY_PART_QUOTER
+                    if self._mode is _WHATWG
+                    else QUERY_PART_QUOTER
+                ),
+            )
         else:
             raise TypeError(
                 "Invalid query type: only str, mapping or "
@@ -2508,7 +2550,9 @@ class URL:
         elif not isinstance(fragment, str):
             raise TypeError("Invalid fragment type")
         else:
-            raw_fragment = FRAGMENT_QUOTER(fragment)
+            raw_fragment = (
+                WHATWG_FRAGMENT_QUOTER if self._mode is _WHATWG else FRAGMENT_QUOTER
+            )(fragment)
         if empty := self._empty:
             if self._fragment == raw_fragment and not empty & EMPTY_FRAGMENT:
                 return self
@@ -3119,6 +3163,10 @@ _NUMERIC_HOST_TAIL = frozenset("0123456789abcdefxABCDEFX.")
 def _moved_url(url: "URL", scheme: str, mode: Mode) -> "URL":
     """Return url moved under scheme and mode, see _moved_parts()."""
     netloc, path, empty = _moved_parts(url, scheme, mode, url._empty)
+    if "\\" in path and mode is _WHATWG and scheme in SPECIAL_SCHEMES:
+        # A non-special path keeps "\\" as written, which a special one
+        # reads as "/", see _backslashes().
+        path = path.replace("\\", "%5C")
     if path and not url._path and not (url._netloc or url._empty & EMPTY_AUTHORITY):
         # "file:" and "file:?q" became "file:///" and "file:///?q" in WHATWG
         # mode, but as a reference they keep the path of a file base, as
