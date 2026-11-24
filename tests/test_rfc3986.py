@@ -296,24 +296,8 @@ def test_percent_encoding_uppercased(component: str, mode: Mode) -> None:
 # Sections 2.2 and 6.2.2.2: a percent-encoded reserved character is not
 # equivalent to the character itself and must be kept encoded.
 RESERVED = ":/?#[]@!$&'()*+,;="
-# Reserved characters that yarl decodes in each component.
-RESERVED_DECODED = {
-    "user": "",
-    "path": "",
-    "query": ":/?@!$'()*,",
-    "fragment": ":/?@!$&'()*+,;=",
-}
 RESERVED_CASES = [
-    pytest.param(
-        component,
-        char,
-        id=f"{component}-%{ord(char):02X}",
-        marks=(
-            [diverges(f"%{ord(char):02X} is decoded in the {component}")]
-            if char in RESERVED_DECODED[component]
-            else []
-        ),
-    )
+    pytest.param(component, char, id=f"{component}-%{ord(char):02X}")
     for component in PCT_TEMPLATES
     for char in RESERVED
 ]
@@ -603,13 +587,16 @@ def test_equivalent_host_rfc_mode() -> None:
 
 # Section 2.2: replacing a reserved character by its percent-encoding
 # produces a different URI.
+@pytest.mark.parametrize("mode", ["whatwg", "rfc"])
 @pytest.mark.parametrize(
     ("first", "second"),
     [
         ("http://example.com/a%2Fb", "http://example.com/a/b"),
+        ("http://example.com/?a%2Fb", "http://example.com/?a/b"),
+        ("http://example.com/#a%2Fb", "http://example.com/#a/b"),
         ("http://example.com/?a%26b", "http://example.com/?a&b"),
         ("http://example.com/a%3Bb", "http://example.com/a;b"),
     ],
 )
-def test_not_equivalent(first: str, second: str) -> None:
-    assert URL(first) != URL(second)
+def test_not_equivalent(first: str, second: str, mode: Mode) -> None:
+    assert URL(first, mode=mode) != URL(second, mode=mode)
