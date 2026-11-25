@@ -414,6 +414,34 @@ def test_host_with_text_before_bracket_is_invalid(url: str) -> None:
 @pytest.mark.parametrize(
     "url",
     (
+        "http://[::1]@",
+        "http://[::1]@/path",
+        "http://[::1]@?query",
+        "http://[::1]@#frag",
+        "http://user[::1]pass@",
+        "sc://[::1]@",
+    ),
+    ids=(
+        "ipv6-userinfo-empty-host",
+        "ipv6-userinfo-empty-host-with-path",
+        "ipv6-userinfo-empty-host-with-query",
+        "ipv6-userinfo-empty-host-with-fragment",
+        "brackets-inside-userinfo-empty-host",
+        "non-special-scheme",
+    ),
+)
+def test_bracket_in_userinfo_with_empty_host_is_invalid(url: str) -> None:
+    """Reject brackets in the userinfo when no host follows the "@".
+
+    These used to escape as IndexError instead of the documented ValueError.
+    """
+    with pytest.raises(ValueError, match="Invalid IPv6 URL"):
+        URL(url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
         "http://[::1]allowed.example:1/",
         "http://[::1]evil.com/",
         "http://[::1]evil.com:8080/",
