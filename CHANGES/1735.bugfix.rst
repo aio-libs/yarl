@@ -1,0 +1,1 @@
+Made the ``suffix`` argument to :meth:`~yarl.URL.with_suffix` optional; calling it without arguments now removes the existing suffix -- by :user:`Aarnav3107`.
