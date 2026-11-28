@@ -202,6 +202,22 @@ def test_build_with_port(port: int, exc: type[Exception], match: str) -> None:
         URL.build(port=port)
 
 
+@pytest.mark.parametrize(
+    ("scheme", "host"),
+    [
+        pytest.param(1, "example.com", id="int"),
+        pytest.param(b"http", "example.com", id="bytes"),
+        pytest.param(True, "example.com", id="bool"),
+        pytest.param(1, "", id="int-without-host"),
+    ],
+)
+def test_build_with_non_str_scheme(scheme: str, host: str) -> None:
+    with pytest.raises(
+        TypeError, match=r"^The scheme is required to be str, got .*\.$"
+    ):
+        URL.build(scheme=scheme, host=host)
+
+
 def test_build_with_user() -> None:
     u = URL.build(scheme="http", host="127.0.0.1", user="foo")
     assert str(u) == "http://foo@127.0.0.1"
