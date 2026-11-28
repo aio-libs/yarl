@@ -1,0 +1,5 @@
+Rejected a *scheme* argument of :meth:`URL.build() <yarl.URL.build>` that
+is not a string, which raised a bare ``AttributeError`` from the host
+encoding when a host was given and stored the value as the scheme
+otherwise
+-- by :user:`qianeric-backup`.

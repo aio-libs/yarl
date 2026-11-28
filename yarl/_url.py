@@ -1143,6 +1143,8 @@ class URL:
                 'NoneType is illegal for "scheme", "authority", "host", "path", '
                 '"query_string", and "fragment" args, use empty string instead.'
             )
+        if not isinstance(scheme, str):
+            raise TypeError(f"The scheme is required to be str, got {type(scheme)!r}.")
 
         if query:
             query_string = get_str_query(query) or ""
